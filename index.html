@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Romeo & Juliet - Wedding Photo Gallery</title>
+  <title>The Wedding of Romeo & Juliet - Wedding Photo Gallery</title>
 
   <!-- Google Fonts: Cormorant Garamond (Serif Elegan) & Plus Jakarta Sans (Modern Clean) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -95,19 +95,27 @@
       margin-bottom: 16px;
     }
 
+    .hero-badges-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
     .hero-date-badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
       background: #FFFFFF;
-      padding: 8px 20px;
+      padding: 8px 18px;
       border-radius: 9999px;
       border: 1px solid var(--gold-border);
       box-shadow: var(--shadow-soft);
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 500;
       color: var(--text-main);
-      margin-bottom: 20px;
     }
 
     .hero-desc {
@@ -914,17 +922,29 @@
       <div class="line right"></div>
     </div>
 
-    <h1 id="coupleName" class="hero-title">Romeo & Juliet</h1>
+    <!-- Nama Event Acara Pernikahan -->
+    <h1 id="coupleName" class="hero-title">The Wedding of Romeo & Juliet</h1>
     <div id="subtitle" class="hero-subtitle">The Wedding Gallery & Precious Memories</div>
 
-    <div class="hero-date-badge">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-        <line x1="16" y1="2" x2="16" y2="6"></line>
-        <line x1="8" y1="2" x2="8" y2="6"></line>
-        <line x1="3" y1="10" x2="21" y2="10"></line>
-      </svg>
-      <span id="eventDate">15 November 2026</span>
+    <!-- Badge Tanggal dan Venue (Lokasi Acara) -->
+    <div class="hero-badges-wrapper">
+      <div class="hero-date-badge">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        <span id="eventDate">15 November 2026</span>
+      </div>
+
+      <div class="hero-date-badge">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span id="eventVenue">Grand Ballroom, Jakarta</span>
+      </div>
     </div>
 
     <p id="welcomeMessage" class="hero-desc">Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.</p>
@@ -959,7 +979,6 @@
       </div>
 
       <div class="action-controls-group">
-        <!-- Live Auto-Refresh Status Indicator & Manual Refresh Button -->
         <button class="ctrl-icon-btn" onclick="fetchGalleryData(true)" title="Sinkronkan foto sekarang (Auto-sync aktif)">
           <svg id="refreshIconSvg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M23 4v6h-6"></path>
@@ -968,7 +987,6 @@
           </svg>
         </button>
 
-        <!-- Admin Access Button -->
         <button id="adminBtn" class="ctrl-icon-btn" onclick="openAdminModal()" title="Menu Admin & Pengaturan Google Drive">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -1048,8 +1066,8 @@
     <div class="slideshow-progress-bar" id="slideshowProgress"></div>
 
     <div class="slideshow-watermark">
-      <h2 id="slideshowCouple">Romeo & Juliet</h2>
-      <p id="slideshowCategory">Precious Memories</p>
+      <h2 id="slideshowCouple">The Wedding of Romeo & Juliet</h2>
+      <p id="slideshowCategory">15 November 2026 • Grand Ballroom, Jakarta</p>
     </div>
 
     <div class="slideshow-stage">
@@ -1111,7 +1129,7 @@
       <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
         <div class="admin-card-body">
           <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
-            Masukkan PIN Admin untuk mengatur sambungan folder Google Drive, bingkai foto, dan rincian acara.
+            Masukkan PIN Admin untuk mengatur sambungan folder Google Drive, bingkai foto, dan koneksi API.
           </p>
 
           <div class="admin-field-group">
@@ -1133,7 +1151,7 @@
     </div>
   </div>
 
-  <!-- Modal 2: Panel Pengaturan Admin, Vercel API & Bingkai Foto -->
+  <!-- Modal 2: Panel Pengaturan Admin & Vercel -->
   <div id="adminSettingsModal" class="admin-modal-overlay">
     <div class="admin-card">
       <div class="admin-card-header">
@@ -1229,29 +1247,39 @@
           </div>
         </div>
 
-        <!-- Bagian 4: Rincian Pernikahan -->
-        <h4 style="font-size: 0.92rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px; border-bottom: 1px solid #E2E8F0; padding-bottom: 6px;">
-          Informasi Pernikahan
-        </h4>
+        <!-- Bagian 4: Informasi Pernikahan (TERKUNCI / TIDAK BISA DIUBAH) -->
+        <div class="admin-sync-box" style="background: #F8FAFC; border-color: #E2E8F0;">
+          <div class="admin-sync-header">
+            <div class="admin-sync-title" style="color: #475569;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <span>Informasi Pernikahan (Terkunci)</span>
+            </div>
+            <span style="font-size: 0.72rem; color: #64748B; font-weight: 700; background: #E2E8F0; padding: 2px 8px; border-radius: 9999px;">
+              🔒 Tidak Bisa Diubah
+            </span>
+          </div>
 
-        <div class="admin-field-group">
-          <label class="admin-label" for="cfgCoupleName">Nama Pasangan Mempelai</label>
-          <input type="text" id="cfgCoupleName" class="admin-input" placeholder="Contoh: Romeo & Juliet">
-        </div>
+          <div class="admin-field-group" style="margin-bottom: 8px;">
+            <label class="admin-label" style="color: #64748B;">Nama Event</label>
+            <input type="text" id="cfgCoupleName" class="admin-input" disabled readonly style="background: #F1F5F9; color: #64748B; cursor: not-allowed;">
+          </div>
 
-        <div class="admin-field-group">
-          <label class="admin-label" for="cfgSubtitle">Subjudul Galeri</label>
-          <input type="text" id="cfgSubtitle" class="admin-input" placeholder="Contoh: The Wedding Gallery & Memories">
-        </div>
+          <div class="admin-field-group" style="margin-bottom: 8px;">
+            <label class="admin-label" style="color: #64748B;">Tanggal Acara</label>
+            <input type="text" id="cfgEventDate" class="admin-input" disabled readonly style="background: #F1F5F9; color: #64748B; cursor: not-allowed;">
+          </div>
 
-        <div class="admin-field-group">
-          <label class="admin-label" for="cfgEventDate">Tanggal Hari Bahagia</label>
-          <input type="text" id="cfgEventDate" class="admin-input" placeholder="Contoh: 15 November 2026">
-        </div>
+          <div class="admin-field-group" style="margin-bottom: 8px;">
+            <label class="admin-label" style="color: #64748B;">Venue (Lokasi Acara)</label>
+            <input type="text" id="cfgEventVenue" class="admin-input" disabled readonly style="background: #F1F5F9; color: #64748B; cursor: not-allowed;">
+          </div>
 
-        <div class="admin-field-group">
-          <label class="admin-label" for="cfgWelcomeMessage">Kalimat Sambutan untuk Tamu</label>
-          <textarea id="cfgWelcomeMessage" class="admin-input" rows="3" placeholder="Pesan hangat bagi tamu undangan..."></textarea>
+          <div class="admin-help-text" style="color: #64748B; font-size: 0.78rem;">
+            🔒 Informasi pernikahan diproteksi secara paten agar terlindungi dan tidak dapat diubah melalui menu admin web.
+          </div>
         </div>
 
         <!-- Bagian 5: Keamanan & PIN Admin -->
@@ -1290,7 +1318,7 @@
 
   <!-- Footer -->
   <footer class="footer">
-    <div class="footer-names">Romeo & Juliet</div>
+    <div class="footer-names">The Wedding of Romeo & Juliet</div>
     <p>Diabadikan dengan cinta &bull; Terima kasih atas doa restunya.</p>
   </footer>
 
@@ -1311,7 +1339,6 @@
       activeSlideTarget: 'A',
       intervalMs: 4000,
       
-      // Admin & Live Auto-Refresh State
       isAdminLoggedIn: false,
       adminPin: "",
       activeConfig: {},
@@ -1328,7 +1355,6 @@
       setupTouchSwipe();
       setupKeyboardNav();
       
-      // Inisialisasi API URL input
       const apiUrlInput = document.getElementById("cfgGasApiUrl");
       if (apiUrlInput) apiUrlInput.value = state.gasApiUrl;
 
@@ -1336,9 +1362,6 @@
       startLiveAutoRefresh();
     });
 
-    /**
-     * Memulai Live Background Auto-Refresh (25 detik)
-     */
     function startLiveAutoRefresh() {
       if (state.autoRefreshTimer) clearInterval(state.autoRefreshTimer);
       state.autoRefreshTimer = setInterval(function() {
@@ -1348,11 +1371,7 @@
       }, state.autoRefreshIntervalMs);
     }
 
-    /**
-     * Helper Universal untuk Pemanggilan Backend (Mendukung Vercel fetch() & GAS google.script.run)
-     */
     function callBackend(action, payload, onSuccess, onError) {
-      // 1. Jika berjalan di Google Apps Script langsung
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         if (action === "getGalleryData") {
           google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).getGalleryData();
@@ -1366,10 +1385,8 @@
         return;
       }
 
-      // 2. Jika berjalan di Vercel (https://*.vercel.app)
       const apiUrl = state.gasApiUrl ? state.gasApiUrl.trim() : "";
       if (!apiUrl) {
-        console.warn("URL Google Apps Script API belum diatur pada Vercel.");
         if (action === "getGalleryData") {
           loadFallbackData("URL API Backend belum dihubungkan");
         } else if (action === "adminLogin") {
@@ -1379,12 +1396,11 @@
             onError({ message: "PIN salah. Gunakan default: 123456" });
           }
         } else {
-          onSuccess({ success: true, message: "Aksi tersimulasi di Vercel (Simpan URL API untuk sinkron live)." });
+          onSuccess({ success: true, message: "Aksi tersimulasi di Vercel." });
         }
         return;
       }
 
-      // Kirim via GET dengan query params untuk kebal terhadap CORS preflight
       const queryParams = new URLSearchParams({
         action: action,
         api: "true"
@@ -1414,14 +1430,11 @@
         onSuccess(data);
       })
       .catch(function(err) {
-        console.error("Gagal menghubungi Google Apps Script API via Vercel:", err);
+        console.error("Gagal menghubungi Google Apps Script API:", err);
         onError(err);
       });
     }
 
-    /**
-     * Mengambil data foto dari backend
-     */
     function fetchGalleryData(forceRefresh, isSilent) {
       const photosGrid = document.getElementById("photosGrid");
       state.isAutoRefreshing = true;
@@ -1453,9 +1466,6 @@
       });
     }
 
-    /**
-     * Memproses respon backend dan mendeteksi foto baru secara cerdas
-     */
     function handleGalleryResponse(response, isSilent) {
       if (!response || !response.photos) return;
 
@@ -1496,17 +1506,21 @@
 
     function populateConfigToUI(cfg) {
       if (!cfg) return;
-      if (cfg.COUPLE_NAME) {
-        document.getElementById("coupleName").innerText = cfg.COUPLE_NAME;
-        document.getElementById("slideshowCouple").innerText = cfg.COUPLE_NAME;
-        document.querySelector(".footer-names").innerText = cfg.COUPLE_NAME;
-        document.title = cfg.COUPLE_NAME + " - Wedding Photo Gallery";
-      }
+      const eventName = cfg.EVENT_NAME || cfg.COUPLE_NAME || "The Wedding of Romeo & Juliet";
+      const eventDate = cfg.EVENT_DATE || "15 November 2026";
+      const eventVenue = cfg.EVENT_VENUE || "Grand Ballroom, Jakarta";
+
+      document.getElementById("coupleName").innerText = eventName;
+      document.getElementById("slideshowCouple").innerText = eventName;
+      document.querySelector(".footer-names").innerText = eventName;
+      document.title = eventName + " - Wedding Photo Gallery";
+
+      document.getElementById("eventDate").innerText = eventDate;
+      document.getElementById("eventVenue").innerText = eventVenue;
+      document.getElementById("slideshowCategory").innerText = eventDate + " • " + eventVenue;
+
       if (cfg.SUBTITLE) {
         document.getElementById("subtitle").innerText = cfg.SUBTITLE;
-      }
-      if (cfg.EVENT_DATE) {
-        document.getElementById("eventDate").innerText = cfg.EVENT_DATE;
       }
       if (cfg.WELCOME_MESSAGE) {
         document.getElementById("welcomeMessage").innerText = cfg.WELCOME_MESSAGE;
@@ -1515,12 +1529,12 @@
         state.intervalMs = cfg.SLIDESHOW_INTERVAL_SEC * 1000;
       }
 
+      // Input form admin
       document.getElementById("cfgDriveFolderId").value = cfg.DRIVE_FOLDER_ID || "";
-      document.getElementById("cfgCoupleName").value = cfg.COUPLE_NAME || "";
-      document.getElementById("cfgSubtitle").value = cfg.SUBTITLE || "";
-      document.getElementById("cfgEventDate").value = cfg.EVENT_DATE || "";
-      document.getElementById("cfgWelcomeMessage").value = cfg.WELCOME_MESSAGE || "";
       document.getElementById("cfgFrameImageUrl").value = cfg.FRAME_IMAGE_URL || "";
+      document.getElementById("cfgCoupleName").value = eventName;
+      document.getElementById("cfgEventDate").value = eventDate;
+      document.getElementById("cfgEventVenue").value = eventVenue;
 
       const frameBadge = document.getElementById("frameStatusBadge");
       if (cfg.FRAME_IMAGE_URL) {
@@ -1633,9 +1647,6 @@
       renderCategoryTabs();
     }
 
-    /* ==========================================================================
-       ADMIN LOGIN & SETTINGS WORKFLOW
-       ========================================================================== */
     function openAdminModal() {
       if (state.isAdminLoggedIn) {
         openAdminSettingsModal();
@@ -1755,13 +1766,10 @@
       state.gasApiUrl = newApiUrl;
       localStorage.setItem("WEDDING_GAS_API_URL", newApiUrl);
 
+      // Hanya mengirim konfigurasi teknis (Informasi Pernikahan paten tidak diubah)
       const payload = {
         DRIVE_FOLDER_ID: document.getElementById("cfgDriveFolderId").value.trim(),
         FRAME_IMAGE_URL: document.getElementById("cfgFrameImageUrl").value.trim(),
-        COUPLE_NAME: document.getElementById("cfgCoupleName").value.trim(),
-        SUBTITLE: document.getElementById("cfgSubtitle").value.trim(),
-        EVENT_DATE: document.getElementById("cfgEventDate").value.trim(),
-        WELCOME_MESSAGE: document.getElementById("cfgWelcomeMessage").value.trim(),
         NEW_PIN: document.getElementById("cfgNewPin").value.trim()
       };
 
@@ -1780,10 +1788,8 @@
           }
           if (res.galleryData) {
             handleGalleryResponse(res.galleryData, false);
-          } else {
-            populateConfigToUI(payload);
           }
-          showToast("Pengaturan & Koneksi Vercel berhasil disimpan!");
+          showToast("Pengaturan teknis berhasil disimpan!");
           closeAdminSettingsModal();
         } else {
           alertBox.className = "admin-alert-box error";
@@ -1793,7 +1799,6 @@
       }, function(err) {
         saveBtn.disabled = false;
         saveBtn.innerHTML = `<span>Simpan Perubahan</span>`;
-        populateConfigToUI(payload);
         showToast("Pengaturan tersimpan secara lokal!");
         closeAdminSettingsModal();
       });
@@ -2012,7 +2017,9 @@
       const photo = state.filteredPhotos[index];
       if (!photo) return;
 
-      document.getElementById("slideshowCategory").innerText = photo.category + " • " + photo.name;
+      const eventDate = state.activeConfig.EVENT_DATE || "15 November 2026";
+      const eventVenue = state.activeConfig.EVENT_VENUE || "Grand Ballroom, Jakarta";
+      document.getElementById("slideshowCategory").innerText = eventDate + " • " + eventVenue + " • " + photo.category;
 
       const imgA = document.getElementById("slideshowImgA");
       const imgB = document.getElementById("slideshowImgB");
@@ -2166,10 +2173,12 @@
       handleGalleryResponse({
         isDemo: true,
         config: {
-          COUPLE_NAME: "Romeo & Juliet",
-          SUBTITLE: "The Wedding Gallery & Precious Memories",
+          EVENT_NAME: "The Wedding of Romeo & Juliet",
+          COUPLE_NAME: "The Wedding of Romeo & Juliet",
           EVENT_DATE: "15 November 2026",
-          WELCOME_MESSAGE: "Terima kasih atas kehadiran dan doa restu keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
+          EVENT_VENUE: "Grand Ballroom, Jakarta",
+          SUBTITLE: "The Wedding Gallery & Precious Memories",
+          WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
           DRIVE_FOLDER_ID: "",
           SLIDESHOW_INTERVAL_SEC: 4,
           FRAME_IMAGE_URL: ""

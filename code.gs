@@ -1,20 +1,33 @@
 /**
  * ================================================================================
  * WEDDING PANGGUNG - ELEGANT GOOGLE DRIVE PHOTO GALLERY
- * Backend Controller & Google Apps Script REST API Service (v1.3)
- * Siap Dihubungkan ke Vercel (https://wedding-panggung.vercel.app)
+ * Backend Controller & Google Apps Script REST API Service (v1.4)
  * Engine: ZettBOT v4.1 by Zettbos
  * ================================================================================
  */
 
 // ================================================================================
-// KONFIGURASI DEFAULT AWAL (FALLBACK)
+// KONFIGURASI PERNIKAHAN MASTER (PATEN / FIXED)
+// Sesuai arahan: Informasi Pernikahan (Nama Event, Tanggal, Venue) tidak dapat diubah
+// melalui antarmuka web dan diproteksi di konfigurasi master ini.
 // ================================================================================
 const WEDDING_CONFIG = {
-  COUPLE_NAME: "Romeo & Juliet",
-  SUBTITLE: "The Wedding Gallery & Precious Memories",
+  // Nama Event Acara
+  EVENT_NAME: "The Wedding of Romeo & Juliet",
+
+  // Tanggal Acara
   EVENT_DATE: "15 November 2026",
+
+  // Venue / Lokasi Acara
+  EVENT_VENUE: "Grand Ballroom, Jakarta",
+
+  // Subjudul Galeri
+  SUBTITLE: "The Wedding Gallery & Precious Memories",
+
+  // Pesan Sambutan untuk Tamu
   WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
+
+  // Konfigurasi Teknis (Dapat dikelola admin via web)
   DRIVE_FOLDER_ID: "",
   DEFAULT_ADMIN_PIN: "123456",
   SLIDESHOW_INTERVAL_SEC: 4,
@@ -23,16 +36,21 @@ const WEDDING_CONFIG = {
 };
 
 /**
- * Mengambil konfigurasi aktif dari Script Properties
+ * Mengambil konfigurasi aktif (Informasi Pernikahan paten, konfigurasi teknis dinamis)
  */
 function getEffectiveConfig() {
   var props = PropertiesService.getScriptProperties().getProperties() || {};
   
   return {
-    COUPLE_NAME: props.COUPLE_NAME || WEDDING_CONFIG.COUPLE_NAME,
-    SUBTITLE: props.SUBTITLE || WEDDING_CONFIG.SUBTITLE,
-    EVENT_DATE: props.EVENT_DATE || WEDDING_CONFIG.EVENT_DATE,
-    WELCOME_MESSAGE: props.WELCOME_MESSAGE || WEDDING_CONFIG.WELCOME_MESSAGE,
+    // Informasi Pernikahan: DIKUNCI / PATEN (tidak dapat diubah via web)
+    EVENT_NAME: WEDDING_CONFIG.EVENT_NAME,
+    COUPLE_NAME: WEDDING_CONFIG.EVENT_NAME, // kompatibilitas ke belakang
+    EVENT_DATE: WEDDING_CONFIG.EVENT_DATE,
+    EVENT_VENUE: WEDDING_CONFIG.EVENT_VENUE,
+    SUBTITLE: WEDDING_CONFIG.SUBTITLE,
+    WELCOME_MESSAGE: WEDDING_CONFIG.WELCOME_MESSAGE,
+
+    // Konfigurasi Teknis: Dapat dikelola Admin
     DRIVE_FOLDER_ID: props.DRIVE_FOLDER_ID || WEDDING_CONFIG.DRIVE_FOLDER_ID,
     ADMIN_PIN: props.ADMIN_PIN || WEDDING_CONFIG.DEFAULT_ADMIN_PIN,
     SLIDESHOW_INTERVAL_SEC: parseInt(props.SLIDESHOW_INTERVAL_SEC, 10) || WEDDING_CONFIG.SLIDESHOW_INTERVAL_SEC,
@@ -47,14 +65,12 @@ function getEffectiveConfig() {
 function doGet(e) {
   var hasParam = e && e.parameter && Object.keys(e.parameter).length > 0;
   
-  // Jika dipanggil oleh frontend di Vercel via fetch()
   if (hasParam && (e.parameter.action || e.parameter.api)) {
     var result = handleApiRequest(e);
     return ContentService.createTextOutput(JSON.stringify(result))
       .setMimeType(ContentService.MimeType.JSON);
   }
 
-  // Jika dibuka langsung di browser
   var template = HtmlService.createTemplateFromFile('index');
   var config = getEffectiveConfig();
   var safeConfig = Object.assign({}, config);
@@ -62,7 +78,7 @@ function doGet(e) {
   template.config = safeConfig;
 
   return template.evaluate()
-    .setTitle(safeConfig.COUPLE_NAME + " - Wedding Photo Gallery")
+    .setTitle(safeConfig.EVENT_NAME + " - Wedding Photo Gallery")
     .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
@@ -111,7 +127,7 @@ function handleApiRequest(e) {
 }
 
 /**
- * Mengambil data galeri (daftar kategori & foto) dari Google Drive
+ * Mengambil data galeri dari Google Drive
  */
 function getGalleryData() {
   try {
@@ -150,7 +166,6 @@ function getGalleryData() {
     var photos = [];
     var categoryMap = {};
 
-    // 1. Pindai Sub-Folder
     var subFolders = rootFolder.getFolders();
     while (subFolders.hasNext()) {
       var sub = subFolders.next();
@@ -162,7 +177,6 @@ function getGalleryData() {
       scanFilesInFolder(sub, cleanCatName, photos);
     }
 
-    // 2. Pindai file foto di folder utama
     scanFilesInFolder(rootFolder, "Galeri Utama", photos);
 
     if (photos.some(function(p) { return p.category === "Galeri Utama"; })) {
@@ -290,7 +304,8 @@ function testAndSyncDriveFolder(pin, folderId) {
 }
 
 /**
- * Menyimpan Pengaturan Lengkap Admin
+ * Menyimpan Pengaturan Teknis Admin
+ * (Hanya memproses Folder ID, Bingkai, Slideshow Interval, dan PIN. Informasi Pernikahan tidak diubah)
  */
 function saveAdminSettings(pin, updatedConfig) {
   var loginResult = adminLogin(pin);
@@ -308,18 +323,6 @@ function saveAdminSettings(pin, updatedConfig) {
       props.setProperty("DRIVE_FOLDER_ID", cleanFolderId);
     }
 
-    if (updatedConfig.COUPLE_NAME) {
-      props.setProperty("COUPLE_NAME", String(updatedConfig.COUPLE_NAME).trim());
-    }
-    if (updatedConfig.SUBTITLE) {
-      props.setProperty("SUBTITLE", String(updatedConfig.SUBTITLE).trim());
-    }
-    if (updatedConfig.EVENT_DATE) {
-      props.setProperty("EVENT_DATE", String(updatedConfig.EVENT_DATE).trim());
-    }
-    if (updatedConfig.WELCOME_MESSAGE) {
-      props.setProperty("WELCOME_MESSAGE", String(updatedConfig.WELCOME_MESSAGE).trim());
-    }
     if (updatedConfig.SLIDESHOW_INTERVAL_SEC) {
       props.setProperty("SLIDESHOW_INTERVAL_SEC", String(updatedConfig.SLIDESHOW_INTERVAL_SEC));
     }
@@ -340,7 +343,7 @@ function saveAdminSettings(pin, updatedConfig) {
 
     return {
       success: true,
-      message: "Seluruh pengaturan dan bingkai foto berhasil disimpan!",
+      message: "Pengaturan teknis dan bingkai berhasil disimpan! (Informasi Pernikahan terlindungi/tidak berubah)",
       galleryData: updatedGallery
     };
 
@@ -353,7 +356,7 @@ function saveAdminSettings(pin, updatedConfig) {
 }
 
 /**
- * Normalisasi URL atau ID Berkas Google Drive menjadi URL Gambar Langsung
+ * Normalisasi URL atau ID Berkas Google Drive
  */
 function normalizeDriveImageUrl(urlOrId) {
   if (!urlOrId) return "";
@@ -372,7 +375,7 @@ function normalizeDriveImageUrl(urlOrId) {
 }
 
 /**
- * Memindai berkas gambar di dalam folder dengan filter ketat
+ * Memindai berkas gambar dengan filter ketat (>20KB)
  */
 function scanFilesInFolder(folder, categoryName, photoList) {
   var files = folder.getFiles();
@@ -426,7 +429,7 @@ function cleanFileName(fileName) {
 }
 
 /**
- * Penyedia foto sampel beresolusi tinggi (Demo Mode)
+ * Demo Photos
  */
 function getDemoPhotos() {
   return [

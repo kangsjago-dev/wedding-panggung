@@ -149,23 +149,24 @@ Karena web app ini mengambil sumber langsung dari Google Drive, tidak diperlukan
 <!-- ======================================================================= -->
 
 ### A. Status Arsitektur & Lingkungan Aktif
-- **Versi Sistem:** 1.3.0 (Vercel Ready - Headless Hybrid Architecture).
+- **Versi Sistem:** 1.4.0 (Custom Event, Tanggal, Venue & Proteksi Informasi Pernikahan).
 - **Runtime:** Vercel Global Edge CDN (Frontend) + Google Apps Script REST API (Backend Google Drive).
 - **Daftar Berkas Terpasang:**
   1. `ZettBOT.md`: Sakelar aktivasi lisensi & sistem arsitek ZettBOT.
   2. `prd.md`: Dokumen acuan spesifikasi produk & master context (file ini).
   3. `vercel.json`: Konfigurasi Vercel deployment.
   4. `package.json`: Metadata proyek untuk Vercel.
-  5. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, Drive scanner).
+  5. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, Drive scanner) v1.4.0.
   6. `setup.gs`: Utilitas inisialisasi, pengujian folder drive, dan reset PIN admin.
-  7. `index.html`: Antarmuka galeri foto responsif universal (Vercel fetch & GAS compatible), filter kategori, Lightbox, Slideshow panggung, Modal Login Admin, Live Auto-Sync timer (25s), auto-cull foto error (`onerror`), dan Browser Canvas Compositor untuk unduh foto dengan bingkai kustom.
+  7. `index.html`: Antarmuka galeri foto responsif universal (Vercel fetch & GAS compatible), Hero Header dengan Nama Event, Tanggal, & Venue badge, filter kategori, Lightbox, Slideshow panggung ber-watermark lengkap, Modal Login Admin dengan proteksi Informasi Pernikahan terkunci (`disabled readonly`), Live Auto-Sync timer (25s), auto-cull foto error (`onerror`), dan Browser Canvas Compositor untuk unduh foto dengan bingkai kustom.
 
 ### B. Konfigurasi Sistem Terkini
 ```javascript
 const WEDDING_CONFIG = {
-  COUPLE_NAME: "Romeo & Juliet",
-  SUBTITLE: "The Wedding Gallery & Precious Memories",
+  EVENT_NAME: "The Wedding of Romeo & Juliet",
   EVENT_DATE: "15 November 2026",
+  EVENT_VENUE: "Grand Ballroom, Jakarta",
+  SUBTITLE: "The Wedding Gallery & Precious Memories",
   WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
   DRIVE_FOLDER_ID: "",
   DEFAULT_ADMIN_PIN: "123456",
@@ -176,6 +177,11 @@ const WEDDING_CONFIG = {
 ```
 
 ### C. Log Pembaruan Resmi (System Changelog)
+- **v1.4.0 (Custom Event, Tanggal, Venue & Proteksi Informasi Pernikahan):**
+  - Penambahan badge Venue (Lokasi Acara) berdampingan dengan badge Tanggal di Hero Header.
+  - Penambahan Nama Event, Tanggal, dan Venue pada watermark Mode Panggung (Slideshow).
+  - Proteksi Informasi Pernikahan: Field Nama Event, Tanggal, dan Venue di Panel Admin Web dibuat terkunci (`disabled readonly` dengan label `🔒 Tidak Bisa Diubah`), dan `code.gs` `saveAdminSettings()` mengabaikan mutasi field tersebut agar aman dari modifikasi web.
+  - Mempertahankan 100% fitur sebelumnya (Vercel deployment, Live Auto-Sync 25d, Custom Frame Compositor, Filter Anti-Corrupt File, Lightbox, Slideshow Panggung).
 - **v1.3.0 (Migrasi Vercel Ready):** 
   - Penambahan file konfigurasi `vercel.json` dan `package.json` untuk deployment Vercel.
   - Refaktor `code.gs` menjadi Headless REST API (CORS-friendly, `doGet` & `doPost` routing).
