@@ -149,17 +149,17 @@ Karena web app ini mengambil sumber langsung dari Google Drive, tidak diperlukan
 <!-- ======================================================================= -->
 
 ### A. Status Arsitektur & Lingkungan Aktif
-- **Versi Sistem:** 1.6.0 (Unified Live Multi-Device Sync via config.json & Cloud PropertiesService).
-- **Runtime:** Vercel Global Edge CDN / GitHub Pages (Frontend) + Google Apps Script REST API (Backend Google Drive).
+- **Versi Sistem:** 1.7.0 (True Live Cloud Central Multi-Device Synchronization & Unlocked Admin Input).
+- **Runtime:** Vercel Global Edge CDN / GitHub Pages (Frontend) + Central Cloud Database (`api.restful-api.dev`) + Google Apps Script REST API (Backend Google Drive).
 - **Daftar Berkas Terpasang:**
   1. `ZettBOT.md`: Sakelar aktivasi lisensi & sistem arsitek ZettBOT.
   2. `prd.md`: Dokumen acuan spesifikasi produk & master context (file ini).
-  3. `config.json`: Berkas konfigurasi live server terpusat (single source of truth untuk seluruh perangkat di dunia).
+  3. `config.json`: Berkas konfigurasi live baseline default.
   4. `vercel.json`: Konfigurasi Vercel deployment.
   5. `package.json`: Metadata proyek untuk Vercel.
-  6. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, Drive scanner, persistent config mutation) v1.6.0.
+  6. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, Drive scanner, persistent config mutation) v1.7.0.
   7. `setup.gs`: Utilitas inisialisasi, pengujian folder drive, dan reset PIN admin.
-  8. `index.html`: Antarmuka galeri foto responsif universal dengan sinkronisasi live otomatis dari `config.json` dan cloud Google, Hero Header dinamis, badge foto baru ("✨ Baru" auto-expire 10 menit), filter kategori, Lightbox, Slideshow panggung, Modal Admin dengan export config live, Live Auto-Sync (25s), auto-cull foto error (`onerror`), Anti-Cache meta tags, dan Canvas Compositor unduh berbingkai.
+  8. `index.html`: Antarmuka galeri foto responsif universal dengan sinkronisasi live terpusat otomatis via Cloud Central KV (`api.restful-api.dev`), input admin 100% unlocked (dapat diketik manual), Hero Header dinamis, badge foto baru ("✨ Baru" auto-expire 10 menit), filter kategori, Lightbox, Slideshow panggung, Live Auto-Sync (20s/25s), auto-cull foto error (`onerror`), Anti-Cache meta tags, dan Canvas Compositor unduh berbingkai.
 
 ### B. Konfigurasi Sistem Terkini
 ```javascript
@@ -179,6 +179,12 @@ const WEDDING_CONFIG = {
 ```
 
 ### C. Log Pembaruan Resmi (System Changelog)
+- **v1.7.0 (True Live Cloud Central Sync & 100% Unlocked Admin Input):**
+  - **Menu Config Diketik Manual (Unlocked):** Seluruh form input di Panel Admin (`cfgCoupleName`, `cfgEventDate`, `cfgEventVenue`, `cfgDriveFolderId`, `cfgFrameImageUrl`, `cfgGasApiUrl`, `cfgNewPin`) 100% dapat diketik manual secara bebas, tidak ada proteksi terkunci (`disabled`/`readonly`).
+  - **Hapus Menu Unduh config.json:** Tombol "Unduh config.json" dan method `exportLiveConfig()` dihapus bersih dari antarmuka modal admin sesuai instruksi.
+  - **Sinkronisasi Live Multi-Device (Cloud Central KV):** Konfigurasi tidak lagi disimpan di `localStorage` lokal yang terisolasi per gadget. Semua perubahan yang disimpan Admin langsung di-PUT ke server database cloud terpusat (`LIVE_CLOUD_API_ENDPOINT`).
+  - **Otomatis Sinkron di HP & Semua Device:** Setiap perangkat (mobile, desktop, tablet, TV) yang membuka halaman web secara otomatis mengambil data live dari cloud saat startup dan di-refresh setiap 20 detik, sehingga semua gadget selalu menampilkan nama acara, tanggal, venue, dan galeri yang identik dan seketika terupdate.
+  - **Prinsip Non-Destruktif:** Mempertahankan 100% fitur sebelumnya (Live Auto-Sync 25d, Badge Baru auto-expire 10m, Canvas Frame Compositor, Filter Anti-Corrupt File, Lightbox, Slideshow Panggung).
 - **v1.6.0 (Unified Live Multi-Device Sync via config.json & Cloud Properties):**
   - Mengatasi masalah perbedaan settingan antar device: Dibuat berkas `config.json` di root repositori server live yang otomatis dimuat oleh semua browser di seluruh perangkat saat halaman dibuka (`cache: no-store`).
   - Menghapus isolasi `localStorage` lokal agar semua perangkat (HP, laptop, tablet, layar panggung) membaca konfigurasi tunggal yang sama persis.
