@@ -252,18 +252,6 @@ function setupDatabaseSpreadsheet(customNameOrId) {
 }
 
 /**
- * Setup Mandiri Satu Klik (Standalone Handler di code.gs)
- */
-function setupTargetSpreadsheetDatabase() {
-  return setupDatabaseSpreadsheet("133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20");
-}
-
-function setupDemoSystemWithDummyFiles() {
-  return setupTargetSpreadsheetDatabase();
-}
-}
-
-/**
  * 3. Membaca Konfigurasi dari Sheet Pengaturan
  */
 function readConfigFromSheet(ss) {
