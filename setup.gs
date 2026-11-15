@@ -122,11 +122,10 @@ function clearCustomSettings() {
 }
 
 /**
- * 6. Setup Mandiri Satu Klik: Mempersiapkan Seluruh Database pada Berkas Google Spreadsheet Pengguna
  * ID: 133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20
  * URL: https://docs.google.com/spreadsheets/d/133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20/edit
  */
-function setupTargetSpreadsheetDatabase() {
+function setupDatabaseSpreadsheetTool() {
   Logger.log("=== MEMULAI SETUP SPREADSHEET DATABASE PENGGUNA ===");
   var targetId = "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20";
   
@@ -141,7 +140,7 @@ function setupTargetSpreadsheetDatabase() {
     Logger.log("❌ Gagal membuka spreadsheet dengan ID: " + targetId + " -> " + eOpen.toString());
     return { success: false, message: "Gagal membuka file spreadsheet. Pastikan izin akses disetel 'Anyone with the link can edit' atau akun memiliki akses." };
   }
-
+  return res;
   // Tulis parameter konfigurasi acara ke Sheet Pengaturan
   writeConfigToSheet(ss, {
     EVENT_NAME: WEDDING_CONFIG.EVENT_NAME,
@@ -253,13 +252,13 @@ function setupTargetSpreadsheetDatabase() {
 }
 
 /**
- * 7. Menguji Koneksi ke Database Spreadsheet
+ * 7. Menguji Koneksi ke Database Spreadsheet 'foto-panggung'
  */
 function testSpreadsheetDatabaseConnection() {
-  Logger.log("=== PENGUJIAN DATABASE SPREADSHEET ===");
+  Logger.log("=== PENGUJIAN DATABASE SPREADSHEET (foto-panggung) ===");
   var ss = getDatabaseSpreadsheet();
   if (!ss) {
-    Logger.log("⚠️ File spreadsheet belum terhubung. Menjalankan setup otomatis...");
+    Logger.log("⚠️ File spreadsheet 'foto-panggung' belum terhubung. Menjalankan setup otomatis...");
     return setupTargetSpreadsheetDatabase();
   }
 
@@ -274,8 +273,8 @@ function testSpreadsheetDatabaseConnection() {
 }
 
 /**
- * 8. Setup Lengkap Sistem Demo Berbasis Spreadsheet (Tanpa Ketergantungan Google Drive)
+ * 8. Setup Lengkap Sistem Demo Berbasis Spreadsheet 'foto-panggung' (Tanpa Ketergantungan Google Drive)
  */
 function setupDemoSystemWithDummyFiles() {
-  return setupTargetSpreadsheetDatabase();
+  Logger.log("=== MEMULAI SETUP DEMO SISTEM & DUMMY FILES (SPREADSHEET MURNI) ===");
 }
