@@ -158,3 +158,176 @@ function testSpreadsheetDatabaseConnection() {
     Logger.log("  " + (i + 1) + ". " + sheets[i].getName() + " (" + sheets[i].getLastRow() + " baris)");
   }
 }
+
+/**
+ * 8. Setup Lengkap Sistem Demo dengan Berkas Dummy (Folder Drive + foto-panggung + Dummy Photos)
+ */
+function setupDemoSystemWithDummyFiles() {
+  Logger.log("=== MEMULAI SETUP DEMO SISTEM & DUMMY FILES ===");
+
+  // 1. Inisialisasi Spreadsheet foto-panggung
+  var ssRes = setupDatabaseSpreadsheet("foto-panggung");
+  var ss = getDatabaseSpreadsheet();
+  if (!ss) {
+    Logger.log("❌ Gagal membuat spreadsheet foto-panggung: " + (ssRes ? ssRes.message : ""));
+    return { success: false, message: "Gagal menghubungkan spreadsheet foto-panggung" };
+  }
+  Logger.log("✅ 1. Spreadsheet 'foto-panggung' Siap! URL: " + ss.getUrl());
+
+  // 2. Buat Struktur Folder Demo di Google Drive
+  var demoFolderName = "Galeri Pernikahan Demo - " + WEDDING_CONFIG.EVENT_NAME;
+  var demoFolder;
+  try {
+    var existingFolders = DriveApp.getFoldersByName(demoFolderName);
+    if (existingFolders.hasNext()) {
+      demoFolder = existingFolders.next();
+      Logger.log("ℹ️ Menggunakan folder demo yang sudah ada: " + demoFolderName);
+    } else {
+      demoFolder = DriveApp.createFolder(demoFolderName);
+      Logger.log("✅ 2. Folder Demo dibuat di Google Drive: " + demoFolderName);
+    }
+    demoFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (eFolder) {
+    Logger.log("⚠️ Gagal membuat folder Drive: " + eFolder.toString());
+  }
+
+  var folderId = demoFolder ? demoFolder.getId() : "";
+
+  // 3. Buat Subfolder Kategori
+  var categoryFolders = {};
+  if (demoFolder) {
+    var subCats = ["01. Prewedding", "02. Akad Nikah", "03. Resepsi", "04. Photobooth"];
+    for (var i = 0; i < subCats.length; i++) {
+      var catName = subCats[i];
+      var existingSub = demoFolder.getFoldersByName(catName);
+      if (existingSub.hasNext()) {
+        categoryFolders[catName] = existingSub.next();
+      } else {
+        categoryFolders[catName] = demoFolder.createFolder(catName);
+        categoryFolders[catName].setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      }
+    }
+    Logger.log("✅ 3. Subfolder kategori berhasil disiapkan.");
+  }
+
+  // 4. Perbarui konfigurasi folder di Script Properties dan Sheet Pengaturan
+  if (folderId) {
+    PropertiesService.getScriptProperties().setProperty("DRIVE_FOLDER_ID", folderId);
+    writeConfigToSheet(ss, {
+      EVENT_NAME: WEDDING_CONFIG.EVENT_NAME,
+      EVENT_DATE: WEDDING_CONFIG.EVENT_DATE,
+      EVENT_VENUE: WEDDING_CONFIG.EVENT_VENUE,
+      DRIVE_FOLDER_ID: folderId
+    });
+    Logger.log("✅ 4. DRIVE_FOLDER_ID disetel ke: " + folderId);
+  }
+
+  // 5. Isi Sheet Daftar_Foto dengan Dummy Photos beresolusi tinggi (Wedding Collection)
+  var dummyPhotos = [
+    {
+      id: "demo_pw_1",
+      name: "Prewedding - Tatapan Bahagia",
+      category: "Prewedding",
+      thumbnailUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
+      downloadUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2000&q=90",
+      sizeBytes: 1542000,
+      timestamp: Date.now() - 3600000
+    },
+    {
+      id: "demo_pw_2",
+      name: "Prewedding - Senja Berdua",
+      category: "Prewedding",
+      thumbnailUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
+      downloadUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=2000&q=90",
+      sizeBytes: 1823000,
+      timestamp: Date.now() - 3000000
+    },
+    {
+      id: "demo_an_1",
+      name: "Akad Nikah - Momen Ijab Kabul",
+      category: "Akad Nikah",
+      thumbnailUrl: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80",
+      downloadUrl: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=2000&q=90",
+      sizeBytes: 2150000,
+      timestamp: Date.now() - 2400000
+    },
+    {
+      id: "demo_an_2",
+      name: "Akad Nikah - Pemasangan Cincin",
+      category: "Akad Nikah",
+      thumbnailUrl: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=800&q=80",
+      downloadUrl: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=2000&q=90",
+      sizeBytes: 1980000,
+      timestamp: Date.now() - 1800000
+    },
+    {
+      id: "demo_rs_1",
+      name: "Resepsi - Lempar Bunga Bahagia",
+      category: "Resepsi",
+      thumbnailUrl: "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=800&q=80",
+      downloadUrl: "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=2000&q=90",
+      sizeBytes: 2310000,
+      timestamp: Date.now() - 1200000
+    },
+    {
+      id: "demo_rs_2",
+      name: "Resepsi - Tawa Bersama Sahabat",
+      category: "Resepsi",
+      thumbnailUrl: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=800&q=80",
+      downloadUrl: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=2000&q=90",
+      sizeBytes: 1740000,
+      timestamp: Date.now() - 600000
+    },
+    {
+      id: "demo_pb_1",
+      name: "Photobooth - Pose Lucu Tamu",
+      category: "Photobooth",
+      thumbnailUrl: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=800&q=80",
+      downloadUrl: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=2000&q=90",
+      sizeBytes: 1650000,
+      timestamp: Date.now() - 120000
+    },
+    {
+      id: "demo_pb_2",
+      name: "Photobooth - Momen Hangat Keluarga",
+      category: "Photobooth",
+      thumbnailUrl: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&q=80",
+      downloadUrl: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=2000&q=90",
+      sizeBytes: 1910000,
+      timestamp: Date.now() - 30000
+    }
+  ];
+
+  syncPhotosToSheet(ss, dummyPhotos);
+  Logger.log("✅ 5. " + dummyPhotos.length + " foto dummy pernikahan berhasil diisi ke Sheet 'Daftar_Foto'.");
+
+  // 6. Buat file dummy info di setiap subfolder Google Drive
+  try {
+    for (var cat in categoryFolders) {
+      var cf = categoryFolders[cat];
+      var dummyFileName = "panduan_" + cat.replace(/[^a-zA-Z0-9]/g, "_") + ".txt";
+      var existingFiles = cf.getFilesByName(dummyFileName);
+      if (!existingFiles.hasNext()) {
+        cf.createFile(dummyFileName, "Folder Kategori: " + cat + "\nSilakan unggah foto momen pernikahan ke folder ini.\nFormat foto yang didukung: JPG, PNG, WEBP (> 20KB).");
+      }
+    }
+    Logger.log("✅ 6. Berkas dummy info panduan dibuat di setiap subfolder Google Drive.");
+  } catch (eDummyFile) {
+    Logger.log("Info dummy file: " + eDummyFile.toString());
+  }
+
+  // 7. Catat aktivitas
+  logActivityToSheet(ss, "Setup Demo Selesai", "Sistem demo berhasil diinisialisasi lengkap dengan folder Drive & dummy files", "Admin System");
+
+  Logger.log("\n🎉 SELURUH SISTEM DEMO & BERKAS DUMMY SIAP DIGUNAKAN!");
+  Logger.log("Spreadsheet: " + ss.getUrl());
+  if (demoFolder) Logger.log("Folder Google Drive: " + demoFolder.getUrl());
+
+  return {
+    success: true,
+    message: "Sistem demo & berkas dummy berhasil disiapkan!",
+    spreadsheetUrl: ss.getUrl(),
+    driveFolderUrl: demoFolder ? demoFolder.getUrl() : "",
+    driveFolderId: folderId
+  };
+}

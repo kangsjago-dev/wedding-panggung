@@ -429,6 +429,8 @@ function handleApiRequest(e) {
       return saveAdminSettings(params.pin, params.config || params);
     } else if (action === "setupDatabase" || action === "setupSpreadsheetDatabase") {
       return setupDatabaseSpreadsheet(params.name);
+    } else if (action === "setupDemo" || action === "setupDemoSystem") {
+      return setupDemoSystemWithDummyFiles();
     } else if (action === "getSpreadsheetInfo") {
       var dbSs = getDatabaseSpreadsheet();
       if (dbSs) {

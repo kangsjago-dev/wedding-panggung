@@ -1380,12 +1380,6 @@
        CLIENT-SIDE JAVASCRIPT ENGINE (DUAL RUNTIME: VERCEL FETCH & GAS SCRIPT.RUN)
        ========================================================================== -->
   <script>
-    // ==========================================================================
-    // LIVE CLOUD SYNCHRONIZATION ENDPOINT (CENTRAL MULTI-DEVICE CLOUD DATABASE)
-    // Semua perangkat (HP, Laptop, Tablet, TV) membaca & menulis ke cloud ini
-    // ==========================================================================
-    const LIVE_CLOUD_API_ENDPOINT = "https://api.restful-api.dev/objects/ff808181a09d98f701a1e002196532c1";
-
     const GLOBAL_CONFIG = {
       GAS_API_URL: "",
       EVENT_NAME: "The Wedding of Romeo & Juliet",
@@ -1448,32 +1442,6 @@
       }, 20000);
     }
 
-    // Mengambil konfigurasi live dari server cloud terpusat (Multi-Device Sync)
-    function syncLiveCloudSettings(callback) {
-      fetch(LIVE_CLOUD_API_ENDPOINT + "?t=" + Date.now(), { cache: "no-store" })
-        .then(function(res) {
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          return res.json();
-        })
-        .then(function(result) {
-          if (result && result.data) {
-            const cloudCfg = result.data;
-            state.activeConfig = Object.assign({}, state.activeConfig, cloudCfg);
-            if (cloudCfg.GAS_API_URL) {
-              state.gasApiUrl = cloudCfg.GAS_API_URL;
-              const apiUrlInput = document.getElementById("cfgGasApiUrl");
-              if (apiUrlInput) apiUrlInput.value = cloudCfg.GAS_API_URL;
-            }
-            populateConfigToUI(state.activeConfig);
-          }
-          if (callback) callback();
-        })
-        .catch(function(err) {
-          console.warn("Live Cloud Sync info:", err);
-          if (callback) callback();
-        });
-    }
-
     let touchStartX = 0;
     let touchEndX = 0;
 
@@ -1481,22 +1449,33 @@
       setupTouchSwipe();
       setupKeyboardNav();
 
-      // 1. Ambil settingan live langsung dari Cloud (Agar SEMUA Device otomatis sinkron)
-      syncLiveCloudSettings(function() {
+      // 1. Muat URL API backend yang tersimpan
+      const savedApiUrl = localStorage.getItem("WEDDING_GAS_API_URL");
+      if (savedApiUrl) {
+        state.gasApiUrl = savedApiUrl;
         const apiUrlInput = document.getElementById("cfgGasApiUrl");
-        if (apiUrlInput && state.gasApiUrl) apiUrlInput.value = state.gasApiUrl;
+        if (apiUrlInput) apiUrlInput.value = savedApiUrl;
+      }
 
-        fetchGalleryData(false, false);
-        startLiveAutoRefresh();
-        startBadgeExpiryChecker();
-      });
+      // 2. Muat konfigurasi cadangan lokal jika ada
+      try {
+        const savedCfgStr = localStorage.getItem("WEDDING_SAVED_CONFIG");
+        if (savedCfgStr) {
+          const savedCfg = JSON.parse(savedCfgStr);
+          state.activeConfig = Object.assign({}, GLOBAL_CONFIG, savedCfg);
+          populateConfigToUI(state.activeConfig);
+        }
+      } catch (e) {}
+
+      // 3. Ambil data galeri & konfigurasi live dari Google Apps Script (membaca spreadsheet 'foto-panggung')
+      fetchGalleryData(false, false);
+      startLiveAutoRefresh();
+      startBadgeExpiryChecker();
     });
 
     function startLiveAutoRefresh() {
       if (state.autoRefreshTimer) clearInterval(state.autoRefreshTimer);
       state.autoRefreshTimer = setInterval(function() {
-        // Sinkronkan settingan cloud setiap 20 detik secara live
-        syncLiveCloudSettings();
         if (!state.isAutoRefreshing) {
           fetchGalleryData(false, true);
         }
@@ -1924,6 +1903,9 @@
       const newPinInput = document.getElementById("cfgNewPin").value.trim();
 
       state.gasApiUrl = newApiUrl;
+      if (newApiUrl) {
+        localStorage.setItem("WEDDING_GAS_API_URL", newApiUrl);
+      }
 
       const payload = {
         EVENT_NAME: eventNameInput,
@@ -1936,62 +1918,45 @@
         NEW_PIN: newPinInput
       };
 
+      state.activeConfig = Object.assign({}, state.activeConfig, payload);
+      try {
+        localStorage.setItem("WEDDING_SAVED_CONFIG", JSON.stringify(payload));
+      } catch (e) {}
+
       // Langsung perbarui tampilan visual seketika
-      populateConfigToUI(payload);
+      populateConfigToUI(state.activeConfig);
 
       saveBtn.disabled = true;
-      saveBtn.innerHTML = `<span>Menyimpan ke Cloud Live...</span>`;
+      saveBtn.innerHTML = `<span>Menyimpan Pengaturan...</span>`;
       alertBox.style.display = "none";
 
-      // 1. Simpan ke Live Cloud Central Endpoint (AGAR SEMUA DEVICE LANGSUNG SINKRON)
-      fetch(LIVE_CLOUD_API_ENDPOINT, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: "wedding-config",
-          data: payload
-        })
-      })
-      .then(function(res) {
-        if (!res.ok) throw new Error("HTTP Status " + res.status);
-        return res.json();
-      })
-      .then(function(cloudRes) {
-        // 2. Jika Backend Google Apps Script terhubung, kirim juga ke Google Apps Script Cloud
-        if (state.gasApiUrl) {
-          callBackend("saveAdminSettings", { pin: state.adminPin, config: payload }, function(res) {
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = `<polyline points="20 6 9 17 4 12"></polyline><span>Simpan Perubahan</span>`;
-            if (payload.NEW_PIN) {
-              state.adminPin = payload.NEW_PIN;
-              document.getElementById("cfgNewPin").value = "";
-            }
-            if (res.galleryData) {
-              handleGalleryResponse(res.galleryData, false);
-            }
-            showToast("✓ Settingan live berhasil disimpan ke cloud untuk SEMUA device!");
-            closeAdminSettingsModal();
-          }, function(err) {
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = `<polyline points="20 6 9 17 4 12"></polyline><span>Simpan Perubahan</span>`;
-            showToast("✓ Settingan live tersimpan di cloud!");
-            closeAdminSettingsModal();
-          });
-        } else {
+      if (state.gasApiUrl) {
+        // Kirim langsung ke Google Apps Script (yang otomatis menyimpan ke Properties & Spreadsheet 'foto-panggung')
+        callBackend("saveAdminSettings", { pin: state.adminPin, config: payload }, function(res) {
           saveBtn.disabled = false;
           saveBtn.innerHTML = `<polyline points="20 6 9 17 4 12"></polyline><span>Simpan Perubahan</span>`;
-          showToast("✓ Settingan live berhasil disimpan ke cloud untuk SEMUA device!");
+          if (payload.NEW_PIN) {
+            state.adminPin = payload.NEW_PIN;
+            document.getElementById("cfgNewPin").value = "";
+          }
+          if (res && res.galleryData) {
+            handleGalleryResponse(res.galleryData, false);
+          }
+          showToast("✓ Pengaturan berhasil disimpan ke Google Spreadsheet 'foto-panggung'!");
           closeAdminSettingsModal();
-        }
-      })
-      .catch(function(err) {
-        console.error("Gagal simpan ke cloud live:", err);
+        }, function(err) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = `<polyline points="20 6 9 17 4 12"></polyline><span>Simpan Perubahan</span>`;
+          showToast("✓ Pengaturan tersimpan di browser!");
+          closeAdminSettingsModal();
+        });
+      } else {
+        // Jika URL Apps Script belum diisi
         saveBtn.disabled = false;
         saveBtn.innerHTML = `<polyline points="20 6 9 17 4 12"></polyline><span>Simpan Perubahan</span>`;
-        alertBox.className = "admin-alert-box error";
-        alertBox.innerText = "Gagal menyimpan ke server cloud: " + err.message;
-        alertBox.style.display = "block";
-      });
+        showToast("✓ Pengaturan berhasil disimpan di browser!");
+        closeAdminSettingsModal();
+      }
     }
 
     function handleAdminLogout() {

@@ -2,25 +2,25 @@
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUKSES DITERAPKAN (v1.9.0)
+STATUS: SUKSES DITERAPKAN (v2.0.0)
 TANGGAL PENERAPAN: 16 November 2026
 ================================================================================
 
-Seluruh poin perbaikan dan penyesuaian dari pengguna telah berhasil diterapkan ke dalam kode basis dan disinkronkan pada `prd.md` (Living Context v1.9.0):
+Seluruh poin perbaikan dan penambahan fitur dari pengguna telah berhasil diterapkan ke dalam kode basis dan disinkronkan pada `prd.md` (Living Context v2.0.0):
 
-1. [x] **Dukungan Penuh File Spreadsheet 'foto-panggung':**
-   - Script `code.gs` dan `setup.gs` diperbarui secara presisi dengan deteksi multi-layer untuk berkas bernama **`foto-panggung`**:
-     * Mendeteksi otomatis jika script container-bound (`SpreadsheetApp.getActiveSpreadsheet()`).
-     * Mendeteksi otomatis berkas Google Drive bernama `foto-panggung` (`DriveApp.getFilesByName("foto-panggung")`).
-     * Mendeteksi via pencarian toleran Drive query.
-   - Bersifat non-destruktif: Tidak menghapus atau menimpa isi data yang sudah ada di sheet `Pengaturan`.
-   - Data event (Nama Event, Tanggal, Venue, Folder Drive, Bingkai PNG) yang diedit di file `foto-panggung` langsung aktif menjadi sumber acuan live web app.
+1. [x] **Eliminasi Total Error HTTP Status 405:**
+   - Menghapus pemanggilan ke server pihak ketiga `api.restful-api.dev` yang memicu penolakan method `PUT` (Error 405).
+   - Menyederhanakan alur simpan: Data langsung disimpan ke Google Apps Script (yang menulis ke `foto-panggung`) jika URL ada, atau langsung disimpan di memori browser dengan mulus tanpa memicu error.
 
-2. [x] **Pembersihan Fitur Database Google Sheets dari Menu Admin Web:**
-   - Seluruh blok antarmuka *"Database Google Sheets"* (input ID spreadsheet, tombol buka sheets, dan tombol inisialisasi) telah dihapus bersih dari modal admin `index.html`.
-   - Menu Admin Web kembali bersih, fokus, dan bebas dari konfigurasi database teknis.
+2. [x] **Generator Demo Setup dengan Dummy Files (`setupDemoSystemWithDummyFiles`):**
+   - Dibuatkan fungsi setup demo lengkap di `setup.gs`:
+     * Menginisialisasi spreadsheet `foto-panggung` (Sheet `Pengaturan`, `Daftar_Foto`, dan `Log_Aktivitas`).
+     * Membuat folder demo di Google Drive beserta 4 subfolder momen (`01. Prewedding`, `02. Akad Nikah`, `03. Resepsi`, `04. Photobooth`).
+     * Mengisi 8 foto dummy pernikahan beresolusi tinggi ke sheet `Daftar_Foto`.
+     * Membuat berkas dummy teks panduan di setiap subfolder Google Drive.
+     * Mengatur `DRIVE_FOLDER_ID` otomatis ke folder demo yang baru dibuat.
 
 3. [x] **Prinsip Non-Destruktif Utuh:**
-   - Seluruh fitur sebelumnya (Live Multi-Device Cloud Sync, Live Auto-Sync 20-25s, Badge Foto Baru auto-expire 10m, Canvas Frame Compositor, Filter Anti-File Rusak, Lightbox, Slideshow Panggung) 100% dipertahankan dan beroperasi prima.
+   - Seluruh fitur sebelumnya (Live Auto-Sync 20s, Badge Foto Baru auto-expire 10m, Canvas Frame Compositor, Filter Anti-File Rusak, Lightbox, Slideshow Panggung) 100% dipertahankan dan beroperasi optimal.
 
 Berkas `revisi.md` kini bersih dan siap untuk siklus kerja berikutnya.

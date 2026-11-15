@@ -149,17 +149,17 @@ Karena web app ini mengambil sumber langsung dari Google Drive, tidak diperlukan
 <!-- ======================================================================= -->
 
 ### A. Status Arsitektur & Lingkungan Aktif
-- **Versi Sistem:** 1.9.0 (Automatic 'foto-panggung' Spreadsheet Database Binding & Clean Web Admin).
-- **Runtime:** Vercel Global Edge CDN / GitHub Pages (Frontend) + Google Spreadsheet 'foto-panggung' (Pengaturan, Daftar_Foto, Log_Aktivitas) + Live Central Cloud KV + Google Apps Script REST API.
+- **Versi Sistem:** 2.0.0 (Robust Admin Save Architecture & Full Demo Setup with Dummy Files).
+- **Runtime:** Vercel Global Edge CDN / GitHub Pages (Frontend) + Google Spreadsheet 'foto-panggung' (Pengaturan, Daftar_Foto, Log_Aktivitas) + Google Apps Script REST API Backend.
 - **Daftar Berkas Terpasang:**
   1. `ZettBOT.md`: Sakelar aktivasi lisensi & sistem arsitek ZettBOT.
   2. `prd.md`: Dokumen acuan spesifikasi produk & master context (file ini).
   3. `config.json`: Berkas konfigurasi live baseline default.
   4. `vercel.json`: Konfigurasi Vercel deployment.
   5. `package.json`: Metadata proyek untuk Vercel.
-  6. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, Drive scanner, integrated Google Spreadsheet `foto-panggung` multi-layer detection, two-way sync) v1.9.0.
-  7. `setup.gs`: Utilitas inisialisasi, pengujian folder drive, database spreadsheet `foto-panggung` tool, dan reset PIN admin.
-  8. `index.html`: Antarmuka galeri foto responsif universal dengan modal admin yang bersih (tanpa kartu database sheets yang rumit), sinkronisasi live terpusat otomatis via Cloud Central KV (`api.restful-api.dev`), input admin 100% unlocked (Nama Event, Tanggal, Venue), Hero Header dinamis, badge foto baru ("✨ Baru" auto-expire 10 menit), filter kategori, Lightbox, Slideshow panggung, Live Auto-Sync (20s/25s), auto-cull foto error (`onerror`), Anti-Cache meta tags, dan Canvas Compositor unduh berbingkai.
+  6. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, Drive scanner, integrated Google Spreadsheet `foto-panggung` multi-layer detection, two-way sync, setupDemo handler) v2.0.0.
+  7. `setup.gs`: Utilitas inisialisasi, pengujian folder drive, generator demo lengkap dengan dummy files (`setupDemoSystemWithDummyFiles`), dan reset PIN admin.
+  8. `index.html`: Antarmuka galeri foto responsif universal dengan sistem simpan admin yang tangguh (bebas error 405), sinkronisasi langsung ke Google Apps Script dan Google Spreadsheet `foto-panggung`, modal admin ringkas dan elegan, input admin 100% unlocked (Nama Event, Tanggal, Venue), Hero Header dinamis, badge foto baru ("✨ Baru" auto-expire 10 menit), filter kategori, Lightbox, Slideshow panggung, Live Auto-Sync (20s), auto-cull foto error (`onerror`), Anti-Cache meta tags, dan Canvas Compositor unduh berbingkai.
 
 ### B. Konfigurasi Sistem Terkini
 ```javascript
@@ -180,15 +180,19 @@ const WEDDING_CONFIG = {
 ```
 
 ### C. Log Pembaruan Resmi (System Changelog)
+- **v2.0.0 (Eliminasi Error 405 Pengaturan Admin & Penyiapan Demo Setup dengan Dummy Files):**
+  - **Eliminasi Total Error HTTP 405:** Menghapus ketergantungan pada endpoint pihak ketiga `api.restful-api.dev` yang rentan menolak method `PUT`.
+  - **Alur Penyimpanan Tangguh & Langsung (Fail-Safe Save Handler):**
+    * Saat URL Google Apps Script terisi, tombol "Simpan Perubahan" langsung mengirim data ke Google Apps Script yang otomatis menulis ke `ScriptProperties` dan ke sheet `Pengaturan` di berkas `foto-panggung`.
+    * Jika URL Apps Script belum diisi (mode pratinjau), data langsung tersimpan aman di memori browser dan langsung diaplikasikan ke antarmuka seketika tanpa memicu pesan error 405.
+  - **Generator Demo Lengkap dengan Berkas Dummy (`setupDemoSystemWithDummyFiles`):**
+    * Menyiapkan berkas Google Spreadsheet `foto-panggung` lengkap dengan sheet `Pengaturan`, `Daftar_Foto`, dan `Log_Aktivitas`.
+    * Membuat folder utama di Google Drive: `"Galeri Pernikahan Demo - The Wedding of Romeo & Juliet"` beserta 4 subfolder momen: `01. Prewedding`, `02. Akad Nikah`, `03. Resepsi`, dan `04. Photobooth`.
+    * Mengisi 8 foto dummy beresolusi tinggi dengan thumbnail dan link unduh siap pakai ke dalam sheet `Daftar_Foto`.
+    * Membuat berkas teks panduan dummy di setiap subfolder Google Drive.
+  - **Prinsip Non-Destruktif:** Seluruh fitur esensial (Live Auto-Sync 20s, Badge Foto Baru auto-expire 10m, Canvas Frame Compositor, Filter Anti-File Rusak, Lightbox, Slideshow Panggung) 100% dipertahankan dan beroperasi optimal.
 - **v1.9.0 (Otomatisasi Spreadsheet 'foto-panggung' & Pembersihan Menu Admin Web):**
-  - **Deteksi Cerdas Multi-Layer 'foto-panggung':** Script backend `code.gs` dan `setup.gs` disempurnakan untuk mengenali dan menggunakan berkas spreadsheet bernama **`foto-panggung`** secara otomatis melalui:
-    1. `SpreadsheetApp.getActiveSpreadsheet()` (otomatis jika container-bound).
-    2. `PropertiesService` ID.
-    3. `DriveApp.getFilesByName("foto-panggung")`.
-    4. Query pencarian judul Drive toleran.
-  - **Non-Destruktif:** Inisialisasi sheet `Pengaturan`, `Daftar_Foto`, dan `Log_Aktivitas` tidak akan menimpa data yang telah Anda isi di file `foto-panggung`.
-  - **Pembersihan Antarmuka Admin Web:** Menghapus total blok kartu *Database Google Sheets* (input ID, tombol buka spreadsheet, dan tombol generate database) dari modal admin web, sehingga antarmuka kembali ringkas, bersih, dan elegan tanpa elemen teknis.
-  - **Prinsip Non-Destruktif:** Seluruh fitur sebelumnya (Live Multi-Device Cloud Sync, Live Auto-Sync 20-25s, Badge Foto Baru auto-expire 10m, Canvas Frame Compositor, Filter Anti-File Rusak, Lightbox, Slideshow Panggung) 100% dipertahankan dan beroperasi optimal.
+  - Deteksi cerdas multi-layer 'foto-panggung' dan pembersihan antarmuka admin web.
 - **v1.8.0 (1 Spreadsheet Google untuk Database & Pengaturan Event Terintegrasi):**
   - **1 Spreadsheet Google Database:** Dibuatkan 3 lembar kerja (*Pengaturan*, *Daftar_Foto*, *Log_Aktivitas*).
   - **Sinkronisasi 2 Arah (Two-Way Sync):** Mengubah data event langsung di Google Sheets otomatis memperbarui tampilan web live.
