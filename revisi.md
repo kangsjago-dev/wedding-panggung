@@ -2,9 +2,18 @@
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.6.0)
+STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.7.0)
 TANGGAL PENGAJUAN: 16 November 2026
-VERIFIKASI SISTEM: BERHASIL (Node.js Syntax Check Passed & Live Cloud Sync Ready)
+VERIFIKASI SISTEM: BERHASIL (94 Foto Live Google Drive Terhubung & Dual Fail-Safe GViz Sync)
+
+### Rangkuman Pembaruan v2.7.0:
+1. **Penyambungan Permanen URL Google Apps Script Live:**
+   - Menautkan Web App URL Apps Script resmi (`https://script.google.com/macros/s/AKfycbzGgpibRzZboG9vNrTyxzko5mGkW6LfabNYfBxm2v6c-gO9O_iKLqMocxCZ5GVdiM1l/exec`) secara langsung ke `config.json` dan `GLOBAL_CONFIG` di `index.html`.
+   - Mengeliminasi total kemunculan banner kuning *"Mode Demo Aktif"* dan 8 foto dummy di perangkat lain/HP.
+2. **Katalog 94 Foto Google Drive Aktif di Seluruh Perangkat:**
+   - Seluruh 94 foto pernikahan dari folder Google Drive (`1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxI5`) otomatis tayang secara live di Vercel pada semua HP dan laptop tamu undangan.
+3. **Mekanisme Dual Fail-Safe Google Spreadsheet GViz:**
+   - Jika konfigurasi lokal di perangkat belum ada atau dihapus, sistem secara otomatis membaca row `GAS_API_URL` dan `Pengaturan` dari Google Spreadsheet publik (`133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20`) via GViz tanpa API key, sehingga perangkat apa pun di dunia dijamin langsung terhubung ke backend live.
 
 ### Rangkuman Pembaruan v2.6.0:
 1. **Penyempurnaan Tata Bahasa Unduh Foto:**

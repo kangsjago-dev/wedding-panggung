@@ -1494,14 +1494,14 @@
        ========================================================================== -->
   <script>
     const GLOBAL_CONFIG = {
-      GAS_API_URL: "",
+      GAS_API_URL: "https://script.google.com/macros/s/AKfycbzGgpibRzZboG9vNrTyxzko5mGkW6LfabNYfBxm2v6c-gO9O_iKLqMocxCZ5GVdiM1l/exec",
       EVENT_NAME: "Hans & Yurike",
       EVENT_DATE: "14 November 2026",
       EVENT_VENUE: "Upperhills Convention Centre, Makassar",
       SUBTITLE: "The Wedding Gallery & Precious Memories",
       WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
-      DRIVE_FOLDER_ID: "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxl5",
-      FRAME_IMAGE_URL: "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NE/view",
+      DRIVE_FOLDER_ID: "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxI5",
+      FRAME_IMAGE_URL: "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing",
       SPREADSHEET_ID: "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20",
       SPREADSHEET_URL: "https://docs.google.com/spreadsheets/d/133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20/edit",
       DEFAULT_ADMIN_PIN: "123456",
@@ -1590,7 +1590,7 @@
         })
         .then(function(remoteCfg) {
           if (remoteCfg && typeof remoteCfg === "object") {
-            if (remoteCfg.GAS_API_URL && !state.gasApiUrl) {
+            if (remoteCfg.GAS_API_URL) {
               state.gasApiUrl = remoteCfg.GAS_API_URL;
               const apiUrlInput = document.getElementById("cfgGasApiUrl");
               if (apiUrlInput) apiUrlInput.value = remoteCfg.GAS_API_URL;
@@ -1601,12 +1601,41 @@
         })
         .catch(function() {})
         .finally(function() {
-          // 4. Ambil data galeri & konfigurasi live dari Google Apps Script (membaca spreadsheet 'foto-panggung')
-          fetchGalleryData(false, false);
-          startLiveAutoRefresh();
-          startBadgeExpiryChecker();
+          // 4. Fail-Safe: Jika URL belum terdeteksi, baca baris Pengaturan di Google Spreadsheet publik via GViz
+          syncFromSpreadsheetGViz(function() {
+            // 5. Ambil data galeri & konfigurasi live dari Google Apps Script (membaca spreadsheet & Google Drive)
+            fetchGalleryData(false, false);
+            startLiveAutoRefresh();
+            startBadgeExpiryChecker();
+          });
         });
     });
+
+    function syncFromSpreadsheetGViz(callback) {
+      if (state.gasApiUrl) { callback(); return; }
+      const sid = state.activeConfig.SPREADSHEET_ID || GLOBAL_CONFIG.SPREADSHEET_ID;
+      if (!sid) { callback(); return; }
+      fetch("https://docs.google.com/spreadsheets/d/" + sid + "/gviz/tq?tqx=out:json&sheet=Pengaturan")
+        .then(function(r) { return r.text(); })
+        .then(function(t) {
+          const raw = t.replace(/^\/\*.*?\*\/\s*google\.visualization\.Query\.setResponse\(/, '').replace(/\);?\s*$/, '');
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.table && parsed.table.rows) {
+            parsed.table.rows.forEach(function(row) {
+              const k = row.c && row.c[0] ? String(row.c[0].v || '').trim() : '';
+              const v = row.c && row.c[1] ? String(row.c[1].v || '').trim() : '';
+              if (k === 'GAS_API_URL' && v && v.startsWith('http')) {
+                state.gasApiUrl = v;
+                localStorage.setItem("WEDDING_GAS_API_URL", v);
+                const apiUrlInput = document.getElementById("cfgGasApiUrl");
+                if (apiUrlInput) apiUrlInput.value = v;
+              }
+            });
+          }
+        })
+        .catch(function() {})
+        .finally(callback);
+    }
 
     function startLiveAutoRefresh() {
       if (state.autoRefreshTimer) clearInterval(state.autoRefreshTimer);

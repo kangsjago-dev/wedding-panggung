@@ -198,6 +198,11 @@ const WEDDING_CONFIG = {
   - **Auto-Provisioning 3 Lembar Kerja:** `Pengaturan` (Konfigurasi Acara & Teknis), `Daftar_Foto` (Katalog Foto Wedding & Kategori), dan `Log_Aktivitas` (Audit Trail) langsung disiapkan dan ditata secara rapi dengan header berlatar Champagne Gold.
   - **Fungsi Setup Mandiri Satu Klik (`setupTargetSpreadsheetDatabase`):** Menambahkan fungsi di `setup.gs` yang dapat langsung dijalankan sekali klik dari Editor Google Apps Script untuk inisialisasi instan.
   - **Prinsip Non-Destruktif:** Seluruh komponen visual dan performa galeri panggung 100% dipertahankan.
+- **v2.7.0 (Integrasi Permanen Live Backend GAS, Penayangan 94 Foto Google Drive & Dual Fail-Safe GViz Sync):**
+  - **Koneksi Live Google Apps Script Permanen:** Menyematkan Web App URL Apps Script (`https://script.google.com/macros/s/AKfycbzGgpibRzZboG9vNrTyxzko5mGkW6LfabNYfBxm2v6c-gO9O_iKLqMocxCZ5GVdiM1l/exec`) secara langsung ke `config.json` dan `GLOBAL_CONFIG` di `index.html`.
+  - **Eliminasi Total Mode Demo pada Perangkat Lain:** Menghapus kemunculan banner kuning *"Mode Demo Aktif"* dan 8 foto sampel di seluruh perangkat lain (HP/tablet/laptop).
+  - **Katalog 94 Foto Google Drive Aktif:** Seluruh 94 foto pernikahan dari folder Google Drive (`1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxI5`) otomatis tayang secara live di Vercel pada semua HP dan laptop tamu undangan.
+  - **Dual Fail-Safe GViz Auto-Discovery:** Menambahkan mekanisme fallback otomatis membaca baris `GAS_API_URL` dari Google Spreadsheet publik (`133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20`) via GViz tanpa API key, sehingga perangkat apa pun di dunia dijamin langsung terhubung ke backend live.
 - **v2.6.0 (Penyempurnaan Bahasa Unduh Bingkai, Keamanan Pesan Duplikasi PIN, Perbaikan Total Modal Admin & True Multi-Device Live Sync Vercel):**
   - **Penyempurnaan Tata Bahasa Unduh Foto:** Tombol unduh berbingkai kini berlabel **"✨ Simpan Kenangan Berbingkai"** dan feedback proses *"Menyiapkan Kenangan Berbingkai..."* yang lebih puitis, elegan, dan romantis.
   - **Privasi & Keamanan Duplikasi PIN:** Menghapus kebocoran nama dan PIN pengguna lain saat terjadi duplikasi PIN. Menggunakan bahasa rahasia elegan: *"Kombinasi PIN ini telah terdaftar demi menjaga privasi & keamanan akun. Mohon gunakan kombinasi angka rahasia lainnya yang unik."*
