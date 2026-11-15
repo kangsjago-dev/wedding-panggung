@@ -36,19 +36,19 @@ const WEDDING_CONFIG = {
 };
 
 /**
- * Mengambil konfigurasi aktif (Informasi Pernikahan paten, konfigurasi teknis dinamis)
+ * Mengambil konfigurasi aktif (Informasi Pernikahan dan konfigurasi teknis dinamis)
  */
 function getEffectiveConfig() {
   var props = PropertiesService.getScriptProperties().getProperties() || {};
   
   return {
-    // Informasi Pernikahan: DIKUNCI / PATEN (tidak dapat diubah via web)
-    EVENT_NAME: WEDDING_CONFIG.EVENT_NAME,
-    COUPLE_NAME: WEDDING_CONFIG.EVENT_NAME, // kompatibilitas ke belakang
-    EVENT_DATE: WEDDING_CONFIG.EVENT_DATE,
-    EVENT_VENUE: WEDDING_CONFIG.EVENT_VENUE,
-    SUBTITLE: WEDDING_CONFIG.SUBTITLE,
-    WELCOME_MESSAGE: WEDDING_CONFIG.WELCOME_MESSAGE,
+    // Informasi Pernikahan: Dapat dikustomisasi oleh Admin via Web
+    EVENT_NAME: props.EVENT_NAME || props.COUPLE_NAME || WEDDING_CONFIG.EVENT_NAME,
+    COUPLE_NAME: props.EVENT_NAME || props.COUPLE_NAME || WEDDING_CONFIG.EVENT_NAME,
+    EVENT_DATE: props.EVENT_DATE || WEDDING_CONFIG.EVENT_DATE,
+    EVENT_VENUE: props.EVENT_VENUE || WEDDING_CONFIG.EVENT_VENUE,
+    SUBTITLE: props.SUBTITLE || WEDDING_CONFIG.SUBTITLE,
+    WELCOME_MESSAGE: props.WELCOME_MESSAGE || WEDDING_CONFIG.WELCOME_MESSAGE,
 
     // Konfigurasi Teknis: Dapat dikelola Admin
     DRIVE_FOLDER_ID: props.DRIVE_FOLDER_ID || WEDDING_CONFIG.DRIVE_FOLDER_ID,
@@ -316,6 +316,25 @@ function saveAdminSettings(pin, updatedConfig) {
   try {
     var props = PropertiesService.getScriptProperties();
 
+    // Kustomisasi Informasi Acara & Pernikahan
+    if (updatedConfig.EVENT_NAME !== undefined && String(updatedConfig.EVENT_NAME).trim()) {
+      var cleanEventName = String(updatedConfig.EVENT_NAME).trim();
+      props.setProperty("EVENT_NAME", cleanEventName);
+      props.setProperty("COUPLE_NAME", cleanEventName);
+    } else if (updatedConfig.COUPLE_NAME !== undefined && String(updatedConfig.COUPLE_NAME).trim()) {
+      var cleanCoupleName = String(updatedConfig.COUPLE_NAME).trim();
+      props.setProperty("EVENT_NAME", cleanCoupleName);
+      props.setProperty("COUPLE_NAME", cleanCoupleName);
+    }
+
+    if (updatedConfig.EVENT_DATE !== undefined && String(updatedConfig.EVENT_DATE).trim()) {
+      props.setProperty("EVENT_DATE", String(updatedConfig.EVENT_DATE).trim());
+    }
+
+    if (updatedConfig.EVENT_VENUE !== undefined && String(updatedConfig.EVENT_VENUE).trim()) {
+      props.setProperty("EVENT_VENUE", String(updatedConfig.EVENT_VENUE).trim());
+    }
+
     if (updatedConfig.DRIVE_FOLDER_ID !== undefined) {
       var cleanFolderId = String(updatedConfig.DRIVE_FOLDER_ID).trim();
       var match = cleanFolderId.match(/folders\/([a-zA-Z0-9_\-]+)/);
@@ -343,7 +362,7 @@ function saveAdminSettings(pin, updatedConfig) {
 
     return {
       success: true,
-      message: "Pengaturan teknis dan bingkai berhasil disimpan! (Informasi Pernikahan terlindungi/tidak berubah)",
+      message: "Pengaturan acara, Google Drive, dan bingkai foto berhasil disimpan!",
       galleryData: updatedGallery
     };
 
@@ -397,7 +416,7 @@ function scanFilesInFolder(folder, categoryName, photoList) {
 
     if (allowedTypes[mime] || (mime.indexOf('image/') === 0 && mime !== 'image/svg+xml' && mime !== 'image/gif')) {
       var fileId = file.getId();
-      var dateCreated = file.getDateCreated();
+      var dateCreated = file.getLastUpdated ? (file.getLastUpdated() || file.getDateCreated()) : file.getDateCreated();
 
       var thumbUrl = "https://lh3.googleusercontent.com/d/" + fileId + "=w800";
       var highResUrl = "https://lh3.googleusercontent.com/d/" + fileId + "=w2048";

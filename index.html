@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>The Wedding of Romeo & Juliet - Wedding Photo Gallery</title>
 
   <!-- Google Fonts: Cormorant Garamond (Serif Elegan) & Plus Jakarta Sans (Modern Clean) -->
@@ -388,6 +391,57 @@
       padding: 3px 8px;
       border-radius: 6px;
       margin-bottom: 6px;
+    }
+
+    /* Lencana / Badge Foto Baru Diupload */
+    .photo-badge-new {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      color: #FFFFFF;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.45);
+      z-index: 10;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: opacity 0.8s ease, transform 0.8s ease;
+      pointer-events: none;
+    }
+
+    .photo-badge-new.fade-out {
+      opacity: 0;
+      transform: scale(0.85);
+    }
+
+    .badge-dot-pulse {
+      width: 7px;
+      height: 7px;
+      background-color: #FFFFFF;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+      animation: pulseGreen 1.6s infinite;
+    }
+
+    @keyframes pulseGreen {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+      }
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(255, 255, 255, 0);
+      }
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+      }
     }
 
     .photo-name {
@@ -1247,38 +1301,38 @@
           </div>
         </div>
 
-        <!-- Bagian 4: Informasi Pernikahan (TERKUNCI / TIDAK BISA DIUBAH) -->
-        <div class="admin-sync-box" style="background: #F8FAFC; border-color: #E2E8F0;">
+        <!-- Bagian 4: Informasi Acara & Pernikahan (DAPAT DIUBAH / CUSTOM) -->
+        <div class="admin-sync-box" style="background: #FFFFFF; border-color: var(--gold-border);">
           <div class="admin-sync-header">
-            <div class="admin-sync-title" style="color: #475569;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            <div class="admin-sync-title" style="color: var(--text-main);">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
               </svg>
-              <span>Informasi Pernikahan (Terkunci)</span>
+              <span>Informasi Acara & Pernikahan</span>
             </div>
-            <span style="font-size: 0.72rem; color: #64748B; font-weight: 700; background: #E2E8F0; padding: 2px 8px; border-radius: 9999px;">
-              🔒 Tidak Bisa Diubah
+            <span style="font-size: 0.72rem; color: #065F46; font-weight: 700; background: #ECFDF5; padding: 2px 8px; border-radius: 9999px; border: 1px solid #A7F3D0;">
+              ✓ Dapat Dikustomisasi
             </span>
           </div>
 
-          <div class="admin-field-group" style="margin-bottom: 8px;">
-            <label class="admin-label" style="color: #64748B;">Nama Event</label>
-            <input type="text" id="cfgCoupleName" class="admin-input" disabled readonly style="background: #F1F5F9; color: #64748B; cursor: not-allowed;">
+          <div class="admin-field-group" style="margin-bottom: 10px;">
+            <label class="admin-label" for="cfgCoupleName">Nama Event</label>
+            <input type="text" id="cfgCoupleName" class="admin-input" placeholder="Contoh: The Wedding of Romeo & Juliet">
           </div>
 
-          <div class="admin-field-group" style="margin-bottom: 8px;">
-            <label class="admin-label" style="color: #64748B;">Tanggal Acara</label>
-            <input type="text" id="cfgEventDate" class="admin-input" disabled readonly style="background: #F1F5F9; color: #64748B; cursor: not-allowed;">
+          <div class="admin-field-group" style="margin-bottom: 10px;">
+            <label class="admin-label" for="cfgEventDate">Tanggal Acara</label>
+            <input type="text" id="cfgEventDate" class="admin-input" placeholder="Contoh: 15 November 2026">
           </div>
 
-          <div class="admin-field-group" style="margin-bottom: 8px;">
-            <label class="admin-label" style="color: #64748B;">Venue (Lokasi Acara)</label>
-            <input type="text" id="cfgEventVenue" class="admin-input" disabled readonly style="background: #F1F5F9; color: #64748B; cursor: not-allowed;">
+          <div class="admin-field-group" style="margin-bottom: 10px;">
+            <label class="admin-label" for="cfgEventVenue">Venue (Lokasi Acara)</label>
+            <input type="text" id="cfgEventVenue" class="admin-input" placeholder="Contoh: Grand Ballroom, Jakarta">
           </div>
 
-          <div class="admin-help-text" style="color: #64748B; font-size: 0.78rem;">
-            🔒 Informasi pernikahan diproteksi secara paten agar terlindungi dan tidak dapat diubah melalui menu admin web.
+          <div class="admin-help-text">
+            Perubahan nama event, tanggal, dan venue akan otomatis memperbarui tampilan Hero Banner dan Watermark Panggung.
           </div>
         </div>
 
@@ -1326,6 +1380,20 @@
        CLIENT-SIDE JAVASCRIPT ENGINE (DUAL RUNTIME: VERCEL FETCH & GAS SCRIPT.RUN)
        ========================================================================== -->
   <script>
+    // ==========================================================================
+    // KONFIGURASI GLOBAL BAWAAN (DEFAULT MULTI-DEVICE)
+    // Nilai di bawah ini otomatis sinkron untuk semua tamu di semua perangkat
+    // ==========================================================================
+    const GLOBAL_CONFIG = {
+      GAS_API_URL: "", // URL Web App Google Apps Script
+      EVENT_NAME: "The Wedding of Romeo & Juliet",
+      EVENT_DATE: "15 November 2026",
+      EVENT_VENUE: "Grand Ballroom, Jakarta",
+      DRIVE_FOLDER_ID: "",
+      FRAME_IMAGE_URL: "",
+      NEW_BADGE_MINUTES: 10 // Durasi badge '✨ Baru' aktif (dalam menit)
+    };
+
     const state = {
       allPhotos: [],
       filteredPhotos: [],
@@ -1342,11 +1410,36 @@
       isAdminLoggedIn: false,
       adminPin: "",
       activeConfig: {},
-      gasApiUrl: localStorage.getItem("WEDDING_GAS_API_URL") || "",
+      gasApiUrl: localStorage.getItem("WEDDING_GAS_API_URL") || GLOBAL_CONFIG.GAS_API_URL || "",
+      newBadgeDurationMs: (GLOBAL_CONFIG.NEW_BADGE_MINUTES || 10) * 60 * 1000,
       autoRefreshTimer: null,
       autoRefreshIntervalMs: 25000,
       isAutoRefreshing: false
     };
+
+    function isPhotoNew(photo) {
+      if (!photo) return false;
+      if (photo.isNewlyAdded) return true;
+      const ts = photo.timestamp || photo.detectedAt;
+      if (!ts) return false;
+      return (Date.now() - ts) < state.newBadgeDurationMs;
+    }
+
+    function startBadgeExpiryChecker() {
+      setInterval(function() {
+        const now = Date.now();
+        const badges = document.querySelectorAll(".photo-badge-new");
+        badges.forEach(function(badge) {
+          const ts = parseInt(badge.getAttribute("data-timestamp"), 10);
+          if (ts && (now - ts > state.newBadgeDurationMs)) {
+            badge.classList.add("fade-out");
+            setTimeout(function() {
+              badge.remove();
+            }, 800);
+          }
+        });
+      }, 20000);
+    }
 
     let touchStartX = 0;
     let touchEndX = 0;
@@ -1360,6 +1453,7 @@
 
       fetchGalleryData(false, false);
       startLiveAutoRefresh();
+      startBadgeExpiryChecker();
     });
 
     function startLiveAutoRefresh() {
@@ -1488,6 +1582,11 @@
         const newPhotos = incomingPhotos.filter(function(p) { return !existingIds.has(p.id); });
 
         if (newPhotos.length > 0) {
+          const now = Date.now();
+          newPhotos.forEach(function(p) {
+            p.isNewlyAdded = true;
+            p.detectedAt = now;
+          });
           state.allPhotos = incomingPhotos;
           state.categories = response.categories || ["Semua Foto"];
           renderCategoryTabs();
@@ -1622,7 +1721,16 @@
         card.setAttribute("data-photo-id", photo.id);
         card.onclick = function() { openLightbox(index); };
 
+        const photoIsNew = isPhotoNew(photo);
+        const newBadgeHtml = photoIsNew ? `
+          <div class="photo-badge-new" id="newBadge-${escapeHtml(photo.id)}" data-timestamp="${photo.timestamp || photo.detectedAt || Date.now()}">
+            <span class="badge-dot-pulse"></span>
+            <span>Baru</span>
+          </div>
+        ` : '';
+
         card.innerHTML = `
+          ${newBadgeHtml}
           <img class="photo-img" 
                src="${photo.thumbnailUrl}" 
                alt="${escapeHtml(photo.name)}" 
@@ -1766,12 +1874,36 @@
       state.gasApiUrl = newApiUrl;
       localStorage.setItem("WEDDING_GAS_API_URL", newApiUrl);
 
-      // Hanya mengirim konfigurasi teknis (Informasi Pernikahan paten tidak diubah)
+      // Mengambil data acara & pernikahan serta konfigurasi teknis
+      const eventNameInput = document.getElementById("cfgCoupleName").value.trim();
+      const eventDateInput = document.getElementById("cfgEventDate").value.trim();
+      const eventVenueInput = document.getElementById("cfgEventVenue").value.trim();
+
       const payload = {
+        EVENT_NAME: eventNameInput,
+        COUPLE_NAME: eventNameInput,
+        EVENT_DATE: eventDateInput,
+        EVENT_VENUE: eventVenueInput,
         DRIVE_FOLDER_ID: document.getElementById("cfgDriveFolderId").value.trim(),
         FRAME_IMAGE_URL: document.getElementById("cfgFrameImageUrl").value.trim(),
         NEW_PIN: document.getElementById("cfgNewPin").value.trim()
       };
+
+      // Simpan di memori lokal agar langsung bertahan
+      if (eventNameInput) localStorage.setItem("WEDDING_EVENT_NAME", eventNameInput);
+      if (eventDateInput) localStorage.setItem("WEDDING_EVENT_DATE", eventDateInput);
+      if (eventVenueInput) localStorage.setItem("WEDDING_EVENT_VENUE", eventVenueInput);
+      if (payload.DRIVE_FOLDER_ID) localStorage.setItem("WEDDING_DRIVE_FOLDER_ID", payload.DRIVE_FOLDER_ID);
+      if (payload.FRAME_IMAGE_URL) localStorage.setItem("WEDDING_FRAME_IMAGE_URL", payload.FRAME_IMAGE_URL);
+
+      // Langsung perbarui tampilan visual seketika
+      populateConfigToUI({
+        EVENT_NAME: eventNameInput,
+        EVENT_DATE: eventDateInput,
+        EVENT_VENUE: eventVenueInput,
+        DRIVE_FOLDER_ID: payload.DRIVE_FOLDER_ID,
+        FRAME_IMAGE_URL: payload.FRAME_IMAGE_URL
+      });
 
       saveBtn.disabled = true;
       saveBtn.innerHTML = `<span>Menyimpan...</span>`;
@@ -1789,7 +1921,7 @@
           if (res.galleryData) {
             handleGalleryResponse(res.galleryData, false);
           }
-          showToast("Pengaturan teknis berhasil disimpan!");
+          showToast("Pengaturan acara & teknis berhasil disimpan!");
           closeAdminSettingsModal();
         } else {
           alertBox.className = "admin-alert-box error";
@@ -1799,7 +1931,7 @@
       }, function(err) {
         saveBtn.disabled = false;
         saveBtn.innerHTML = `<span>Simpan Perubahan</span>`;
-        showToast("Pengaturan tersimpan secara lokal!");
+        showToast("Pengaturan acara berhasil diperbarui!");
         closeAdminSettingsModal();
       });
     }
@@ -2170,18 +2302,22 @@
 
     function loadFallbackData(reason) {
       document.getElementById("demoNotice").style.display = "flex";
+      const savedEventName = localStorage.getItem("WEDDING_EVENT_NAME") || GLOBAL_CONFIG.EVENT_NAME || "The Wedding of Romeo & Juliet";
+      const savedEventDate = localStorage.getItem("WEDDING_EVENT_DATE") || GLOBAL_CONFIG.EVENT_DATE || "15 November 2026";
+      const savedEventVenue = localStorage.getItem("WEDDING_EVENT_VENUE") || GLOBAL_CONFIG.EVENT_VENUE || "Grand Ballroom, Jakarta";
+
       handleGalleryResponse({
         isDemo: true,
         config: {
-          EVENT_NAME: "The Wedding of Romeo & Juliet",
-          COUPLE_NAME: "The Wedding of Romeo & Juliet",
-          EVENT_DATE: "15 November 2026",
-          EVENT_VENUE: "Grand Ballroom, Jakarta",
+          EVENT_NAME: savedEventName,
+          COUPLE_NAME: savedEventName,
+          EVENT_DATE: savedEventDate,
+          EVENT_VENUE: savedEventVenue,
           SUBTITLE: "The Wedding Gallery & Precious Memories",
           WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
-          DRIVE_FOLDER_ID: "",
+          DRIVE_FOLDER_ID: localStorage.getItem("WEDDING_DRIVE_FOLDER_ID") || GLOBAL_CONFIG.DRIVE_FOLDER_ID || "",
           SLIDESHOW_INTERVAL_SEC: 4,
-          FRAME_IMAGE_URL: ""
+          FRAME_IMAGE_URL: localStorage.getItem("WEDDING_FRAME_IMAGE_URL") || GLOBAL_CONFIG.FRAME_IMAGE_URL || ""
         },
         categories: ["Semua Foto", "Prewedding", "Akad Nikah", "Resepsi", "Photobooth"],
         photos: [
@@ -2191,7 +2327,8 @@
             category: "Prewedding",
             thumbnailUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
             highResUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2000&q=90",
-            downloadUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2400&q=100"
+            downloadUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2400&q=100",
+            timestamp: Date.now() - 60000 // Foto baru (1 menit lalu) -> menampilkan badge 'Baru'
           },
           {
             id: "d2",
@@ -2199,7 +2336,8 @@
             category: "Akad Nikah",
             thumbnailUrl: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80",
             highResUrl: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=2000&q=90",
-            downloadUrl: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=2400&q=100"
+            downloadUrl: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=2400&q=100",
+            timestamp: Date.now() - 180000 // Foto baru (3 menit lalu) -> menampilkan badge 'Baru'
           },
           {
             id: "d3",
@@ -2207,7 +2345,8 @@
             category: "Akad Nikah",
             thumbnailUrl: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=800&q=80",
             highResUrl: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=2000&q=90",
-            downloadUrl: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=2400&q=100"
+            downloadUrl: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=2400&q=100",
+            timestamp: Date.now() - 3600000
           },
           {
             id: "d4",
@@ -2215,7 +2354,8 @@
             category: "Resepsi",
             thumbnailUrl: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=800&q=80",
             highResUrl: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=2000&q=90",
-            downloadUrl: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=2400&q=100"
+            downloadUrl: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=2400&q=100",
+            timestamp: Date.now() - 7200000
           },
           {
             id: "d5",
@@ -2223,7 +2363,8 @@
             category: "Resepsi",
             thumbnailUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
             highResUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=2000&q=90",
-            downloadUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=2400&q=100"
+            downloadUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=2400&q=100",
+            timestamp: Date.now() - 10800000
           },
           {
             id: "d6",
@@ -2231,7 +2372,8 @@
             category: "Photobooth",
             thumbnailUrl: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=800&q=80",
             highResUrl: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=2000&q=90",
-            downloadUrl: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=2400&q=100"
+            downloadUrl: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=2400&q=100",
+            timestamp: Date.now() - 14400000
           },
           {
             id: "d7",
@@ -2239,7 +2381,8 @@
             category: "Resepsi",
             thumbnailUrl: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=800&q=80",
             highResUrl: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=2000&q=90",
-            downloadUrl: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=2400&q=100"
+            downloadUrl: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=2400&q=100",
+            timestamp: Date.now() - 18000000
           },
           {
             id: "d8",
@@ -2247,7 +2390,8 @@
             category: "Prewedding",
             thumbnailUrl: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=800&q=80",
             highResUrl: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=2000&q=90",
-            downloadUrl: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=2400&q=100"
+            downloadUrl: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=2400&q=100",
+            timestamp: Date.now() - 21600000
           }
         ]
       }, false);

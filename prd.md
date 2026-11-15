@@ -149,16 +149,16 @@ Karena web app ini mengambil sumber langsung dari Google Drive, tidak diperlukan
 <!-- ======================================================================= -->
 
 ### A. Status Arsitektur & Lingkungan Aktif
-- **Versi Sistem:** 1.4.0 (Custom Event, Tanggal, Venue & Proteksi Informasi Pernikahan).
-- **Runtime:** Vercel Global Edge CDN (Frontend) + Google Apps Script REST API (Backend Google Drive).
+- **Versi Sistem:** 1.5.0 (Buka Kunci Informasi Acara, Badge Foto Baru Auto-Expire & Multi-Device Sync).
+- **Runtime:** Vercel Global Edge CDN / GitHub Pages (Frontend) + Google Apps Script REST API (Backend Google Drive).
 - **Daftar Berkas Terpasang:**
   1. `ZettBOT.md`: Sakelar aktivasi lisensi & sistem arsitek ZettBOT.
   2. `prd.md`: Dokumen acuan spesifikasi produk & master context (file ini).
   3. `vercel.json`: Konfigurasi Vercel deployment.
   4. `package.json`: Metadata proyek untuk Vercel.
-  5. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, Drive scanner) v1.4.0.
+  5. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, Drive scanner, persistent config mutation) v1.5.0.
   6. `setup.gs`: Utilitas inisialisasi, pengujian folder drive, dan reset PIN admin.
-  7. `index.html`: Antarmuka galeri foto responsif universal (Vercel fetch & GAS compatible), Hero Header dengan Nama Event, Tanggal, & Venue badge, filter kategori, Lightbox, Slideshow panggung ber-watermark lengkap, Modal Login Admin dengan proteksi Informasi Pernikahan terkunci (`disabled readonly`), Live Auto-Sync timer (25s), auto-cull foto error (`onerror`), dan Browser Canvas Compositor untuk unduh foto dengan bingkai kustom.
+  7. `index.html`: Antarmuka galeri foto responsif universal (Vercel/GitHub Pages fetch & GAS compatible), Hero Header dinamis, badge foto baru ("✨ Baru" berkedip auto-expire 10 menit), filter kategori, Lightbox, Slideshow panggung ber-watermark lengkap, Modal Login Admin dengan Informasi Acara yang dapat diedit bebas (`editable`), Live Auto-Sync timer (25s), auto-cull foto error (`onerror`), Anti-Cache meta tags, dan Browser Canvas Compositor untuk unduh foto dengan bingkai kustom.
 
 ### B. Konfigurasi Sistem Terkini
 ```javascript
@@ -172,21 +172,24 @@ const WEDDING_CONFIG = {
   DEFAULT_ADMIN_PIN: "123456",
   SLIDESHOW_INTERVAL_SEC: 4,
   AUTO_REFRESH_INTERVAL_SEC: 25,
-  FRAME_IMAGE_URL: ""
+  FRAME_IMAGE_URL: "",
+  NEW_BADGE_MINUTES: 10
 };
 ```
 
 ### C. Log Pembaruan Resmi (System Changelog)
-- **v1.4.0 (Custom Event, Tanggal, Venue & Proteksi Informasi Pernikahan):**
-  - Penambahan badge Venue (Lokasi Acara) berdampingan dengan badge Tanggal di Hero Header.
-  - Penambahan Nama Event, Tanggal, dan Venue pada watermark Mode Panggung (Slideshow).
-  - Proteksi Informasi Pernikahan: Field Nama Event, Tanggal, dan Venue di Panel Admin Web dibuat terkunci (`disabled readonly` dengan label `🔒 Tidak Bisa Diubah`), dan `code.gs` `saveAdminSettings()` mengabaikan mutasi field tersebut agar aman dari modifikasi web.
+- **v1.5.0 (Buka Kunci Kustomisasi Acara & Badge Foto Baru Auto-Expire):**
+  - Membuka kunci Informasi Pernikahan: Field Nama Event, Tanggal Acara, dan Venue di Panel Admin web kini dapat diedit bebas oleh Admin dan perubahannya tersimpan persisten ke cloud (`PropertiesService`).
+  - Lencana Foto Baru ("✨ Baru"): Foto yang baru diunggah (< 10 menit atau terdeteksi saat Live Auto-Sync) diberi badge beranimasi elegan di sudut kartu dan otomatis hilang sendiri setelah 10 menit.
+  - Multi-Device Sync & Anti-Cache: Tag `<meta http-equiv="Cache-Control">` ditambahkan agar peramban HP tamu selalu memuat versi live terkini tanpa tertahan cache.
   - Mempertahankan 100% fitur sebelumnya (Vercel deployment, Live Auto-Sync 25d, Custom Frame Compositor, Filter Anti-Corrupt File, Lightbox, Slideshow Panggung).
+- **v1.4.0 (Custom Event, Tanggal, Venue & Proteksi Informasi Pernikahan):**
+  - Penambahan badge Venue berdampingan dengan badge Tanggal di Hero Header.
+  - Penambahan Nama Event, Tanggal, dan Venue pada watermark Mode Panggung (Slideshow).
 - **v1.3.0 (Migrasi Vercel Ready):** 
   - Penambahan file konfigurasi `vercel.json` dan `package.json` untuk deployment Vercel.
   - Refaktor `code.gs` menjadi Headless REST API (CORS-friendly, `doGet` & `doPost` routing).
   - Refaktor `index.html` dengan dual-runtime data fetching (Vercel `fetch()` API + local storage `WEDDING_GAS_API_URL` + GAS `google.script.run`).
-  - Seluruh fitur sebelumnya (Anti-Corrupt File, Live Auto-Sync 25d, Custom Frame Compositor, Lightbox, Slideshow Panggung) dipertahankan 100% utuh.
 - **v1.2.0 (Anti-Corrupt File, Live Auto-Sync & Custom Frame Compositor):** Eliminasi file corrupt, live auto-sync, dan Canvas frame compositor.
 - **v1.1.0 (Menu Admin & Sinkronisasi Drive):** Login admin PIN, modal pengaturan web.
 - **v1.0.0 (Inisialisasi PRD):** Blueprint awal sistem.
