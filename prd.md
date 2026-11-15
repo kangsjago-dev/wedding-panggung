@@ -149,35 +149,42 @@ Karena web app ini mengambil sumber langsung dari Google Drive, tidak diperlukan
 <!-- ======================================================================= -->
 
 ### A. Status Arsitektur & Lingkungan Aktif
-- **Versi Sistem:** 2.3.0 (Dynamic Google Spreadsheet URL Configurator & Event Timeline).
-- **Runtime:** Google Apps Script Web App / Vercel Edge + Google Spreadsheet Database (`JadwalEvent`) + Google Drive Media Source.
+- **Versi Sistem:** 2.2.0 (Dedicated User Google Spreadsheet Database Integration).
+- **Runtime:** Vercel Global Edge CDN / GitHub Pages (Frontend) + Google Spreadsheet Dedicated Database ID `133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20` (Pengaturan, Daftar_Foto, Log_Aktivitas) + Google Apps Script REST API Backend.
 - **Daftar Berkas Terpasang:**
   1. `ZettBOT.md`: Sakelar aktivasi lisensi & sistem arsitek ZettBOT.
   2. `prd.md`: Dokumen acuan spesifikasi produk & master context (file ini).
-  3. `code.gs`: Backend Google Apps Script (`doGet`, Google Drive Scanner, Spreadsheet Event Reader via `getDisplayValues()`, API Admin PIN, `testSpreadsheetApi`, `autoCreateSpreadsheetApi`, `initSpreadsheetSheetApi`, dan persistensi via `PropertiesService`).
-  4. `setup.gs`: Utilitas inisialisasi, pengujian koneksi Drive, dan pengujian database Google Spreadsheet.
-  5. `index.html`: Antarmuka galeri foto responsif bernuansa *Romantic Ivory & Soft Gold*, Seksi Rangkaian Acara (Wedding Events Timeline) dinamis dari Google Spreadsheet, Tab Database Spreadsheet di Panel Admin (Input URL, Tes Koneksi, Buat Otomatis, Buka Sheet), Lightbox layar penuh, dan Mode Slideshow Panggung.
+  3. `config.json`: Berkas konfigurasi live baseline default.
+  4. `vercel.json`: Konfigurasi Vercel deployment.
+  5. `package.json`: Metadata proyek untuk Vercel.
+  6. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, direct Google Spreadsheet photo catalog reader from Sheet `Daftar_Foto` on ID `133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20`, two-way config sync via Sheet `Pengaturan`, setupDemo handler) v2.2.0.
+  7. `setup.gs`: Utilitas inisialisasi, pengujian spreadsheet database, generator setup satu klik spreadsheet pengguna (`setupTargetSpreadsheetDatabase`), dan reset PIN admin.
+  8. `index.html`: Antarmuka galeri foto responsif universal dengan basis Google Spreadsheet target pengguna, pemilih tanggal modern (Date Picker `<input type="date">`) dengan konversi otomatis format bahasa Indonesia, modal admin ringkas dan elegan, input admin 100% unlocked (Nama Event, Tanggal Acara, Venue), Hero Header dinamis, badge foto baru ("✨ Baru" auto-expire 10 menit), filter kategori otomatis dari tabel spreadsheet, Lightbox layar penuh, Slideshow panggung, Live Auto-Sync (20s), auto-cull foto error (`onerror`), Anti-Cache meta tags, dan Canvas Compositor unduh berbingkai.
 
 ### B. Konfigurasi Sistem Terkini
 ```javascript
 const WEDDING_CONFIG = {
-  COUPLE_NAME: "Romeo & Juliet",
-  SUBTITLE: "The Wedding Gallery & Precious Memories",
+  EVENT_NAME: "The Wedding of Romeo & Juliet",
   EVENT_DATE: "15 November 2026",
+  EVENT_VENUE: "Grand Ballroom, Jakarta",
+  SUBTITLE: "The Wedding Gallery & Precious Memories",
   WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
   DRIVE_FOLDER_ID: "",
-  SPREADSHEET_URL: "", // Dinamis diatur dari Panel Admin & tersimpan di PropertiesService
-  DEFAULT_ADMIN_PIN: "1234",
-  SLIDESHOW_INTERVAL_SEC: 4
+  DEFAULT_ADMIN_PIN: "123456",
+  SLIDESHOW_INTERVAL_SEC: 4,
+  AUTO_REFRESH_INTERVAL_SEC: 25,
+  FRAME_IMAGE_URL: "",
+  SPREADSHEET_ID: "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20",
+  NEW_BADGE_MINUTES: 10
 };
 ```
 
 ### C. Log Pembaruan Resmi (System Changelog)
-- **v2.3.0 (Fitur Input URL Spreadsheet di Menu Admin & Jadwal Acara Dinamis):**
-  - **Input URL Spreadsheet di Admin:** Admin dapat memasukkan atau mengganti URL / ID Google Spreadsheet secara bebas langsung dari modal admin tanpa menyentuh kode.
-  - **Pengujian & Auto-Provisioning Spreadsheet:** Tombol *"Tes Koneksi Sheet"* untuk verifikasi instan, tombol *"Buat Spreadsheet Baru Otomatis"* untuk membuat sheet database siap pakai, dan tombol *"Inisialisasi Tab JadwalEvent"*.
-  - **Seksi Rangkaian Acara (Event Timeline):** Menampilkan rundown acara pernikahan secara dinamis dari tab `JadwalEvent` di Google Spreadsheet menggunakan pembacaan aman `getDisplayValues()`.
-  - **Penyimpanan Persisten:** Nilai `SPREADSHEET_URL` tersimpan permanen di `PropertiesService.getScriptProperties()`.
+- **v2.2.0 (Integrasi Penuh Database pada Google Spreadsheet Tertentu Milik Pengguna):**
+  - **Penguncian Spreadsheet ID Tunggal:** Menetapkan ID `133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20` sebagai pusat basis data primer aplikasi galeri panggung.
+  - **Auto-Provisioning 3 Lembar Kerja:** `Pengaturan` (Konfigurasi Acara & Teknis), `Daftar_Foto` (Katalog Foto Wedding & Kategori), dan `Log_Aktivitas` (Audit Trail) langsung disiapkan dan ditata secara rapi dengan header berlatar Champagne Gold.
+  - **Fungsi Setup Mandiri Satu Klik (`setupTargetSpreadsheetDatabase`):** Menambahkan fungsi di `setup.gs` yang dapat langsung dijalankan sekali klik dari Editor Google Apps Script untuk inisialisasi instan.
+  - **Prinsip Non-Destruktif:** Seluruh komponen visual dan performa galeri panggung 100% dipertahankan.
 - **v2.1.0 (Migrasi Penuh ke Google Spreadsheet 'foto-panggung', Live Sync & Date Picker Admin):**
   - **Pelepasan Ketergantungan Google Drive:** Galeri foto tidak lagi membaca folder Google Drive mentah. Seluruh katalog foto, kategori, dan link gambar bersumber langsung dari Sheet **`Daftar_Foto`**.
   - **Live Central Sync:** Web galeri auto-sync live setiap 20 detik langsung dari Google Spreadsheet.
