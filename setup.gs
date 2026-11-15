@@ -120,3 +120,41 @@ function clearCustomSettings() {
   PropertiesService.getScriptProperties().deleteAllProperties();
   Logger.log("✅ SUKSES: Seluruh pengaturan kustom telah dibersihkan.");
 }
+
+/**
+ * 6. Inisialisasi 1 Spreadsheet Google untuk Database & Pengaturan
+ */
+function setupDatabaseSpreadsheetTool() {
+  Logger.log("=== MEMULAI SETUP SPREADSHEET DATABASE ===");
+  var res = setupDatabaseSpreadsheet();
+  if (res.success) {
+    Logger.log("✅ SUKSES MEMBUAT / MENGHUBUNGKAN SPREADSHEET!");
+    Logger.log("ID Spreadsheet: " + res.spreadsheetId);
+    Logger.log("URL Spreadsheet: " + res.spreadsheetUrl);
+    Logger.log("Silakan buka link di atas untuk melihat 3 Sheet: Pengaturan, Daftar_Foto, dan Log_Aktivitas.");
+  } else {
+    Logger.log("❌ Gagal: " + res.message);
+  }
+  return res;
+}
+
+/**
+ * 7. Menguji Koneksi ke Database Spreadsheet
+ */
+function testSpreadsheetDatabaseConnection() {
+  Logger.log("=== PENGUJIAN DATABASE SPREADSHEET ===");
+  var ss = getDatabaseSpreadsheet();
+  if (!ss) {
+    Logger.log("⚠️ Belum ada spreadsheet database terhubung. Menjalankan setup otomatis...");
+    return setupDatabaseSpreadsheetTool();
+  }
+
+  Logger.log("✅ SUKSES TERHUBUNG KE SPREADSHEET: " + ss.getName());
+  Logger.log("URL: " + ss.getUrl());
+  
+  var sheets = ss.getSheets();
+  Logger.log("Daftar Lembar Kerja (Sheets):");
+  for (var i = 0; i < sheets.length; i++) {
+    Logger.log("  " + (i + 1) + ". " + sheets[i].getName() + " (" + sheets[i].getLastRow() + " baris)");
+  }
+}

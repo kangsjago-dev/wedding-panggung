@@ -149,17 +149,17 @@ Karena web app ini mengambil sumber langsung dari Google Drive, tidak diperlukan
 <!-- ======================================================================= -->
 
 ### A. Status Arsitektur & Lingkungan Aktif
-- **Versi Sistem:** 1.7.0 (True Live Cloud Central Multi-Device Synchronization & Unlocked Admin Input).
-- **Runtime:** Vercel Global Edge CDN / GitHub Pages (Frontend) + Central Cloud Database (`api.restful-api.dev`) + Google Apps Script REST API (Backend Google Drive).
+- **Versi Sistem:** 1.8.0 (Integrated Google Spreadsheet Central Database & Live Multi-Device Sync).
+- **Runtime:** Vercel Global Edge CDN / GitHub Pages (Frontend) + Google Spreadsheet Database (Pengaturan, Daftar_Foto, Log_Aktivitas) + Live Central Cloud KV + Google Apps Script REST API.
 - **Daftar Berkas Terpasang:**
   1. `ZettBOT.md`: Sakelar aktivasi lisensi & sistem arsitek ZettBOT.
   2. `prd.md`: Dokumen acuan spesifikasi produk & master context (file ini).
   3. `config.json`: Berkas konfigurasi live baseline default.
   4. `vercel.json`: Konfigurasi Vercel deployment.
   5. `package.json`: Metadata proyek untuk Vercel.
-  6. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, Drive scanner, persistent config mutation) v1.7.0.
-  7. `setup.gs`: Utilitas inisialisasi, pengujian folder drive, dan reset PIN admin.
-  8. `index.html`: Antarmuka galeri foto responsif universal dengan sinkronisasi live terpusat otomatis via Cloud Central KV (`api.restful-api.dev`), input admin 100% unlocked (dapat diketik manual), Hero Header dinamis, badge foto baru ("✨ Baru" auto-expire 10 menit), filter kategori, Lightbox, Slideshow panggung, Live Auto-Sync (20s/25s), auto-cull foto error (`onerror`), Anti-Cache meta tags, dan Canvas Compositor unduh berbingkai.
+  6. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, Drive scanner, integrated Google Spreadsheet Database module, two-way sync) v1.8.0.
+  7. `setup.gs`: Utilitas inisialisasi, pengujian folder drive, database spreadsheet tool, dan reset PIN admin.
+  8. `index.html`: Antarmuka galeri foto responsif universal dengan kartu Database Google Sheets di panel admin (input ID, tombol buka Spreadsheet, tombol buat database otomatis), sinkronisasi live terpusat otomatis via Cloud Central KV (`api.restful-api.dev`), input admin 100% unlocked, Hero Header dinamis, badge foto baru ("✨ Baru" auto-expire 10 menit), filter kategori, Lightbox, Slideshow panggung, Live Auto-Sync (20s/25s), auto-cull foto error (`onerror`), Anti-Cache meta tags, dan Canvas Compositor unduh berbingkai.
 
 ### B. Konfigurasi Sistem Terkini
 ```javascript
@@ -174,17 +174,26 @@ const WEDDING_CONFIG = {
   SLIDESHOW_INTERVAL_SEC: 4,
   AUTO_REFRESH_INTERVAL_SEC: 25,
   FRAME_IMAGE_URL: "",
+  SPREADSHEET_ID: "",
   NEW_BADGE_MINUTES: 10
 };
 ```
 
 ### C. Log Pembaruan Resmi (System Changelog)
+- **v1.8.0 (1 Spreadsheet Google untuk Database & Pengaturan Event Terintegrasi):**
+  - **1 Spreadsheet Google Database (`Wedding Panggung - Database & Pengaturan`):** Dibuatkan 3 lembar kerja (*sheets*) berdesain elegan emas (`#C5A880`) dengan baris header dibekukan dan auto-resize kolom:
+    1. `Pengaturan`: Menyimpan key-value data acara (`EVENT_NAME`, `EVENT_DATE`, `EVENT_VENUE`, `SUBTITLE`, `WELCOME_MESSAGE`, `DRIVE_FOLDER_ID`, `FRAME_IMAGE_URL`, `ADMIN_PIN`, `SLIDESHOW_INTERVAL_SEC`, `NEW_BADGE_MINUTES`, `AUTO_REFRESH_INTERVAL_SEC`).
+    2. `Daftar_Foto`: Menyimpan katalog metadata foto valid hasil pemindaian Google Drive (`ID_Foto`, `Nama_File`, `Kategori`, `URL_Thumbnail`, `URL_Download`, `Ukuran_Bytes`, `Waktu_Upload`, `Status`).
+    3. `Log_Aktivitas`: Mencatat seluruh histori perubahan data dan sinkronisasi sistem (`Timestamp`, `Aksi`, `Detail`, `Pengguna`).
+  - **Sinkronisasi 2 Arah (Two-Way Sync):** Mengubah data event langsung di Google Sheets (di HP/PC) otomatis memperbarui tampilan web live. Mengubah data via Web Admin otomatis memperbarui baris di Google Sheets.
+  - **Integrasi Antarmuka Web Admin:** Ditambahkan kartu *Database Google Sheets* pada Panel Admin lengkap dengan status koneksi, input ID/URL Spreadsheet, tombol pintas *Buka Google Sheets* di tab baru, dan tombol *Buat Database Otomatis*.
+  - **Prinsip Non-Destruktif:** Seluruh fitur sebelumnya (Live Cloud sync, Live Auto-Sync 20-25d, Badge Foto Baru auto-expire 10m, Canvas Frame Compositor, Filter Anti-Corrupt File, Lightbox, Slideshow Panggung) 100% dipertahankan dan beroperasi optimal.
 - **v1.7.0 (True Live Cloud Central Sync & 100% Unlocked Admin Input):**
-  - **Menu Config Diketik Manual (Unlocked):** Seluruh form input di Panel Admin (`cfgCoupleName`, `cfgEventDate`, `cfgEventVenue`, `cfgDriveFolderId`, `cfgFrameImageUrl`, `cfgGasApiUrl`, `cfgNewPin`) 100% dapat diketik manual secara bebas, tidak ada proteksi terkunci (`disabled`/`readonly`).
+  - **Menu Config Diketik Manual (Unlocked):** Seluruh form input di Panel Admin 100% dapat diketik manual secara bebas, tidak ada proteksi terkunci (`disabled`/`readonly`).
   - **Hapus Menu Unduh config.json:** Tombol "Unduh config.json" dan method `exportLiveConfig()` dihapus bersih dari antarmuka modal admin sesuai instruksi.
   - **Sinkronisasi Live Multi-Device (Cloud Central KV):** Konfigurasi tidak lagi disimpan di `localStorage` lokal yang terisolasi per gadget. Semua perubahan yang disimpan Admin langsung di-PUT ke server database cloud terpusat (`LIVE_CLOUD_API_ENDPOINT`).
-  - **Otomatis Sinkron di HP & Semua Device:** Setiap perangkat (mobile, desktop, tablet, TV) yang membuka halaman web secara otomatis mengambil data live dari cloud saat startup dan di-refresh setiap 20 detik, sehingga semua gadget selalu menampilkan nama acara, tanggal, venue, dan galeri yang identik dan seketika terupdate.
-  - **Prinsip Non-Destruktif:** Mempertahankan 100% fitur sebelumnya (Live Auto-Sync 25d, Badge Baru auto-expire 10m, Canvas Frame Compositor, Filter Anti-Corrupt File, Lightbox, Slideshow Panggung).
+  - **Otomatis Sinkron di HP & Semua Device:** Setiap perangkat otomatis mengambil data live dari cloud saat startup dan di-refresh setiap 20 detik.
+  - **Prinsip Non-Destruktif:** Mempertahankan 100% fitur sebelumnya.
 - **v1.6.0 (Unified Live Multi-Device Sync via config.json & Cloud Properties):**
   - Mengatasi masalah perbedaan settingan antar device: Dibuat berkas `config.json` di root repositori server live yang otomatis dimuat oleh semua browser di seluruh perangkat saat halaman dibuka (`cache: no-store`).
   - Menghapus isolasi `localStorage` lokal agar semua perangkat (HP, laptop, tablet, layar panggung) membaca konfigurasi tunggal yang sama persis.

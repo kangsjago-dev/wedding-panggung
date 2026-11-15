@@ -1248,6 +1248,52 @@
           </div>
         </div>
 
+        <!-- Bagian 1.5: Database Google Sheets Terintegrasi -->
+        <div class="admin-sync-box" style="background: #F0FDF4; border-color: #86EFAC;">
+          <div class="admin-sync-header">
+            <div class="admin-sync-title" style="color: #166534;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="3" y1="15" x2="21" y2="15"></line>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+                <line x1="15" y1="3" x2="15" y2="21"></line>
+              </svg>
+              <span>Database Google Sheets</span>
+            </div>
+            <span id="sheetStatusBadge" style="font-size: 0.72rem; color: #166534; font-weight: 700; background: #DCFCE7; padding: 2px 8px; border-radius: 9999px; border: 1px solid #86EFAC;">
+              Belum Terhubung
+            </span>
+          </div>
+
+          <div class="admin-field-group" style="margin-bottom: 8px;">
+            <label class="admin-label" for="cfgSpreadsheetId">ID / Tautan Spreadsheet Google Sheets</label>
+            <input type="text" id="cfgSpreadsheetId" class="admin-input" placeholder="Contoh: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms atau URL Sheets">
+            <div class="admin-help-text">
+              Spreadsheet ini berfungsi sebagai database utama (Sheet <em>Pengaturan</em>, <em>Daftar_Foto</em>, dan <em>Log_Aktivitas</em>). Anda bisa mengedit data acara langsung di Spreadsheet!
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+            <a id="btnOpenSpreadsheet" href="#" target="_blank" class="btn btn-outline" style="flex: 1; min-width: 160px; font-size: 0.82rem; padding: 8px 12px; display: inline-flex; justify-content: center; align-items: center; text-decoration: none; pointer-events: none; opacity: 0.5;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+              <span>Buka Google Sheets</span>
+            </a>
+
+            <button type="button" id="btnAutoSetupDatabase" class="btn btn-gold" style="flex: 1; min-width: 180px; font-size: 0.82rem; padding: 8px 12px;" onclick="handleAutoSetupDatabase()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              <span id="setupDbBtnText">Buat Database Otomatis</span>
+            </button>
+          </div>
+          <div id="dbSetupAlert" class="admin-alert-box" style="margin-top: 8px;"></div>
+        </div>
+
         <!-- Bagian 2: Folder Google Drive Foto -->
         <div class="admin-sync-box">
           <div class="admin-sync-header">
@@ -1395,6 +1441,8 @@
       WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
       DRIVE_FOLDER_ID: "",
       FRAME_IMAGE_URL: "",
+      SPREADSHEET_ID: "",
+      SPREADSHEET_URL: "",
       DEFAULT_ADMIN_PIN: "123456",
       NEW_BADGE_MINUTES: 10
     };
@@ -1511,6 +1559,8 @@
           google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).testAndSyncDriveFolder(payload.pin, payload.folderId);
         } else if (action === "saveAdminSettings") {
           google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).saveAdminSettings(payload.pin, payload.config || payload);
+        } else if (action === "setupDatabase" || action === "setupSpreadsheetDatabase") {
+          google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).setupDatabaseSpreadsheet();
         }
         return;
       }
@@ -1688,6 +1738,42 @@
         apiBadge.innerText = "Mode Pratinjau Lokal";
         apiBadge.style.color = "#F59E0B";
       }
+
+      // Database Google Sheets
+      const sheetInput = document.getElementById("cfgSpreadsheetId");
+      if (sheetInput) sheetInput.value = cfg.SPREADSHEET_ID || "";
+      
+      const sheetBadge = document.getElementById("sheetStatusBadge");
+      const openSheetBtn = document.getElementById("btnOpenSpreadsheet");
+      
+      const ssId = cfg.SPREADSHEET_ID ? String(cfg.SPREADSHEET_ID).trim() : "";
+      if (ssId) {
+        if (sheetBadge) {
+          sheetBadge.innerText = "✓ Terhubung ke Google Sheets";
+          sheetBadge.style.color = "#166534";
+          sheetBadge.style.background = "#DCFCE7";
+          sheetBadge.style.borderColor = "#86EFAC";
+        }
+        if (openSheetBtn) {
+          var cleanId = ssId.match(/\/d\/([a-zA-Z0-9_\-]+)/);
+          cleanId = cleanId ? cleanId[1] : ssId;
+          openSheetBtn.href = cfg.SPREADSHEET_URL || ("https://docs.google.com/spreadsheets/d/" + cleanId + "/edit");
+          openSheetBtn.style.pointerEvents = "auto";
+          openSheetBtn.style.opacity = "1";
+        }
+      } else {
+        if (sheetBadge) {
+          sheetBadge.innerText = "Belum Terhubung";
+          sheetBadge.style.color = "#64748B";
+          sheetBadge.style.background = "#F1F5F9";
+          sheetBadge.style.borderColor = "#CBD5E1";
+        }
+        if (openSheetBtn) {
+          openSheetBtn.href = "#";
+          openSheetBtn.style.pointerEvents = "none";
+          openSheetBtn.style.opacity = "0.5";
+        }
+      }
     }
 
     function renderCategoryTabs() {
@@ -1845,17 +1931,55 @@
     function openAdminSettingsModal() {
       document.getElementById("syncResultAlert").style.display = "none";
       document.getElementById("saveAlertBox").style.display = "none";
+      const dbAlert = document.getElementById("dbSetupAlert");
+      if (dbAlert) dbAlert.style.display = "none";
       document.getElementById("cfgGasApiUrl").value = state.gasApiUrl || "";
       document.getElementById("cfgCoupleName").value = state.activeConfig.EVENT_NAME || state.activeConfig.COUPLE_NAME || "";
       document.getElementById("cfgEventDate").value = state.activeConfig.EVENT_DATE || "";
       document.getElementById("cfgEventVenue").value = state.activeConfig.EVENT_VENUE || "";
       document.getElementById("cfgDriveFolderId").value = state.activeConfig.DRIVE_FOLDER_ID || "";
       document.getElementById("cfgFrameImageUrl").value = state.activeConfig.FRAME_IMAGE_URL || "";
+      document.getElementById("cfgSpreadsheetId").value = state.activeConfig.SPREADSHEET_ID || "";
       document.getElementById("adminSettingsModal").classList.add("active");
     }
 
     function closeAdminSettingsModal() {
       document.getElementById("adminSettingsModal").classList.remove("active");
+    }
+
+    function handleAutoSetupDatabase() {
+      const btn = document.getElementById("btnAutoSetupDatabase");
+      const txt = document.getElementById("setupDbBtnText");
+      const alertBox = document.getElementById("dbSetupAlert");
+
+      btn.disabled = true;
+      txt.innerText = "Menyiapkan Spreadsheet...";
+      alertBox.style.display = "none";
+
+      callBackend("setupDatabase", {}, function(res) {
+        btn.disabled = false;
+        txt.innerText = "Buat Database Otomatis";
+        if (res.success) {
+          alertBox.className = "admin-alert-box success";
+          alertBox.innerHTML = `<strong>Berhasil!</strong> Database Spreadsheet siap.<br><a href="${res.spreadsheetUrl}" target="_blank" style="color: #166534; font-weight: 600; text-decoration: underline;">Buka Spreadsheet Anda</a>`;
+          alertBox.style.display = "block";
+          document.getElementById("cfgSpreadsheetId").value = res.spreadsheetId;
+          state.activeConfig.SPREADSHEET_ID = res.spreadsheetId;
+          state.activeConfig.SPREADSHEET_URL = res.spreadsheetUrl;
+          populateConfigToUI(state.activeConfig);
+          showToast("✓ Database Google Sheets berhasil dibuat!");
+        } else {
+          alertBox.className = "admin-alert-box error";
+          alertBox.innerText = res.message || "Gagal membuat database. Hubungkan URL Google Apps Script terlebih dahulu.";
+          alertBox.style.display = "block";
+        }
+      }, function(err) {
+        btn.disabled = false;
+        txt.innerText = "Buat Database Otomatis";
+        alertBox.className = "admin-alert-box error";
+        alertBox.innerText = "Perhatian: " + (err.message || "Hubungkan URL Apps Script terlebih dahulu.");
+        alertBox.style.display = "block";
+      });
     }
 
     function handleSyncDriveNow() {
@@ -1917,6 +2041,7 @@
       const eventVenueInput = document.getElementById("cfgEventVenue").value.trim();
       const driveFolderInput = document.getElementById("cfgDriveFolderId").value.trim();
       const frameUrlInput = document.getElementById("cfgFrameImageUrl").value.trim();
+      const spreadsheetIdInput = document.getElementById("cfgSpreadsheetId").value.trim();
       const newPinInput = document.getElementById("cfgNewPin").value.trim();
 
       state.gasApiUrl = newApiUrl;
@@ -1928,6 +2053,7 @@
         EVENT_VENUE: eventVenueInput,
         DRIVE_FOLDER_ID: driveFolderInput,
         FRAME_IMAGE_URL: frameUrlInput,
+        SPREADSHEET_ID: spreadsheetIdInput,
         GAS_API_URL: newApiUrl,
         NEW_PIN: newPinInput
       };
@@ -2371,7 +2497,9 @@
           WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
           DRIVE_FOLDER_ID: state.activeConfig.DRIVE_FOLDER_ID || GLOBAL_CONFIG.DRIVE_FOLDER_ID || "",
           SLIDESHOW_INTERVAL_SEC: 4,
-          FRAME_IMAGE_URL: state.activeConfig.FRAME_IMAGE_URL || GLOBAL_CONFIG.FRAME_IMAGE_URL || ""
+          FRAME_IMAGE_URL: state.activeConfig.FRAME_IMAGE_URL || GLOBAL_CONFIG.FRAME_IMAGE_URL || "",
+          SPREADSHEET_ID: state.activeConfig.SPREADSHEET_ID || GLOBAL_CONFIG.SPREADSHEET_ID || "",
+          SPREADSHEET_URL: state.activeConfig.SPREADSHEET_URL || GLOBAL_CONFIG.SPREADSHEET_URL || ""
         },
         categories: ["Semua Foto", "Prewedding", "Akad Nikah", "Resepsi", "Photobooth"],
         photos: [
