@@ -122,13 +122,13 @@ function clearCustomSettings() {
 }
 
 /**
- * 6. Inisialisasi 1 Spreadsheet Google untuk Database & Pengaturan
+ * 6. Inisialisasi Spreadsheet Google 'foto-panggung' untuk Database & Pengaturan
  */
 function setupDatabaseSpreadsheetTool() {
-  Logger.log("=== MEMULAI SETUP SPREADSHEET DATABASE ===");
-  var res = setupDatabaseSpreadsheet();
+  Logger.log("=== MEMULAI SETUP SPREADSHEET DATABASE (foto-panggung) ===");
+  var res = setupDatabaseSpreadsheet("foto-panggung");
   if (res.success) {
-    Logger.log("✅ SUKSES MEMBUAT / MENGHUBUNGKAN SPREADSHEET!");
+    Logger.log("✅ SUKSES MEMBUAT / MENGHUBUNGKAN SPREADSHEET 'foto-panggung'!");
     Logger.log("ID Spreadsheet: " + res.spreadsheetId);
     Logger.log("URL Spreadsheet: " + res.spreadsheetUrl);
     Logger.log("Silakan buka link di atas untuk melihat 3 Sheet: Pengaturan, Daftar_Foto, dan Log_Aktivitas.");
@@ -139,13 +139,13 @@ function setupDatabaseSpreadsheetTool() {
 }
 
 /**
- * 7. Menguji Koneksi ke Database Spreadsheet
+ * 7. Menguji Koneksi ke Database Spreadsheet 'foto-panggung'
  */
 function testSpreadsheetDatabaseConnection() {
-  Logger.log("=== PENGUJIAN DATABASE SPREADSHEET ===");
+  Logger.log("=== PENGUJIAN DATABASE SPREADSHEET (foto-panggung) ===");
   var ss = getDatabaseSpreadsheet();
   if (!ss) {
-    Logger.log("⚠️ Belum ada spreadsheet database terhubung. Menjalankan setup otomatis...");
+    Logger.log("⚠️ File spreadsheet 'foto-panggung' belum terhubung. Menjalankan setup otomatis...");
     return setupDatabaseSpreadsheetTool();
   }
 

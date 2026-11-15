@@ -149,17 +149,17 @@ Karena web app ini mengambil sumber langsung dari Google Drive, tidak diperlukan
 <!-- ======================================================================= -->
 
 ### A. Status Arsitektur & Lingkungan Aktif
-- **Versi Sistem:** 1.8.0 (Integrated Google Spreadsheet Central Database & Live Multi-Device Sync).
-- **Runtime:** Vercel Global Edge CDN / GitHub Pages (Frontend) + Google Spreadsheet Database (Pengaturan, Daftar_Foto, Log_Aktivitas) + Live Central Cloud KV + Google Apps Script REST API.
+- **Versi Sistem:** 1.9.0 (Automatic 'foto-panggung' Spreadsheet Database Binding & Clean Web Admin).
+- **Runtime:** Vercel Global Edge CDN / GitHub Pages (Frontend) + Google Spreadsheet 'foto-panggung' (Pengaturan, Daftar_Foto, Log_Aktivitas) + Live Central Cloud KV + Google Apps Script REST API.
 - **Daftar Berkas Terpasang:**
   1. `ZettBOT.md`: Sakelar aktivasi lisensi & sistem arsitek ZettBOT.
   2. `prd.md`: Dokumen acuan spesifikasi produk & master context (file ini).
   3. `config.json`: Berkas konfigurasi live baseline default.
   4. `vercel.json`: Konfigurasi Vercel deployment.
   5. `package.json`: Metadata proyek untuk Vercel.
-  6. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, Drive scanner, integrated Google Spreadsheet Database module, two-way sync) v1.8.0.
-  7. `setup.gs`: Utilitas inisialisasi, pengujian folder drive, database spreadsheet tool, dan reset PIN admin.
-  8. `index.html`: Antarmuka galeri foto responsif universal dengan kartu Database Google Sheets di panel admin (input ID, tombol buka Spreadsheet, tombol buat database otomatis), sinkronisasi live terpusat otomatis via Cloud Central KV (`api.restful-api.dev`), input admin 100% unlocked, Hero Header dinamis, badge foto baru ("✨ Baru" auto-expire 10 menit), filter kategori, Lightbox, Slideshow panggung, Live Auto-Sync (20s/25s), auto-cull foto error (`onerror`), Anti-Cache meta tags, dan Canvas Compositor unduh berbingkai.
+  6. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, Drive scanner, integrated Google Spreadsheet `foto-panggung` multi-layer detection, two-way sync) v1.9.0.
+  7. `setup.gs`: Utilitas inisialisasi, pengujian folder drive, database spreadsheet `foto-panggung` tool, dan reset PIN admin.
+  8. `index.html`: Antarmuka galeri foto responsif universal dengan modal admin yang bersih (tanpa kartu database sheets yang rumit), sinkronisasi live terpusat otomatis via Cloud Central KV (`api.restful-api.dev`), input admin 100% unlocked (Nama Event, Tanggal, Venue), Hero Header dinamis, badge foto baru ("✨ Baru" auto-expire 10 menit), filter kategori, Lightbox, Slideshow panggung, Live Auto-Sync (20s/25s), auto-cull foto error (`onerror`), Anti-Cache meta tags, dan Canvas Compositor unduh berbingkai.
 
 ### B. Konfigurasi Sistem Terkini
 ```javascript
@@ -180,36 +180,32 @@ const WEDDING_CONFIG = {
 ```
 
 ### C. Log Pembaruan Resmi (System Changelog)
+- **v1.9.0 (Otomatisasi Spreadsheet 'foto-panggung' & Pembersihan Menu Admin Web):**
+  - **Deteksi Cerdas Multi-Layer 'foto-panggung':** Script backend `code.gs` dan `setup.gs` disempurnakan untuk mengenali dan menggunakan berkas spreadsheet bernama **`foto-panggung`** secara otomatis melalui:
+    1. `SpreadsheetApp.getActiveSpreadsheet()` (otomatis jika container-bound).
+    2. `PropertiesService` ID.
+    3. `DriveApp.getFilesByName("foto-panggung")`.
+    4. Query pencarian judul Drive toleran.
+  - **Non-Destruktif:** Inisialisasi sheet `Pengaturan`, `Daftar_Foto`, dan `Log_Aktivitas` tidak akan menimpa data yang telah Anda isi di file `foto-panggung`.
+  - **Pembersihan Antarmuka Admin Web:** Menghapus total blok kartu *Database Google Sheets* (input ID, tombol buka spreadsheet, dan tombol generate database) dari modal admin web, sehingga antarmuka kembali ringkas, bersih, dan elegan tanpa elemen teknis.
+  - **Prinsip Non-Destruktif:** Seluruh fitur sebelumnya (Live Multi-Device Cloud Sync, Live Auto-Sync 20-25s, Badge Foto Baru auto-expire 10m, Canvas Frame Compositor, Filter Anti-File Rusak, Lightbox, Slideshow Panggung) 100% dipertahankan dan beroperasi optimal.
 - **v1.8.0 (1 Spreadsheet Google untuk Database & Pengaturan Event Terintegrasi):**
-  - **1 Spreadsheet Google Database (`Wedding Panggung - Database & Pengaturan`):** Dibuatkan 3 lembar kerja (*sheets*) berdesain elegan emas (`#C5A880`) dengan baris header dibekukan dan auto-resize kolom:
-    1. `Pengaturan`: Menyimpan key-value data acara (`EVENT_NAME`, `EVENT_DATE`, `EVENT_VENUE`, `SUBTITLE`, `WELCOME_MESSAGE`, `DRIVE_FOLDER_ID`, `FRAME_IMAGE_URL`, `ADMIN_PIN`, `SLIDESHOW_INTERVAL_SEC`, `NEW_BADGE_MINUTES`, `AUTO_REFRESH_INTERVAL_SEC`).
-    2. `Daftar_Foto`: Menyimpan katalog metadata foto valid hasil pemindaian Google Drive (`ID_Foto`, `Nama_File`, `Kategori`, `URL_Thumbnail`, `URL_Download`, `Ukuran_Bytes`, `Waktu_Upload`, `Status`).
-    3. `Log_Aktivitas`: Mencatat seluruh histori perubahan data dan sinkronisasi sistem (`Timestamp`, `Aksi`, `Detail`, `Pengguna`).
-  - **Sinkronisasi 2 Arah (Two-Way Sync):** Mengubah data event langsung di Google Sheets (di HP/PC) otomatis memperbarui tampilan web live. Mengubah data via Web Admin otomatis memperbarui baris di Google Sheets.
-  - **Integrasi Antarmuka Web Admin:** Ditambahkan kartu *Database Google Sheets* pada Panel Admin lengkap dengan status koneksi, input ID/URL Spreadsheet, tombol pintas *Buka Google Sheets* di tab baru, dan tombol *Buat Database Otomatis*.
-  - **Prinsip Non-Destruktif:** Seluruh fitur sebelumnya (Live Cloud sync, Live Auto-Sync 20-25d, Badge Foto Baru auto-expire 10m, Canvas Frame Compositor, Filter Anti-Corrupt File, Lightbox, Slideshow Panggung) 100% dipertahankan dan beroperasi optimal.
+  - **1 Spreadsheet Google Database:** Dibuatkan 3 lembar kerja (*Pengaturan*, *Daftar_Foto*, *Log_Aktivitas*).
+  - **Sinkronisasi 2 Arah (Two-Way Sync):** Mengubah data event langsung di Google Sheets otomatis memperbarui tampilan web live.
 - **v1.7.0 (True Live Cloud Central Sync & 100% Unlocked Admin Input):**
-  - **Menu Config Diketik Manual (Unlocked):** Seluruh form input di Panel Admin 100% dapat diketik manual secara bebas, tidak ada proteksi terkunci (`disabled`/`readonly`).
-  - **Hapus Menu Unduh config.json:** Tombol "Unduh config.json" dan method `exportLiveConfig()` dihapus bersih dari antarmuka modal admin sesuai instruksi.
-  - **Sinkronisasi Live Multi-Device (Cloud Central KV):** Konfigurasi tidak lagi disimpan di `localStorage` lokal yang terisolasi per gadget. Semua perubahan yang disimpan Admin langsung di-PUT ke server database cloud terpusat (`LIVE_CLOUD_API_ENDPOINT`).
-  - **Otomatis Sinkron di HP & Semua Device:** Setiap perangkat otomatis mengambil data live dari cloud saat startup dan di-refresh setiap 20 detik.
-  - **Prinsip Non-Destruktif:** Mempertahankan 100% fitur sebelumnya.
+  - **Menu Config Diketik Manual (Unlocked):** Seluruh form input di Panel Admin 100% dapat diketik manual secara bebas.
+  - **Hapus Menu Unduh config.json:** Dihapus bersih dari antarmuka modal admin.
+  - **Sinkronisasi Live Multi-Device (Cloud Central KV):** Menghilangkan isolasi `localStorage`.
 - **v1.6.0 (Unified Live Multi-Device Sync via config.json & Cloud Properties):**
-  - Mengatasi masalah perbedaan settingan antar device: Dibuat berkas `config.json` di root repositori server live yang otomatis dimuat oleh semua browser di seluruh perangkat saat halaman dibuka (`cache: no-store`).
-  - Menghapus isolasi `localStorage` lokal agar semua perangkat (HP, laptop, tablet, layar panggung) membaca konfigurasi tunggal yang sama persis.
-  - Penambahan tombol "Unduh config.json" pada panel admin untuk memudahkan ekspor konfigurasi live ke repositori.
-  - Mempertahankan 100% fitur sebelumnya (Buka kunci admin, Live Auto-Sync 25d, Badge Baru auto-expire 10m, Canvas Frame Compositor, Filter Anti-Corrupt File, Lightbox, Slideshow Panggung).
+  - Konfigurasi live baseline default server.
 - **v1.5.0 (Buka Kunci Kustomisasi Acara & Badge Foto Baru Auto-Expire):**
-  - Membuka kunci Informasi Pernikahan: Field Nama Event, Tanggal Acara, dan Venue di Panel Admin web kini dapat diedit bebas oleh Admin.
-  - Lencana Foto Baru ("✨ Baru"): Foto baru (< 10 menit atau dari Live Auto-Sync) diberi badge beranimasi elegan di sudut kartu dan otomatis hilang setelah 10 menit.
+  - Lencana Foto Baru ("✨ Baru") auto-expire 10 menit.
 - **v1.4.0 (Custom Event, Tanggal, Venue & Proteksi Informasi Pernikahan):**
-  - Penambahan badge Venue berdampingan dengan badge Tanggal di Hero Header.
-  - Penambahan Nama Event, Tanggal, dan Venue pada watermark Mode Panggung (Slideshow).
+  - Penambahan badge Venue di Hero Header dan watermark Slideshow.
 - **v1.3.0 (Migrasi Vercel Ready):** 
-  - Penambahan file konfigurasi `vercel.json` dan `package.json` untuk deployment Vercel.
-  - Refaktor `code.gs` menjadi Headless REST API (CORS-friendly, `doGet` & `doPost` routing).
-  - Refaktor `index.html` dengan dual-runtime data fetching (Vercel `fetch()` API + local storage `WEDDING_GAS_API_URL` + GAS `google.script.run`).
-- **v1.2.0 (Anti-Corrupt File, Live Auto-Sync & Custom Frame Compositor):** Eliminasi file corrupt, live auto-sync, dan Canvas frame compositor.
-- **v1.1.0 (Menu Admin & Sinkronisasi Drive):** Login admin PIN, modal pengaturan web.
+  - Rest API headless dan konfigurasi deploy.
+- **v1.2.0 (Anti-Corrupt File, Live Auto-Sync & Custom Frame Compositor):**
+  - Eliminasi file corrupt, live auto-sync, dan Canvas frame compositor.
+- **v1.1.0 (Menu Admin & Sinkronisasi Drive):** Login admin PIN.
 - **v1.0.0 (Inisialisasi PRD):** Blueprint awal sistem.
 

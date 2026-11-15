@@ -35,31 +35,40 @@ const WEDDING_CONFIG = {
   NEW_BADGE_MINUTES: 10
 };
 
-const SPREADSHEET_DB_NAME = "Wedding Panggung - Database & Pengaturan";
+const SPREADSHEET_DB_NAME = "foto-panggung";
 
 /**
  * ================================================================================
- * MODUL DATABASE GOOGLE SPREADSHEET TERINTEGRASI
+ * MODUL DATABASE GOOGLE SPREADSHEET TERINTEGRASI ('foto-panggung')
  * Mengelola 3 Sheet: Pengaturan, Daftar_Foto, dan Log_Aktivitas
  * ================================================================================
  */
 
 /**
- * 1. Mengambil spreadsheet database aktif
+ * 1. Mengambil spreadsheet database aktif ('foto-panggung')
  */
 function getDatabaseSpreadsheet(optionalCustomId) {
+  // A. Cek apakah script terikat langsung (Container-Bound) ke file Spreadsheet
+  try {
+    var activeSs = SpreadsheetApp.getActiveSpreadsheet();
+    if (activeSs) {
+      return activeSs;
+    }
+  } catch (eActive) {}
+
   var props = PropertiesService.getScriptProperties();
   var ssId = optionalCustomId || props.getProperty("SPREADSHEET_ID") || "";
   
+  // B. Cek berdasarkan ID jika tersimpan
   if (ssId) {
     try {
       return SpreadsheetApp.openById(ssId);
-    } catch (e) {
-      Logger.log("⚠️ Gagal membuka spreadsheet dengan ID: " + ssId + ". " + e.toString());
+    } catch (eId) {
+      Logger.log("⚠️ Gagal membuka spreadsheet dengan ID: " + ssId);
     }
   }
   
-  // Cari di Google Drive berdasarkan nama file
+  // C. Cari di Google Drive berdasarkan nama file 'foto-panggung'
   try {
     var files = DriveApp.getFilesByName(SPREADSHEET_DB_NAME);
     if (files.hasNext()) {
@@ -68,19 +77,29 @@ function getDatabaseSpreadsheet(optionalCustomId) {
       props.setProperty("SPREADSHEET_ID", ss.getId());
       return ss;
     }
-  } catch (err) {}
+  } catch (errDrive) {}
+
+  // D. Pencarian toleran di Google Drive (pencarian judul foto-panggung)
+  try {
+    var searchFiles = DriveApp.searchFiles("title contains '" + SPREADSHEET_DB_NAME + "' and mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false");
+    if (searchFiles.hasNext()) {
+      var matchedFile = searchFiles.next();
+      var matchedSs = SpreadsheetApp.open(matchedFile);
+      props.setProperty("SPREADSHEET_ID", matchedSs.getId());
+      return matchedSs;
+    }
+  } catch (errSearch) {}
   
   return null;
 }
 
 /**
- * 2. Setup Otomatis 1 Google Spreadsheet Database (3 Sheet Berformat Elegan)
+ * 2. Setup Otomatis Google Spreadsheet Database 'foto-panggung' (Non-Destruktif)
  */
 function setupDatabaseSpreadsheet(customName) {
   try {
     var props = PropertiesService.getScriptProperties();
-    var existingSs = getDatabaseSpreadsheet();
-    var ss = existingSs;
+    var ss = getDatabaseSpreadsheet();
 
     if (!ss) {
       var name = customName || SPREADSHEET_DB_NAME;
@@ -97,38 +116,52 @@ function setupDatabaseSpreadsheet(customName) {
       sheetSettings = ss.insertSheet("Pengaturan", 0);
     }
 
-    // Inisialisasi Header & Data Default Pengaturan jika masih kosong
-    if (sheetSettings.getLastRow() < 2) {
-      sheetSettings.clear();
+    if (sheetSettings.getLastRow() < 1) {
       var settingsHeaders = [["Parameter", "Nilai", "Keterangan"]];
       sheetSettings.getRange(1, 1, 1, 3).setValues(settingsHeaders)
         .setBackground("#C5A880")
         .setFontColor("#FFFFFF")
         .setFontWeight("bold")
         .setHorizontalAlignment("center");
-
-      var currentCfg = WEDDING_CONFIG;
-      var settingsData = [
-        ["EVENT_NAME", currentCfg.EVENT_NAME, "Nama Event / Pasangan Pengantin"],
-        ["EVENT_DATE", currentCfg.EVENT_DATE, "Tanggal Pelaksanaan Acara"],
-        ["EVENT_VENUE", currentCfg.EVENT_VENUE, "Venue / Lokasi Gedung Acara"],
-        ["SUBTITLE", currentCfg.SUBTITLE, "Subjudul Galeri Foto"],
-        ["WELCOME_MESSAGE", currentCfg.WELCOME_MESSAGE, "Pesan Sambutan Hangat untuk Tamu"],
-        ["DRIVE_FOLDER_ID", currentCfg.DRIVE_FOLDER_ID || "", "ID / Tautan Folder Google Drive Foto"],
-        ["FRAME_IMAGE_URL", currentCfg.FRAME_IMAGE_URL || "", "Tautan / ID File Bingkai PNG Transparan"],
-        ["ADMIN_PIN", currentCfg.DEFAULT_ADMIN_PIN, "PIN Akses Masuk Panel Admin Web"],
-        ["SLIDESHOW_INTERVAL_SEC", String(currentCfg.SLIDESHOW_INTERVAL_SEC), "Durasi Perpindahan Foto Slideshow (detik)"],
-        ["NEW_BADGE_MINUTES", "10", "Durasi Lencana '✨ Baru' Aktif (menit)"],
-        ["AUTO_REFRESH_INTERVAL_SEC", String(currentCfg.AUTO_REFRESH_INTERVAL_SEC), "Interval Live Auto-Sync Foto (detik)"]
-      ];
-
-      sheetSettings.getRange(2, 1, settingsData.length, 3).setValues(settingsData);
       sheetSettings.setFrozenRows(1);
-      sheetSettings.setColumnWidth(1, 220);
-      sheetSettings.setColumnWidth(2, 380);
-      sheetSettings.setColumnWidth(3, 300);
-      sheetSettings.getRange(1, 1, settingsData.length + 1, 3).setBorder(true, true, true, true, true, true, "#E2E8F0", SpreadsheetApp.BorderStyle.SOLID);
     }
+
+    // Periksa apakah parameter default sudah ada, jika belum tambahkan barisnya (tanpa menimpa yang sudah ada)
+    var currentData = sheetSettings.getDataRange().getValues();
+    var existingKeys = {};
+    for (var r = 1; r < currentData.length; r++) {
+      var k = String(currentData[r][0]).trim();
+      if (k) existingKeys[k] = true;
+    }
+
+    var defaultParams = [
+      ["EVENT_NAME", WEDDING_CONFIG.EVENT_NAME, "Nama Event / Pasangan Pengantin"],
+      ["EVENT_DATE", WEDDING_CONFIG.EVENT_DATE, "Tanggal Pelaksanaan Acara"],
+      ["EVENT_VENUE", WEDDING_CONFIG.EVENT_VENUE, "Venue / Lokasi Gedung Acara"],
+      ["SUBTITLE", WEDDING_CONFIG.SUBTITLE, "Subjudul Galeri Foto"],
+      ["WELCOME_MESSAGE", WEDDING_CONFIG.WELCOME_MESSAGE, "Pesan Sambutan Hangat untuk Tamu"],
+      ["DRIVE_FOLDER_ID", WEDDING_CONFIG.DRIVE_FOLDER_ID || "", "ID / Tautan Folder Google Drive Foto"],
+      ["FRAME_IMAGE_URL", WEDDING_CONFIG.FRAME_IMAGE_URL || "", "Tautan / ID File Bingkai PNG Transparan"],
+      ["ADMIN_PIN", WEDDING_CONFIG.DEFAULT_ADMIN_PIN, "PIN Akses Masuk Panel Admin Web"],
+      ["SLIDESHOW_INTERVAL_SEC", String(WEDDING_CONFIG.SLIDESHOW_INTERVAL_SEC), "Durasi Perpindahan Foto Slideshow (detik)"],
+      ["NEW_BADGE_MINUTES", "10", "Durasi Lencana '✨ Baru' Aktif (menit)"],
+      ["AUTO_REFRESH_INTERVAL_SEC", String(WEDDING_CONFIG.AUTO_REFRESH_INTERVAL_SEC), "Interval Live Auto-Sync Foto (detik)"]
+    ];
+
+    var rowsToAdd = [];
+    for (var p = 0; p < defaultParams.length; p++) {
+      if (!existingKeys[defaultParams[p][0]]) {
+        rowsToAdd.push(defaultParams[p]);
+      }
+    }
+    if (rowsToAdd.length > 0) {
+      var startRow = Math.max(sheetSettings.getLastRow() + 1, 2);
+      sheetSettings.getRange(startRow, 1, rowsToAdd.length, 3).setValues(rowsToAdd);
+    }
+
+    sheetSettings.setColumnWidth(1, 220);
+    sheetSettings.setColumnWidth(2, 380);
+    sheetSettings.setColumnWidth(3, 300);
 
     // 2. Sheet: Daftar_Foto
     var sheetPhotos = ss.getSheetByName("Daftar_Foto");
@@ -172,24 +205,18 @@ function setupDatabaseSpreadsheet(customName) {
       sheetLogs.setColumnWidth(4, 120);
     }
 
-    // Hapus sheet default bawaan (Sheet1) jika ada dan bukan satu-satunya
-    var defaultSheet = ss.getSheetByName("Sheet1") || ss.getSheetByName("Sheet 1");
-    if (defaultSheet && ss.getSheets().length > 1) {
-      try { ss.deleteSheet(defaultSheet); } catch (e) {}
-    }
-
-    logActivityToSheet(ss, "Inisialisasi Database", "Database spreadsheet berhasil disiapkan dan dihubungkan", "Sistem");
+    logActivityToSheet(ss, "Inisialisasi Database", "Database spreadsheet foto-panggung berhasil disiapkan", "Sistem");
 
     return {
       success: true,
-      message: "Database spreadsheet berhasil disiapkan!",
+      message: "Database spreadsheet foto-panggung berhasil disiapkan!",
       spreadsheetId: ssId,
       spreadsheetUrl: ssUrl
     };
   } catch (err) {
     return {
       success: false,
-      message: "Gagal menyiapkan spreadsheet database: " + err.toString()
+      message: "Gagal menyiapkan spreadsheet database foto-panggung: " + err.toString()
     };
   }
 }
