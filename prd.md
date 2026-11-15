@@ -149,16 +149,17 @@ Karena web app ini mengambil sumber langsung dari Google Drive, tidak diperlukan
 <!-- ======================================================================= -->
 
 ### A. Status Arsitektur & Lingkungan Aktif
-- **Versi Sistem:** 1.5.0 (Buka Kunci Informasi Acara, Badge Foto Baru Auto-Expire & Multi-Device Sync).
+- **Versi Sistem:** 1.6.0 (Unified Live Multi-Device Sync via config.json & Cloud PropertiesService).
 - **Runtime:** Vercel Global Edge CDN / GitHub Pages (Frontend) + Google Apps Script REST API (Backend Google Drive).
 - **Daftar Berkas Terpasang:**
   1. `ZettBOT.md`: Sakelar aktivasi lisensi & sistem arsitek ZettBOT.
   2. `prd.md`: Dokumen acuan spesifikasi produk & master context (file ini).
-  3. `vercel.json`: Konfigurasi Vercel deployment.
-  4. `package.json`: Metadata proyek untuk Vercel.
-  5. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, Drive scanner, persistent config mutation) v1.5.0.
-  6. `setup.gs`: Utilitas inisialisasi, pengujian folder drive, dan reset PIN admin.
-  7. `index.html`: Antarmuka galeri foto responsif universal (Vercel/GitHub Pages fetch & GAS compatible), Hero Header dinamis, badge foto baru ("✨ Baru" berkedip auto-expire 10 menit), filter kategori, Lightbox, Slideshow panggung ber-watermark lengkap, Modal Login Admin dengan Informasi Acara yang dapat diedit bebas (`editable`), Live Auto-Sync timer (25s), auto-cull foto error (`onerror`), Anti-Cache meta tags, dan Browser Canvas Compositor untuk unduh foto dengan bingkai kustom.
+  3. `config.json`: Berkas konfigurasi live server terpusat (single source of truth untuk seluruh perangkat di dunia).
+  4. `vercel.json`: Konfigurasi Vercel deployment.
+  5. `package.json`: Metadata proyek untuk Vercel.
+  6. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, Drive scanner, persistent config mutation) v1.6.0.
+  7. `setup.gs`: Utilitas inisialisasi, pengujian folder drive, dan reset PIN admin.
+  8. `index.html`: Antarmuka galeri foto responsif universal dengan sinkronisasi live otomatis dari `config.json` dan cloud Google, Hero Header dinamis, badge foto baru ("✨ Baru" auto-expire 10 menit), filter kategori, Lightbox, Slideshow panggung, Modal Admin dengan export config live, Live Auto-Sync (25s), auto-cull foto error (`onerror`), Anti-Cache meta tags, dan Canvas Compositor unduh berbingkai.
 
 ### B. Konfigurasi Sistem Terkini
 ```javascript
@@ -178,11 +179,14 @@ const WEDDING_CONFIG = {
 ```
 
 ### C. Log Pembaruan Resmi (System Changelog)
+- **v1.6.0 (Unified Live Multi-Device Sync via config.json & Cloud Properties):**
+  - Mengatasi masalah perbedaan settingan antar device: Dibuat berkas `config.json` di root repositori server live yang otomatis dimuat oleh semua browser di seluruh perangkat saat halaman dibuka (`cache: no-store`).
+  - Menghapus isolasi `localStorage` lokal agar semua perangkat (HP, laptop, tablet, layar panggung) membaca konfigurasi tunggal yang sama persis.
+  - Penambahan tombol "Unduh config.json" pada panel admin untuk memudahkan ekspor konfigurasi live ke repositori.
+  - Mempertahankan 100% fitur sebelumnya (Buka kunci admin, Live Auto-Sync 25d, Badge Baru auto-expire 10m, Canvas Frame Compositor, Filter Anti-Corrupt File, Lightbox, Slideshow Panggung).
 - **v1.5.0 (Buka Kunci Kustomisasi Acara & Badge Foto Baru Auto-Expire):**
-  - Membuka kunci Informasi Pernikahan: Field Nama Event, Tanggal Acara, dan Venue di Panel Admin web kini dapat diedit bebas oleh Admin dan perubahannya tersimpan persisten ke cloud (`PropertiesService`).
-  - Lencana Foto Baru ("✨ Baru"): Foto yang baru diunggah (< 10 menit atau terdeteksi saat Live Auto-Sync) diberi badge beranimasi elegan di sudut kartu dan otomatis hilang sendiri setelah 10 menit.
-  - Multi-Device Sync & Anti-Cache: Tag `<meta http-equiv="Cache-Control">` ditambahkan agar peramban HP tamu selalu memuat versi live terkini tanpa tertahan cache.
-  - Mempertahankan 100% fitur sebelumnya (Vercel deployment, Live Auto-Sync 25d, Custom Frame Compositor, Filter Anti-Corrupt File, Lightbox, Slideshow Panggung).
+  - Membuka kunci Informasi Pernikahan: Field Nama Event, Tanggal Acara, dan Venue di Panel Admin web kini dapat diedit bebas oleh Admin.
+  - Lencana Foto Baru ("✨ Baru"): Foto baru (< 10 menit atau dari Live Auto-Sync) diberi badge beranimasi elegan di sudut kartu dan otomatis hilang setelah 10 menit.
 - **v1.4.0 (Custom Event, Tanggal, Venue & Proteksi Informasi Pernikahan):**
   - Penambahan badge Venue berdampingan dengan badge Tanggal di Hero Header.
   - Penambahan Nama Event, Tanggal, dan Venue pada watermark Mode Panggung (Slideshow).

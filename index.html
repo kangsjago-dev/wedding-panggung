@@ -1350,7 +1350,16 @@
         <div id="saveAlertBox" class="admin-alert-box"></div>
       </div>
 
-      <div class="admin-card-footer">
+      <div class="admin-card-footer" style="flex-wrap: wrap; gap: 8px;">
+        <button type="button" class="btn btn-outline" onclick="exportLiveConfig()" title="Unduh berkas config.json live untuk disalin ke repositori">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Unduh config.json</span>
+        </button>
+
         <button type="button" class="btn btn-outline" onclick="handleAdminLogout()" style="color: #EF4444; border-color: #FECACA;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -1441,6 +1450,31 @@
       }, 20000);
     }
 
+    function loadServerConfig(callback) {
+      fetch("./config.json?v=" + Date.now(), { cache: "no-store" })
+        .then(function(res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.json();
+        })
+        .then(function(cfg) {
+          if (cfg) {
+            Object.assign(GLOBAL_CONFIG, cfg);
+            if (cfg.GAS_API_URL && !state.gasApiUrl) {
+              state.gasApiUrl = cfg.GAS_API_URL;
+              const apiUrlInput = document.getElementById("cfgGasApiUrl");
+              if (apiUrlInput) apiUrlInput.value = cfg.GAS_API_URL;
+            }
+            state.activeConfig = Object.assign({}, GLOBAL_CONFIG, state.activeConfig, cfg);
+            populateConfigToUI(state.activeConfig);
+          }
+          if (callback) callback();
+        })
+        .catch(function(err) {
+          console.log("Memuat konfigurasi bawaan:", err.message);
+          if (callback) callback();
+        });
+    }
+
     let touchStartX = 0;
     let touchEndX = 0;
 
@@ -1451,9 +1485,12 @@
       const apiUrlInput = document.getElementById("cfgGasApiUrl");
       if (apiUrlInput) apiUrlInput.value = state.gasApiUrl;
 
-      fetchGalleryData(false, false);
-      startLiveAutoRefresh();
-      startBadgeExpiryChecker();
+      // Muat konfigurasi live terpusat dari server (config.json)
+      loadServerConfig(function() {
+        fetchGalleryData(false, false);
+        startLiveAutoRefresh();
+        startBadgeExpiryChecker();
+      });
     });
 
     function startLiveAutoRefresh() {
@@ -1942,6 +1979,39 @@
       document.getElementById("adminBtn").classList.remove("admin-active");
       closeAdminSettingsModal();
       showToast("Anda telah keluar dari mode admin.");
+    }
+
+    function exportLiveConfig() {
+      const eventName = document.getElementById("cfgCoupleName").value.trim() || GLOBAL_CONFIG.EVENT_NAME;
+      const eventDate = document.getElementById("cfgEventDate").value.trim() || GLOBAL_CONFIG.EVENT_DATE;
+      const eventVenue = document.getElementById("cfgEventVenue").value.trim() || GLOBAL_CONFIG.EVENT_VENUE;
+      const driveFolder = document.getElementById("cfgDriveFolderId").value.trim();
+      const frameUrl = document.getElementById("cfgFrameImageUrl").value.trim();
+      const gasUrl = document.getElementById("cfgGasApiUrl").value.trim();
+
+      const liveCfg = {
+        EVENT_NAME: eventName,
+        EVENT_DATE: eventDate,
+        EVENT_VENUE: eventVenue,
+        SUBTITLE: GLOBAL_CONFIG.SUBTITLE || "The Wedding Gallery & Precious Memories",
+        WELCOME_MESSAGE: GLOBAL_CONFIG.WELCOME_MESSAGE || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
+        DRIVE_FOLDER_ID: driveFolder,
+        FRAME_IMAGE_URL: frameUrl,
+        GAS_API_URL: gasUrl,
+        DEFAULT_ADMIN_PIN: state.adminPin || "123456",
+        SLIDESHOW_INTERVAL_SEC: 4,
+        AUTO_REFRESH_INTERVAL_SEC: 25,
+        NEW_BADGE_MINUTES: 10
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(liveCfg, null, 2));
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "config.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast("✓ config.json berhasil diunduh!");
     }
 
     /* ==========================================================================
