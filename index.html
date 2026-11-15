@@ -1246,6 +1246,18 @@
               Salin URL Web App dari Google Apps Script (setelah Deploy: <em>Execute as: Me</em>, <em>Who has access: Anyone</em>).
             </div>
           </div>
+
+          <div class="admin-field-group" style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #CBD5E1;">
+            <button type="button" id="btnInitDatabase" class="admin-btn admin-btn-secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; padding: 10px;" onclick="handleInitDatabaseDirectly()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              <span id="initDbBtnText">⚡ Buat Tabel & Foto Dummy di Spreadsheet</span>
+            </button>
+            <div class="admin-help-text" style="text-align: center; margin-top: 6px;">
+              Klik tombol di atas untuk membuat Sheet <em>Pengaturan</em>, <em>Daftar_Foto</em> (lengkap 8 foto dummy), dan <em>Log_Aktivitas</em> pada spreadsheet Anda.
+            </div>
+          </div>
         </div>
 
         <!-- Bagian 2: Bingkai Foto Kustom -->
@@ -1977,6 +1989,29 @@
       document.getElementById("adminBtn").classList.remove("admin-active");
       closeAdminSettingsModal();
       showToast("Anda telah keluar dari mode admin.");
+    }
+
+    function handleInitDatabaseDirectly() {
+      const btn = document.getElementById("btnInitDatabase");
+      const btnText = document.getElementById("initDbBtnText");
+
+      if (btn) btn.disabled = true;
+      if (btnText) btnText.innerText = "Menginisialisasi Spreadsheet...";
+
+      callBackend("setupTargetSpreadsheetDatabase", {}, function(res) {
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.innerText = "⚡ Buat Tabel & Foto Dummy di Spreadsheet";
+        if (res.success) {
+          showToast("✓ Sukses! Tabel & 8 foto dummy berhasil dibuat di spreadsheet!");
+          fetchGalleryData(true);
+        } else {
+          showToast("Hasil: " + (res.message || "Tabel berhasil diperbarui"));
+        }
+      }, function(err) {
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.innerText = "⚡ Buat Tabel & Foto Dummy di Spreadsheet";
+        showToast("Info backend: " + err.message);
+      });
     }
 
     /* ==========================================================================

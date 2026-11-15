@@ -200,6 +200,11 @@ function setupDatabaseSpreadsheet(customNameOrId) {
       sheetPhotos.setColumnWidth(8, 100);
     }
 
+    // Isi foto dummy langsung ke sheet Daftar_Foto jika masih kosong
+    if (sheetPhotos.getLastRow() <= 1) {
+      syncPhotosToSheet(ss, getDemoPhotos());
+    }
+
     // 3. Sheet: Log_Aktivitas
     var sheetLogs = ss.getSheetByName("Log_Aktivitas");
     if (!sheetLogs) {
@@ -208,7 +213,7 @@ function setupDatabaseSpreadsheet(customNameOrId) {
     if (sheetLogs.getLastRow() < 1) {
       var logHeaders = [["Timestamp", "Aksi", "Detail", "Pengguna"]];
       sheetLogs.getRange(1, 1, 1, 4).setValues(logHeaders)
-        .setBackground("#C5A880")
+        .setBackground("#64748B")
         .setFontColor("#FFFFFF")
         .setFontWeight("bold")
         .setHorizontalAlignment("center");
@@ -219,20 +224,43 @@ function setupDatabaseSpreadsheet(customNameOrId) {
       sheetLogs.setColumnWidth(4, 120);
     }
 
-    logActivityToSheet(ss, "Inisialisasi Database", "Database spreadsheet foto-panggung berhasil disiapkan", "Sistem");
+    logActivityToSheet(ss, "Inisialisasi Database", "Database spreadsheet pengguna & dummy photos berhasil disiapkan", "Sistem");
+
+    // Hapus Sheet1 kosong bawaan Google Sheets jika ada dan lembar kerja lain sudah ada
+    try {
+      var residualSheet1 = ss.getSheetByName("Sheet1");
+      if (residualSheet1 && ss.getSheets().length > 1) {
+        ss.deleteSheet(residualSheet1);
+      }
+    } catch (eDel) {}
+
+    // Flush semua perubahan ke Google Sheets
+    SpreadsheetApp.flush();
 
     return {
       success: true,
-      message: "Database spreadsheet foto-panggung berhasil disiapkan!",
+      message: "Database spreadsheet pengguna & foto dummy pernikahan berhasil disiapkan 100%!",
       spreadsheetId: ssId,
       spreadsheetUrl: ssUrl
     };
   } catch (err) {
     return {
       success: false,
-      message: "Gagal menyiapkan spreadsheet database foto-panggung: " + err.toString()
+      message: "Gagal menyiapkan spreadsheet database: " + err.toString()
     };
   }
+}
+
+/**
+ * Setup Mandiri Satu Klik (Standalone Handler di code.gs)
+ */
+function setupTargetSpreadsheetDatabase() {
+  return setupDatabaseSpreadsheet("133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20");
+}
+
+function setupDemoSystemWithDummyFiles() {
+  return setupTargetSpreadsheetDatabase();
+}
 }
 
 /**
@@ -441,10 +469,8 @@ function handleApiRequest(e) {
       return testAndSyncDriveFolder(params.pin, params.folderId);
     } else if (action === "saveAdminSettings") {
       return saveAdminSettings(params.pin, params.config || params);
-    } else if (action === "setupDatabase" || action === "setupSpreadsheetDatabase") {
-      return setupDatabaseSpreadsheet(params.name);
-    } else if (action === "setupDemo" || action === "setupDemoSystem") {
-      return setupDemoSystemWithDummyFiles();
+    } else if (action === "setupDatabase" || action === "setupSpreadsheetDatabase" || action === "setupDemo" || action === "setupDemoSystem" || action === "setupTargetSpreadsheetDatabase") {
+      return setupTargetSpreadsheetDatabase();
     } else if (action === "getSpreadsheetInfo") {
       var dbSs = getDatabaseSpreadsheet();
       if (dbSs) {

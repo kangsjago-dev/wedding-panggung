@@ -122,143 +122,276 @@ function clearCustomSettings() {
 }
 
 /**
+ * ================================================================================
+ * 6. SETUP MANDIRI SATU KLIK: INISIALISASI DATABASE & DUMMY DATA LENGKAP
+ * Target Spreadsheet: https://docs.google.com/spreadsheets/d/133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20/edit
  * ID: 133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20
- * URL: https://docs.google.com/spreadsheets/d/133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20/edit
+ * ================================================================================
  */
-function setupDatabaseSpreadsheetTool() {
-  Logger.log("=== MEMULAI SETUP SPREADSHEET DATABASE PENGGUNA ===");
+function setupTargetSpreadsheetDatabase() {
+  Logger.log("=== MEMULAI INISIALISASI DATABASE PADA SPREADSHEET PENGGUNA ===");
   var targetId = "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20";
   
+  // 1. Simpan target ID ke Script Properties
   var props = PropertiesService.getScriptProperties();
   props.setProperty("SPREADSHEET_ID", targetId);
 
-  var res = setupDatabaseSpreadsheet(targetId);
+  // 2. Buka spreadsheet secara langsung berdasarkan ID
   var ss;
   try {
     ss = SpreadsheetApp.openById(targetId);
-  } catch (eOpen) {
-    Logger.log("❌ Gagal membuka spreadsheet dengan ID: " + targetId + " -> " + eOpen.toString());
-    return { success: false, message: "Gagal membuka file spreadsheet. Pastikan izin akses disetel 'Anyone with the link can edit' atau akun memiliki akses." };
+  } catch (errOpen) {
+    Logger.log("❌ GAGAL MEMBUKA SPREADSHEET: " + errOpen.toString());
+    Logger.log("Pastikan akun Google Anda memiliki akses Edit pada file: " + targetId);
+    return {
+      success: false,
+      message: "Gagal membuka spreadsheet. Pastikan izin akses disetel 'Anyone with the link can edit' atau akun memiliki akses: " + errOpen.toString()
+    };
   }
-  return res;
-  // Tulis parameter konfigurasi acara ke Sheet Pengaturan
-  writeConfigToSheet(ss, {
-    EVENT_NAME: WEDDING_CONFIG.EVENT_NAME,
-    EVENT_DATE: WEDDING_CONFIG.EVENT_DATE,
-    EVENT_VENUE: WEDDING_CONFIG.EVENT_VENUE,
-    SUBTITLE: WEDDING_CONFIG.SUBTITLE,
-    WELCOME_MESSAGE: WEDDING_CONFIG.WELCOME_MESSAGE,
-    SLIDESHOW_INTERVAL_SEC: WEDDING_CONFIG.SLIDESHOW_INTERVAL_SEC,
-    AUTO_REFRESH_INTERVAL_SEC: WEDDING_CONFIG.AUTO_REFRESH_INTERVAL_SEC,
-    FRAME_IMAGE_URL: WEDDING_CONFIG.FRAME_IMAGE_URL,
-    ADMIN_PIN: WEDDING_CONFIG.DEFAULT_ADMIN_PIN,
-    SPREADSHEET_ID: targetId
-  });
-  Logger.log("✅ 1. Konfigurasi acara berhasil disimpan ke Sheet 'Pengaturan'.");
 
-  // Isi Sheet Daftar_Foto jika masih kosong
+  Logger.log("✅ Berhasil membuka spreadsheet: " + ss.getName() + " (" + ss.getUrl() + ")");
+
+  // --------------------------------------------------------------------------
+  // A. SHEET 1: Pengaturan
+  // --------------------------------------------------------------------------
+  var sheetSettings = ss.getSheetByName("Pengaturan");
+  if (!sheetSettings) {
+    // Jika ada 'Sheet1' default yang kosong, kita gunakan / ubah namanya jadi 'Pengaturan'
+    var sheet1 = ss.getSheetByName("Sheet1");
+    if (sheet1 && sheet1.getLastRow() <= 1 && sheet1.getLastColumn() <= 1) {
+      sheet1.setName("Pengaturan");
+      sheetSettings = sheet1;
+    } else {
+      sheetSettings = ss.insertSheet("Pengaturan", 0);
+    }
+  }
+
+  // Tulis Header Pengaturan
+  sheetSettings.getRange(1, 1, 1, 3).setValues([["Parameter", "Nilai", "Keterangan"]])
+    .setBackground("#C5A880")
+    .setFontColor("#FFFFFF")
+    .setFontWeight("bold")
+    .setHorizontalAlignment("center");
+  sheetSettings.setFrozenRows(1);
+
+  // Parameter Konfigurasi Master
+  var defaultParams = [
+    ["EVENT_NAME", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.EVENT_NAME) ? WEDDING_CONFIG.EVENT_NAME : "The Wedding of Romeo & Juliet", "Nama Event / Pasangan Pengantin"],
+    ["EVENT_DATE", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.EVENT_DATE) ? WEDDING_CONFIG.EVENT_DATE : "15 November 2026", "Tanggal Pelaksanaan Acara"],
+    ["EVENT_VENUE", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.EVENT_VENUE) ? WEDDING_CONFIG.EVENT_VENUE : "Grand Ballroom, Jakarta", "Venue / Lokasi Gedung Acara"],
+    ["SUBTITLE", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.SUBTITLE) ? WEDDING_CONFIG.SUBTITLE : "The Wedding Gallery & Precious Memories", "Subjudul Galeri Foto"],
+    ["WELCOME_MESSAGE", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.WELCOME_MESSAGE) ? WEDDING_CONFIG.WELCOME_MESSAGE : "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.", "Pesan Sambutan Hangat untuk Tamu"],
+    ["DRIVE_FOLDER_ID", "", "ID / Tautan Folder Google Drive (Opsional / Tidak Wajib)"],
+    ["FRAME_IMAGE_URL", "", "Tautan / ID File Bingkai PNG Transparan Saat Download"],
+    ["ADMIN_PIN", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.DEFAULT_ADMIN_PIN) ? WEDDING_CONFIG.DEFAULT_ADMIN_PIN : "123456", "PIN Akses Masuk Panel Admin Web"],
+    ["SLIDESHOW_INTERVAL_SEC", "4", "Durasi Perpindahan Foto Slideshow (detik)"],
+    ["AUTO_REFRESH_INTERVAL_SEC", "25", "Interval Live Auto-Sync Foto (detik)"],
+    ["NEW_BADGE_MINUTES", "10", "Durasi Lencana '✨ Baru' Aktif (menit)"],
+    ["SPREADSHEET_ID", targetId, "ID File Google Spreadsheet Database Aktif"]
+  ];
+
+  // Bersihkan baris lama jika ada lalu tulis ulang baris pengaturan
+  var lastSettingsRow = sheetSettings.getLastRow();
+  if (lastSettingsRow > 1) {
+    sheetSettings.getRange(2, 1, lastSettingsRow - 1, 3).clearContent();
+  }
+  sheetSettings.getRange(2, 1, defaultParams.length, 3).setValues(defaultParams);
+  sheetSettings.setColumnWidth(1, 240);
+  sheetSettings.setColumnWidth(2, 380);
+  sheetSettings.setColumnWidth(3, 300);
+  Logger.log("✅ Sheet 'Pengaturan' berhasil disiapkan dengan " + defaultParams.length + " parameter.");
+
+  // --------------------------------------------------------------------------
+  // B. SHEET 2: Daftar_Foto (Lengkap dengan Dummy Photos)
+  // --------------------------------------------------------------------------
   var sheetPhotos = ss.getSheetByName("Daftar_Foto");
-  if (sheetPhotos && sheetPhotos.getLastRow() <= 1) {
-    var dummyPhotos = [
-      {
-        id: "demo_pw_1",
-        name: "Prewedding - Tatapan Bahagia",
-        category: "Prewedding",
-        thumbnailUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
-        downloadUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2000&q=90",
-        sizeBytes: 1542000,
-        timestamp: Date.now() - 3600000
-      },
-      {
-        id: "demo_pw_2",
-        name: "Prewedding - Senja Berdua",
-        category: "Prewedding",
-        thumbnailUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
-        downloadUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=2000&q=90",
-        sizeBytes: 1823000,
-        timestamp: Date.now() - 3000000
-      },
-      {
-        id: "demo_an_1",
-        name: "Akad Nikah - Momen Ijab Kabul",
-        category: "Akad Nikah",
-        thumbnailUrl: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80",
-        downloadUrl: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=2000&q=90",
-        sizeBytes: 2150000,
-        timestamp: Date.now() - 2400000
-      },
-      {
-        id: "demo_an_2",
-        name: "Akad Nikah - Pemasangan Cincin",
-        category: "Akad Nikah",
-        thumbnailUrl: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=800&q=80",
-        downloadUrl: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=2000&q=90",
-        sizeBytes: 1980000,
-        timestamp: Date.now() - 1800000
-      },
-      {
-        id: "demo_rs_1",
-        name: "Resepsi - Lempar Bunga Bahagia",
-        category: "Resepsi",
-        thumbnailUrl: "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=800&q=80",
-        downloadUrl: "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=2000&q=90",
-        sizeBytes: 2310000,
-        timestamp: Date.now() - 1200000
-      },
-      {
-        id: "demo_rs_2",
-        name: "Resepsi - Tawa Bersama Sahabat",
-        category: "Resepsi",
-        thumbnailUrl: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=800&q=80",
-        downloadUrl: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=2000&q=90",
-        sizeBytes: 1740000,
-        timestamp: Date.now() - 600000
-      },
-      {
-        id: "demo_pb_1",
-        name: "Photobooth - Pose Lucu Tamu",
-        category: "Photobooth",
-        thumbnailUrl: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=800&q=80",
-        downloadUrl: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=2000&q=90",
-        sizeBytes: 1650000,
-        timestamp: Date.now() - 120000
-      },
-      {
-        id: "demo_pb_2",
-        name: "Photobooth - Momen Hangat Keluarga",
-        category: "Photobooth",
-        thumbnailUrl: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&q=80",
-        downloadUrl: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=2000&q=90",
-        sizeBytes: 1910000,
-        timestamp: Date.now() - 30000
-      }
-    ];
-    syncPhotosToSheet(ss, dummyPhotos);
-    Logger.log("✅ 2. " + dummyPhotos.length + " foto awal berhasil diisi ke Sheet 'Daftar_Foto'.");
+  if (!sheetPhotos) {
+    sheetPhotos = ss.insertSheet("Daftar_Foto", 1);
   }
 
-  logActivityToSheet(ss, "Inisialisasi Database", "Database spreadsheet pengguna (133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20) berhasil disiapkan", "ZettBOT Setup");
+  // Tulis Header Daftar_Foto
+  var photoHeaders = [["ID_Foto", "Nama_Foto", "Kategori", "URL_Foto", "URL_Download", "Ukuran_Bytes", "Waktu_Upload", "Status"]];
+  sheetPhotos.getRange(1, 1, 1, 8).setValues(photoHeaders)
+    .setBackground("#C5A880")
+    .setFontColor("#FFFFFF")
+    .setFontWeight("bold")
+    .setHorizontalAlignment("center");
+  sheetPhotos.setFrozenRows(1);
 
-  Logger.log("\n🎉 SELURUH SISTEM DATABASE BERHASIL DISIAPKAN PADA BERKAS SPREADSHEET!");
-  Logger.log("Spreadsheet URL: " + ss.getUrl());
-  Logger.log("Spreadsheet ID: " + ss.getId());
+  // Koleksi Foto Dummy Pernikahan Berkualitas Tinggi
+  var dummyPhotos = [
+    [
+      "foto_pw_01",
+      "Tatapan Penuh Bahagia",
+      "Prewedding",
+      "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2400&q=100",
+      1542000,
+      Utilities.formatDate(new Date(Date.now() - 3600000), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
+      "Aktif"
+    ],
+    [
+      "foto_pw_02",
+      "Senja Berdua di Tepi Pantai",
+      "Prewedding",
+      "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=2400&q=100",
+      1823000,
+      Utilities.formatDate(new Date(Date.now() - 3000000), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
+      "Aktif"
+    ],
+    [
+      "foto_an_01",
+      "Momen Ijab Kabul Penuh Khidmat",
+      "Akad Nikah",
+      "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=2400&q=100",
+      2150000,
+      Utilities.formatDate(new Date(Date.now() - 2400000), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
+      "Aktif"
+    ],
+    [
+      "foto_an_02",
+      "Pemasangan Cincin Pernikahan",
+      "Akad Nikah",
+      "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=2400&q=100",
+      1980000,
+      Utilities.formatDate(new Date(Date.now() - 1800000), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
+      "Aktif"
+    ],
+    [
+      "foto_rs_01",
+      "Lempar Bunga & Tawa Bahagia",
+      "Resepsi",
+      "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=2400&q=100",
+      2310000,
+      Utilities.formatDate(new Date(Date.now() - 1200000), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
+      "Aktif"
+    ],
+    [
+      "foto_rs_02",
+      "Momen Dansa & Suasana Romantis",
+      "Resepsi",
+      "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=2400&q=100",
+      1740000,
+      Utilities.formatDate(new Date(Date.now() - 600000), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
+      "Aktif"
+    ],
+    [
+      "foto_pb_01",
+      "Pose Ceria Tamu & Sahabat",
+      "Photobooth",
+      "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=2400&q=100",
+      1650000,
+      Utilities.formatDate(new Date(Date.now() - 120000), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
+      "Aktif"
+    ],
+    [
+      "foto_pb_02",
+      "Keluarga Besar & Sahabat Tercinta",
+      "Photobooth",
+      "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=2400&q=100",
+      1910000,
+      Utilities.formatDate(new Date(Date.now() - 30000), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
+      "Aktif"
+    ]
+  ];
+
+  // Bersihkan baris lama jika ada lalu isi foto dummy
+  var lastPhotoRow = sheetPhotos.getLastRow();
+  if (lastPhotoRow > 1) {
+    sheetPhotos.getRange(2, 1, lastPhotoRow - 1, 8).clearContent();
+  }
+  sheetPhotos.getRange(2, 1, dummyPhotos.length, 8).setValues(dummyPhotos);
+  sheetPhotos.setColumnWidth(1, 130);
+  sheetPhotos.setColumnWidth(2, 240);
+  sheetPhotos.setColumnWidth(3, 140);
+  sheetPhotos.setColumnWidth(4, 280);
+  sheetPhotos.setColumnWidth(5, 280);
+  sheetPhotos.setColumnWidth(6, 120);
+  sheetPhotos.setColumnWidth(7, 180);
+  sheetPhotos.setColumnWidth(8, 100);
+  Logger.log("✅ Sheet 'Daftar_Foto' berhasil diisi dengan " + dummyPhotos.length + " foto pernikahan demo.");
+
+  // --------------------------------------------------------------------------
+  // C. SHEET 3: Log_Aktivitas
+  // --------------------------------------------------------------------------
+  var sheetLogs = ss.getSheetByName("Log_Aktivitas");
+  if (!sheetLogs) {
+    sheetLogs = ss.insertSheet("Log_Aktivitas", 2);
+  }
+  var logHeaders = [["Timestamp", "Aksi", "Detail", "Pengguna"]];
+  sheetLogs.getRange(1, 1, 1, 4).setValues(logHeaders)
+    .setBackground("#64748B")
+    .setFontColor("#FFFFFF")
+    .setFontWeight("bold")
+    .setHorizontalAlignment("center");
+  sheetLogs.setFrozenRows(1);
+
+  var nowStr = Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd HH:mm:ss");
+  sheetLogs.appendRow([nowStr, "Inisialisasi Database", "Database spreadsheet pengguna & foto dummy berhasil dibuat lengkap", "ZettBOT Setup"]);
+  sheetLogs.setColumnWidth(1, 200);
+  sheetLogs.setColumnWidth(2, 180);
+  sheetLogs.setColumnWidth(3, 350);
+  sheetLogs.setColumnWidth(4, 140);
+
+  // --------------------------------------------------------------------------
+  // D. Hapus 'Sheet1' kosong bawaan jika masih ada dan tersisa sheet lain
+  // --------------------------------------------------------------------------
+  try {
+    var residualSheet1 = ss.getSheetByName("Sheet1");
+    if (residualSheet1 && ss.getSheets().length > 1) {
+      ss.deleteSheet(residualSheet1);
+      Logger.log("ℹ️ Lembar kerja kosong bawaan 'Sheet1' berhasil dibersihkan.");
+    }
+  } catch (eDel) {}
+
+  // --------------------------------------------------------------------------
+  // E. FLUSH SEMUA PERUBAHAN KE SERVER GOOGLE SPREADSHEETS
+  // --------------------------------------------------------------------------
+  SpreadsheetApp.flush();
+  Logger.log("🎉 SUKSES BESAR! Seluruh data & tabel berhasil di-flush ke Google Sheets.");
+  Logger.log("Buka Spreadsheet Anda: " + ss.getUrl());
 
   return {
     success: true,
-    message: "Seluruh database berhasil disiapkan pada spreadsheet target pengguna!",
+    message: "Database & foto dummy berhasil dibuat 100% lengkap pada spreadsheet Anda!",
     spreadsheetUrl: ss.getUrl(),
-    spreadsheetId: ss.getId()
+    spreadsheetId: ss.getId(),
+    totalPhotos: dummyPhotos.length
   };
 }
 
 /**
- * 7. Menguji Koneksi ke Database Spreadsheet 'foto-panggung'
+ * 7. Alias: setupDemoSystemWithDummyFiles
+ */
+function setupDemoSystemWithDummyFiles() {
+  return setupTargetSpreadsheetDatabase();
+}
+
+/**
+ * 8. Alias: setupDatabaseSpreadsheetTool
+ */
+function setupDatabaseSpreadsheetTool() {
+  return setupTargetSpreadsheetDatabase();
+}
+
+/**
+ * 9. Menguji Koneksi ke Database Spreadsheet
  */
 function testSpreadsheetDatabaseConnection() {
-  Logger.log("=== PENGUJIAN DATABASE SPREADSHEET (foto-panggung) ===");
-  var ss = getDatabaseSpreadsheet();
-  if (!ss) {
-    Logger.log("⚠️ File spreadsheet 'foto-panggung' belum terhubung. Menjalankan setup otomatis...");
+  Logger.log("=== PENGUJIAN DATABASE SPREADSHEET ===");
+  var targetId = "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20";
+  var ss;
+  try {
+    ss = SpreadsheetApp.openById(targetId);
+  } catch (e) {
+    Logger.log("❌ Gagal membuka spreadsheet: " + e.toString());
     return setupTargetSpreadsheetDatabase();
   }
 
@@ -270,11 +403,4 @@ function testSpreadsheetDatabaseConnection() {
   for (var i = 0; i < sheets.length; i++) {
     Logger.log("  " + (i + 1) + ". " + sheets[i].getName() + " (" + sheets[i].getLastRow() + " baris)");
   }
-}
-
-/**
- * 8. Setup Lengkap Sistem Demo Berbasis Spreadsheet 'foto-panggung' (Tanpa Ketergantungan Google Drive)
- */
-function setupDemoSystemWithDummyFiles() {
-  Logger.log("=== MEMULAI SETUP DEMO SISTEM & DUMMY FILES (SPREADSHEET MURNI) ===");
 }
