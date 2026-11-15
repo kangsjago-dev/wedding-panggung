@@ -2,9 +2,28 @@
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.7.0)
+STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.8.0)
 TANGGAL PENGAJUAN: 16 November 2026
-VERIFIKASI SISTEM: BERHASIL (94 Foto Live Google Drive Terhubung & Dual Fail-Safe GViz Sync)
+VERIFIKASI SISTEM: BERHASIL (94 Foto Live Google Drive, Full HD Frame Composite, Clean Mobile Grid)
+
+### Rangkuman Pembaruan v2.8.0:
+1. **Perbaikan Hasil Unduh Foto Berbingkai (Full Resolution Canvas 1920x1080):**
+   - Memperbaiki bug ukuran kanvas unduhan yang sebelumnya terpotong menjadi strip sempit (353x1024).
+   - Menetapkan secara eksplisit `canvas.width = fw` dan `canvas.height = fh` pada resolusi asli bingkai (`1920 x 1080`).
+   - Penempatan foto di dalam kanvas bingkai kini 100% presisi dan proporsional (mengisi penuh jendela transparan tanpa pemotongan/cropping pada subjek dan tamu undangan).
+2. **Tampilan Galeri Mobile Bersih Tanpa Teks Menutupi Foto:**
+   - Menghilangkan tulisan overlay (badge kategori `"SEMUA FOTO"` dan teks nama file) pada perangkat mobile (`@media (max-width: 768px)` dan `@media (hover: none)`).
+   - Wajah pengantin, keluarga, dan para tamu pada tampilan grid smartphone kini terlihat jernih, utuh, dan elegan tanpa tertutup label teks.
+3. **Penghapusan Tulisan Default 123456 pada Input Password/PIN Login:**
+   - Menghapus tulisan `(Default: 123456)` dari placeholder form login admin.
+   - Placeholder kini tampil bersih dan profesional: `"Masukkan PIN Rahasia"`.
+   - Menghilangkan referensi angka default pada pesan galat login fallback.
+4. **Pengecekan Fungsi Menyeluruh:**
+   - Sinkronisasi 94 foto dari Google Drive: Aktif.
+   - Slideshow Mode Panggung: Berjalan normal.
+   - Unduh foto berbingkai perangkat: Berjalan normal.
+   - Manajemen Multi-User Admin & PIN: Berjalan normal.
+   - Dual Fail-Safe GViz Auto-Discovery: Berjalan normal.
 
 ### Rangkuman Pembaruan v2.7.0:
 1. **Penyambungan Permanen URL Google Apps Script Live:**

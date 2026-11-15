@@ -416,10 +416,10 @@
       opacity: 1;
     }
 
-    @media (hover: none) {
+    /* Pada perangkat sentuh / mobile: sembunyikan overlay & badge di depan foto agar foto bersih & wajah tidak tertutup */
+    @media (hover: none), (max-width: 768px) {
       .photo-overlay {
-        opacity: 1;
-        background: linear-gradient(to top, rgba(15, 23, 42, 0.65) 0%, rgba(15, 23, 42, 0) 50%);
+        display: none !important;
       }
     }
 
@@ -1294,7 +1294,7 @@
 
           <div class="admin-field-group">
             <label class="admin-label" for="adminPinInput">PIN Rahasia Admin</label>
-            <input type="password" id="adminPinInput" class="admin-input" placeholder="Masukkan PIN (Default: 123456)" required autocomplete="current-password">
+            <input type="password" id="adminPinInput" class="admin-input" placeholder="Masukkan PIN Rahasia" required autocomplete="current-password">
           </div>
 
           <div id="loginAlertBox" class="admin-alert-box error"></div>
@@ -1684,7 +1684,7 @@
               user: { id: "usr_superadmin", name: "Super Admin", role: "Super Admin" }
             });
           } else {
-            onError({ message: "PIN salah. Gunakan default: 123456" });
+            onError({ message: "PIN yang Anda masukkan salah. Silakan coba lagi." });
           }
         } else if (action === "getAdminUsers") {
           onSuccess({
@@ -2630,23 +2630,28 @@
 
             // Canvas akhir berukuran resolusi tinggi mengikuti dimensi asli bingkai
             const canvas = document.createElement("canvas");
-            const w = photoImg.naturalWidth || 1920;
+            canvas.width = fw;
             canvas.height = fh;
             const ctx = canvas.getContext("2d");
 
-            // 1. Gambar foto asli di lapisan dasar
+            // 1. Gambar latar belakang putih bersih
             ctx.fillStyle = "#FFFFFF";
             ctx.fillRect(0, 0, fw, fh);
 
-            // 2. Gambar bingkai PNG transparan tepat di atas foto
-            // Tanpa terpotong (100% foto terlihat utuh dari sudut ke sudut)
-            const pw = photoImg.naturalWidth || 1920;
-            const ph = photoImg.naturalHeight || 1080;
+            // 2. Gambar foto asli di lapisan dasar
+            const pw = photoImg.naturalWidth || photoImg.width || 1920;
+            const ph = photoImg.naturalHeight || photoImg.height || 1080;
             const photoAspect = pw / ph;
             const cutoutAspect = cutoutW / cutoutH;
 
-            // 3. Ekspor ke Blob kualitas tinggi dan simpan langsung ke file sistem perangkat
-            if (photoAspect > cutoutAspect) {
+            let drawX = 0, drawY = 0, drawW = cutoutW, drawH = cutoutH;
+            if (Math.abs(photoAspect - cutoutAspect) < 0.05) {
+              // Aspek rasio sama (misal sama-sama 16:9) -> isi penuh jendela transparan
+              drawX = cutoutX;
+              drawY = cutoutY;
+              drawW = cutoutW;
+              drawH = cutoutH;
+            } else if (photoAspect > cutoutAspect) {
               // Foto lebih lebar dibanding jendela bingkai -> kunci lebar jendela, pusatkan vertikal
               drawW = cutoutW;
               drawH = cutoutW / photoAspect;
