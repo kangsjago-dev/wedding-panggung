@@ -2,9 +2,26 @@
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.5.0)
+STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.6.0)
 TANGGAL PENGAJUAN: 16 November 2026
-VERIFIKASI SISTEM: BERHASIL (Node.js Syntax Check Passed & Clean Zero FOUC)
+VERIFIKASI SISTEM: BERHASIL (Node.js Syntax Check Passed & Live Cloud Sync Ready)
+
+### Rangkuman Pembaruan v2.6.0:
+1. **Penyempurnaan Tata Bahasa Unduh Foto:**
+   - Label tombol diubah dari "Unduh Foto + Bingkai" menjadi **"✨ Simpan Kenangan Berbingkai"** dan "Simpan Foto Asli".
+   - Feedback proses diubah menjadi *"Menyiapkan Kenangan Berbingkai..."* dan notifikasi sukses *"✓ Kenangan berbingkai berhasil tersimpan ke perangkat!"*.
+2. **Keamanan & Privasi Validasi PIN Unik (Bahasa Menarik & Rahasia):**
+   - Menghilangkan pembocoran nama pengguna dan nomor PIN lama pada notifikasi duplikasi.
+   - Pesan baru: *"Kombinasi PIN ini telah terdaftar demi menjaga privasi & keamanan akun. Mohon gunakan kombinasi angka rahasia lainnya yang unik."*
+   - Pada daftar admin aktif, status PIN ditampilkan elegan: *"Akses: Terproteksi PIN Unik • Peran: Admin"*.
+3. **Perbaikan Tampilan Antarmuka Modal Admin (Anti-Bocor / Anti-Stretch):**
+   - Memperbaiki penutupan tag HTML yang rusak pada form acara dan media di dalam modal admin.
+   - Memperbaiki label field Nama Event (yang sebelumnya keliru tertulis URL Apps Script).
+   - Menambahkan `box-sizing: border-box; max-width: 100%;` pada seluruh input & textarea, memastikan seluruh elemen form terkurung rapi di dalam card modal tanpa melebar ke luar layar.
+4. **Sinkronisasi Multi-Device Live di Vercel (Bukan Sekadar Lokal):**
+   - `index.html` kini otomatis memuat `config.json?v=` + timestamp saat startup, menyamakan URL Google Apps Script dan konfigurasi acara di seluruh perangkat pengunjung Vercel.
+   - Baseline konfigurasi langsung disinkronkan ke: **"Hans & Yurike"**, **"14 November 2026"**, **"Upperhills Convention Centre, Makassar"**, folder Google Drive, dan URL bingkai aktif.
+   - Polling live auto-refresh 20 detik langsung membaca perubahan data Google Apps Script & Google Spreadsheet di semua perangkat secara real-time.
 ================================================================================
 
 ### 1. Diagnosa & Rincian Masalah

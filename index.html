@@ -801,8 +801,9 @@
 
     .admin-card {
       background: #FFFFFF;
-      width: 100%;
-      max-width: 540px;
+      width: 94%;
+      max-width: 520px;
+      box-sizing: border-box;
       border-radius: 20px;
       box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
       border: 1px solid var(--gold-border);
@@ -837,9 +838,11 @@
     }
 
     .admin-card-body {
-      padding: 24px;
+      padding: 20px 24px;
       overflow-y: auto;
+      overflow-x: hidden;
       flex: 1;
+      box-sizing: border-box;
     }
 
     .admin-field-group {
@@ -856,6 +859,8 @@
 
     .admin-input {
       width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
       padding: 11px 14px;
       border-radius: 10px;
       border: 1px solid #CBD5E1;
@@ -1078,7 +1083,7 @@
     </div>
 
     <!-- Nama Event Acara Pernikahan -->
-    <h1 id="coupleName" class="hero-title">The Wedding of Romeo & Juliet</h1>
+    <h1 id="coupleName" class="hero-title">Hans & Yurike</h1>
     <div id="subtitle" class="hero-subtitle">The Wedding Gallery & Precious Memories</div>
 
     <!-- Badge Tanggal dan Venue (Lokasi Acara) -->
@@ -1090,7 +1095,7 @@
           <line x1="8" y1="2" x2="8" y2="6"></line>
           <line x1="3" y1="10" x2="21" y2="10"></line>
         </svg>
-        <span id="eventDate">15 November 2026</span>
+        <span id="eventDate">14 November 2026</span>
       </div>
 
       <div class="hero-date-badge">
@@ -1098,7 +1103,7 @@
           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
           <circle cx="12" cy="10" r="3"></circle>
         </svg>
-        <span id="eventVenue">Grand Ballroom, Jakarta</span>
+        <span id="eventVenue">Upperhills Convention Centre, Makassar</span>
       </div>
     </div>
 
@@ -1204,7 +1209,7 @@
           <polyline points="7 10 12 15 17 10"></polyline>
           <line x1="12" y1="15" x2="12" y2="3"></line>
         </svg>
-        <span id="downloadBtnLabel">Unduh Foto Asli</span>
+        <span id="downloadBtnLabel">Simpan Foto Asli</span>
       </button>
 
       <button class="btn btn-outline" onclick="startSlideshowFromCurrent()">
@@ -1221,8 +1226,8 @@
     <div class="slideshow-progress-bar" id="slideshowProgress"></div>
 
     <div class="slideshow-watermark">
-      <h2 id="slideshowCouple">The Wedding of Romeo & Juliet</h2>
-      <p id="slideshowCategory">13 November 2026 • Grand Ballroom, Jakarta</p>
+      <h2 id="slideshowCouple">Hans & Yurike</h2>
+      <p id="slideshowCategory">14 November 2026 • Upperhills Convention Centre, Makassar</p>
     </div>
 
     <div class="slideshow-stage">
@@ -1349,28 +1354,32 @@
         <!-- Tab 1: Acara & Pernikahan -->
         <div class="admin-tab-pane active" id="tabPane-event">
           <div class="admin-field-group">
-            <label class="admin-label" for="cfgGasApiUrl">URL Web App Google Apps Script</label>
-            <input type="text" id="cfgCoupleName" class="admin-input" placeholder="Contoh: The Wedding of Romeo & Juliet">
+            <label class="admin-label" for="cfgCoupleName">Nama Event / Pasangan Pengantin</label>
+            <input type="text" id="cfgCoupleName" class="admin-input" placeholder="Contoh: Hans & Yurike">
           </div>
 
+          <div class="admin-field-group">
             <label class="admin-label" for="cfgEventDate">Tanggal Acara (Klik untuk Buka Kalender)</label>
             <input type="date" id="cfgEventDate" class="admin-input" onclick="try{this.showPicker()}catch(e){}" onfocus="try{this.showPicker()}catch(e){}" style="cursor: pointer;">
           </div>
 
+          <div class="admin-field-group">
             <label class="admin-label" for="cfgEventVenue">Venue (Lokasi Acara)</label>
-            <input type="text" id="cfgEventVenue" class="admin-input" placeholder="Contoh: Grand Ballroom, Jakarta">
+            <input type="text" id="cfgEventVenue" class="admin-input" placeholder="Contoh: Upperhills Convention Centre, Makassar">
           </div>
 
+          <div class="admin-field-group">
             <label class="admin-label" for="cfgSubtitle">Subjudul Galeri</label>
             <input type="text" id="cfgSubtitle" class="admin-input" placeholder="Contoh: The Wedding Gallery & Precious Memories">
           </div>
 
+          <div class="admin-field-group">
             <label class="admin-label" for="cfgWelcomeMessage">Pesan Sambutan Tamu</label>
-            <textarea id="cfgWelcomeMessage" class="admin-input" rows="2" style="resize: vertical; font-family: inherit; font-size: 0.88rem;" placeholder="Pesan sambutan hangat untuk tamu undangan..."></textarea>
+            <textarea id="cfgWelcomeMessage" class="admin-input" rows="3" style="resize: vertical; font-family: inherit; font-size: 0.88rem; box-sizing: border-box; width: 100%;" placeholder="Pesan sambutan hangat untuk tamu undangan..."></textarea>
           </div>
         </div>
 
-          <div class="admin-help-text">
+        <!-- Tab 2: Foto & Bingkai -->
         <div class="admin-tab-pane" id="tabPane-media">
           <div class="admin-field-group">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
@@ -1385,19 +1394,20 @@
               </svg>
               <span id="syncDriveBtnText">🔄 Sinkronkan Foto Google Drive ke Galeri</span>
             </button>
+            <div class="admin-help-text">Unggah foto ke Google Drive Anda. Pastikan setelan izin folder: <em>"Anyone with the link can view"</em>.</div>
           </div>
-        </div>
-        <!-- Bagian 4: Manajemen Pengguna Admin (Multi-User dengan PIN Unik) -->
+
+          <div class="admin-field-group" style="margin-top: 14px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
               <label class="admin-label" for="cfgFrameImageUrl" style="margin-bottom: 0;">Bingkai PNG Transparan Saat Download</label>
               <span id="frameStatusBadge" style="font-size: 0.75rem; font-weight: 600;"></span>
             </div>
-            <span style="font-size: 0.72rem; color: #1E40AF; font-weight: 700; background: #EFF6FF; padding: 2px 8px; border-radius: 9999px; border: 1px solid #BFDBFE;">
-            <div class="admin-help-text">Unggah file bingkai PNG transparan ke Google Drive dengan izin <em>"Anyone with the link can view"</em>.</div>
+            <input type="text" id="cfgFrameImageUrl" class="admin-input" placeholder="Tautan / ID File Bingkai PNG Google Drive">
+            <div class="admin-help-text">Unggah file bingkai berformat PNG transparan ke Google Drive dengan izin <em>"Anyone with the link can view"</em>.</div>
           </div>
         </div>
 
-          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
+        <!-- Tab 3: Pengguna & PIN -->
         <div class="admin-tab-pane" id="tabPane-users">
           <!-- Ganti PIN Akun Pribadi -->
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px; margin-bottom: 14px;">
@@ -1433,7 +1443,7 @@
           <div id="adminUsersList" style="display: flex; flex-direction: column; gap: 6px;"></div>
         </div>
 
-        <!-- Bagian 5: Keamanan & PIN Admin -->
+        <!-- Tab 4: Cloud Vercel -->
         <div class="admin-tab-pane" id="tabPane-cloud">
           <div class="admin-field-group">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
@@ -1446,7 +1456,7 @@
             </div>
           </div>
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
-            💡 <strong>Panduan Vercel:</strong> Hubungkan repositori ini ke <a href="https://vercel.com" target="_blank" style="color: var(--gold-dark); font-weight: 600;">Vercel.app</a>. Web app akan langsung aktif online dengan domain gratis Vercel.
+            💡 <strong>Panduan Vercel Live Multi-Device:</strong> Masukkan URL Web App Google Apps Script di atas lalu klik <strong>Simpan Perubahan</strong> agar seluruh foto dari Google Drive & Google Spreadsheet langsung sinkron secara live di semua perangkat.
           </div>
         </div>
 
@@ -1475,7 +1485,7 @@
 
   <!-- Footer -->
   <footer class="footer">
-    <div class="footer-names">The Wedding of Romeo & Juliet</div>
+    <div class="footer-names">Hans & Yurike</div>
     <p>Diabadikan dengan cinta &bull; Terima kasih atas doa restunya.</p>
   </footer>
 
@@ -1485,13 +1495,13 @@
   <script>
     const GLOBAL_CONFIG = {
       GAS_API_URL: "",
-      EVENT_NAME: "The Wedding of Romeo & Juliet",
-      EVENT_DATE: "13 November 2026",
-      EVENT_VENUE: "Grand Ballroom, Jakarta",
+      EVENT_NAME: "Hans & Yurike",
+      EVENT_DATE: "14 November 2026",
+      EVENT_VENUE: "Upperhills Convention Centre, Makassar",
       SUBTITLE: "The Wedding Gallery & Precious Memories",
       WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
-      DRIVE_FOLDER_ID: "",
-      FRAME_IMAGE_URL: "",
+      DRIVE_FOLDER_ID: "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxl5",
+      FRAME_IMAGE_URL: "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NE/view",
       SPREADSHEET_ID: "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20",
       SPREADSHEET_URL: "https://docs.google.com/spreadsheets/d/133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20/edit",
       DEFAULT_ADMIN_PIN: "123456",
@@ -1553,7 +1563,7 @@
       setupKeyboardNav();
 
       // 1. Muat URL API backend yang tersimpan
-      const savedApiUrl = localStorage.getItem("WEDDING_GAS_API_URL");
+      const savedApiUrl = localStorage.getItem("WEDDING_GAS_API_URL") || GLOBAL_CONFIG.GAS_API_URL;
       if (savedApiUrl) {
         state.gasApiUrl = savedApiUrl;
         const apiUrlInput = document.getElementById("cfgGasApiUrl");
@@ -1567,13 +1577,35 @@
           const savedCfg = JSON.parse(savedCfgStr);
           state.activeConfig = Object.assign({}, GLOBAL_CONFIG, savedCfg);
           populateConfigToUI(state.activeConfig);
+        } else {
+          populateConfigToUI(GLOBAL_CONFIG);
         }
       } catch (e) {}
 
-      // 3. Ambil data galeri & konfigurasi live dari Google Apps Script (membaca spreadsheet 'foto-panggung')
-      fetchGalleryData(false, false);
-      startLiveAutoRefresh();
-      startBadgeExpiryChecker();
+      // 3. Muat konfigurasi sentral dari config.json (Untuk sinkronisasi live semua device di Vercel)
+      fetch("config.json?v=" + Date.now())
+        .then(function(res) {
+          if (!res.ok) throw new Error("No config.json");
+          return res.json();
+        })
+        .then(function(remoteCfg) {
+          if (remoteCfg && typeof remoteCfg === "object") {
+            if (remoteCfg.GAS_API_URL && !state.gasApiUrl) {
+              state.gasApiUrl = remoteCfg.GAS_API_URL;
+              const apiUrlInput = document.getElementById("cfgGasApiUrl");
+              if (apiUrlInput) apiUrlInput.value = remoteCfg.GAS_API_URL;
+            }
+            state.activeConfig = Object.assign({}, GLOBAL_CONFIG, remoteCfg);
+            populateConfigToUI(state.activeConfig);
+          }
+        })
+        .catch(function() {})
+        .finally(function() {
+          // 4. Ambil data galeri & konfigurasi live dari Google Apps Script (membaca spreadsheet 'foto-panggung')
+          fetchGalleryData(false, false);
+          startLiveAutoRefresh();
+          startBadgeExpiryChecker();
+        });
     });
 
     function startLiveAutoRefresh() {
@@ -1781,7 +1813,7 @@
     ];
 
     function formatIndonesianDate(dateStr) {
-      if (!dateStr) return "15 November 2026";
+      if (!dateStr) return "14 November 2026";
       const s = String(dateStr).trim();
       if (/^\d{1,2}\s+[A-Za-z]+\s+\d{4}$/.test(s)) {
         return s;
@@ -1805,7 +1837,7 @@
     }
 
     function formatDateForInput(dateStr) {
-      if (!dateStr) return "2026-11-15";
+      if (!dateStr) return "2026-11-14";
       const str = String(dateStr).trim();
       if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
         return str;
@@ -1840,15 +1872,15 @@
         const dd = String(d.getDate()).padStart(2, "0");
         return yyyy + "-" + mm + "-" + dd;
       }
-      return "2026-11-15";
+      return "2026-11-14";
     }
 
     function populateConfigToUI(cfg) {
       if (!cfg) return;
-      const eventName = cfg.EVENT_NAME || cfg.COUPLE_NAME || "The Wedding of Romeo & Juliet";
-      const rawDate = cfg.EVENT_DATE || "13 November 2026";
+      const eventName = cfg.EVENT_NAME || cfg.COUPLE_NAME || "Hans & Yurike";
+      const rawDate = cfg.EVENT_DATE || "14 November 2026";
       const displayDate = formatIndonesianDate(rawDate);
-      const eventVenue = cfg.EVENT_VENUE || "Grand Ballroom, Jakarta";
+      const eventVenue = cfg.EVENT_VENUE || "Upperhills Convention Centre, Makassar";
 
       document.getElementById("coupleName").innerText = eventName;
       document.getElementById("slideshowCouple").innerText = eventName;
@@ -2233,7 +2265,7 @@
                 ${isCurrent ? '<span style="font-size: 0.68rem; background: #DBEAFE; color: #1E40AF; padding: 1px 6px; border-radius: 9999px;">Anda</span>' : ''}
               </div>
               <div style="font-size: 0.72rem; color: var(--text-muted);">
-                PIN: ${escapeHtml(u.pinMasked || '••••')} &bull; Peran: ${escapeHtml(u.role || 'Admin')}
+                Akses: Terproteksi PIN Unik &bull; Peran: ${escapeHtml(u.role || 'Admin')}
               </div>
             </div>
             ${!isCurrent && users.length > 1 ? `
@@ -2337,14 +2369,14 @@
       }
 
       // Format tanggal ke format bahasa Indonesia untuk display dan penyimpanan
-      const formattedDate = eventDateInput ? formatIndonesianDate(eventDateInput) : (state.activeConfig.EVENT_DATE || "15 November 2026");
+      const formattedDate = eventDateInput ? formatIndonesianDate(eventDateInput) : (state.activeConfig.EVENT_DATE || "14 November 2026");
       const finalEventName = eventNameInput || state.activeConfig.EVENT_NAME || "Hans & Yurike";
 
       const payload = {
         EVENT_NAME: finalEventName,
         COUPLE_NAME: finalEventName,
         EVENT_DATE: formattedDate,
-        EVENT_VENUE: eventVenueInput || state.activeConfig.EVENT_VENUE || "Grand Ballroom, Jakarta",
+        EVENT_VENUE: eventVenueInput || state.activeConfig.EVENT_VENUE || "Upperhills Convention Centre, Makassar",
         SUBTITLE: subtitleInput || state.activeConfig.SUBTITLE || "The Wedding Gallery & Precious Memories",
         WELCOME_MESSAGE: welcomeInput || state.activeConfig.WELCOME_MESSAGE || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
         DRIVE_FOLDER_ID: driveFolderInput,
@@ -2481,7 +2513,7 @@
       }
 
       if (downloadBtn) downloadBtn.disabled = true;
-      if (btnLabel) btnLabel.innerText = "Menggabungkan Foto & Bingkai...";
+      if (btnLabel) btnLabel.innerText = "Menyiapkan Kenangan Berbingkai...";
 
       // Helper untuk memuat gambar aman ke Canvas (mencegah blokir CORS)
       function prepareCanvasSource(urlOrId, callback, errCallback) {
@@ -2611,7 +2643,7 @@
                 const cleanName = (photo.rawName || photo.name || "wedding-photo").replace(/\.[^/.]+$/, "");
                 saveBlobToDevice(blob, cleanName + "-berbingkai.jpg");
                 resetDownloadButton();
-                showToast("✓ Foto berbingkai berhasil tersimpan ke perangkat!");
+                showToast("✓ Kenangan berbingkai berhasil tersimpan ke perangkat!");
               } else {
                 triggerDirectDownload(photo);
               }
@@ -2634,7 +2666,7 @@
       const downloadBtn = document.getElementById("lightboxDownloadBtn");
       const btnLabel = document.getElementById("downloadBtnLabel");
       if (downloadBtn) downloadBtn.disabled = true;
-      if (btnLabel) btnLabel.innerText = "Mengunduh ke Perangkat...";
+      if (btnLabel) btnLabel.innerText = "Menyimpan ke Perangkat...";
 
       const cleanName = (photo.rawName || photo.name || "wedding-photo").replace(/\.[^/.]+$/, "");
       const fileName = cleanName + ".jpg";
@@ -2649,7 +2681,7 @@
         .then(function(blob) {
           saveBlobToDevice(blob, fileName);
           resetDownloadButton();
-          showToast("✓ Foto berhasil disimpan ke perangkat!");
+          showToast("✓ Foto kenangan berhasil tersimpan ke perangkat!");
         })
         .catch(function(errFetch) {
           // Jika fetch langsung diblokir oleh CORS browser, ambil via Base64 backend
@@ -2666,7 +2698,7 @@
                 const blob = new Blob([byteArray], { type: res.contentType || "image/jpeg" });
                 saveBlobToDevice(blob, fileName);
                 resetDownloadButton();
-                showToast("✓ Foto berhasil disimpan ke perangkat!");
+                showToast("✓ Foto kenangan berhasil tersimpan ke perangkat!");
               } else {
                 fallbackSaveLink(directUrl, fileName);
               }
@@ -2698,7 +2730,7 @@
       document.body.appendChild(a);
       a.click();
       a.remove();
-      showToast("Mengunduh foto...");
+      showToast("Menyimpan foto...");
     }
 
     function resetDownloadButton() {
@@ -2707,7 +2739,7 @@
       if (downloadBtn && btnLabel) {
         downloadBtn.disabled = false;
         const hasFrame = state.activeConfig.FRAME_IMAGE_URL && state.activeConfig.FRAME_IMAGE_URL.trim();
-        btnLabel.innerText = hasFrame ? "🖼️ Unduh Foto + Bingkai" : "Unduh Foto Asli";
+        btnLabel.innerText = hasFrame ? "✨ Simpan Kenangan Berbingkai" : "Simpan Foto Asli";
       }
     }
 
@@ -2820,8 +2852,8 @@
       const photo = state.filteredPhotos[index];
       if (!photo) return;
 
-      const eventDate = state.activeConfig.EVENT_DATE || "15 November 2026";
-      const eventVenue = state.activeConfig.EVENT_VENUE || "Grand Ballroom, Jakarta";
+      const eventDate = state.activeConfig.EVENT_DATE || "14 November 2026";
+      const eventVenue = state.activeConfig.EVENT_VENUE || "Upperhills Convention Centre, Makassar";
       document.getElementById("slideshowCategory").innerText = eventDate + " • " + eventVenue + " • " + photo.category;
 
       const imgA = document.getElementById("slideshowImgA");

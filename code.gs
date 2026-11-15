@@ -14,10 +14,10 @@ const WEDDING_CONFIG = {
   EVENT_NAME: "Hans & Yurike",
 
   // Tanggal Acara
-  EVENT_DATE: "13 November 2026",
+  EVENT_DATE: "14 November 2026",
 
   // Venue / Lokasi Acara
-  EVENT_VENUE: "Grand Ballroom, Jakarta",
+  EVENT_VENUE: "Upperhills Convention Centre, Makassar",
 
   // Subjudul Galeri
   SUBTITLE: "The Wedding Gallery & Precious Memories",
@@ -26,11 +26,11 @@ const WEDDING_CONFIG = {
   WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
 
   // Konfigurasi Teknis (Dapat dikelola admin via web & spreadsheet)
-  DRIVE_FOLDER_ID: "",
+  DRIVE_FOLDER_ID: "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxl5",
   DEFAULT_ADMIN_PIN: "123456",
   SLIDESHOW_INTERVAL_SEC: 4,
-  AUTO_REFRESH_INTERVAL_SEC: 25,
-  FRAME_IMAGE_URL: "",
+  AUTO_REFRESH_INTERVAL_SEC: 20,
+  FRAME_IMAGE_URL: "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NE/view",
   SPREADSHEET_ID: "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20",
   NEW_BADGE_MINUTES: 10
 };
@@ -962,7 +962,7 @@ function addAdminUser(currentPin, newUser) {
     if (String(users[i].pin).trim() === pin) {
       return {
         success: false,
-        message: "PIN '" + pin + "' sudah digunakan oleh pengguna '" + users[i].name + "'. Setiap user wajib memiliki PIN yang berbeda!"
+        message: "Kombinasi PIN ini telah terdaftar demi menjaga privasi & keamanan akun. Mohon gunakan kombinasi angka rahasia lainnya yang unik."
       };
     }
   }
@@ -1065,7 +1065,7 @@ function changeAdminPin(currentPin, newPin) {
     if (users[i].id !== loginResult.user.id && String(users[i].pin).trim() === cleanNew) {
       return {
         success: false,
-        message: "PIN '" + cleanNew + "' sudah digunakan oleh pengguna '" + users[i].name + "'! Setiap user wajib memiliki PIN yang unik."
+        message: "Kombinasi PIN ini telah terdaftar demi menjaga privasi & keamanan akun. Mohon gunakan kombinasi angka rahasia lainnya yang unik."
       };
     }
   }
@@ -1254,7 +1254,7 @@ function saveAdminSettings(pin, updatedConfig) {
         if (users[uCheck].id !== loginResult.user.id && String(users[uCheck].pin).trim() === newPin) {
           return {
             success: false,
-            message: "Gagal mengganti PIN: PIN '" + newPin + "' sudah digunakan oleh pengguna '" + users[uCheck].name + "'! Setiap user wajib memiliki PIN unik."
+            message: "Kombinasi PIN ini telah terdaftar demi menjaga privasi & keamanan akun. Mohon gunakan kombinasi angka rahasia lainnya yang unik."
           };
         }
       }

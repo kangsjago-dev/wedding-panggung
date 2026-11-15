@@ -1,15 +1,15 @@
 {
   "EVENT_NAME": "Hans & Yurike",
-  "EVENT_DATE": "13 November 2026",
-  "EVENT_VENUE": "Grand Ballroom, Jakarta",
+  "EVENT_DATE": "14 November 2026",
+  "EVENT_VENUE": "Upperhills Convention Centre, Makassar",
   "SUBTITLE": "The Wedding Gallery & Precious Memories",
   "WELCOME_MESSAGE": "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
-  "DRIVE_FOLDER_ID": "",
-  "FRAME_IMAGE_URL": "",
+  "DRIVE_FOLDER_ID": "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxl5",
+  "FRAME_IMAGE_URL": "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NE/view",
   "SPREADSHEET_ID": "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20",
   "GAS_API_URL": "",
   "DEFAULT_ADMIN_PIN": "123456",
   "SLIDESHOW_INTERVAL_SEC": 4,
-  "AUTO_REFRESH_INTERVAL_SEC": 25,
+  "AUTO_REFRESH_INTERVAL_SEC": 20,
   "NEW_BADGE_MINUTES": 10
 }
