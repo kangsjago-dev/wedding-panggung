@@ -447,75 +447,122 @@ function handleApiRequest(e) {
 }
 
 /**
- * Mengambil data galeri dari Google Drive
+ * Mengambil data galeri langsung dari Google Spreadsheet 'foto-panggung' (Sheet 'Daftar_Foto')
  */
 function getGalleryData() {
   try {
     var config = getEffectiveConfig();
-    var folderId = config.DRIVE_FOLDER_ID ? config.DRIVE_FOLDER_ID.trim() : "";
-    
     var safeConfig = Object.assign({}, config);
     delete safeConfig.ADMIN_PIN;
 
-    if (!folderId || folderId === "MASUKKAN_ID_FOLDER_GOOGLE_DRIVE_ANDA_DI_SINI") {
+    var ss = getDatabaseSpreadsheet();
+    if (!ss) {
       return {
         success: true,
         isDemo: true,
-        message: "ID Folder Google Drive belum diatur. Menampilkan galeri contoh (Demo Mode). Buka Menu Admin untuk memasukkan ID folder.",
+        message: "Spreadsheet 'foto-panggung' belum terhubung. Menampilkan galeri contoh.",
         config: safeConfig,
         categories: ["Semua Foto", "Prewedding", "Akad Nikah", "Resepsi", "Photobooth"],
-        photos: getDemoPhotos()
+        photos: getDemoPhotos(),
+        totalPhotos: getDemoPhotos().length
       };
     }
 
-    var rootFolder;
-    try {
-      rootFolder = DriveApp.getFolderById(folderId);
-    } catch (err) {
+    var sheetPhotos = ss.getSheetByName("Daftar_Foto");
+    if (!sheetPhotos || sheetPhotos.getLastRow() < 2) {
+      var initialDemo = getDemoPhotos();
+      if (sheetPhotos) {
+        syncPhotosToSheet(ss, initialDemo);
+      }
       return {
-        success: false,
-        error: "FOLDER_NOT_FOUND",
-        message: "Folder Google Drive tidak ditemukan atau izin belum dibagikan. Pastikan folder disetel 'Siapa saja yang memiliki link dapat melihat'. Error: " + err.toString(),
+        success: true,
+        isDemo: false,
+        message: "Sheet 'Daftar_Foto' siap.",
         config: safeConfig,
-        categories: ["Semua Foto"],
-        photos: getDemoPhotos()
+        categories: ["Semua Foto", "Prewedding", "Akad Nikah", "Resepsi", "Photobooth"],
+        photos: initialDemo,
+        totalPhotos: initialDemo.length
       };
     }
 
-    var categories = ["Semua Foto"];
+    var data = sheetPhotos.getDataRange().getValues();
+    var headers = data[0];
     var photos = [];
     var categoryMap = {};
+    var categories = ["Semua Foto"];
 
-    var subFolders = rootFolder.getFolders();
-    while (subFolders.hasNext()) {
-      var sub = subFolders.next();
-      var cleanCatName = cleanCategoryName(sub.getName());
-      if (!categoryMap[cleanCatName]) {
-        categoryMap[cleanCatName] = true;
-        categories.push(cleanCatName);
-      }
-      scanFilesInFolder(sub, cleanCatName, photos);
+    // Petakan indeks kolom secara dinamis berdasarkan header
+    var colMap = {
+      id: 0,
+      name: 1,
+      category: 2,
+      url: 3,
+      downloadUrl: 4,
+      size: 5,
+      timestamp: 6,
+      status: 7
+    };
+
+    for (var h = 0; h < headers.length; h++) {
+      var head = String(headers[h]).toLowerCase().trim();
+      if (head.indexOf("id") === 0) colMap.id = h;
+      else if (head.indexOf("nama") >= 0) colMap.name = h;
+      else if (head.indexOf("kategori") >= 0) colMap.category = h;
+      else if (head === "url_foto" || head === "url" || head.indexOf("thumb") >= 0) colMap.url = h;
+      else if (head.indexOf("download") >= 0) colMap.downloadUrl = h;
+      else if (head.indexOf("ukuran") >= 0 || head.indexOf("size") >= 0) colMap.size = h;
+      else if (head.indexOf("waktu") >= 0 || head.indexOf("time") >= 0 || head.indexOf("tanggal") >= 0) colMap.timestamp = h;
+      else if (head.indexOf("status") >= 0) colMap.status = h;
     }
 
-    scanFilesInFolder(rootFolder, "Galeri Utama", photos);
+    for (var r = 1; r < data.length; r++) {
+      var row = data[r];
+      var rawUrl = row[colMap.url] ? String(row[colMap.url]).trim() : "";
+      if (!rawUrl) continue;
 
-    if (photos.some(function(p) { return p.category === "Galeri Utama"; })) {
-      if (!categoryMap["Galeri Utama"]) {
-        categories.push("Galeri Utama");
+      var status = row[colMap.status] ? String(row[colMap.status]).trim().toLowerCase() : "aktif";
+      if (status === "nonaktif" || status === "inactive" || status === "hide") continue;
+
+      var photoId = row[colMap.id] ? String(row[colMap.id]).trim() : ("p_" + r);
+      var photoName = row[colMap.name] ? String(row[colMap.name]).trim() : ("Foto " + r);
+      var photoCat = row[colMap.category] ? String(row[colMap.category]).trim() : "Galeri";
+      if (!photoCat) photoCat = "Galeri";
+
+      // Normalisasi URL jika berasal dari Google Drive share link
+      var normalizedUrl = normalizeDriveImageUrl(rawUrl) || rawUrl;
+      var rawDownloadUrl = row[colMap.downloadUrl] ? String(row[colMap.downloadUrl]).trim() : "";
+      var downloadUrl = normalizeDriveImageUrl(rawDownloadUrl) || rawDownloadUrl || normalizedUrl;
+
+      // Parsing waktu/timestamp
+      var rawTime = row[colMap.timestamp];
+      var photoTimestamp = Date.now();
+      if (rawTime instanceof Date) {
+        photoTimestamp = rawTime.getTime();
+      } else if (rawTime) {
+        var parsedTs = Date.parse(rawTime);
+        if (!isNaN(parsedTs)) photoTimestamp = parsedTs;
       }
+
+      if (!categoryMap[photoCat]) {
+        categoryMap[photoCat] = true;
+        categories.push(photoCat);
+      }
+
+      photos.push({
+        id: photoId,
+        name: photoName,
+        category: photoCat,
+        thumbnailUrl: normalizedUrl,
+        downloadUrl: downloadUrl,
+        sizeBytes: parseInt(row[colMap.size], 10) || 1024000,
+        timestamp: photoTimestamp
+      });
     }
 
+    // Urutkan dari yang terbaru
     photos.sort(function(a, b) {
       return (b.timestamp || 0) - (a.timestamp || 0);
     });
-
-    // Sinkronkan daftar foto ke Sheet Daftar_Foto jika spreadsheet database aktif
-    try {
-      var activeSs = getDatabaseSpreadsheet();
-      if (activeSs && photos.length > 0) {
-        syncPhotosToSheet(activeSs, photos);
-      }
-    } catch (e) {}
 
     return {
       success: true,
@@ -708,7 +755,7 @@ function saveAdminSettings(pin, updatedConfig) {
 
     return {
       success: true,
-      message: "Pengaturan acara, Google Drive, dan bingkai foto berhasil disimpan!",
+      message: "Pengaturan acara dan bingkai foto berhasil disimpan ke spreadsheet 'foto-panggung'!",
       galleryData: updatedGallery
     };
 

@@ -1248,37 +1248,7 @@
           </div>
         </div>
 
-        <!-- Bagian 2: Folder Google Drive Foto -->
-        <div class="admin-sync-box">
-          <div class="admin-sync-header">
-            <div class="admin-sync-title">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-              </svg>
-              <span>Folder Google Drive Foto</span>
-            </div>
-            <span style="font-size: 0.75rem; color: var(--gold-dark); font-weight: 600;">Live Auto-Sync (25d)</span>
-          </div>
-
-          <div class="admin-field-group" style="margin-bottom: 10px;">
-            <label class="admin-label" for="cfgDriveFolderId">ID / Tautan Folder Google Drive</label>
-            <input type="text" id="cfgDriveFolderId" class="admin-input" placeholder="Tempel ID Folder atau Tautan Google Drive di sini">
-            <div class="admin-help-text">
-              Salin kode dari URL Google Drive (contoh: <code>1ABCxyz...</code>). Pastikan izin folder: <em>"Anyone with the link can view"</em>.
-            </div>
-          </div>
-
-          <button type="button" id="btnSyncDrive" class="btn btn-gold" style="width: 100%; padding: 10px 18px; font-size: 0.88rem;" onclick="handleSyncDriveNow()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-            </svg>
-            <span id="syncBtnText">Sinkronkan Google Drive Sekarang</span>
-          </button>
-
-          <div id="syncResultAlert" class="admin-alert-box"></div>
-        </div>
-
-        <!-- Bagian 3: Bingkai Foto Kustom -->
+        <!-- Bagian 2: Bingkai Foto Kustom -->
         <div class="admin-sync-box" style="background: #FDFBF7; border-color: rgba(197, 168, 128, 0.4);">
           <div class="admin-sync-header">
             <div class="admin-sync-title">
@@ -1301,7 +1271,7 @@
           </div>
         </div>
 
-        <!-- Bagian 4: Informasi Acara & Pernikahan (DAPAT DIUBAH / CUSTOM) -->
+        <!-- Bagian 3: Informasi Acara & Pernikahan (DAPAT DIUBAH / CUSTOM) -->
         <div class="admin-sync-box" style="background: #FFFFFF; border-color: var(--gold-border);">
           <div class="admin-sync-header">
             <div class="admin-sync-title" style="color: var(--text-main);">
@@ -1322,8 +1292,8 @@
           </div>
 
           <div class="admin-field-group" style="margin-bottom: 10px;">
-            <label class="admin-label" for="cfgEventDate">Tanggal Acara</label>
-            <input type="text" id="cfgEventDate" class="admin-input" placeholder="Contoh: 15 November 2026">
+            <label class="admin-label" for="cfgEventDate">Tanggal Acara (Date Picker)</label>
+            <input type="date" id="cfgEventDate" class="admin-input">
           </div>
 
           <div class="admin-field-group" style="margin-bottom: 10px;">
@@ -1622,10 +1592,82 @@
       applyCategoryFilter(state.activeCategory);
     }
 
+    /* ==========================================================================
+       DATE FORMATTING UTILITIES (INDONESIAN & DATE PICKER)
+       ========================================================================== */
+    const INDONESIAN_MONTHS = [
+      "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+      "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+
+    function formatIndonesianDate(dateStr) {
+      if (!dateStr) return "15 November 2026";
+      const s = String(dateStr).trim();
+      if (/^\d{1,2}\s+[A-Za-z]+\s+\d{4}$/.test(s)) {
+        return s;
+      }
+      const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (match) {
+        const year = match[1];
+        const monthIdx = parseInt(match[2], 10) - 1;
+        const day = parseInt(match[3], 10);
+        const monthName = INDONESIAN_MONTHS[monthIdx] || match[2];
+        return day + " " + monthName + " " + year;
+      }
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        const day = d.getDate();
+        const month = INDONESIAN_MONTHS[d.getMonth()];
+        const year = d.getFullYear();
+        return day + " " + month + " " + year;
+      }
+      return s;
+    }
+
+    function formatDateForInput(dateStr) {
+      if (!dateStr) return "2026-11-15";
+      const str = String(dateStr).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+        return str;
+      }
+      const parts = str.split(/\s+/);
+      if (parts.length === 3) {
+        const day = parts[0].padStart(2, "0");
+        const monthName = parts[1].toLowerCase();
+        const year = parts[2];
+        const monthMap = {
+          "januari": "01", "january": "01", "jan": "01",
+          "februari": "02", "february": "02", "feb": "02",
+          "maret": "03", "march": "03", "mar": "03",
+          "april": "04", "apr": "04",
+          "mei": "05", "may": "05",
+          "juni": "06", "june": "06", "jun": "06",
+          "juli": "07", "july": "07", "jul": "07",
+          "agustus": "08", "august": "08", "agu": "08", "aug": "08",
+          "september": "09", "sep": "09",
+          "oktober": "10", "october": "10", "okt": "10", "oct": "10",
+          "november": "11", "nov": "11",
+          "desember": "12", "december": "12", "des": "12", "dec": "12"
+        };
+        if (monthMap[monthName] && /^\d{4}$/.test(year)) {
+          return year + "-" + monthMap[monthName] + "-" + day;
+        }
+      }
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        return yyyy + "-" + mm + "-" + dd;
+      }
+      return "2026-11-15";
+    }
+
     function populateConfigToUI(cfg) {
       if (!cfg) return;
       const eventName = cfg.EVENT_NAME || cfg.COUPLE_NAME || "The Wedding of Romeo & Juliet";
-      const eventDate = cfg.EVENT_DATE || "15 November 2026";
+      const rawDate = cfg.EVENT_DATE || "15 November 2026";
+      const displayDate = formatIndonesianDate(rawDate);
       const eventVenue = cfg.EVENT_VENUE || "Grand Ballroom, Jakarta";
 
       document.getElementById("coupleName").innerText = eventName;
@@ -1633,9 +1675,9 @@
       document.querySelector(".footer-names").innerText = eventName;
       document.title = eventName + " - Wedding Photo Gallery";
 
-      document.getElementById("eventDate").innerText = eventDate;
+      document.getElementById("eventDate").innerText = displayDate;
       document.getElementById("eventVenue").innerText = eventVenue;
-      document.getElementById("slideshowCategory").innerText = eventDate + " • " + eventVenue;
+      document.getElementById("slideshowCategory").innerText = displayDate + " • " + eventVenue;
 
       if (cfg.SUBTITLE) {
         document.getElementById("subtitle").innerText = cfg.SUBTITLE;
@@ -1647,29 +1689,36 @@
         state.intervalMs = cfg.SLIDESHOW_INTERVAL_SEC * 1000;
       }
 
-      // Input form admin
-      document.getElementById("cfgDriveFolderId").value = cfg.DRIVE_FOLDER_ID || "";
-      document.getElementById("cfgFrameImageUrl").value = cfg.FRAME_IMAGE_URL || "";
-      document.getElementById("cfgCoupleName").value = eventName;
-      document.getElementById("cfgEventDate").value = eventDate;
-      document.getElementById("cfgEventVenue").value = eventVenue;
+      // Input form admin (tanpa ketergantungan Google Drive)
+      const cfgFrameEl = document.getElementById("cfgFrameImageUrl");
+      if (cfgFrameEl) cfgFrameEl.value = cfg.FRAME_IMAGE_URL || "";
+      const cfgCoupleEl = document.getElementById("cfgCoupleName");
+      if (cfgCoupleEl) cfgCoupleEl.value = eventName;
+      const cfgDateEl = document.getElementById("cfgEventDate");
+      if (cfgDateEl) cfgDateEl.value = formatDateForInput(rawDate);
+      const cfgVenueEl = document.getElementById("cfgEventVenue");
+      if (cfgVenueEl) cfgVenueEl.value = eventVenue;
 
       const frameBadge = document.getElementById("frameStatusBadge");
-      if (cfg.FRAME_IMAGE_URL) {
-        frameBadge.innerText = "✓ Bingkai Aktif";
-        frameBadge.style.color = "#10B981";
-      } else {
-        frameBadge.innerText = "Tanpa Bingkai";
-        frameBadge.style.color = "#64748B";
+      if (frameBadge) {
+        if (cfg.FRAME_IMAGE_URL) {
+          frameBadge.innerText = "✓ Bingkai Aktif";
+          frameBadge.style.color = "#10B981";
+        } else {
+          frameBadge.innerText = "Tanpa Bingkai";
+          frameBadge.style.color = "#64748B";
+        }
       }
 
       const apiBadge = document.getElementById("apiStatusBadge");
-      if (state.gasApiUrl) {
-        apiBadge.innerText = "✓ Terhubung ke Apps Script";
-        apiBadge.style.color = "#10B981";
-      } else {
-        apiBadge.innerText = "Mode Pratinjau Lokal";
-        apiBadge.style.color = "#F59E0B";
+      if (apiBadge) {
+        if (state.gasApiUrl) {
+          apiBadge.innerText = "✓ Terhubung ke Apps Script";
+          apiBadge.style.color = "#10B981";
+        } else {
+          apiBadge.innerText = "Mode Pratinjau Lokal";
+          apiBadge.style.color = "#F59E0B";
+        }
       }
     }
 
@@ -1826,14 +1875,24 @@
     }
 
     function openAdminSettingsModal() {
-      document.getElementById("syncResultAlert").style.display = "none";
-      document.getElementById("saveAlertBox").style.display = "none";
-      document.getElementById("cfgGasApiUrl").value = state.gasApiUrl || "";
-      document.getElementById("cfgCoupleName").value = state.activeConfig.EVENT_NAME || state.activeConfig.COUPLE_NAME || "";
-      document.getElementById("cfgEventDate").value = state.activeConfig.EVENT_DATE || "";
-      document.getElementById("cfgEventVenue").value = state.activeConfig.EVENT_VENUE || "";
-      document.getElementById("cfgDriveFolderId").value = state.activeConfig.DRIVE_FOLDER_ID || "";
-      document.getElementById("cfgFrameImageUrl").value = state.activeConfig.FRAME_IMAGE_URL || "";
+      const saveAlertBox = document.getElementById("saveAlertBox");
+      if (saveAlertBox) saveAlertBox.style.display = "none";
+
+      const cfgGasApiUrlEl = document.getElementById("cfgGasApiUrl");
+      if (cfgGasApiUrlEl) cfgGasApiUrlEl.value = state.gasApiUrl || "";
+
+      const cfgCoupleNameEl = document.getElementById("cfgCoupleName");
+      if (cfgCoupleNameEl) cfgCoupleNameEl.value = state.activeConfig.EVENT_NAME || state.activeConfig.COUPLE_NAME || "";
+
+      const cfgDateEl = document.getElementById("cfgEventDate");
+      if (cfgDateEl) cfgDateEl.value = formatDateForInput(state.activeConfig.EVENT_DATE);
+
+      const cfgEventVenueEl = document.getElementById("cfgEventVenue");
+      if (cfgEventVenueEl) cfgEventVenueEl.value = state.activeConfig.EVENT_VENUE || "";
+
+      const cfgFrameImageUrlEl = document.getElementById("cfgFrameImageUrl");
+      if (cfgFrameImageUrlEl) cfgFrameImageUrlEl.value = state.activeConfig.FRAME_IMAGE_URL || "";
+
       document.getElementById("adminSettingsModal").classList.add("active");
     }
 
@@ -1841,78 +1900,30 @@
       document.getElementById("adminSettingsModal").classList.remove("active");
     }
 
-    function handleSyncDriveNow() {
-      const folderInput = document.getElementById("cfgDriveFolderId").value.trim();
-      const syncBtn = document.getElementById("btnSyncDrive");
-      const syncText = document.getElementById("syncBtnText");
-      const alertBox = document.getElementById("syncResultAlert");
-
-      if (!folderInput) {
-        alertBox.className = "admin-alert-box error";
-        alertBox.innerText = "Masukkan ID atau URL folder Google Drive terlebih dahulu.";
-        alertBox.style.display = "block";
-        return;
-      }
-
-      syncBtn.disabled = true;
-      syncText.innerText = "Menghubungkan ke Google Drive...";
-      alertBox.style.display = "none";
-
-      callBackend("testAndSyncDriveFolder", { pin: state.adminPin, folderId: folderInput }, function(res) {
-        syncBtn.disabled = false;
-        syncText.innerText = "Sinkronkan Google Drive Sekarang";
-
-        if (res.success) {
-          alertBox.className = "admin-alert-box success";
-          alertBox.innerHTML = `
-            <strong>Berhasil Terhubung!</strong><br>
-            Folder: ${escapeHtml(res.folderName)}<br>
-            Subfolder Momen: ${res.subfolderCount} kategori<br>
-            Foto Valid (>20KB): ${res.rootImageCount} foto
-          `;
-          alertBox.style.display = "block";
-
-          if (res.galleryData) {
-            handleGalleryResponse(res.galleryData, false);
-          }
-          showToast("Sinkronisasi Google Drive Berhasil!");
-        } else {
-          alertBox.className = "admin-alert-box error";
-          alertBox.innerText = res.message;
-          alertBox.style.display = "block";
-        }
-      }, function(err) {
-        syncBtn.disabled = false;
-        syncText.innerText = "Sinkronkan Google Drive Sekarang";
-        alertBox.className = "admin-alert-box error";
-        alertBox.innerText = "Error: " + err.message;
-        alertBox.style.display = "block";
-      });
-    }
-
     function handleSaveAllSettings() {
       const saveBtn = document.getElementById("btnSaveSettings");
       const alertBox = document.getElementById("saveAlertBox");
 
-      const newApiUrl = document.getElementById("cfgGasApiUrl").value.trim();
-      const eventNameInput = document.getElementById("cfgCoupleName").value.trim();
-      const eventDateInput = document.getElementById("cfgEventDate").value.trim();
-      const eventVenueInput = document.getElementById("cfgEventVenue").value.trim();
-      const driveFolderInput = document.getElementById("cfgDriveFolderId").value.trim();
-      const frameUrlInput = document.getElementById("cfgFrameImageUrl").value.trim();
-      const newPinInput = document.getElementById("cfgNewPin").value.trim();
+      const newApiUrl = (document.getElementById("cfgGasApiUrl")?.value || "").trim();
+      const eventNameInput = (document.getElementById("cfgCoupleName")?.value || "").trim();
+      const eventDateInput = (document.getElementById("cfgEventDate")?.value || "").trim();
+      const eventVenueInput = (document.getElementById("cfgEventVenue")?.value || "").trim();
+      const frameUrlInput = (document.getElementById("cfgFrameImageUrl")?.value || "").trim();
+      const newPinInput = (document.getElementById("cfgNewPin")?.value || "").trim();
 
       state.gasApiUrl = newApiUrl;
       if (newApiUrl) {
         localStorage.setItem("WEDDING_GAS_API_URL", newApiUrl);
       }
 
+      // Format tanggal ke format bahasa Indonesia untuk display dan penyimpanan
+      const formattedDate = eventDateInput ? formatIndonesianDate(eventDateInput) : (state.activeConfig.EVENT_DATE || "15 November 2026");
+
       const payload = {
-        EVENT_NAME: eventNameInput,
-        COUPLE_NAME: eventNameInput,
-        EVENT_DATE: eventDateInput,
-        EVENT_VENUE: eventVenueInput,
-        DRIVE_FOLDER_ID: driveFolderInput,
+        EVENT_NAME: eventNameInput || state.activeConfig.EVENT_NAME,
+        COUPLE_NAME: eventNameInput || state.activeConfig.COUPLE_NAME,
+        EVENT_DATE: formattedDate,
+        EVENT_VENUE: eventVenueInput || state.activeConfig.EVENT_VENUE,
         FRAME_IMAGE_URL: frameUrlInput,
         GAS_API_URL: newApiUrl,
         NEW_PIN: newPinInput
@@ -1928,7 +1939,7 @@
 
       saveBtn.disabled = true;
       saveBtn.innerHTML = `<span>Menyimpan Pengaturan...</span>`;
-      alertBox.style.display = "none";
+      if (alertBox) alertBox.style.display = "none";
 
       if (state.gasApiUrl) {
         // Kirim langsung ke Google Apps Script (yang otomatis menyimpan ke Properties & Spreadsheet 'foto-panggung')
@@ -1937,7 +1948,8 @@
           saveBtn.innerHTML = `<polyline points="20 6 9 17 4 12"></polyline><span>Simpan Perubahan</span>`;
           if (payload.NEW_PIN) {
             state.adminPin = payload.NEW_PIN;
-            document.getElementById("cfgNewPin").value = "";
+            const newPinEl = document.getElementById("cfgNewPin");
+            if (newPinEl) newPinEl.value = "";
           }
           if (res && res.galleryData) {
             handleGalleryResponse(res.galleryData, false);

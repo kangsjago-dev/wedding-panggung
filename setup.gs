@@ -160,12 +160,12 @@ function testSpreadsheetDatabaseConnection() {
 }
 
 /**
- * 8. Setup Lengkap Sistem Demo dengan Berkas Dummy (Folder Drive + foto-panggung + Dummy Photos)
+ * 8. Setup Lengkap Sistem Demo Berbasis Spreadsheet 'foto-panggung' (Tanpa Ketergantungan Google Drive)
  */
 function setupDemoSystemWithDummyFiles() {
-  Logger.log("=== MEMULAI SETUP DEMO SISTEM & DUMMY FILES ===");
+  Logger.log("=== MEMULAI SETUP DEMO SISTEM & DUMMY FILES (SPREADSHEET MURNI) ===");
 
-  // 1. Inisialisasi Spreadsheet foto-panggung
+  // 1. Inisialisasi Spreadsheet foto-panggung (membuat Sheet Pengaturan, Daftar_Foto, dan Log_Aktivitas)
   var ssRes = setupDatabaseSpreadsheet("foto-panggung");
   var ss = getDatabaseSpreadsheet();
   if (!ss) {
@@ -174,55 +174,20 @@ function setupDemoSystemWithDummyFiles() {
   }
   Logger.log("✅ 1. Spreadsheet 'foto-panggung' Siap! URL: " + ss.getUrl());
 
-  // 2. Buat Struktur Folder Demo di Google Drive
-  var demoFolderName = "Galeri Pernikahan Demo - " + WEDDING_CONFIG.EVENT_NAME;
-  var demoFolder;
-  try {
-    var existingFolders = DriveApp.getFoldersByName(demoFolderName);
-    if (existingFolders.hasNext()) {
-      demoFolder = existingFolders.next();
-      Logger.log("ℹ️ Menggunakan folder demo yang sudah ada: " + demoFolderName);
-    } else {
-      demoFolder = DriveApp.createFolder(demoFolderName);
-      Logger.log("✅ 2. Folder Demo dibuat di Google Drive: " + demoFolderName);
-    }
-    demoFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  } catch (eFolder) {
-    Logger.log("⚠️ Gagal membuat folder Drive: " + eFolder.toString());
-  }
+  // 2. Tulis data pengaturan awal ke Sheet Pengaturan
+  writeConfigToSheet(ss, {
+    EVENT_NAME: WEDDING_CONFIG.EVENT_NAME,
+    EVENT_DATE: WEDDING_CONFIG.EVENT_DATE,
+    EVENT_VENUE: WEDDING_CONFIG.EVENT_VENUE,
+    SUBTITLE: WEDDING_CONFIG.SUBTITLE,
+    WELCOME_MESSAGE: WEDDING_CONFIG.WELCOME_MESSAGE,
+    SLIDESHOW_INTERVAL_SEC: WEDDING_CONFIG.SLIDESHOW_INTERVAL_SEC,
+    AUTO_REFRESH_INTERVAL_SEC: WEDDING_CONFIG.AUTO_REFRESH_INTERVAL_SEC,
+    FRAME_IMAGE_URL: WEDDING_CONFIG.FRAME_IMAGE_URL
+  });
+  Logger.log("✅ 2. Pengaturan awal tersimpan di Sheet 'Pengaturan'.");
 
-  var folderId = demoFolder ? demoFolder.getId() : "";
-
-  // 3. Buat Subfolder Kategori
-  var categoryFolders = {};
-  if (demoFolder) {
-    var subCats = ["01. Prewedding", "02. Akad Nikah", "03. Resepsi", "04. Photobooth"];
-    for (var i = 0; i < subCats.length; i++) {
-      var catName = subCats[i];
-      var existingSub = demoFolder.getFoldersByName(catName);
-      if (existingSub.hasNext()) {
-        categoryFolders[catName] = existingSub.next();
-      } else {
-        categoryFolders[catName] = demoFolder.createFolder(catName);
-        categoryFolders[catName].setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      }
-    }
-    Logger.log("✅ 3. Subfolder kategori berhasil disiapkan.");
-  }
-
-  // 4. Perbarui konfigurasi folder di Script Properties dan Sheet Pengaturan
-  if (folderId) {
-    PropertiesService.getScriptProperties().setProperty("DRIVE_FOLDER_ID", folderId);
-    writeConfigToSheet(ss, {
-      EVENT_NAME: WEDDING_CONFIG.EVENT_NAME,
-      EVENT_DATE: WEDDING_CONFIG.EVENT_DATE,
-      EVENT_VENUE: WEDDING_CONFIG.EVENT_VENUE,
-      DRIVE_FOLDER_ID: folderId
-    });
-    Logger.log("✅ 4. DRIVE_FOLDER_ID disetel ke: " + folderId);
-  }
-
-  // 5. Isi Sheet Daftar_Foto dengan Dummy Photos beresolusi tinggi (Wedding Collection)
+  // 3. Isi Sheet Daftar_Foto dengan Dummy Photos beresolusi tinggi (Wedding Collection)
   var dummyPhotos = [
     {
       id: "demo_pw_1",
@@ -299,35 +264,19 @@ function setupDemoSystemWithDummyFiles() {
   ];
 
   syncPhotosToSheet(ss, dummyPhotos);
-  Logger.log("✅ 5. " + dummyPhotos.length + " foto dummy pernikahan berhasil diisi ke Sheet 'Daftar_Foto'.");
+  Logger.log("✅ 3. " + dummyPhotos.length + " foto dummy pernikahan berhasil diisi ke Sheet 'Daftar_Foto'.");
 
-  // 6. Buat file dummy info di setiap subfolder Google Drive
-  try {
-    for (var cat in categoryFolders) {
-      var cf = categoryFolders[cat];
-      var dummyFileName = "panduan_" + cat.replace(/[^a-zA-Z0-9]/g, "_") + ".txt";
-      var existingFiles = cf.getFilesByName(dummyFileName);
-      if (!existingFiles.hasNext()) {
-        cf.createFile(dummyFileName, "Folder Kategori: " + cat + "\nSilakan unggah foto momen pernikahan ke folder ini.\nFormat foto yang didukung: JPG, PNG, WEBP (> 20KB).");
-      }
-    }
-    Logger.log("✅ 6. Berkas dummy info panduan dibuat di setiap subfolder Google Drive.");
-  } catch (eDummyFile) {
-    Logger.log("Info dummy file: " + eDummyFile.toString());
-  }
+  // 4. Catat aktivitas ke Sheet Log_Aktivitas
+  logActivityToSheet(ss, "Setup Demo Selesai", "Sistem demo berhasil diinisialisasi pada spreadsheet 'foto-panggung'", "Admin System");
 
-  // 7. Catat aktivitas
-  logActivityToSheet(ss, "Setup Demo Selesai", "Sistem demo berhasil diinisialisasi lengkap dengan folder Drive & dummy files", "Admin System");
-
-  Logger.log("\n🎉 SELURUH SISTEM DEMO & BERKAS DUMMY SIAP DIGUNAKAN!");
+  Logger.log("\n🎉 SELURUH SISTEM DEMO & BERKAS DUMMY SPREADSHEET SIAP DIGUNAKAN!");
   Logger.log("Spreadsheet: " + ss.getUrl());
-  if (demoFolder) Logger.log("Folder Google Drive: " + demoFolder.getUrl());
 
   return {
     success: true,
-    message: "Sistem demo & berkas dummy berhasil disiapkan!",
+    message: "Sistem database spreadsheet 'foto-panggung' & foto dummy pernikahan berhasil disiapkan!",
     spreadsheetUrl: ss.getUrl(),
-    driveFolderUrl: demoFolder ? demoFolder.getUrl() : "",
-    driveFolderId: folderId
+    spreadsheetId: ss.getId(),
+    totalPhotos: dummyPhotos.length
   };
 }

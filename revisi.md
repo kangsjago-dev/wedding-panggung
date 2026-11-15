@@ -1,26 +1,29 @@
-# STATUS REVISI: SELESAI & TELAH DITERAPKAN (MERGED)
+# LAPORAN REVISI: MIGRASI PENUH DATA KE SPREADSHEET (TANPA GOOGLE DRIVE) & DATE PICKER
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUKSES DITERAPKAN (v2.0.0)
+STATUS: SUDAH DITERAPKAN (MERGED KE MASTER v2.1.0)
 TANGGAL PENERAPAN: 16 November 2026
 ================================================================================
 
-Seluruh poin perbaikan dan penambahan fitur dari pengguna telah berhasil diterapkan ke dalam kode basis dan disinkronkan pada `prd.md` (Living Context v2.0.0):
+### A. Rangkuman Eksekusi Perubahan
+1. **Pelepasan Total dari Google Drive Folder:**
+   - Katalog foto, kategori, dan metadata acara kini 100% bersumber dari Google Spreadsheet **`foto-panggung`** (Sheet **`Daftar_Foto`** dan Sheet **`Pengaturan`**).
+   - Pengguna bebas menambahkan foto cukup dengan menempelkan URL gambar (Google Drive view link, CDN, Unsplash, dll.) ke kolom `URL_Foto` di spreadsheet.
+2. **Date Picker Modern & Format Bahasa Indonesia:**
+   - Input tanggal acara di panel admin modal menggunakan pemilih tanggal interaktif (`<input type="date">`).
+   - Otomatis diformat menjadi format tanggal ramah bahasa Indonesia (contoh: *15 November 2026*) pada tampilan Hero Banner dan watermark panggung.
+3. **Pembersihan Antarmuka & Eliminasi Error 405:**
+   - Input folder Google Drive dan tombol sinkronisasi Drive dihapus dari panel admin.
+   - Seluruh pemanggilan DOM tervalidasi 100% aman tanpa exception null.
+   - Penyimpanan konfigurasi berlangsung langsung ke Google Apps Script dan Google Spreadsheet tanpa perantara third-party.
+4. **Live Auto-Sync Multi-Device:**
+   - Seluruh gadget (HP, laptop, tablet, layar panggung) melakukan polling otomatis setiap 20 detik secara live ke backend spreadsheet `foto-panggung`.
 
-1. [x] **Eliminasi Total Error HTTP Status 405:**
-   - Menghapus pemanggilan ke server pihak ketiga `api.restful-api.dev` yang memicu penolakan method `PUT` (Error 405).
-   - Menyederhanakan alur simpan: Data langsung disimpan ke Google Apps Script (yang menulis ke `foto-panggung`) jika URL ada, atau langsung disimpan di memori browser dengan mulus tanpa memicu error.
+---
 
-2. [x] **Generator Demo Setup dengan Dummy Files (`setupDemoSystemWithDummyFiles`):**
-   - Dibuatkan fungsi setup demo lengkap di `setup.gs`:
-     * Menginisialisasi spreadsheet `foto-panggung` (Sheet `Pengaturan`, `Daftar_Foto`, dan `Log_Aktivitas`).
-     * Membuat folder demo di Google Drive beserta 4 subfolder momen (`01. Prewedding`, `02. Akad Nikah`, `03. Resepsi`, `04. Photobooth`).
-     * Mengisi 8 foto dummy pernikahan beresolusi tinggi ke sheet `Daftar_Foto`.
-     * Membuat berkas dummy teks panduan di setiap subfolder Google Drive.
-     * Mengatur `DRIVE_FOLDER_ID` otomatis ke folder demo yang baru dibuat.
-
-3. [x] **Prinsip Non-Destruktif Utuh:**
-   - Seluruh fitur sebelumnya (Live Auto-Sync 20s, Badge Foto Baru auto-expire 10m, Canvas Frame Compositor, Filter Anti-File Rusak, Lightbox, Slideshow Panggung) 100% dipertahankan dan beroperasi optimal.
-
-Berkas `revisi.md` kini bersih dan siap untuk siklus kerja berikutnya.
+### B. Berkas yang Diperbarui
+1. `code.gs`: Backend API membaca data foto langsung dari Sheet `Daftar_Foto` di `foto-panggung` dan menyimpan konfigurasi ke Sheet `Pengaturan`.
+2. `index.html`: Antarmuka galeri responsif dengan Date Picker, utilitas konversi tanggal bahasa Indonesia, form admin bersih, dan live sync terpusat.
+3. `setup.gs`: Fungsi `setupDemoSystemWithDummyFiles()` menginisialisasi spreadsheet `foto-panggung` dan mengisinya dengan foto dummy resolusi tinggi tanpa folder Drive.
+4. `prd.md`: Master context diperbarui ke versi 2.1.0.
