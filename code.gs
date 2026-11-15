@@ -11,10 +11,10 @@
 // ================================================================================
 const WEDDING_CONFIG = {
   // Nama Event Acara
-  EVENT_NAME: "The Wedding of Romeo & Juliet",
+  EVENT_NAME: "Hans & Yurike",
 
   // Tanggal Acara
-  EVENT_DATE: "15 November 2026",
+  EVENT_DATE: "13 November 2026",
 
   // Venue / Lokasi Acara
   EVENT_VENUE: "Grand Ballroom, Jakarta",
@@ -301,6 +301,7 @@ function writeConfigToSheet(ss, configDict) {
         }
       }
     }
+    SpreadsheetApp.flush();
   } catch (e) {
     Logger.log("Gagal menulis ke sheet pengaturan: " + e.toString());
   }
@@ -353,6 +354,7 @@ function syncPhotosToSheet(ss, photos) {
     if (rows.length > 0) {
       sheet.getRange(2, 1, rows.length, 8).setValues(rows);
     }
+    SpreadsheetApp.flush();
   } catch (e) {
     Logger.log("Gagal sync foto ke sheet: " + e.toString());
   }
@@ -447,14 +449,22 @@ function handleApiRequest(e) {
       } catch (err) {}
     }
 
+    // Parsing config jika dikirim dalam bentuk JSON string via GET parameter
+    if (typeof params.config === "string") {
+      try {
+        params.config = JSON.parse(params.config);
+      } catch (errCfg) {}
+    }
+
     var action = params.action || "getGalleryData";
 
     if (action === "getGalleryData") {
       return getGalleryData();
     } else if (action === "adminLogin") {
       return adminLogin(params.pin);
-    } else if (action === "testAndSyncDriveFolder") {
-      return testAndSyncDriveFolder(params.pin, params.folderId);
+    } else if (action === "testAndSyncDriveFolder" || action === "syncDriveFolder") {
+      var targetFolder = params.folderId || (params.config && params.config.DRIVE_FOLDER_ID) || params.DRIVE_FOLDER_ID;
+      return testAndSyncDriveFolder(params.pin, targetFolder);
     } else if (action === "saveAdminSettings") {
       return saveAdminSettings(params.pin, params.config || params);
     } else if (action === "setupDatabase" || action === "setupSpreadsheetDatabase" || action === "setupDemo" || action === "setupDemoSystem" || action === "setupTargetSpreadsheetDatabase") {
@@ -466,6 +476,16 @@ function handleApiRequest(e) {
       } else {
         return { success: false, message: "Database spreadsheet belum dibuat / dihubungkan." };
       }
+    } else if (action === "getAdminUsers") {
+      return getAdminUsers(params.pin);
+    } else if (action === "addAdminUser") {
+      return addAdminUser(params.pin, params.newUser);
+    } else if (action === "deleteAdminUser") {
+      return deleteAdminUser(params.pin, params.targetUserId);
+    } else if (action === "changeAdminPin") {
+      return changeAdminPin(params.pin, params.newPin);
+    } else if (action === "getImageBase64") {
+      return getImageBase64(params.fileId);
     } else {
       return { success: false, message: "Aksi tidak dikenali: " + action };
     }
@@ -475,7 +495,9 @@ function handleApiRequest(e) {
 }
 
 /**
- * Mengambil data galeri langsung dari Google Spreadsheet 'foto-panggung' (Sheet 'Daftar_Foto')
+ * Mengambil data galeri foto.
+ * Sesuai instruksi: Data foto otomatis diambil langsung dari Google Drive (bukan dari spreadsheet Daftar_Foto).
+ * Menggunakan cache mikro 20 detik agar tidak membebani kuota API Google Drive pada live auto-refresh.
  */
 function getGalleryData() {
   try {
@@ -483,12 +505,60 @@ function getGalleryData() {
     var safeConfig = Object.assign({}, config);
     delete safeConfig.ADMIN_PIN;
 
+    var folderId = config.DRIVE_FOLDER_ID ? String(config.DRIVE_FOLDER_ID).trim() : "";
+    var matchFolder = folderId.match(/folders\/([a-zA-Z0-9_\-]+)/);
+    if (matchFolder && matchFolder[1]) folderId = matchFolder[1];
+
+    // Jika folder Google Drive telah diatur, prioritaskan pemindaian langsung dari Google Drive
+    if (folderId) {
+      var cache = CacheService.getScriptCache();
+      var cacheKey = "drive_gallery_" + folderId;
+      var cachedJson = cache.get(cacheKey);
+      if (cachedJson) {
+        try {
+          var parsed = JSON.parse(cachedJson);
+          return {
+            success: true,
+            isDemo: false,
+            message: "Foto diambil dari Google Drive (Cached)",
+            config: safeConfig,
+            categories: parsed.categories,
+            photos: parsed.photos,
+            totalPhotos: parsed.photos.length
+          };
+        } catch (eCache) {}
+      }
+
+      // Pindai folder Google Drive secara langsung
+      var driveScan = scanDriveFolderDirectly(folderId);
+      if (driveScan.success && driveScan.photos.length > 0) {
+        // Simpan di ScriptCache selama 20 detik untuk mencegah over-quota
+        try {
+          cache.put(cacheKey, JSON.stringify({
+            categories: driveScan.categories,
+            photos: driveScan.photos
+          }), 20);
+        } catch (ePut) {}
+
+        return {
+          success: true,
+          isDemo: false,
+          message: "Berhasil memindai " + driveScan.photos.length + " foto langsung dari Google Drive",
+          config: safeConfig,
+          categories: driveScan.categories,
+          photos: driveScan.photos,
+          totalPhotos: driveScan.photos.length
+        };
+      }
+    }
+
+    // Jika folder Google Drive belum diatur atau kosong, periksa apakah ada spreadsheet yang terhubung
     var ss = getDatabaseSpreadsheet();
     if (!ss) {
       return {
         success: true,
         isDemo: true,
-        message: "Spreadsheet 'foto-panggung' belum terhubung. Menampilkan galeri contoh.",
+        message: "Folder Google Drive belum diatur. Menampilkan galeri contoh.",
         config: safeConfig,
         categories: ["Semua Foto", "Prewedding", "Akad Nikah", "Resepsi", "Photobooth"],
         photos: getDemoPhotos(),
@@ -496,16 +566,14 @@ function getGalleryData() {
       };
     }
 
+    // Fallback: Jika ada data di sheet Daftar_Foto lama
     var sheetPhotos = ss.getSheetByName("Daftar_Foto");
     if (!sheetPhotos || sheetPhotos.getLastRow() < 2) {
       var initialDemo = getDemoPhotos();
-      if (sheetPhotos) {
-        syncPhotosToSheet(ss, initialDemo);
-      }
       return {
         success: true,
-        isDemo: false,
-        message: "Sheet 'Daftar_Foto' siap.",
+        isDemo: true,
+        message: "Folder Google Drive belum diatur. Menampilkan foto contoh.",
         config: safeConfig,
         categories: ["Semua Foto", "Prewedding", "Akad Nikah", "Resepsi", "Photobooth"],
         photos: initialDemo,
@@ -516,21 +584,10 @@ function getGalleryData() {
     var data = sheetPhotos.getDataRange().getValues();
     var headers = data[0];
     var photos = [];
-    var categoryMap = {};
+    var categoryMap = { "Semua Foto": true };
     var categories = ["Semua Foto"];
 
-    // Petakan indeks kolom secara dinamis berdasarkan header
-    var colMap = {
-      id: 0,
-      name: 1,
-      category: 2,
-      url: 3,
-      downloadUrl: 4,
-      size: 5,
-      timestamp: 6,
-      status: 7
-    };
-
+    var colMap = { id: 0, name: 1, category: 2, url: 3, downloadUrl: 4, size: 5, timestamp: 6, status: 7 };
     for (var h = 0; h < headers.length; h++) {
       var head = String(headers[h]).toLowerCase().trim();
       if (head.indexOf("id") === 0) colMap.id = h;
@@ -554,14 +611,12 @@ function getGalleryData() {
       var photoId = row[colMap.id] ? String(row[colMap.id]).trim() : ("p_" + r);
       var photoName = row[colMap.name] ? String(row[colMap.name]).trim() : ("Foto " + r);
       var photoCat = row[colMap.category] ? String(row[colMap.category]).trim() : "Galeri";
-      if (!photoCat) photoCat = "Galeri";
+      if (!photoCat || photoCat.toLowerCase() === "semua foto") photoCat = "Semua Foto";
 
-      // Normalisasi URL jika berasal dari Google Drive share link
       var normalizedUrl = normalizeDriveImageUrl(rawUrl) || rawUrl;
       var rawDownloadUrl = row[colMap.downloadUrl] ? String(row[colMap.downloadUrl]).trim() : "";
       var downloadUrl = normalizeDriveImageUrl(rawDownloadUrl) || rawDownloadUrl || normalizedUrl;
 
-      // Parsing waktu/timestamp
       var rawTime = row[colMap.timestamp];
       var photoTimestamp = Date.now();
       if (rawTime instanceof Date) {
@@ -571,7 +626,7 @@ function getGalleryData() {
         if (!isNaN(parsedTs)) photoTimestamp = parsedTs;
       }
 
-      if (!categoryMap[photoCat]) {
+      if (photoCat !== "Semua Foto" && !categoryMap[photoCat]) {
         categoryMap[photoCat] = true;
         categories.push(photoCat);
       }
@@ -587,7 +642,6 @@ function getGalleryData() {
       });
     }
 
-    // Urutkan dari yang terbaru
     photos.sort(function(a, b) {
       return (b.timestamp || 0) - (a.timestamp || 0);
     });
@@ -616,26 +670,237 @@ function getGalleryData() {
 }
 
 /**
- * Verifikasi Login Admin menggunakan PIN
+ * Memindai file foto langsung dari folder Google Drive tanpa menulis ke spreadsheet Daftar_Foto
+ */
+function scanDriveFolderDirectly(folderId) {
+  var cleanId = String(folderId || "").trim();
+  var match = cleanId.match(/folders\/([a-zA-Z0-9_\-]+)/);
+  if (match && match[1]) cleanId = match[1];
+
+  var folder;
+  try {
+    folder = DriveApp.getFolderById(cleanId);
+  } catch (errOpen) {
+    return { success: false, message: "Folder Google Drive tidak ditemukan: " + errOpen.toString() };
+  }
+
+  var folderName = folder.getName();
+  var scannedPhotos = [];
+  var categoryMap = { "Semua Foto": true };
+  var categories = ["Semua Foto"];
+
+  // 1. Pindai foto langsung di folder utama (kategori: Semua Foto)
+  var rootFiles = folder.getFiles();
+  while (rootFiles.hasNext()) {
+    var rf = rootFiles.next();
+    if (rf.getSize() >= 20480 && rf.getMimeType().indexOf('image/') === 0) {
+      var rfId = rf.getId();
+      var rfDate = rf.getLastUpdated ? (rf.getLastUpdated() || rf.getDateCreated()) : rf.getDateCreated();
+      var rfTimestamp = rfDate ? rfDate.getTime() : Date.now();
+      var rfName = cleanFileName(rf.getName());
+
+      scannedPhotos.push({
+        id: rfId,
+        name: rfName,
+        rawName: rf.getName(),
+        category: "Semua Foto",
+        thumbnailUrl: "https://drive.google.com/thumbnail?id=" + rfId + "&sz=w1000",
+        highResUrl: "https://drive.google.com/thumbnail?id=" + rfId + "&sz=w2500",
+        downloadUrl: "https://drive.google.com/uc?export=download&id=" + rfId,
+        sizeBytes: rf.getSize(),
+        timestamp: rfTimestamp
+      });
+    }
+  }
+
+  // 2. Pindai subfolder momen (misal: Prewedding, Akad Nikah, Resepsi, Photobooth)
+  var subFolders = folder.getFolders();
+  while (subFolders.hasNext()) {
+    var sub = subFolders.next();
+    var subCategory = cleanCategoryName(sub.getName());
+    if (subCategory && !categoryMap[subCategory]) {
+      categoryMap[subCategory] = true;
+      categories.push(subCategory);
+    }
+
+    var subFiles = sub.getFiles();
+    while (subFiles.hasNext()) {
+      var sf = subFiles.next();
+      if (sf.getSize() >= 20480 && sf.getMimeType().indexOf('image/') === 0) {
+        var sfId = sf.getId();
+        var sfDate = sf.getLastUpdated ? (sf.getLastUpdated() || sf.getDateCreated()) : sf.getDateCreated();
+        var sfTimestamp = sfDate ? sfDate.getTime() : Date.now();
+        var sfName = cleanFileName(sf.getName());
+
+        scannedPhotos.push({
+          id: sfId,
+          name: sfName,
+          rawName: sf.getName(),
+          category: subCategory,
+          thumbnailUrl: "https://drive.google.com/thumbnail?id=" + sfId + "&sz=w1000",
+          highResUrl: "https://drive.google.com/thumbnail?id=" + sfId + "&sz=w2500",
+          downloadUrl: "https://drive.google.com/uc?export=download&id=" + sfId,
+          sizeBytes: sf.getSize(),
+          timestamp: sfTimestamp
+        });
+      }
+    }
+  }
+
+  // Urutkan foto dari yang paling baru diunggah/diperbarui
+  scannedPhotos.sort(function(a, b) {
+    return (b.timestamp || 0) - (a.timestamp || 0);
+  });
+
+  return {
+    success: true,
+    folderName: folderName,
+    folderId: cleanId,
+    categories: categories,
+    photos: scannedPhotos,
+    totalPhotos: scannedPhotos.length
+  };
+}
+
+/**
+ * ==============================================================================
+ * SISTEM MANAJEMEN MULTI-USER ADMIN
+ * - Login hanya menggunakan PIN
+ * - Setiap user wajib memiliki PIN yang unik (berbeda satu sama lain)
+ * - Menampilkan nama pengguna yang sedang masuk
+ * ==============================================================================
+ */
+
+/**
+ * Mengambil daftar seluruh pengguna admin (internal backend)
+ */
+function getAdminUsersList() {
+  var props = PropertiesService.getScriptProperties();
+  var rawJson = props.getProperty("ADMIN_USERS_JSON");
+  var defaultPin = props.getProperty("ADMIN_PIN") || WEDDING_CONFIG.DEFAULT_ADMIN_PIN || "123456";
+
+  var users = [];
+  if (rawJson) {
+    try {
+      users = JSON.parse(rawJson);
+    } catch (eParse) {}
+  }
+
+  // Jika belum ada daftar user, buat user default pertama
+  if (!users || !Array.isArray(users) || users.length === 0) {
+    users = [
+      {
+        id: "usr_superadmin",
+        name: "Super Admin",
+        pin: defaultPin,
+        role: "Super Admin",
+        createdAt: "2026-11-15 00:00:00"
+      }
+    ];
+    saveAdminUsersList(users);
+  }
+
+  return users;
+}
+
+/**
+ * Menyimpan daftar pengguna admin ke Script Properties & Google Spreadsheet (Sheet 'Pengguna_Admin')
+ */
+function saveAdminUsersList(users) {
+  var props = PropertiesService.getScriptProperties();
+  props.setProperty("ADMIN_USERS_JSON", JSON.stringify(users));
+
+  // Sinkronkan ke spreadsheet jika terhubung
+  try {
+    var ss = getDatabaseSpreadsheet();
+    if (ss) {
+      var sheet = ss.getSheetByName("Pengguna_Admin");
+      if (!sheet) {
+        sheet = ss.insertSheet("Pengguna_Admin");
+      }
+      var headers = [["ID_User", "Nama_Pengguna", "PIN", "Peran", "Tanggal_Dibuat"]];
+      sheet.clear();
+      sheet.getRange(1, 1, 1, 5).setValues(headers)
+        .setBackground("#475569")
+        .setFontColor("#FFFFFF")
+        .setFontWeight("bold")
+        .setHorizontalAlignment("center");
+      sheet.setFrozenRows(1);
+
+      var rows = users.map(function(u) {
+        return [u.id || "", u.name || "", u.pin || "", u.role || "Admin", u.createdAt || ""];
+      });
+
+      if (rows.length > 0) {
+        sheet.getRange(2, 1, rows.length, 5).setValues(rows);
+      }
+      sheet.setColumnWidth(1, 150);
+      sheet.setColumnWidth(2, 200);
+      sheet.setColumnWidth(3, 120);
+      sheet.setColumnWidth(4, 140);
+      sheet.setColumnWidth(5, 180);
+      SpreadsheetApp.flush();
+    }
+  } catch (errSync) {
+    Logger.log("Info sync users to sheet: " + errSync.toString());
+  }
+}
+
+/**
+ * Mengambil daftar pengguna admin yang aman untuk UI (PIN disamarkan)
+ */
+function getSafeUsersList(users) {
+  return users.map(function(u) {
+    return {
+      id: u.id,
+      name: u.name,
+      role: u.role || "Admin",
+      createdAt: u.createdAt || "-",
+      pinMasked: "••••"
+    };
+  });
+}
+
+/**
+ * Verifikasi Login Admin: Murni hanya dengan PIN.
+ * Mengembalikan informasi nama pengguna yang sesuai dengan PIN tersebut.
  */
 function adminLogin(pin) {
   try {
-    var config = getEffectiveConfig();
     var inputPin = String(pin || "").trim();
-    var currentPin = String(config.ADMIN_PIN || WEDDING_CONFIG.DEFAULT_ADMIN_PIN).trim();
+    if (!inputPin) {
+      return { success: false, message: "PIN Admin tidak boleh kosong." };
+    }
 
-    if (inputPin && inputPin === currentPin) {
+    var users = getAdminUsersList();
+    var matchedUser = null;
+
+    for (var i = 0; i < users.length; i++) {
+      if (String(users[i].pin).trim() === inputPin) {
+        matchedUser = users[i];
+        break;
+      }
+    }
+
+    if (matchedUser) {
+      var config = getEffectiveConfig();
       var safeConfig = Object.assign({}, config);
       delete safeConfig.ADMIN_PIN;
+
       return {
         success: true,
-        message: "Login Admin berhasil!",
+        message: "Login berhasil! Selamat datang, " + matchedUser.name + ".",
+        user: {
+          id: matchedUser.id,
+          name: matchedUser.name,
+          role: matchedUser.role || "Admin"
+        },
         config: safeConfig
       };
     } else {
       return {
         success: false,
-        message: "PIN Admin salah. Silakan coba lagi."
+        message: "PIN Admin salah atau tidak terdaftar. Silakan coba lagi."
       };
     }
   } catch (e) {
@@ -647,7 +912,213 @@ function adminLogin(pin) {
 }
 
 /**
- * Sinkronisasi & Uji Coba ID Folder Google Drive
+ * Mengambil daftar admin untuk ditampilkan di panel pengaturan (butuh autentikasi PIN admin)
+ */
+function getAdminUsers(pin) {
+  var loginResult = adminLogin(pin);
+  if (!loginResult.success) {
+    return { success: false, message: "Akses ditolak: PIN tidak sah." };
+  }
+
+  var users = getAdminUsersList();
+  return {
+    success: true,
+    users: getSafeUsersList(users)
+  };
+}
+
+/**
+ * Menambahkan pengguna admin baru.
+ * Setiap user WAJIB memiliki PIN yang unik (berbeda satu sama lain).
+ */
+function addAdminUser(currentPin, newUser) {
+  var loginResult = adminLogin(currentPin);
+  if (!loginResult.success) {
+    return { success: false, message: "Akses ditolak: PIN otorisasi salah." };
+  }
+
+  if (typeof newUser === "string") {
+    try { newUser = JSON.parse(newUser); } catch (e) {}
+  }
+  if (!newUser || typeof newUser !== "object") {
+    return { success: false, message: "Data pengguna baru tidak valid." };
+  }
+
+  var name = String(newUser.name || "").trim();
+  var pin = String(newUser.pin || "").trim();
+  var role = String(newUser.role || "Admin").trim();
+
+  if (!name) {
+    return { success: false, message: "Nama admin tidak boleh kosong." };
+  }
+  if (!pin || pin.length < 4) {
+    return { success: false, message: "PIN admin minimal 4 karakter (angka/huruf)." };
+  }
+
+  var users = getAdminUsersList();
+
+  // Validasi Keunikan PIN: Tidak boleh sama dengan PIN user lain
+  for (var i = 0; i < users.length; i++) {
+    if (String(users[i].pin).trim() === pin) {
+      return {
+        success: false,
+        message: "PIN '" + pin + "' sudah digunakan oleh pengguna '" + users[i].name + "'. Setiap user wajib memiliki PIN yang berbeda!"
+      };
+    }
+  }
+
+  var tz = Session.getScriptTimeZone() || "GMT+7";
+  var nowFormatted = Utilities.formatDate(new Date(), tz, "yyyy-MM-dd HH:mm:ss");
+
+  var newUserObj = {
+    id: "usr_" + Date.now().toString(36) + "_" + Math.floor(Math.random() * 1000),
+    name: name,
+    pin: pin,
+    role: role,
+    createdAt: nowFormatted
+  };
+
+  users.push(newUserObj);
+  saveAdminUsersList(users);
+
+  // Catat ke log aktivitas
+  try {
+    var ss = getDatabaseSpreadsheet();
+    if (ss) {
+      logActivityToSheet(ss, "Tambah Pengguna Admin", "Menambahkan user baru: " + name + " (Peran: " + role + ")", loginResult.user.name);
+    }
+  } catch (eLog) {}
+
+  return {
+    success: true,
+    message: "Pengguna '" + name + "' berhasil ditambahkan dengan PIN tersendiri!",
+    users: getSafeUsersList(users)
+  };
+}
+
+/**
+ * Menghapus pengguna admin
+ */
+function deleteAdminUser(currentPin, targetUserId) {
+  var loginResult = adminLogin(currentPin);
+  if (!loginResult.success) {
+    return { success: false, message: "Akses ditolak: PIN otorisasi salah." };
+  }
+
+  var users = getAdminUsersList();
+  if (users.length <= 1) {
+    return { success: false, message: "Tidak dapat menghapus. Sistem wajib memiliki minimal 1 pengguna admin!" };
+  }
+
+  var targetIdx = -1;
+  for (var i = 0; i < users.length; i++) {
+    if (users[i].id === targetUserId) {
+      targetIdx = i;
+      break;
+    }
+  }
+
+  if (targetIdx === -1) {
+    return { success: false, message: "Pengguna tidak ditemukan." };
+  }
+
+  var deletedUser = users[targetIdx];
+
+  // Cegah menghapus user yang sedang aktif login jika ID sama
+  if (deletedUser.id === loginResult.user.id) {
+    return { success: false, message: "Anda tidak dapat menghapus akun Anda sendiri saat sedang masuk!" };
+  }
+
+  users.splice(targetIdx, 1);
+  saveAdminUsersList(users);
+
+  try {
+    var ss = getDatabaseSpreadsheet();
+    if (ss) {
+      logActivityToSheet(ss, "Hapus Pengguna Admin", "Menghapus user: " + deletedUser.name, loginResult.user.name);
+    }
+  } catch (eLog) {}
+
+  return {
+    success: true,
+    message: "Pengguna '" + deletedUser.name + "' berhasil dihapus.",
+    users: getSafeUsersList(users)
+  };
+}
+
+/**
+ * Mengganti PIN admin pengguna aktif
+ */
+function changeAdminPin(currentPin, newPin) {
+  var loginResult = adminLogin(currentPin);
+  if (!loginResult.success) {
+    return { success: false, message: "Akses ditolak: PIN otorisasi lama tidak cocok." };
+  }
+
+  var cleanNew = String(newPin || "").trim();
+  if (cleanNew.length < 4) {
+    return { success: false, message: "PIN baru minimal 4 karakter (angka/kombinasi unik)." };
+  }
+
+  var users = getAdminUsersList();
+  for (var i = 0; i < users.length; i++) {
+    if (users[i].id !== loginResult.user.id && String(users[i].pin).trim() === cleanNew) {
+      return {
+        success: false,
+        message: "PIN '" + cleanNew + "' sudah digunakan oleh pengguna '" + users[i].name + "'! Setiap user wajib memiliki PIN yang unik."
+      };
+    }
+  }
+
+  for (var j = 0; j < users.length; j++) {
+    if (users[j].id === loginResult.user.id || (loginResult.user.role === "Super Admin" && users[j].role === "Super Admin")) {
+      users[j].pin = cleanNew;
+      break;
+    }
+  }
+
+  saveAdminUsersList(users);
+  PropertiesService.getScriptProperties().setProperty("ADMIN_PIN", cleanNew);
+
+  return {
+    success: true,
+    message: "PIN Anda berhasil diperbarui ke: " + cleanNew,
+    newPin: cleanNew
+  };
+}
+
+/**
+ * Mengambil Base64 Data URI dari gambar Google Drive untuk canvas tanpa terkena blokir CORS
+ */
+function getImageBase64(fileIdOrUrl) {
+  try {
+    var cleanId = String(fileIdOrUrl || "").trim();
+    if (!cleanId) return { success: false, message: "ID atau URL file kosong." };
+
+    var match = cleanId.match(/\/d\/([a-zA-Z0-9_\-]+)/) || cleanId.match(/id=([a-zA-Z0-9_\-]+)/);
+    if (match && match[1]) cleanId = match[1];
+
+    var file = DriveApp.getFileById(cleanId);
+    var blob = file.getBlob();
+    var mime = blob.getContentType() || "image/jpeg";
+    var base64Data = Utilities.base64Encode(blob.getBytes());
+
+    return {
+      success: true,
+      contentType: mime,
+      fileName: file.getName(),
+      dataUrl: "data:" + mime + ";base64," + base64Data
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Gagal mengambil data gambar: " + e.toString()
+    };
+  }
+}
+
+/**
+ * Sinkronisasi & Uji Coba ID Folder Google Drive (Tanpa menulis ke sheet Daftar_Foto)
  */
 function testAndSyncDriveFolder(pin, folderId) {
   var loginResult = adminLogin(pin);
@@ -657,7 +1128,7 @@ function testAndSyncDriveFolder(pin, folderId) {
 
   var cleanId = String(folderId || "").trim();
   if (!cleanId) {
-    return { success: false, message: "ID Folder Google Drive tidak boleh kosong." };
+    return { success: false, message: "Tautan atau ID Folder Google Drive tidak boleh kosong." };
   }
 
   var match = cleanId.match(/folders\/([a-zA-Z0-9_\-]+)/);
@@ -666,35 +1137,31 @@ function testAndSyncDriveFolder(pin, folderId) {
   }
 
   try {
-    var folder = DriveApp.getFolderById(cleanId);
-    var folderName = folder.getName();
-
-    var subCount = 0;
-    var subIter = folder.getFolders();
-    while (subIter.hasNext()) {
-      subIter.next();
-      subCount++;
-    }
-
-    var imgCount = 0;
-    var fileIter = folder.getFiles();
-    while (fileIter.hasNext()) {
-      var f = fileIter.next();
-      if (f.getSize() >= 20480 && f.getMimeType().indexOf('image/') === 0) {
-        imgCount++;
-      }
-    }
-
     PropertiesService.getScriptProperties().setProperty("DRIVE_FOLDER_ID", cleanId);
+
+    // Hapus cache lama agar foto langsung segar dari Drive
+    var cache = CacheService.getScriptCache();
+    cache.remove("drive_gallery_" + cleanId);
+
+    var ss = getDatabaseSpreadsheet();
+    if (ss) {
+      writeConfigToSheet(ss, { DRIVE_FOLDER_ID: cleanId });
+      logActivityToSheet(ss, "Tautkan Folder Google Drive", "Folder ID: " + cleanId + " ditautkan oleh " + loginResult.user.name, loginResult.user.name);
+    }
+
+    var scanResult = scanDriveFolderDirectly(cleanId);
+    if (!scanResult.success) {
+      return scanResult;
+    }
+
     var updatedGallery = getGalleryData();
 
     return {
       success: true,
-      message: "Folder Google Drive berhasil disinkronkan!",
-      folderName: folderName,
+      message: "Sukses! Berhasil membaca " + scanResult.totalPhotos + " foto langsung dari Google Drive '" + scanResult.folderName + "'!",
+      folderName: scanResult.folderName,
       folderId: cleanId,
-      subfolderCount: subCount,
-      rootImageCount: imgCount,
+      totalPhotos: scanResult.totalPhotos,
       galleryData: updatedGallery
     };
 
@@ -707,13 +1174,21 @@ function testAndSyncDriveFolder(pin, folderId) {
 }
 
 /**
- * Menyimpan Pengaturan Teknis Admin
- * (Hanya memproses Folder ID, Bingkai, Slideshow Interval, dan PIN. Informasi Pernikahan tidak diubah)
+ * Menyimpan Pengaturan Teknis Admin & Informasi Acara
  */
 function saveAdminSettings(pin, updatedConfig) {
   var loginResult = adminLogin(pin);
   if (!loginResult.success) {
     return { success: false, message: "Akses ditolak. PIN tidak sah." };
+  }
+
+  if (typeof updatedConfig === "string") {
+    try {
+      updatedConfig = JSON.parse(updatedConfig);
+    } catch (eParse) {}
+  }
+  if (!updatedConfig || typeof updatedConfig !== "object") {
+    updatedConfig = {};
   }
 
   try {
@@ -738,11 +1213,26 @@ function saveAdminSettings(pin, updatedConfig) {
       props.setProperty("EVENT_VENUE", String(updatedConfig.EVENT_VENUE).trim());
     }
 
+    if (updatedConfig.SUBTITLE !== undefined && String(updatedConfig.SUBTITLE).trim()) {
+      props.setProperty("SUBTITLE", String(updatedConfig.SUBTITLE).trim());
+    }
+
+    if (updatedConfig.WELCOME_MESSAGE !== undefined && String(updatedConfig.WELCOME_MESSAGE).trim()) {
+      props.setProperty("WELCOME_MESSAGE", String(updatedConfig.WELCOME_MESSAGE).trim());
+    }
+
+    var dbSpreadsheet = getDatabaseSpreadsheet(updatedConfig.SPREADSHEET_ID);
+
     if (updatedConfig.DRIVE_FOLDER_ID !== undefined) {
       var cleanFolderId = String(updatedConfig.DRIVE_FOLDER_ID).trim();
       var match = cleanFolderId.match(/folders\/([a-zA-Z0-9_\-]+)/);
       if (match && match[1]) cleanFolderId = match[1];
       props.setProperty("DRIVE_FOLDER_ID", cleanFolderId);
+
+      // Bersihkan cache galeri saat folder ID diperbarui
+      if (cleanFolderId) {
+        CacheService.getScriptCache().remove("drive_gallery_" + cleanFolderId);
+      }
     }
 
     if (updatedConfig.SLIDESHOW_INTERVAL_SEC) {
@@ -758,7 +1248,24 @@ function saveAdminSettings(pin, updatedConfig) {
     }
 
     if (updatedConfig.NEW_PIN && String(updatedConfig.NEW_PIN).trim().length >= 4) {
-      props.setProperty("ADMIN_PIN", String(updatedConfig.NEW_PIN).trim());
+      var newPin = String(updatedConfig.NEW_PIN).trim();
+      var users = getAdminUsersList();
+      for (var uCheck = 0; uCheck < users.length; uCheck++) {
+        if (users[uCheck].id !== loginResult.user.id && String(users[uCheck].pin).trim() === newPin) {
+          return {
+            success: false,
+            message: "Gagal mengganti PIN: PIN '" + newPin + "' sudah digunakan oleh pengguna '" + users[uCheck].name + "'! Setiap user wajib memiliki PIN unik."
+          };
+        }
+      }
+      for (var u = 0; u < users.length; u++) {
+        if (users[u].id === loginResult.user.id || (loginResult.user.role === "Super Admin" && users[u].role === "Super Admin")) {
+          users[u].pin = newPin;
+          break;
+        }
+      }
+      saveAdminUsersList(users);
+      props.setProperty("ADMIN_PIN", newPin);
     }
 
     if (updatedConfig.SPREADSHEET_ID !== undefined) {
@@ -770,10 +1277,10 @@ function saveAdminSettings(pin, updatedConfig) {
 
     // Sinkronisasi pembaruan ke Google Spreadsheet Database jika terhubung
     try {
-      var dbSpreadsheet = getDatabaseSpreadsheet(updatedConfig.SPREADSHEET_ID);
       if (dbSpreadsheet) {
         writeConfigToSheet(dbSpreadsheet, updatedConfig);
-        logActivityToSheet(dbSpreadsheet, "Pembaruan Pengaturan", "Admin memperbarui data acara & teknis via Web Admin", "Admin Web");
+        logActivityToSheet(dbSpreadsheet, "Pembaruan Pengaturan", "Admin (" + loginResult.user.name + ") memperbarui data acara via Web Admin", loginResult.user.name);
+        SpreadsheetApp.flush();
       }
     } catch (sheetErr) {
       Logger.log("Info write sheet: " + sheetErr.toString());
@@ -783,7 +1290,7 @@ function saveAdminSettings(pin, updatedConfig) {
 
     return {
       success: true,
-      message: "Pengaturan acara dan bingkai foto berhasil disimpan ke spreadsheet 'foto-panggung'!",
+      message: "Pengaturan berhasil disimpan!",
       galleryData: updatedGallery
     };
 

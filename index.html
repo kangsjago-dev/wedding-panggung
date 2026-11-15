@@ -6,7 +6,22 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>The Wedding of Romeo & Juliet - Wedding Photo Gallery</title>
+
+  <!-- Inline Micro-Loader: Mencegah Kedipan Nama Default Lama (Zero FOUC) -->
+  <script>
+    (function() {
+      try {
+        var s = localStorage.getItem("WEDDING_SAVED_CONFIG");
+        if (s) {
+          var c = JSON.parse(s);
+          var name = c.EVENT_NAME || c.COUPLE_NAME;
+          if (name) {
+            document.title = name + " - Wedding Photo Gallery";
+          }
+        }
+      } catch(e) {}
+    })();
+  </script>
 
   <!-- Google Fonts: Cormorant Garamond (Serif Elegan) & Plus Jakarta Sans (Modern Clean) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -192,11 +207,12 @@
       position: sticky;
       top: 0;
       z-index: 40;
-      background: rgba(250, 248, 245, 0.92);
+      background: rgba(250, 248, 245, 0.95);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(197, 168, 128, 0.2);
-      padding: 14px 20px;
+      padding: 12px 20px;
+      overflow: hidden;
     }
 
     .filter-container {
@@ -206,6 +222,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+      min-width: 0;
     }
 
     .filter-scroll {
@@ -216,10 +233,36 @@
       -ms-overflow-style: none;
       padding: 2px 0;
       flex: 1;
+      min-width: 0;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
     }
 
     .filter-scroll::-webkit-scrollbar {
       display: none;
+    }
+
+    @media (max-width: 640px) {
+      .filter-wrapper {
+        padding: 8px 12px;
+      }
+      .filter-container {
+        gap: 8px;
+      }
+      .filter-scroll {
+        gap: 6px;
+      }
+      .filter-pill {
+        padding: 6px 12px;
+        font-size: 0.82rem;
+      }
+      .action-controls-group {
+        gap: 6px;
+      }
+      .ctrl-icon-btn {
+        width: 34px;
+        height: 34px;
+      }
     }
 
     .filter-pill {
@@ -835,6 +878,64 @@
       line-height: 1.4;
     }
 
+    .admin-tabs-nav {
+      display: flex;
+      gap: 6px;
+      background: #F1F5F9;
+      padding: 5px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .admin-tabs-nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    .admin-tab-btn {
+      flex: 1;
+      white-space: nowrap;
+      padding: 9px 12px;
+      border-radius: 9px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #64748B;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .admin-tab-btn:hover {
+      color: var(--text-main);
+    }
+
+    .admin-tab-btn.active {
+      background: #FFFFFF;
+      color: var(--gold-dark);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .admin-tab-pane {
+      display: none;
+      animation: fadeInTab 0.2s ease;
+    }
+
+    .admin-tab-pane.active {
+      display: block;
+    }
+
+    @keyframes fadeInTab {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .admin-sync-box {
       background: var(--gold-light);
       border: 1px solid var(--gold-border);
@@ -1121,7 +1222,7 @@
 
     <div class="slideshow-watermark">
       <h2 id="slideshowCouple">The Wedding of Romeo & Juliet</h2>
-      <p id="slideshowCategory">15 November 2026 • Grand Ballroom, Jakarta</p>
+      <p id="slideshowCategory">13 November 2026 • Grand Ballroom, Jakarta</p>
     </div>
 
     <div class="slideshow-stage">
@@ -1189,7 +1290,6 @@
           <div class="admin-field-group">
             <label class="admin-label" for="adminPinInput">PIN Rahasia Admin</label>
             <input type="password" id="adminPinInput" class="admin-input" placeholder="Masukkan PIN (Default: 123456)" required autocomplete="current-password">
-            <div class="admin-help-text">PIN bawaan awal adalah: <strong>123456</strong> (dapat diubah di dalam).</div>
           </div>
 
           <div id="loginAlertBox" class="admin-alert-box error"></div>
@@ -1209,13 +1309,18 @@
   <div id="adminSettingsModal" class="admin-modal-overlay">
     <div class="admin-card">
       <div class="admin-card-header">
-        <h3>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-          <span>Pengaturan Admin & Vercel</span>
-        </h3>
+        <div>
+          <h3 style="display: flex; align-items: center; gap: 8px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>Pengaturan Admin & Vercel</span>
+          </h3>
+          <div id="adminUserGreeting" style="font-size: 0.78rem; color: #1E3A8A; background: #DBEAFE; padding: 2px 10px; border-radius: 9999px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; border: 1px solid #BFDBFE;">
+            👤 Masuk sebagai: <span id="adminGreetingName">Super Admin</span>
+          </div>
+        </div>
         <button class="ctrl-icon-btn" onclick="closeAdminSettingsModal()" style="width: 32px; height: 32px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -1225,108 +1330,124 @@
       </div>
 
       <div class="admin-card-body">
-        <!-- Bagian 1: Tautan API Google Apps Script (Untuk Vercel) -->
-        <div class="admin-sync-box" style="background: #F8FAFC; border-color: #CBD5E1;">
-          <div class="admin-sync-header">
-            <div class="admin-sync-title" style="color: #0F172A;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="2" y1="12" x2="22" y2="12"></line>
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-              </svg>
-              <span>Koneksi Backend Google Apps Script (Vercel)</span>
-            </div>
-            <span id="apiStatusBadge" style="font-size: 0.75rem; color: #10B981; font-weight: 600;"></span>
-          </div>
+        <!-- Segmented Navigation Tabs (Minimalist & Responsif) -->
+        <div class="admin-tabs-nav">
+          <button type="button" class="admin-tab-btn active" id="tabBtn-event" onclick="switchAdminTab('event')">
+            <span>💍 Acara</span>
+          </button>
+          <button type="button" class="admin-tab-btn" id="tabBtn-media" onclick="switchAdminTab('media')">
+            <span>🖼️ Foto & Bingkai</span>
+          </button>
+          <button type="button" class="admin-tab-btn" id="tabBtn-users" onclick="switchAdminTab('users')">
+            <span>👥 Admin & PIN</span>
+          </button>
+          <button type="button" class="admin-tab-btn" id="tabBtn-cloud" onclick="switchAdminTab('cloud')">
+            <span>☁️ Cloud Vercel</span>
+          </button>
+        </div>
 
-          <div class="admin-field-group" style="margin-bottom: 8px;">
+        <!-- Tab 1: Acara & Pernikahan -->
+        <div class="admin-tab-pane active" id="tabPane-event">
+          <div class="admin-field-group">
             <label class="admin-label" for="cfgGasApiUrl">URL Web App Google Apps Script</label>
-            <input type="text" id="cfgGasApiUrl" class="admin-input" placeholder="https://script.google.com/macros/s/.../exec">
-            <div class="admin-help-text">
-              Salin URL Web App dari Google Apps Script (setelah Deploy: <em>Execute as: Me</em>, <em>Who has access: Anyone</em>).
-            </div>
-          </div>
-
-          <div class="admin-field-group" style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #CBD5E1;">
-            <button type="button" id="btnInitDatabase" class="admin-btn admin-btn-secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; padding: 10px;" onclick="handleInitDatabaseDirectly()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-              </svg>
-              <span id="initDbBtnText">⚡ Buat Tabel & Foto Dummy di Spreadsheet</span>
-            </button>
-            <div class="admin-help-text" style="text-align: center; margin-top: 6px;">
-              Klik tombol di atas untuk membuat Sheet <em>Pengaturan</em>, <em>Daftar_Foto</em> (lengkap 8 foto dummy), dan <em>Log_Aktivitas</em> pada spreadsheet Anda.
-            </div>
-          </div>
-        </div>
-
-        <!-- Bagian 2: Bingkai Foto Kustom -->
-        <div class="admin-sync-box" style="background: #FDFBF7; border-color: rgba(197, 168, 128, 0.4);">
-          <div class="admin-sync-header">
-            <div class="admin-sync-title">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-              </svg>
-              <span>Bingkai Foto Kustom Saat Download</span>
-            </div>
-            <span id="frameStatusBadge" style="font-size: 0.75rem; color: #10B981; font-weight: 600;"></span>
-          </div>
-
-          <div class="admin-field-group" style="margin-bottom: 8px;">
-            <label class="admin-label" for="cfgFrameImageUrl">Tautan / ID File Bingkai PNG Google Drive</label>
-            <input type="text" id="cfgFrameImageUrl" class="admin-input" placeholder="Contoh: https://drive.google.com/file/d/1XYZ.../view atau ID file">
-            <div class="admin-help-text">
-              Unggah file bingkai berformat <strong>PNG Transparan</strong> ke Google Drive, setel izin <em>"Anyone with the link can view"</em>, lalu tempel tautannya di sini.
-            </div>
-          </div>
-        </div>
-
-        <!-- Bagian 3: Informasi Acara & Pernikahan (DAPAT DIUBAH / CUSTOM) -->
-        <div class="admin-sync-box" style="background: #FFFFFF; border-color: var(--gold-border);">
-          <div class="admin-sync-header">
-            <div class="admin-sync-title" style="color: var(--text-main);">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
-                <path d="M12 20h9"></path>
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-              </svg>
-              <span>Informasi Acara & Pernikahan</span>
-            </div>
-            <span style="font-size: 0.72rem; color: #065F46; font-weight: 700; background: #ECFDF5; padding: 2px 8px; border-radius: 9999px; border: 1px solid #A7F3D0;">
-              ✓ Dapat Dikustomisasi
-            </span>
-          </div>
-
-          <div class="admin-field-group" style="margin-bottom: 10px;">
-            <label class="admin-label" for="cfgCoupleName">Nama Event</label>
             <input type="text" id="cfgCoupleName" class="admin-input" placeholder="Contoh: The Wedding of Romeo & Juliet">
           </div>
 
-          <div class="admin-field-group" style="margin-bottom: 10px;">
-            <label class="admin-label" for="cfgEventDate">Tanggal Acara (Date Picker)</label>
-            <input type="date" id="cfgEventDate" class="admin-input">
+            <label class="admin-label" for="cfgEventDate">Tanggal Acara (Klik untuk Buka Kalender)</label>
+            <input type="date" id="cfgEventDate" class="admin-input" onclick="try{this.showPicker()}catch(e){}" onfocus="try{this.showPicker()}catch(e){}" style="cursor: pointer;">
           </div>
 
-          <div class="admin-field-group" style="margin-bottom: 10px;">
             <label class="admin-label" for="cfgEventVenue">Venue (Lokasi Acara)</label>
             <input type="text" id="cfgEventVenue" class="admin-input" placeholder="Contoh: Grand Ballroom, Jakarta">
           </div>
 
-          <div class="admin-help-text">
-            Perubahan nama event, tanggal, dan venue akan otomatis memperbarui tampilan Hero Banner dan Watermark Panggung.
+            <label class="admin-label" for="cfgSubtitle">Subjudul Galeri</label>
+            <input type="text" id="cfgSubtitle" class="admin-input" placeholder="Contoh: The Wedding Gallery & Precious Memories">
+          </div>
+
+            <label class="admin-label" for="cfgWelcomeMessage">Pesan Sambutan Tamu</label>
+            <textarea id="cfgWelcomeMessage" class="admin-input" rows="2" style="resize: vertical; font-family: inherit; font-size: 0.88rem;" placeholder="Pesan sambutan hangat untuk tamu undangan..."></textarea>
           </div>
         </div>
 
-        <!-- Bagian 5: Keamanan & PIN Admin -->
-        <h4 style="font-size: 0.92rem; font-weight: 700; color: var(--text-main); margin-top: 20px; margin-bottom: 12px; border-bottom: 1px solid #E2E8F0; padding-bottom: 6px;">
-          Keamanan & PIN Admin (Opsional)
-        </h4>
+          <div class="admin-help-text">
+        <div class="admin-tab-pane" id="tabPane-media">
+          <div class="admin-field-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="admin-label" for="cfgDriveFolderId" style="margin-bottom: 0;">Katalog Foto Google Drive</label>
+              <span id="driveFolderStatusBadge" style="font-size: 0.75rem; color: #10B981; font-weight: 600;"></span>
+            </div>
+            <input type="text" id="cfgDriveFolderId" class="admin-input" placeholder="Tautan / ID Folder Google Drive">
+            <button type="button" id="btnSyncDrivePhotos" class="btn btn-outline" style="width: 100%; margin-top: 8px; justify-content: center; padding: 9px; font-size: 0.84rem;" onclick="handleSyncDrivePhotosDirectly()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="syncDriveBtnIcon">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+              </svg>
+              <span id="syncDriveBtnText">🔄 Sinkronkan Foto Google Drive ke Galeri</span>
+            </button>
+          </div>
+        </div>
+        <!-- Bagian 4: Manajemen Pengguna Admin (Multi-User dengan PIN Unik) -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="admin-label" for="cfgFrameImageUrl" style="margin-bottom: 0;">Bingkai PNG Transparan Saat Download</label>
+              <span id="frameStatusBadge" style="font-size: 0.75rem; font-weight: 600;"></span>
+            </div>
+            <span style="font-size: 0.72rem; color: #1E40AF; font-weight: 700; background: #EFF6FF; padding: 2px 8px; border-radius: 9999px; border: 1px solid #BFDBFE;">
+            <div class="admin-help-text">Unggah file bingkai PNG transparan ke Google Drive dengan izin <em>"Anyone with the link can view"</em>.</div>
+          </div>
+        </div>
 
-        <div class="admin-field-group">
-          <label class="admin-label" for="cfgNewPin">Ganti PIN Admin Baru</label>
-          <input type="password" id="cfgNewPin" class="admin-input" placeholder="Kosongkan jika tidak ingin mengubah PIN">
-          <div class="admin-help-text">Minimal 4 karakter (angka atau kombinasi huruf).</div>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
+        <div class="admin-tab-pane" id="tabPane-users">
+          <!-- Ganti PIN Akun Pribadi -->
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px; margin-bottom: 14px;">
+            <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">🔐 Ganti PIN Akun Anda</div>
+            <div style="display: flex; gap: 8px;">
+              <input type="password" id="cfgNewPin" class="admin-input" placeholder="PIN Baru (Min 4 digit)" style="padding: 7px 10px; font-size: 0.84rem;">
+              <button type="button" class="btn btn-gold" style="white-space: nowrap; padding: 7px 14px; font-size: 0.82rem;" onclick="handleStandaloneChangePin()">Perbarui PIN</button>
+            </div>
+            <div id="changePinAlertBox" class="admin-alert-box" style="margin-top: 6px; font-size: 0.78rem;"></div>
+          </div>
+
+          <!-- Form Tambah Admin Baru -->
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px; margin-bottom: 14px;">
+            <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">➕ Tambah Admin Baru</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+              <div>
+                <label class="admin-label" style="font-size: 0.75rem;" for="newAdminNameInput">Nama Admin</label>
+                <input type="text" id="newAdminNameInput" class="admin-input" placeholder="Contoh: Panitia / Foto 1" style="padding: 7px 10px; font-size: 0.84rem;">
+              </div>
+              <div>
+                <label class="admin-label" style="font-size: 0.75rem;" for="newAdminPinInput">PIN Masuk (Unik)</label>
+                <input type="password" id="newAdminPinInput" class="admin-input" placeholder="Min 4 digit unik" style="padding: 7px 10px; font-size: 0.84rem;">
+              </div>
+            </div>
+            <div id="addUserAlertBox" class="admin-alert-box error" style="margin-bottom: 8px; font-size: 0.78rem;"></div>
+            <button type="button" id="btnAddAdminUserBtn" class="btn btn-gold" style="width: 100%; padding: 8px; font-size: 0.84rem; justify-content: center;" onclick="handleAddAdminUser()">
+              <span>+ Tambahkan Admin</span>
+            </button>
+          </div>
+
+          <!-- Daftar Admin Terdaftar -->
+          <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Daftar Pengguna Aktif:</div>
+          <div id="adminUsersList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+        </div>
+
+        <!-- Bagian 5: Keamanan & PIN Admin -->
+        <div class="admin-tab-pane" id="tabPane-cloud">
+          <div class="admin-field-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="admin-label" for="cfgGasApiUrl" style="margin-bottom: 0;">URL Web App Google Apps Script</label>
+              <span id="apiStatusBadge" style="font-size: 0.75rem; color: #10B981; font-weight: 600;"></span>
+            </div>
+            <input type="text" id="cfgGasApiUrl" class="admin-input" placeholder="https://script.google.com/macros/s/.../exec">
+            <div class="admin-help-text" style="margin-top: 6px;">
+              Salin URL Web App dari Google Apps Script (setelah Deploy: <em>Execute as: Me</em>, <em>Who has access: Anyone</em>).
+            </div>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
+            💡 <strong>Panduan Vercel:</strong> Hubungkan repositori ini ke <a href="https://vercel.com" target="_blank" style="color: var(--gold-dark); font-weight: 600;">Vercel.app</a>. Web app akan langsung aktif online dengan domain gratis Vercel.
+          </div>
         </div>
 
         <div id="saveAlertBox" class="admin-alert-box"></div>
@@ -1365,7 +1486,7 @@
     const GLOBAL_CONFIG = {
       GAS_API_URL: "",
       EVENT_NAME: "The Wedding of Romeo & Juliet",
-      EVENT_DATE: "15 November 2026",
+      EVENT_DATE: "13 November 2026",
       EVENT_VENUE: "Grand Ballroom, Jakarta",
       SUBTITLE: "The Wedding Gallery & Precious Memories",
       WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
@@ -1476,6 +1597,16 @@
           google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).saveAdminSettings(payload.pin, payload.config || payload);
         } else if (action === "setupDatabase" || action === "setupSpreadsheetDatabase") {
           google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).setupDatabaseSpreadsheet();
+        } else if (action === "getAdminUsers") {
+          google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).getAdminUsers(payload.pin);
+        } else if (action === "addAdminUser") {
+          google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).addAdminUser(payload.pin, payload.newUser);
+        } else if (action === "deleteAdminUser") {
+          google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).deleteAdminUser(payload.pin, payload.targetUserId);
+        } else if (action === "getImageBase64") {
+          google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).getImageBase64(payload.fileId);
+        } else if (action === "changeAdminPin") {
+          google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).changeAdminPin(payload.currentPin, payload.newPin);
         }
         return;
       }
@@ -1486,9 +1617,46 @@
           loadFallbackData("URL API Backend belum dihubungkan");
         } else if (action === "adminLogin") {
           if (payload.pin === "123456" || payload.pin === "admin") {
-            onSuccess({ success: true, message: "Login demo lokal berhasil!" });
+            onSuccess({
+              success: true,
+              message: "Login demo lokal berhasil!",
+              user: { id: "usr_superadmin", name: "Super Admin", role: "Super Admin" }
+            });
           } else {
             onError({ message: "PIN salah. Gunakan default: 123456" });
+          }
+        } else if (action === "getAdminUsers") {
+          onSuccess({
+            success: true,
+            users: [
+              { id: "usr_superadmin", name: "Super Admin", role: "Super Admin", pinMasked: "••••" }
+            ]
+          });
+        } else if (action === "addAdminUser") {
+          onSuccess({
+            success: true,
+            message: "Pengguna " + payload.newUser.name + " berhasil ditambahkan (Demo Lokal)",
+            users: [
+              { id: "usr_superadmin", name: "Super Admin", role: "Super Admin", pinMasked: "••••" },
+              { id: "usr_" + Date.now(), name: payload.newUser.name, role: payload.newUser.role || "Admin", pinMasked: "••••" }
+            ]
+          });
+        } else if (action === "deleteAdminUser") {
+          onSuccess({
+            success: true,
+            message: "Pengguna berhasil dihapus (Demo Lokal)",
+            users: [
+              { id: "usr_superadmin", name: "Super Admin", role: "Super Admin", pinMasked: "••••" }
+            ]
+          });
+        } else if (action === "changeAdminPin") {
+          if (payload.newPin && payload.newPin.length >= 4) {
+            onSuccess({
+              success: true,
+              message: "PIN Admin berhasil diperbarui!"
+            });
+          } else {
+            onError({ message: "PIN baru minimal 4 digit." });
           }
         } else {
           onSuccess({ success: true, message: "Aksi tersimulasi di Vercel." });
@@ -1678,7 +1846,7 @@
     function populateConfigToUI(cfg) {
       if (!cfg) return;
       const eventName = cfg.EVENT_NAME || cfg.COUPLE_NAME || "The Wedding of Romeo & Juliet";
-      const rawDate = cfg.EVENT_DATE || "15 November 2026";
+      const rawDate = cfg.EVENT_DATE || "13 November 2026";
       const displayDate = formatIndonesianDate(rawDate);
       const eventVenue = cfg.EVENT_VENUE || "Grand Ballroom, Jakarta";
 
@@ -1701,15 +1869,26 @@
         state.intervalMs = cfg.SLIDESHOW_INTERVAL_SEC * 1000;
       }
 
-      // Input form admin (tanpa ketergantungan Google Drive)
-      const cfgFrameEl = document.getElementById("cfgFrameImageUrl");
-      if (cfgFrameEl) cfgFrameEl.value = cfg.FRAME_IMAGE_URL || "";
-      const cfgCoupleEl = document.getElementById("cfgCoupleName");
-      if (cfgCoupleEl) cfgCoupleEl.value = eventName;
-      const cfgDateEl = document.getElementById("cfgEventDate");
-      if (cfgDateEl) cfgDateEl.value = formatDateForInput(rawDate);
-      const cfgVenueEl = document.getElementById("cfgEventVenue");
-      if (cfgVenueEl) cfgVenueEl.value = eventVenue;
+      // Input form admin: HANYA perbarui jika modal admin SEDANG TIDAK DIBUKA (mencegah teks tertimpa saat admin mengetik)
+      const adminModal = document.getElementById("adminSettingsModal");
+      const isModalActive = adminModal && adminModal.classList.contains("active");
+
+      if (!isModalActive) {
+        const cfgFrameEl = document.getElementById("cfgFrameImageUrl");
+        if (cfgFrameEl) cfgFrameEl.value = cfg.FRAME_IMAGE_URL || "";
+        const cfgCoupleEl = document.getElementById("cfgCoupleName");
+        if (cfgCoupleEl) cfgCoupleEl.value = eventName;
+        const cfgDateEl = document.getElementById("cfgEventDate");
+        if (cfgDateEl) cfgDateEl.value = formatDateForInput(rawDate);
+        const cfgVenueEl = document.getElementById("cfgEventVenue");
+        if (cfgVenueEl) cfgVenueEl.value = eventVenue;
+        const cfgDriveEl = document.getElementById("cfgDriveFolderId");
+        if (cfgDriveEl) cfgDriveEl.value = cfg.DRIVE_FOLDER_ID || "";
+        const cfgSubEl = document.getElementById("cfgSubtitle");
+        if (cfgSubEl) cfgSubEl.value = cfg.SUBTITLE || "";
+        const cfgWelcomeEl = document.getElementById("cfgWelcomeMessage");
+        if (cfgWelcomeEl) cfgWelcomeEl.value = cfg.WELCOME_MESSAGE || "";
+      }
 
       const frameBadge = document.getElementById("frameStatusBadge");
       if (frameBadge) {
@@ -1737,6 +1916,21 @@
     function renderCategoryTabs() {
       const container = document.getElementById("categoryTabs");
       container.innerHTML = "";
+
+      // Deduplikasi kategori secara ketat (mencegah duplikasi pil Semua Foto pada mobile)
+      const uniqueCategories = [];
+      const seen = {};
+      (state.categories || ["Semua Foto"]).forEach(function(c) {
+        const catName = String(c || "").trim();
+        if (catName && !seen[catName]) {
+          seen[catName] = true;
+          uniqueCategories.push(catName);
+        }
+      });
+      if (!seen["Semua Foto"]) {
+        uniqueCategories.unshift("Semua Foto");
+      }
+      state.categories = uniqueCategories;
 
       state.categories.forEach(function(cat) {
         const count = cat === "Semua Foto" 
@@ -1870,10 +2064,15 @@
         if (res.success) {
           state.isAdminLoggedIn = true;
           state.adminPin = pin;
+          state.currentAdminUser = res.user || { name: "Admin" };
           document.getElementById("adminBtn").classList.add("admin-active");
+
+          const greetingNameEl = document.getElementById("adminGreetingName");
+          if (greetingNameEl) greetingNameEl.innerText = state.currentAdminUser.name || "Admin";
+
           closeAdminLoginModal();
           openAdminSettingsModal();
-          showToast("Selamat datang, Admin!");
+          showToast("Selamat datang, " + (state.currentAdminUser.name || "Admin") + "!");
         } else {
           alertBox.innerText = res.message || "PIN salah.";
           alertBox.style.display = "block";
@@ -1886,9 +2085,82 @@
       });
     }
 
+    function switchAdminTab(tabName) {
+      document.querySelectorAll(".admin-tab-btn").forEach(function(btn) {
+        btn.classList.remove("active");
+      });
+      const activeBtn = document.getElementById("tabBtn-" + tabName);
+      if (activeBtn) activeBtn.classList.add("active");
+
+      document.querySelectorAll(".admin-tab-pane").forEach(function(pane) {
+        pane.classList.remove("active");
+      });
+      const activePane = document.getElementById("tabPane-" + tabName);
+      if (activePane) activePane.classList.add("active");
+    }
+
+    function handleStandaloneChangePin() {
+      const pinInput = document.getElementById("cfgNewPin");
+      const alertBox = document.getElementById("changePinAlertBox");
+      const newPin = (pinInput ? pinInput.value : "").trim();
+
+      if (!newPin || newPin.length < 4) {
+        if (alertBox) {
+          alertBox.className = "admin-alert-box error";
+          alertBox.innerText = "PIN baru minimal 4 digit.";
+          alertBox.style.display = "block";
+        }
+        return;
+      }
+
+      if (alertBox) {
+        alertBox.className = "admin-alert-box";
+        alertBox.innerText = "Memperbarui PIN...";
+        alertBox.style.display = "block";
+      }
+
+      callBackend("changeAdminPin", { currentPin: state.adminPin, newPin: newPin }, function(res) {
+        if (res && res.success) {
+          state.adminPin = newPin;
+          if (pinInput) pinInput.value = "";
+          if (alertBox) {
+            alertBox.className = "admin-alert-box success";
+            alertBox.innerText = "✓ PIN berhasil diperbarui!";
+            alertBox.style.display = "block";
+          }
+          showToast("✓ PIN Admin berhasil diganti!");
+          loadAdminUsers();
+        } else {
+          if (alertBox) {
+            alertBox.className = "admin-alert-box error";
+            alertBox.innerText = (res && res.message) ? res.message : "Gagal mengganti PIN.";
+            alertBox.style.display = "block";
+          }
+        }
+      }, function(err) {
+        if (alertBox) {
+          alertBox.className = "admin-alert-box error";
+          alertBox.innerText = "Gangguan koneksi: " + (err.message || err);
+          alertBox.style.display = "block";
+        }
+      });
+    }
+
     function openAdminSettingsModal() {
       const saveAlertBox = document.getElementById("saveAlertBox");
       if (saveAlertBox) saveAlertBox.style.display = "none";
+      const changePinAlertBox = document.getElementById("changePinAlertBox");
+      if (changePinAlertBox) changePinAlertBox.style.display = "none";
+      const addUserAlertBox = document.getElementById("addUserAlertBox");
+      if (addUserAlertBox) addUserAlertBox.style.display = "none";
+
+      switchAdminTab("event");
+
+      if (state.currentAdminUser) {
+        const greetingNameEl = document.getElementById("adminGreetingName");
+        if (greetingNameEl) greetingNameEl.innerText = state.currentAdminUser.name || "Admin";
+      }
+      loadAdminUsers();
 
       const cfgGasApiUrlEl = document.getElementById("cfgGasApiUrl");
       if (cfgGasApiUrlEl) cfgGasApiUrlEl.value = state.gasApiUrl || "";
@@ -1902,10 +2174,143 @@
       const cfgEventVenueEl = document.getElementById("cfgEventVenue");
       if (cfgEventVenueEl) cfgEventVenueEl.value = state.activeConfig.EVENT_VENUE || "";
 
+      const cfgDriveFolderIdEl = document.getElementById("cfgDriveFolderId");
+      if (cfgDriveFolderIdEl) cfgDriveFolderIdEl.value = state.activeConfig.DRIVE_FOLDER_ID || "";
+
       const cfgFrameImageUrlEl = document.getElementById("cfgFrameImageUrl");
       if (cfgFrameImageUrlEl) cfgFrameImageUrlEl.value = state.activeConfig.FRAME_IMAGE_URL || "";
 
+      const cfgSubtitleEl = document.getElementById("cfgSubtitle");
+      if (cfgSubtitleEl) cfgSubtitleEl.value = state.activeConfig.SUBTITLE || "";
+
+      const cfgWelcomeMessageEl = document.getElementById("cfgWelcomeMessage");
+      if (cfgWelcomeMessageEl) cfgWelcomeMessageEl.value = state.activeConfig.WELCOME_MESSAGE || "";
+
       document.getElementById("adminSettingsModal").classList.add("active");
+    }
+
+    /* ==========================================================================
+       MANAJEMEN PENGGUNA ADMIN (MULTI-USER DENGAN PIN UNIK)
+       ========================================================================== */
+    function loadAdminUsers() {
+      const container = document.getElementById("adminUsersList");
+      if (!container) return;
+      container.innerHTML = `<div style="font-size: 0.8rem; color: var(--text-muted); text-align: center; padding: 6px;">Memuat data pengguna...</div>`;
+
+      callBackend("getAdminUsers", { pin: state.adminPin }, function(res) {
+        if (res && res.success && Array.isArray(res.users)) {
+          state.adminUsers = res.users;
+          renderAdminUsersList(res.users);
+        } else {
+          const defaultList = [
+            { id: "usr_superadmin", name: (state.currentAdminUser ? state.currentAdminUser.name : "Super Admin"), role: "Super Admin", pinMasked: "••••" }
+          ];
+          renderAdminUsersList(defaultList);
+        }
+      }, function() {
+        const defaultList = [
+          { id: "usr_superadmin", name: (state.currentAdminUser ? state.currentAdminUser.name : "Super Admin"), role: "Super Admin", pinMasked: "••••" }
+        ];
+        renderAdminUsersList(defaultList);
+      });
+    }
+
+    function renderAdminUsersList(users) {
+      const container = document.getElementById("adminUsersList");
+      if (!container) return;
+      if (!users || users.length === 0) {
+        container.innerHTML = `<div style="font-size: 0.8rem; color: var(--text-muted); text-align: center; padding: 6px;">Belum ada pengguna tambahan.</div>`;
+        return;
+      }
+
+      container.innerHTML = users.map(function(u) {
+        const isCurrent = state.currentAdminUser && (state.currentAdminUser.id === u.id || state.currentAdminUser.name === u.name);
+        return `
+          <div style="display: flex; align-items: center; justify-content: space-between; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 8px 12px;">
+            <div>
+              <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                <span>${escapeHtml(u.name)}</span>
+                ${isCurrent ? '<span style="font-size: 0.68rem; background: #DBEAFE; color: #1E40AF; padding: 1px 6px; border-radius: 9999px;">Anda</span>' : ''}
+              </div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">
+                PIN: ${escapeHtml(u.pinMasked || '••••')} &bull; Peran: ${escapeHtml(u.role || 'Admin')}
+              </div>
+            </div>
+            ${!isCurrent && users.length > 1 ? `
+              <button type="button" class="ctrl-icon-btn" style="width: 28px; height: 28px; border-color: #FECACA; color: #EF4444;" onclick="handleDeleteAdminUser('${escapeHtml(u.id)}')" title="Hapus Pengguna">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            ` : ''}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function handleAddAdminUser() {
+      const nameInput = document.getElementById("newAdminNameInput");
+      const pinInput = document.getElementById("newAdminPinInput");
+      const alertBox = document.getElementById("addUserAlertBox");
+      const addBtn = document.getElementById("btnAddAdminUserBtn");
+
+      const name = (nameInput?.value || "").trim();
+      const pin = (pinInput?.value || "").trim();
+
+      if (!name) {
+        if (alertBox) {
+          alertBox.innerText = "Silakan masukkan nama admin.";
+          alertBox.style.display = "block";
+        }
+        return;
+      }
+      if (!pin || pin.length < 4) {
+        if (alertBox) {
+          alertBox.innerText = "PIN minimal 4 karakter (angka/kombinasi unik).";
+          alertBox.style.display = "block";
+        }
+        return;
+      }
+
+      if (alertBox) alertBox.style.display = "none";
+      if (addBtn) addBtn.disabled = true;
+
+      callBackend("addAdminUser", { pin: state.adminPin, newUser: { name: name, pin: pin, role: "Admin" } }, function(res) {
+        if (addBtn) addBtn.disabled = false;
+        if (res && res.success) {
+          if (nameInput) nameInput.value = "";
+          if (pinInput) pinInput.value = "";
+          if (res.users) renderAdminUsersList(res.users);
+          showToast("✓ " + (res.message || "Admin baru berhasil ditambahkan!"));
+        } else {
+          if (alertBox) {
+            alertBox.innerText = (res && res.message) ? res.message : "Gagal menambahkan admin.";
+            alertBox.style.display = "block";
+          }
+        }
+      }, function(err) {
+        if (addBtn) addBtn.disabled = false;
+        if (alertBox) {
+          alertBox.innerText = "Gangguan koneksi: " + err.message;
+          alertBox.style.display = "block";
+        }
+      });
+    }
+
+    function handleDeleteAdminUser(userId) {
+      if (!confirm("Yakin ingin menghapus pengguna admin ini?")) return;
+
+      callBackend("deleteAdminUser", { pin: state.adminPin, targetUserId: userId }, function(res) {
+        if (res && res.success) {
+          if (res.users) renderAdminUsersList(res.users);
+          showToast("✓ Pengguna admin berhasil dihapus.");
+        } else {
+          showToast("⚠️ " + (res && res.message ? res.message : "Gagal menghapus admin."));
+        }
+      }, function(err) {
+        showToast("Gangguan: " + err.message);
+      });
     }
 
     function closeAdminSettingsModal() {
@@ -1917,9 +2322,12 @@
       const alertBox = document.getElementById("saveAlertBox");
 
       const newApiUrl = (document.getElementById("cfgGasApiUrl")?.value || "").trim();
+      const driveFolderInput = (document.getElementById("cfgDriveFolderId")?.value || "").trim();
       const eventNameInput = (document.getElementById("cfgCoupleName")?.value || "").trim();
       const eventDateInput = (document.getElementById("cfgEventDate")?.value || "").trim();
       const eventVenueInput = (document.getElementById("cfgEventVenue")?.value || "").trim();
+      const subtitleInput = (document.getElementById("cfgSubtitle")?.value || "").trim();
+      const welcomeInput = (document.getElementById("cfgWelcomeMessage")?.value || "").trim();
       const frameUrlInput = (document.getElementById("cfgFrameImageUrl")?.value || "").trim();
       const newPinInput = (document.getElementById("cfgNewPin")?.value || "").trim();
 
@@ -1930,12 +2338,16 @@
 
       // Format tanggal ke format bahasa Indonesia untuk display dan penyimpanan
       const formattedDate = eventDateInput ? formatIndonesianDate(eventDateInput) : (state.activeConfig.EVENT_DATE || "15 November 2026");
+      const finalEventName = eventNameInput || state.activeConfig.EVENT_NAME || "Hans & Yurike";
 
       const payload = {
-        EVENT_NAME: eventNameInput || state.activeConfig.EVENT_NAME,
-        COUPLE_NAME: eventNameInput || state.activeConfig.COUPLE_NAME,
+        EVENT_NAME: finalEventName,
+        COUPLE_NAME: finalEventName,
         EVENT_DATE: formattedDate,
-        EVENT_VENUE: eventVenueInput || state.activeConfig.EVENT_VENUE,
+        EVENT_VENUE: eventVenueInput || state.activeConfig.EVENT_VENUE || "Grand Ballroom, Jakarta",
+        SUBTITLE: subtitleInput || state.activeConfig.SUBTITLE || "The Wedding Gallery & Precious Memories",
+        WELCOME_MESSAGE: welcomeInput || state.activeConfig.WELCOME_MESSAGE || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
+        DRIVE_FOLDER_ID: driveFolderInput,
         FRAME_IMAGE_URL: frameUrlInput,
         GAS_API_URL: newApiUrl,
         NEW_PIN: newPinInput
@@ -1943,10 +2355,10 @@
 
       state.activeConfig = Object.assign({}, state.activeConfig, payload);
       try {
-        localStorage.setItem("WEDDING_SAVED_CONFIG", JSON.stringify(payload));
+        localStorage.setItem("WEDDING_SAVED_CONFIG", JSON.stringify(state.activeConfig));
       } catch (e) {}
 
-      // Langsung perbarui tampilan visual seketika
+      // Langsung perbarui tampilan visual seketika (Instant UI Update)
       populateConfigToUI(state.activeConfig);
 
       saveBtn.disabled = true;
@@ -1963,15 +2375,20 @@
             const newPinEl = document.getElementById("cfgNewPin");
             if (newPinEl) newPinEl.value = "";
           }
-          if (res && res.galleryData) {
+          if (res && res.galleryData && res.galleryData.config) {
+            res.galleryData.config = Object.assign({}, res.galleryData.config, payload);
             handleGalleryResponse(res.galleryData, false);
           }
-          showToast("✓ Pengaturan berhasil disimpan ke Google Spreadsheet 'foto-panggung'!");
+          if (res && !res.success) {
+            showToast("⚠️ " + (res.message || "Gagal menyimpan ke Google Spreadsheet. Pengaturan disimpan di browser."));
+          } else {
+            showToast("✓ Pengaturan & Kustomisasi Acara berhasil disimpan!");
+          }
           closeAdminSettingsModal();
         }, function(err) {
           saveBtn.disabled = false;
           saveBtn.innerHTML = `<polyline points="20 6 9 17 4 12"></polyline><span>Simpan Perubahan</span>`;
-          showToast("✓ Pengaturan tersimpan di browser!");
+          showToast("✓ Pengaturan berhasil disimpan di browser!");
           closeAdminSettingsModal();
         });
       } else {
@@ -1991,37 +2408,70 @@
       showToast("Anda telah keluar dari mode admin.");
     }
 
-    function handleInitDatabaseDirectly() {
-      const btn = document.getElementById("btnInitDatabase");
-      const btnText = document.getElementById("initDbBtnText");
+    function handleSyncDrivePhotosDirectly() {
+      const driveInput = (document.getElementById("cfgDriveFolderId")?.value || "").trim();
+      if (!driveInput) {
+        showToast("⚠️ Masukkan Tautan atau ID Folder Google Drive terlebih dahulu.");
+        return;
+      }
+
+      const btn = document.getElementById("btnSyncDrivePhotos");
+      const btnText = document.getElementById("syncDriveBtnText");
+      const btnIcon = document.getElementById("syncDriveBtnIcon");
 
       if (btn) btn.disabled = true;
-      if (btnText) btnText.innerText = "Menginisialisasi Spreadsheet...";
+      if (btnText) btnText.innerText = "Memindai & Menyinkronkan...";
+      if (btnIcon) btnIcon.classList.add("spin");
 
-      callBackend("setupTargetSpreadsheetDatabase", {}, function(res) {
+      callBackend("testAndSyncDriveFolder", { pin: state.adminPin, folderId: driveInput }, function(res) {
         if (btn) btn.disabled = false;
-        if (btnText) btnText.innerText = "⚡ Buat Tabel & Foto Dummy di Spreadsheet";
-        if (res.success) {
-          showToast("✓ Sukses! Tabel & 8 foto dummy berhasil dibuat di spreadsheet!");
-          fetchGalleryData(true);
+        if (btnText) btnText.innerText = "🔄 Sinkronkan Foto Google Drive ke Galeri";
+        if (btnIcon) btnIcon.classList.remove("spin");
+
+        if (res && res.success) {
+          state.activeConfig.DRIVE_FOLDER_ID = driveInput;
+          showToast("✓ " + (res.message || "Foto Google Drive berhasil disinkronkan ke galeri!"));
+          if (res.galleryData) {
+            handleGalleryResponse(res.galleryData, false);
+          } else {
+            fetchGalleryData(true);
+          }
         } else {
-          showToast("Hasil: " + (res.message || "Tabel berhasil diperbarui"));
+          showToast("⚠️ " + (res.message || "Gagal menyinkronkan folder Google Drive."));
         }
       }, function(err) {
         if (btn) btn.disabled = false;
-        if (btnText) btnText.innerText = "⚡ Buat Tabel & Foto Dummy di Spreadsheet";
-        showToast("Info backend: " + err.message);
+        if (btnText) btnText.innerText = "🔄 Sinkronkan Foto Google Drive ke Galeri";
+        if (btnIcon) btnIcon.classList.remove("spin");
+        showToast("Gangguan koneksi: " + err.message);
       });
     }
 
     /* ==========================================================================
        CANVAS COMPOSITOR: TEMPEL BINGKAI FOTO KUSTOM SAAT DOWNLOAD
        ========================================================================== */
+    function normalizeDriveImageUrl(urlOrId) {
+      if (!urlOrId) return "";
+      const raw = String(urlOrId).trim();
+
+      const match = raw.match(/\/d\/([a-zA-Z0-9_\-]+)/) || raw.match(/id=([a-zA-Z0-9_\-]+)/);
+      if (match && match[1]) {
+        return "https://drive.google.com/thumbnail?id=" + match[1] + "&sz=w2500";
+      }
+
+      if (/^[a-zA-Z0-9_\-]{20,}$/.test(raw) && !raw.startsWith("http")) {
+        return "https://drive.google.com/thumbnail?id=" + raw + "&sz=w2500";
+      }
+
+      return raw;
+    }
+
     function downloadCurrentPhotoWithFrame() {
       const photo = state.filteredPhotos[state.currentLightboxIndex];
       if (!photo) return;
 
-      const frameUrl = state.activeConfig.FRAME_IMAGE_URL ? state.activeConfig.FRAME_IMAGE_URL.trim() : "";
+      const rawFrameConfig = state.activeConfig.FRAME_IMAGE_URL ? state.activeConfig.FRAME_IMAGE_URL.trim() : "";
+      const frameUrl = normalizeDriveImageUrl(rawFrameConfig);
       const downloadBtn = document.getElementById("lightboxDownloadBtn");
       const btnLabel = document.getElementById("downloadBtnLabel");
 
@@ -2030,76 +2480,225 @@
         return;
       }
 
-      downloadBtn.disabled = true;
-      btnLabel.innerText = "Memproses Bingkai...";
+      if (downloadBtn) downloadBtn.disabled = true;
+      if (btnLabel) btnLabel.innerText = "Menggabungkan Foto & Bingkai...";
 
-      const photoImg = new Image();
-      photoImg.crossOrigin = "Anonymous";
+      // Helper untuk memuat gambar aman ke Canvas (mencegah blokir CORS)
+      function prepareCanvasSource(urlOrId, callback, errCallback) {
+        if (!urlOrId) { errCallback(); return; }
+        if (urlOrId.startsWith("data:")) {
+          const img = new Image();
+          img.onload = function() { callback(img); };
+          img.onerror = errCallback;
+          img.src = urlOrId;
+          return;
+        }
 
-      photoImg.onload = function() {
-        const frameImg = new Image();
-        frameImg.crossOrigin = "Anonymous";
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = function() { callback(img); };
+        img.onerror = function() {
+          // Jika gambar gagal dimuat secara cross-origin, minta Base64 dari backend
+          callBackend("getImageBase64", { fileId: urlOrId }, function(res) {
+            if (res && res.success && res.dataUrl) {
+              const b64Img = new Image();
+              b64Img.onload = function() { callback(b64Img); };
+              b64Img.onerror = errCallback;
+              b64Img.src = res.dataUrl;
+            } else {
+              errCallback();
+            }
+          }, function() {
+            errCallback();
+          });
+        };
+        img.src = urlOrId;
+      }
 
-        frameImg.onload = function() {
+      const photoSrc = photo.highResUrl || photo.downloadUrl || photo.thumbnailUrl;
+      const photoIdOrSrc = photo.id || photoSrc;
+
+      prepareCanvasSource(photoIdOrSrc, function(photoImg) {
+        prepareCanvasSource(frameUrl, function(frameImg) {
           try {
+            // Deteksi batas jendela transparan bingkai secara instan (<3ms)
+            const fw = frameImg.naturalWidth || 2400;
+            const fh = frameImg.naturalHeight || 1600;
+            const scanMax = 500;
+            const scanScale = Math.min(1, scanMax / Math.max(fw, fh));
+            const scanW = Math.max(1, Math.round(fw * scanScale));
+            const scanH = Math.max(1, Math.round(fh * scanScale));
+
+            const scanCanvas = document.createElement("canvas");
+            scanCanvas.width = scanW;
+            scanCanvas.height = scanH;
+            const scanCtx = scanCanvas.getContext("2d");
+            scanCtx.drawImage(frameImg, 0, 0, scanW, scanH);
+            const scanData = scanCtx.getImageData(0, 0, scanW, scanH).data;
+
+            let minX = scanW, minY = scanH, maxX = -1, maxY = -1;
+            let transparentCount = 0;
+
+            for (let y = 0; y < scanH; y++) {
+              for (let x = 0; x < scanW; x++) {
+                const alpha = scanData[(y * scanW + x) * 4 + 3];
+                // Anggap piksel transparan / jendela foto jika alpha < 80
+                if (alpha < 80) {
+                  transparentCount++;
+                  if (x < minX) minX = x;
+                  if (x > maxX) maxX = x;
+                  if (y < minY) minY = y;
+                  if (y > maxY) maxY = y;
+                }
+              }
+            }
+
+            // Hitung koordinat cutout (jendela transparan)
+            let cutoutX, cutoutY, cutoutW, cutoutH;
+            if (transparentCount > (scanW * scanH * 0.05) && maxX > minX && maxY > minY) {
+              cutoutX = Math.round(minX / scanScale);
+              cutoutY = Math.round(minY / scanScale);
+              cutoutW = Math.round((maxX - minX + 1) / scanScale);
+              cutoutH = Math.round((maxY - minY + 1) / scanScale);
+            } else {
+              cutoutX = 0;
+              cutoutY = 0;
+              cutoutW = fw;
+              cutoutH = fh;
+            }
+
+            // Canvas akhir berukuran resolusi tinggi mengikuti dimensi asli bingkai
             const canvas = document.createElement("canvas");
-            canvas.width = photoImg.naturalWidth || 1920;
-            canvas.height = photoImg.naturalHeight || 1080;
+            const w = photoImg.naturalWidth || 1920;
+            canvas.height = fh;
             const ctx = canvas.getContext("2d");
 
-            ctx.drawImage(photoImg, 0, 0, canvas.width, canvas.height);
-            ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+            // 1. Gambar foto asli di lapisan dasar
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(0, 0, fw, fh);
 
+            // 2. Gambar bingkai PNG transparan tepat di atas foto
+            // Tanpa terpotong (100% foto terlihat utuh dari sudut ke sudut)
+            const pw = photoImg.naturalWidth || 1920;
+            const ph = photoImg.naturalHeight || 1080;
+            const photoAspect = pw / ph;
+            const cutoutAspect = cutoutW / cutoutH;
+
+            // 3. Ekspor ke Blob kualitas tinggi dan simpan langsung ke file sistem perangkat
+            if (photoAspect > cutoutAspect) {
+              // Foto lebih lebar dibanding jendela bingkai -> kunci lebar jendela, pusatkan vertikal
+              drawW = cutoutW;
+              drawH = cutoutW / photoAspect;
+              drawX = cutoutX;
+              drawY = cutoutY + (cutoutH - drawH) / 2;
+            } else {
+              // Foto lebih tinggi dibanding jendela bingkai -> kunci tinggi jendela, pusatkan horizontal
+              drawH = cutoutH;
+              drawW = cutoutH * photoAspect;
+              drawY = cutoutY;
+              drawX = cutoutX + (cutoutW - drawW) / 2;
+            }
+
+            // Gambar foto asli tepat di dalam jendela transparan bingkai
+            ctx.drawImage(photoImg, drawX, drawY, drawW, drawH);
+
+            // 3. Gambar bingkai PNG di atasnya (elemen dekoratif dan teks nama pengantin)
+            ctx.drawImage(frameImg, 0, 0, fw, fh);
+
+            // 4. Ekspor ke Blob kualitas tinggi dan simpan langsung ke file sistem perangkat
             canvas.toBlob(function(blob) {
               if (blob) {
-                const blobUrl = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = blobUrl;
-                a.download = (photo.rawName || photo.name) + "-wedding-frame.jpg";
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 2500);
-
+                const cleanName = (photo.rawName || photo.name || "wedding-photo").replace(/\.[^/.]+$/, "");
+                saveBlobToDevice(blob, cleanName + "-berbingkai.jpg");
                 resetDownloadButton();
-                showToast("Foto berbingkai berhasil diunduh!");
+                showToast("✓ Foto berbingkai berhasil tersimpan ke perangkat!");
               } else {
                 triggerDirectDownload(photo);
               }
             }, "image/jpeg", 0.95);
 
-          } catch (e) {
-            console.warn("Canvas compositing error, fallback to direct download:", e);
+          } catch (eCanvas) {
+            console.warn("Canvas compositing error, fallback to direct download:", eCanvas);
             triggerDirectDownload(photo);
           }
-        };
-
-        frameImg.onerror = function() {
-          console.warn("Gagal memuat gambar bingkai, mengunduh foto asli.");
+        }, function() {
+          showToast("⚠️ Bingkai tidak dapat dimuat, mengunduh foto asli langsung ke perangkat.");
           triggerDirectDownload(photo);
-        };
-
-        frameImg.src = frameUrl;
-      };
-
-      photoImg.onerror = function() {
-        console.warn("Gagal memuat gambar foto untuk canvas, mengunduh foto langsung.");
+        });
+      }, function() {
         triggerDirectDownload(photo);
-      };
-
-      photoImg.src = photo.highResUrl || photo.thumbnailUrl;
+      });
     }
 
     function triggerDirectDownload(photo) {
-      resetDownloadButton();
+      const downloadBtn = document.getElementById("lightboxDownloadBtn");
+      const btnLabel = document.getElementById("downloadBtnLabel");
+      if (downloadBtn) downloadBtn.disabled = true;
+      if (btnLabel) btnLabel.innerText = "Mengunduh ke Perangkat...";
+
+      const cleanName = (photo.rawName || photo.name || "wedding-photo").replace(/\.[^/.]+$/, "");
+      const fileName = cleanName + ".jpg";
+      const directUrl = photo.highResUrl || photo.downloadUrl || photo.thumbnailUrl;
+
+      // Ambil berkas sebagai Blob agar langsung tersimpan di memori perangkat tanpa membuka tab baru
+      fetch(directUrl)
+        .then(function(res) {
+          if (!res.ok) throw new Error("HTTP error " + res.status);
+          return res.blob();
+        })
+        .then(function(blob) {
+          saveBlobToDevice(blob, fileName);
+          resetDownloadButton();
+          showToast("✓ Foto berhasil disimpan ke perangkat!");
+        })
+        .catch(function(errFetch) {
+          // Jika fetch langsung diblokir oleh CORS browser, ambil via Base64 backend
+          if (photo.id && (state.gasApiUrl || (typeof google !== 'undefined' && google.script))) {
+            callBackend("getImageBase64", { fileId: photo.id }, function(res) {
+              if (res && res.success && res.dataUrl) {
+                const parts = res.dataUrl.split(",");
+                const byteCharacters = atob(parts[1]);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                  byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: res.contentType || "image/jpeg" });
+                saveBlobToDevice(blob, fileName);
+                resetDownloadButton();
+                showToast("✓ Foto berhasil disimpan ke perangkat!");
+              } else {
+                fallbackSaveLink(directUrl, fileName);
+              }
+            }, function() {
+              fallbackSaveLink(directUrl, fileName);
+            });
+          } else {
+            fallbackSaveLink(directUrl, fileName);
+          }
+        });
+    }
+
+    function saveBlobToDevice(blob, fileName) {
+      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = photo.downloadUrl || photo.highResUrl;
-      a.download = (photo.rawName || photo.name) + ".jpg";
-      a.target = "_blank";
+      a.href = blobUrl;
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       a.remove();
-      showToast("Mengunduh foto kualitas asli...");
+      setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 10000);
+    }
+
+    function fallbackSaveLink(url, fileName) {
+      resetDownloadButton();
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showToast("Mengunduh foto...");
     }
 
     function resetDownloadButton() {
@@ -2107,7 +2706,8 @@
       const btnLabel = document.getElementById("downloadBtnLabel");
       if (downloadBtn && btnLabel) {
         downloadBtn.disabled = false;
-        btnLabel.innerText = "Unduh Foto Asli";
+        const hasFrame = state.activeConfig.FRAME_IMAGE_URL && state.activeConfig.FRAME_IMAGE_URL.trim();
+        btnLabel.innerText = hasFrame ? "🖼️ Unduh Foto + Bingkai" : "Unduh Foto Asli";
       }
     }
 
@@ -2142,6 +2742,7 @@
       modal.classList.add("active");
       document.body.style.overflow = "hidden";
 
+      resetDownloadButton();
       updateLightboxContent();
     }
 

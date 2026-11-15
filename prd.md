@@ -149,7 +149,7 @@ Karena web app ini mengambil sumber langsung dari Google Drive, tidak diperlukan
 <!-- ======================================================================= -->
 
 ### A. Status Arsitektur & Lingkungan Aktif
-- **Versi Sistem:** 2.2.0 (Dedicated User Google Spreadsheet Database Integration).
+- **Versi Sistem:** 2.3.2 (Penyempurnaan Canvas Compositor Unduh Foto Berbingkai Kustom).
 - **Runtime:** Vercel Global Edge CDN / GitHub Pages (Frontend) + Google Spreadsheet Dedicated Database ID `133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20` (Pengaturan, Daftar_Foto, Log_Aktivitas) + Google Apps Script REST API Backend.
 - **Daftar Berkas Terpasang:**
   1. `ZettBOT.md`: Sakelar aktivasi lisensi & sistem arsitek ZettBOT.
@@ -157,9 +157,9 @@ Karena web app ini mengambil sumber langsung dari Google Drive, tidak diperlukan
   3. `config.json`: Berkas konfigurasi live baseline default.
   4. `vercel.json`: Konfigurasi Vercel deployment.
   5. `package.json`: Metadata proyek untuk Vercel.
-  6. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, direct Google Spreadsheet photo catalog reader from Sheet `Daftar_Foto` on ID `133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20`, two-way config sync via Sheet `Pengaturan`, setupDemo handler) v2.2.0.
+  6. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, `saveAdminSettings` dengan dukungan kustomisasi lengkap nama, tanggal, venue, subtitle, welcome message, pemindai Google Drive ke sheet `Daftar_Foto`, sinkronisasi instan sheet `Pengaturan` dengan `SpreadsheetApp.flush()`) v2.3.2.
   7. `setup.gs`: Utilitas inisialisasi, pengujian spreadsheet database, generator setup satu klik spreadsheet pengguna (`setupTargetSpreadsheetDatabase`), dan reset PIN admin.
-  8. `index.html`: Antarmuka galeri foto responsif universal dengan basis Google Spreadsheet target pengguna, pemilih tanggal modern (Date Picker `<input type="date">`) dengan konversi otomatis format bahasa Indonesia, modal admin ringkas dan elegan, input admin 100% unlocked (Nama Event, Tanggal Acara, Venue), Hero Header dinamis, badge foto baru ("✨ Baru" auto-expire 10 menit), filter kategori otomatis dari tabel spreadsheet, Lightbox layar penuh, Slideshow panggung, Live Auto-Sync (20s), auto-cull foto error (`onerror`), Anti-Cache meta tags, dan Canvas Compositor unduh berbingkai.
+  8. `index.html`: Antarmuka galeri foto responsif universal dengan mesin Canvas Compositor unduh berbingkai yang disempurnakan (konversi otomatis Google Drive link ke CDN transparan CORS, label tombol unduh dinamis "🖼️ Unduh Foto + Bingkai", penempelan lapisan presisi HD), benteng anti-reset saat admin mengetik, kustomisasi lengkap nama event/pengantin, tanggal, venue, subjudul, dan pesan sambutan tamu, input tautan folder Google Drive & tombol sinkronisasi foto langsung, pemilih tanggal modern (Date Picker `<input type="date">`), Hero Header dinamis, badge foto baru, filter kategori otomatis, Lightbox layar penuh, dan Slideshow panggung.
 
 ### B. Konfigurasi Sistem Terkini
 ```javascript
@@ -180,11 +180,38 @@ const WEDDING_CONFIG = {
 ```
 
 ### C. Log Pembaruan Resmi (System Changelog)
+- **v2.3.2 (Penyempurnaan Canvas Compositor Unduh Foto Berbingkai Kustom):**
+  - **Normalisasi Tautan Bingkai Google Drive Otomatis:** Menambahkan fungsi `normalizeDriveImageUrl()` pada frontend `index.html` untuk mengonversi link Google Drive file bingkai PNG menjadi stream thumbnail CDN beresolusi tinggi (`sz=w2500`). Hal ini menjamin transparansi PNG 100% terjaga dan lolos validasi keamanan CORS canvas tanpa error.
+  - **Penggabungan Berlapis (Layering HD):** Menempelkan foto di lapisan dasar dan bingkai transparan tepat di lapisan atasnya secara presisi, lalu mengekspornya ke format JPEG HD 95% dengan nama `[Nama-Foto]-berbingkai.jpg`.
+  - **Dinamika Label Tombol Lightbox:** Tombol unduh otomatis berganti nama menjadi **"🖼️ Unduh Foto + Bingkai"** jika tautan bingkai aktif dan menampilkan pesan interaktif saat proses perenderan canvas berlangsung.
+- **v2.3.1 (Benteng Anti-Reset Form Modal Admin & Kustomisasi Lengkap Acara):**
+  - **Benteng Anti-Reset Saat Mengetik:** Menambahkan proteksi `!isModalActive` pada `populateConfigToUI()` sehingga isian form tidak lagi ter-reset atau tertimpa oleh interval auto-refresh 20 detik saat pengguna sedang membuka modal dan mengetik kustomisasi acara.
+  - **Penambahan Input Subjudul & Pesan Sambutan:** Melengkapi formulir kustomisasi dengan input Subjudul Galeri dan Pesan Sambutan Tamu yang langsung tersimpan ke memori browser dan lembar kerja `Pengaturan` di Google Spreadsheet.
+  - **Instant UI Update & Fallback Proteksi:** Nilai baru langsung diterapkan seketika pada Hero Header, Watermark Slideshow, dan Footer tanpa perlu menunggu respons jaringan.
+- **v2.3.0 (Perbaikan Edit Pengaturan, Integrasi Sinkronisasi Google Drive & Pembersihan Tombol Dummy):**
+  - **Perbaikan Total Edit Pengaturan (100% Tersimpan):** Menambahkan JSON parser otomatis di `handleApiRequest` dan `saveAdminSettings` pada `code.gs`, serta pemanggilan `SpreadsheetApp.flush()` di akhir penulisan sheet `Pengaturan` sehingga perubahan nama acara, tanggal, dan venue tersimpan permanen.
+  - **Input & Sinkronisasi Folder Google Drive:** Menambahkan kotak input **Tautan / ID Folder Google Drive** di modal Admin web serta tombol **"🔄 Sinkronkan Foto Google Drive ke Galeri"**. Backend otomatis memindai folder Google Drive dan sub-folder momen, mengambil foto asli, dan menyimpannya langsung ke sheet `Daftar_Foto` di Google Spreadsheet.
+  - **Pembersihan Tombol Dummy:** Menghapus tombol `⚡ Buat Tabel & Foto Dummy di Spreadsheet` beserta keterangannya dari modal admin web sesuai instruksi pengguna.
+  - **Prinsip Non-Destruktif:** Menjaga 100% keutuhan tampilan Romantic Ivory & Soft Gold, Hero Banner, Date Picker, Bingkai Foto, Lightbox, dan Slideshow.
 - **v2.2.0 (Integrasi Penuh Database pada Google Spreadsheet Tertentu Milik Pengguna):**
   - **Penguncian Spreadsheet ID Tunggal:** Menetapkan ID `133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20` sebagai pusat basis data primer aplikasi galeri panggung.
   - **Auto-Provisioning 3 Lembar Kerja:** `Pengaturan` (Konfigurasi Acara & Teknis), `Daftar_Foto` (Katalog Foto Wedding & Kategori), dan `Log_Aktivitas` (Audit Trail) langsung disiapkan dan ditata secara rapi dengan header berlatar Champagne Gold.
   - **Fungsi Setup Mandiri Satu Klik (`setupTargetSpreadsheetDatabase`):** Menambahkan fungsi di `setup.gs` yang dapat langsung dijalankan sekali klik dari Editor Google Apps Script untuk inisialisasi instan.
   - **Prinsip Non-Destruktif:** Seluruh komponen visual dan performa galeri panggung 100% dipertahankan.
+- **v2.5.0 (Redesain Minimalis Admin, Anti-FOUC Nama, 1-Klik Date Picker, Mandiri Ganti PIN & Smart Cutout Frame Compositor):**
+  - **Zero FOUC (Anti-Kedip Nama Lama):** Micro-loader di `<head>` dan baseline default disinkronkan ke "Hans & Yurike" dan "13 November 2026", mengeliminasi total kedipan "Romeo & Juliet" saat refresh di mobile.
+  - **Redesain Modern Minimalist Admin Dashboard:** Menggantikan border tebal bertingkat dengan antarmuka Segmented Navigation Tabs (Acara, Foto & Bingkai, Admin & PIN, Cloud Vercel) yang ramping, bersih, elegan, dan sangat ramah mobile.
+  - **Pembersihan Teks PIN Bawaan:** Menghapus teks "PIN bawaan awal adalah: 123456..." dari modal login untuk privasi dan tampilan profesional.
+  - **Date Picker 1-Klik:** Input tanggal langsung memanggil `this.showPicker()`, membuka kalender native seketika saat diklik di desktop maupun ponsel.
+  - **Ganti PIN Mandiri & Validasi Keunikan:** Tersedia kontrol ganti PIN tersendiri dengan validasi ketat keunikan terhadap seluruh user admin.
+  - **Smart Transparent Cutout Compositor:** Algoritma deteksi koordinat jendela transparan pada bingkai PNG dan penskalaan foto proporsional (*Aspect-Ratio Preserving Contain*). Menjamin 100% foto asli (lantai panggung, speaker, tamu di tepi) tampil utuh sempurna tanpa terpotong oleh banner atau border bingkai.
+  - **Vercel Production Deployment:** Siap di-deploy langsung ke `vercel.app` dengan integrasi Google Apps Script backend headless.
+- **v2.4.0 (Perbaikan Tampilan Mobile, Auto-Refresh Google Drive, Download Frame ke Device, Multi-User PIN):**
+  - **Mobile Layout & Anti-Saling Tindih:** Memperbaiki layout flexbox pada `.filter-scroll` dengan `min-width: 0;`, penyesuaian `@media (max-width: 640px)`, serta menghapus duplikasi kategori "Semua Foto".
+  - **Otomatisasi Penuh dari Google Drive:** Foto otomatis dibaca langsung dari folder Google Drive tanpa menulis ke sheet `Daftar_Foto`. Dilengkapi micro-cache 20 detik untuk efisiensi API.
+  - **Auto-Refresh dengan Info/Tanda Foto Baru:** Deteksi background refresh menampilkan lencana visual `✨ Baru` dan toast notifikasi interaktif.
+  - **Download Berbingkai Langsung ke Device:** Menggunakan Canvas Compositor beresolusi tinggi, ekspor Blob lokal, dan endpoint `getImageBase64` tanpa `target="_blank"`, sehingga file langsung tersimpan ke memori perangkat.
+  - **Multi-User Admin (Login Hanya PIN, Tampilkan Nama):** Setiap admin memiliki PIN tersendiri yang wajib unik. Login murni menggunakan PIN, dan sistem menampilkan nama user yang sedang aktif serta menyediakan panel kelola admin (tambah/hapus).
 - **v2.1.0 (Migrasi Penuh ke Google Spreadsheet 'foto-panggung', Live Sync & Date Picker Admin):**
   - **Pelepasan Ketergantungan Google Drive:** Galeri foto tidak lagi membaca folder Google Drive mentah. Seluruh katalog foto, kategori, dan link gambar bersumber langsung dari Sheet **`Daftar_Foto`**.
   - **Live Central Sync:** Web galeri auto-sync live setiap 20 detik langsung dari Google Spreadsheet.

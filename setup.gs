@@ -176,8 +176,8 @@ function setupTargetSpreadsheetDatabase() {
 
   // Parameter Konfigurasi Master
   var defaultParams = [
-    ["EVENT_NAME", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.EVENT_NAME) ? WEDDING_CONFIG.EVENT_NAME : "The Wedding of Romeo & Juliet", "Nama Event / Pasangan Pengantin"],
-    ["EVENT_DATE", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.EVENT_DATE) ? WEDDING_CONFIG.EVENT_DATE : "15 November 2026", "Tanggal Pelaksanaan Acara"],
+    ["EVENT_NAME", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.EVENT_NAME) ? WEDDING_CONFIG.EVENT_NAME : "Hans & Yurike", "Nama Event / Pasangan Pengantin"],
+    ["EVENT_DATE", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.EVENT_DATE) ? WEDDING_CONFIG.EVENT_DATE : "13 November 2026", "Tanggal Pelaksanaan Acara"],
     ["EVENT_VENUE", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.EVENT_VENUE) ? WEDDING_CONFIG.EVENT_VENUE : "Grand Ballroom, Jakarta", "Venue / Lokasi Gedung Acara"],
     ["SUBTITLE", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.SUBTITLE) ? WEDDING_CONFIG.SUBTITLE : "The Wedding Gallery & Precious Memories", "Subjudul Galeri Foto"],
     ["WELCOME_MESSAGE", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.WELCOME_MESSAGE) ? WEDDING_CONFIG.WELCOME_MESSAGE : "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.", "Pesan Sambutan Hangat untuk Tamu"],
@@ -202,121 +202,32 @@ function setupTargetSpreadsheetDatabase() {
   Logger.log("✅ Sheet 'Pengaturan' berhasil disiapkan dengan " + defaultParams.length + " parameter.");
 
   // --------------------------------------------------------------------------
-  // B. SHEET 2: Daftar_Foto (Lengkap dengan Dummy Photos)
+  // B. SHEET 2: Pengguna_Admin (Multi-User Admin dengan PIN Unik)
+  // Catatan: Sheet 'Daftar_Foto' tidak diperlukan lagi karena foto otomatis
+  // diambil langsung dari Google Drive.
   // --------------------------------------------------------------------------
-  var sheetPhotos = ss.getSheetByName("Daftar_Foto");
-  if (!sheetPhotos) {
-    sheetPhotos = ss.insertSheet("Daftar_Foto", 1);
+  var sheetUsers = ss.getSheetByName("Pengguna_Admin");
+  if (!sheetUsers) {
+    sheetUsers = ss.insertSheet("Pengguna_Admin", 1);
   }
-
-  // Tulis Header Daftar_Foto
-  var photoHeaders = [["ID_Foto", "Nama_Foto", "Kategori", "URL_Foto", "URL_Download", "Ukuran_Bytes", "Waktu_Upload", "Status"]];
-  sheetPhotos.getRange(1, 1, 1, 8).setValues(photoHeaders)
-    .setBackground("#C5A880")
+  var userHeaders = [["ID_User", "Nama_Pengguna", "PIN", "Peran", "Tanggal_Dibuat"]];
+  sheetUsers.getRange(1, 1, 1, 5).setValues(userHeaders)
+    .setBackground("#475569")
     .setFontColor("#FFFFFF")
     .setFontWeight("bold")
     .setHorizontalAlignment("center");
-  sheetPhotos.setFrozenRows(1);
+  sheetUsers.setFrozenRows(1);
 
-  // Koleksi Foto Dummy Pernikahan Berkualitas Tinggi
-  var dummyPhotos = [
-    [
-      "foto_pw_01",
-      "Tatapan Penuh Bahagia",
-      "Prewedding",
-      "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2400&q=100",
-      1542000,
-      Utilities.formatDate(new Date(Date.now() - 3600000), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
-      "Aktif"
-    ],
-    [
-      "foto_pw_02",
-      "Senja Berdua di Tepi Pantai",
-      "Prewedding",
-      "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=2400&q=100",
-      1823000,
-      Utilities.formatDate(new Date(Date.now() - 3000000), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
-      "Aktif"
-    ],
-    [
-      "foto_an_01",
-      "Momen Ijab Kabul Penuh Khidmat",
-      "Akad Nikah",
-      "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=2400&q=100",
-      2150000,
-      Utilities.formatDate(new Date(Date.now() - 2400000), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
-      "Aktif"
-    ],
-    [
-      "foto_an_02",
-      "Pemasangan Cincin Pernikahan",
-      "Akad Nikah",
-      "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=2400&q=100",
-      1980000,
-      Utilities.formatDate(new Date(Date.now() - 1800000), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
-      "Aktif"
-    ],
-    [
-      "foto_rs_01",
-      "Lempar Bunga & Tawa Bahagia",
-      "Resepsi",
-      "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=2400&q=100",
-      2310000,
-      Utilities.formatDate(new Date(Date.now() - 1200000), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
-      "Aktif"
-    ],
-    [
-      "foto_rs_02",
-      "Momen Dansa & Suasana Romantis",
-      "Resepsi",
-      "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=2400&q=100",
-      1740000,
-      Utilities.formatDate(new Date(Date.now() - 600000), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
-      "Aktif"
-    ],
-    [
-      "foto_pb_01",
-      "Pose Ceria Tamu & Sahabat",
-      "Photobooth",
-      "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=2400&q=100",
-      1650000,
-      Utilities.formatDate(new Date(Date.now() - 120000), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
-      "Aktif"
-    ],
-    [
-      "foto_pb_02",
-      "Keluarga Besar & Sahabat Tercinta",
-      "Photobooth",
-      "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=2400&q=100",
-      1910000,
-      Utilities.formatDate(new Date(Date.now() - 30000), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
-      "Aktif"
-    ]
+  var initialUsers = [
+    ["usr_superadmin", "Super Admin", "123456", "Super Admin", Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd HH:mm:ss")]
   ];
-
-  // Bersihkan baris lama jika ada lalu isi foto dummy
-  var lastPhotoRow = sheetPhotos.getLastRow();
-  if (lastPhotoRow > 1) {
-    sheetPhotos.getRange(2, 1, lastPhotoRow - 1, 8).clearContent();
-  }
-  sheetPhotos.getRange(2, 1, dummyPhotos.length, 8).setValues(dummyPhotos);
-  sheetPhotos.setColumnWidth(1, 130);
-  sheetPhotos.setColumnWidth(2, 240);
-  sheetPhotos.setColumnWidth(3, 140);
-  sheetPhotos.setColumnWidth(4, 280);
-  sheetPhotos.setColumnWidth(5, 280);
-  sheetPhotos.setColumnWidth(6, 120);
-  sheetPhotos.setColumnWidth(7, 180);
-  sheetPhotos.setColumnWidth(8, 100);
-  Logger.log("✅ Sheet 'Daftar_Foto' berhasil diisi dengan " + dummyPhotos.length + " foto pernikahan demo.");
+  sheetUsers.getRange(2, 1, initialUsers.length, 5).setValues(initialUsers);
+  sheetUsers.setColumnWidth(1, 160);
+  sheetUsers.setColumnWidth(2, 200);
+  sheetUsers.setColumnWidth(3, 120);
+  sheetUsers.setColumnWidth(4, 140);
+  sheetUsers.setColumnWidth(5, 180);
+  Logger.log("✅ Sheet 'Pengguna_Admin' berhasil disiapkan dengan user awal Super Admin.");
 
   // --------------------------------------------------------------------------
   // C. SHEET 3: Log_Aktivitas
