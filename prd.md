@@ -149,17 +149,17 @@ Karena web app ini mengambil sumber langsung dari Google Drive, tidak diperlukan
 <!-- ======================================================================= -->
 
 ### A. Status Arsitektur & Lingkungan Aktif
-- **Versi Sistem:** 2.1.0 (Pure Google Spreadsheet Architecture, Live Central Sync & Admin Date Picker).
-- **Runtime:** Vercel Global Edge CDN / GitHub Pages (Frontend) + Google Spreadsheet 'foto-panggung' (Pengaturan, Daftar_Foto, Log_Aktivitas) + Google Apps Script REST API Backend.
+- **Versi Sistem:** 2.2.0 (Dedicated User Google Spreadsheet Database Integration).
+- **Runtime:** Vercel Global Edge CDN / GitHub Pages (Frontend) + Google Spreadsheet Dedicated Database ID `133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20` (Pengaturan, Daftar_Foto, Log_Aktivitas) + Google Apps Script REST API Backend.
 - **Daftar Berkas Terpasang:**
   1. `ZettBOT.md`: Sakelar aktivasi lisensi & sistem arsitek ZettBOT.
   2. `prd.md`: Dokumen acuan spesifikasi produk & master context (file ini).
   3. `config.json`: Berkas konfigurasi live baseline default.
   4. `vercel.json`: Konfigurasi Vercel deployment.
   5. `package.json`: Metadata proyek untuk Vercel.
-  6. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, direct Google Spreadsheet `foto-panggung` photo catalog reader from Sheet `Daftar_Foto`, two-way config sync via Sheet `Pengaturan`, setupDemo handler) v2.1.0.
-  7. `setup.gs`: Utilitas inisialisasi, pengujian spreadsheet database, generator demo spreadsheet murni (`setupDemoSystemWithDummyFiles`), dan reset PIN admin.
-  8. `index.html`: Antarmuka galeri foto responsif universal dengan arsitektur Google Spreadsheet murni (bebas Google Drive), pemilih tanggal modern (Date Picker `<input type="date">`) dengan konversi otomatis format bahasa Indonesia, modal admin ringkas dan elegan, input admin 100% unlocked (Nama Event, Tanggal Acara, Venue), Hero Header dinamis, badge foto baru ("✨ Baru" auto-expire 10 menit), filter kategori otomatis dari tabel spreadsheet, Lightbox layar penuh, Slideshow panggung, Live Auto-Sync (20s), auto-cull foto error (`onerror`), Anti-Cache meta tags, dan Canvas Compositor unduh berbingkai.
+  6. `code.gs`: Backend Google Apps Script REST API (`doGet`, `doPost`, `handleApiRequest`, direct Google Spreadsheet photo catalog reader from Sheet `Daftar_Foto` on ID `133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20`, two-way config sync via Sheet `Pengaturan`, setupDemo handler) v2.2.0.
+  7. `setup.gs`: Utilitas inisialisasi, pengujian spreadsheet database, generator setup satu klik spreadsheet pengguna (`setupTargetSpreadsheetDatabase`), dan reset PIN admin.
+  8. `index.html`: Antarmuka galeri foto responsif universal dengan basis Google Spreadsheet target pengguna, pemilih tanggal modern (Date Picker `<input type="date">`) dengan konversi otomatis format bahasa Indonesia, modal admin ringkas dan elegan, input admin 100% unlocked (Nama Event, Tanggal Acara, Venue), Hero Header dinamis, badge foto baru ("✨ Baru" auto-expire 10 menit), filter kategori otomatis dari tabel spreadsheet, Lightbox layar penuh, Slideshow panggung, Live Auto-Sync (20s), auto-cull foto error (`onerror`), Anti-Cache meta tags, dan Canvas Compositor unduh berbingkai.
 
 ### B. Konfigurasi Sistem Terkini
 ```javascript
@@ -174,18 +174,22 @@ const WEDDING_CONFIG = {
   SLIDESHOW_INTERVAL_SEC: 4,
   AUTO_REFRESH_INTERVAL_SEC: 25,
   FRAME_IMAGE_URL: "",
-  SPREADSHEET_ID: "",
+  SPREADSHEET_ID: "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20",
   NEW_BADGE_MINUTES: 10
 };
 ```
 
 ### C. Log Pembaruan Resmi (System Changelog)
+- **v2.2.0 (Integrasi Penuh Database pada Google Spreadsheet Tertentu Milik Pengguna):**
+  - **Penguncian Spreadsheet ID Tunggal:** Menetapkan ID `133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20` sebagai pusat basis data primer aplikasi galeri panggung.
+  - **Auto-Provisioning 3 Lembar Kerja:** `Pengaturan` (Konfigurasi Acara & Teknis), `Daftar_Foto` (Katalog Foto Wedding & Kategori), dan `Log_Aktivitas` (Audit Trail) langsung disiapkan dan ditata secara rapi dengan header berlatar Champagne Gold.
+  - **Fungsi Setup Mandiri Satu Klik (`setupTargetSpreadsheetDatabase`):** Menambahkan fungsi di `setup.gs` yang dapat langsung dijalankan sekali klik dari Editor Google Apps Script untuk inisialisasi instan.
+  - **Prinsip Non-Destruktif:** Seluruh komponen visual dan performa galeri panggung 100% dipertahankan.
 - **v2.1.0 (Migrasi Penuh ke Google Spreadsheet 'foto-panggung', Live Sync & Date Picker Admin):**
-  - **Pelepasan Ketergantungan Google Drive:** Galeri foto tidak lagi membaca folder Google Drive mentah. Seluruh katalog foto, kategori, dan link gambar bersumber langsung dari Sheet **`Daftar_Foto`** di Google Spreadsheet **`foto-panggung`**.
-  - **Live Central Sync:** Web galeri auto-sync live setiap 20 detik langsung dari Google Spreadsheet `foto-panggung`. Penambahan baris foto baru atau perubahan status langsung terupdate di seluruh perangkat secara sinkron.
-  - **Date Picker Modern untuk Tanggal Acara:** Input tanggal acara di panel admin web menggunakan HTML5 Date Picker (`<input type="date">`), terintegrasi dengan fungsi konversi tanggal bahasa Indonesia (`formatIndonesianDate`) sehingga tampil anggun di Hero Banner dan Watermark Panggung.
-  - **Pembersihan Antarmuka Admin:** Menghapus input folder Google Drive dan elemen sinkronisasi Drive dari panel modal admin. Seluruh pemanggilan DOM elemen tervalidasi aman 100% tanpa risiko error null.
-  - **Prinsip Non-Destruktif:** Seluruh fitur visual (Hero Header dinamis, Badge Foto Baru auto-expire 10m, Canvas Frame Compositor, Lightbox, Slideshow Panggung) 100% dipertahankan dan beroperasi utuh.
+  - **Pelepasan Ketergantungan Google Drive:** Galeri foto tidak lagi membaca folder Google Drive mentah. Seluruh katalog foto, kategori, dan link gambar bersumber langsung dari Sheet **`Daftar_Foto`**.
+  - **Live Central Sync:** Web galeri auto-sync live setiap 20 detik langsung dari Google Spreadsheet.
+  - **Date Picker Modern untuk Tanggal Acara:** Input tanggal acara di panel admin web menggunakan HTML5 Date Picker (`<input type="date">`).
+  - **Pembersihan Antarmuka Admin:** Menghapus input folder Google Drive dan elemen sinkronisasi Drive dari panel modal admin.
 - **v2.0.0 (Eliminasi Error 405 Pengaturan Admin & Penyiapan Demo Setup dengan Dummy Files):**
   - **Eliminasi Total Error HTTP 405:** Menghapus ketergantungan pada endpoint pihak ketiga `api.restful-api.dev` yang rentan menolak method `PUT`.
   - **Alur Penyimpanan Tangguh & Langsung (Fail-Safe Save Handler):**

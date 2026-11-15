@@ -31,7 +31,7 @@ const WEDDING_CONFIG = {
   SLIDESHOW_INTERVAL_SEC: 4,
   AUTO_REFRESH_INTERVAL_SEC: 25,
   FRAME_IMAGE_URL: "",
-  SPREADSHEET_ID: "",
+  SPREADSHEET_ID: "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20",
   NEW_BADGE_MINUTES: 10
 };
 
@@ -45,7 +45,7 @@ const SPREADSHEET_DB_NAME = "foto-panggung";
  */
 
 /**
- * 1. Mengambil spreadsheet database aktif ('foto-panggung')
+ * 1. Mengambil spreadsheet database aktif
  */
 function getDatabaseSpreadsheet(optionalCustomId) {
   // A. Cek apakah script terikat langsung (Container-Bound) ke file Spreadsheet
@@ -57,7 +57,7 @@ function getDatabaseSpreadsheet(optionalCustomId) {
   } catch (eActive) {}
 
   var props = PropertiesService.getScriptProperties();
-  var ssId = optionalCustomId || props.getProperty("SPREADSHEET_ID") || "";
+  var ssId = optionalCustomId || props.getProperty("SPREADSHEET_ID") || WEDDING_CONFIG.SPREADSHEET_ID || "";
   
   // B. Cek berdasarkan ID jika tersimpan
   if (ssId) {
@@ -94,15 +94,29 @@ function getDatabaseSpreadsheet(optionalCustomId) {
 }
 
 /**
- * 2. Setup Otomatis Google Spreadsheet Database 'foto-panggung' (Non-Destruktif)
+ * 2. Setup Otomatis Google Spreadsheet Database (Non-Destruktif)
  */
-function setupDatabaseSpreadsheet(customName) {
+function setupDatabaseSpreadsheet(customNameOrId) {
   try {
     var props = PropertiesService.getScriptProperties();
-    var ss = getDatabaseSpreadsheet();
+    var targetId = (customNameOrId && customNameOrId.length > 20) ? customNameOrId : (props.getProperty("SPREADSHEET_ID") || WEDDING_CONFIG.SPREADSHEET_ID || "");
+    var ss = null;
+
+    if (targetId && targetId.length > 20) {
+      try {
+        ss = SpreadsheetApp.openById(targetId);
+        props.setProperty("SPREADSHEET_ID", ss.getId());
+      } catch (eId) {
+        Logger.log("⚠️ Gagal openById targetId: " + eId.toString());
+      }
+    }
 
     if (!ss) {
-      var name = customName || SPREADSHEET_DB_NAME;
+      ss = getDatabaseSpreadsheet(targetId);
+    }
+
+    if (!ss) {
+      var name = customNameOrId || SPREADSHEET_DB_NAME;
       ss = SpreadsheetApp.create(name);
       props.setProperty("SPREADSHEET_ID", ss.getId());
     }

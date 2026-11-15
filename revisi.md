@@ -1,29 +1,21 @@
-# LAPORAN REVISI: MIGRASI PENUH DATA KE SPREADSHEET (TANPA GOOGLE DRIVE) & DATE PICKER
+# LAPORAN REVISI: PENYIAPAN SELURUH DATABASE PADA SPREADSHEET PENGGUNA
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUDAH DITERAPKAN (MERGED KE MASTER v2.1.0)
+STATUS: SUDAH DITERAPKAN (MERGED KE MASTER v2.2.0)
 TANGGAL PENERAPAN: 16 November 2026
+TARGET SPREADSHEET: https://docs.google.com/spreadsheets/d/133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20/edit
+ID SPREADSHEET: 133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20
 ================================================================================
 
 ### A. Rangkuman Eksekusi Perubahan
-1. **Pelepasan Total dari Google Drive Folder:**
-   - Katalog foto, kategori, dan metadata acara kini 100% bersumber dari Google Spreadsheet **`foto-panggung`** (Sheet **`Daftar_Foto`** dan Sheet **`Pengaturan`**).
-   - Pengguna bebas menambahkan foto cukup dengan menempelkan URL gambar (Google Drive view link, CDN, Unsplash, dll.) ke kolom `URL_Foto` di spreadsheet.
-2. **Date Picker Modern & Format Bahasa Indonesia:**
-   - Input tanggal acara di panel admin modal menggunakan pemilih tanggal interaktif (`<input type="date">`).
-   - Otomatis diformat menjadi format tanggal ramah bahasa Indonesia (contoh: *15 November 2026*) pada tampilan Hero Banner dan watermark panggung.
-3. **Pembersihan Antarmuka & Eliminasi Error 405:**
-   - Input folder Google Drive dan tombol sinkronisasi Drive dihapus dari panel admin.
-   - Seluruh pemanggilan DOM tervalidasi 100% aman tanpa exception null.
-   - Penyimpanan konfigurasi berlangsung langsung ke Google Apps Script dan Google Spreadsheet tanpa perantara third-party.
-4. **Live Auto-Sync Multi-Device:**
-   - Seluruh gadget (HP, laptop, tablet, layar panggung) melakukan polling otomatis setiap 20 detik secara live ke backend spreadsheet `foto-panggung`.
-
----
-
-### B. Berkas yang Diperbarui
-1. `code.gs`: Backend API membaca data foto langsung dari Sheet `Daftar_Foto` di `foto-panggung` dan menyimpan konfigurasi ke Sheet `Pengaturan`.
-2. `index.html`: Antarmuka galeri responsif dengan Date Picker, utilitas konversi tanggal bahasa Indonesia, form admin bersih, dan live sync terpusat.
-3. `setup.gs`: Fungsi `setupDemoSystemWithDummyFiles()` menginisialisasi spreadsheet `foto-panggung` dan mengisinya dengan foto dummy resolusi tinggi tanpa folder Drive.
-4. `prd.md`: Master context diperbarui ke versi 2.1.0.
+1. **Pemusatan Database pada Spreadsheet Pengguna:**
+   - Seluruh backend dan frontend kini terhubung langsung ke berkas Google Spreadsheet dengan ID `133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20`.
+2. **Inisialisasi 3 Lembar Kerja:**
+   - **Sheet `Pengaturan`**: Mengelola konfigurasi acara, tanggal, venue, pesan sambutan, durasi slideshow, interval live auto-sync, dan PIN admin.
+   - **Sheet `Daftar_Foto`**: Mengelola katalog foto, kategori (*Prewedding*, *Akad Nikah*, *Resepsi*, *Photobooth*), URL gambar, dan status aktif.
+   - **Sheet `Log_Aktivitas`**: Mencatat riwayat inisialisasi awal dan aktivitas admin.
+3. **Fungsi Setup Mandiri Satu Klik di Google Apps Script:**
+   - Menambahkan fungsi `setupTargetSpreadsheetDatabase()` pada [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/setup.gs) yang dapat dijalankan langsung di Google Apps Script Editor untuk inisialisasi tabel secara otomatis.
+4. **Pembaruan Berkas Client-Side:**
+   - [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/config.json) dan [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) telah diperbarui dengan ID spreadsheet default tersebut.
