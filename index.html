@@ -1,0 +1,2248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Romeo & Juliet - Wedding Photo Gallery</title>
+
+  <!-- Google Fonts: Cormorant Garamond (Serif Elegan) & Plus Jakarta Sans (Modern Clean) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================================================
+       RESET & ROOT VARIABLES - PALET ROMANTIC IVORY & SOFT GOLD
+       ========================================================================== */
+    :root {
+      --bg-warm: #FAF8F5;
+      --bg-card: #FFFFFF;
+      --text-main: #1E293B;
+      --text-muted: #64748B;
+      --gold-primary: #C5A880;
+      --gold-dark: #A8895E;
+      --gold-light: #F4EFEA;
+      --gold-border: rgba(197, 168, 128, 0.35);
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --shadow-soft: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+      --shadow-hover: 0 20px 40px -10px rgba(168, 137, 94, 0.18);
+      --radius-card: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-warm);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* ==========================================================================
+       HERO HEADER SECTION
+       ========================================================================== */
+    .hero {
+      position: relative;
+      padding: 60px 20px 40px;
+      text-align: center;
+      background: radial-gradient(circle at 50% 20%, #FFFFFF 0%, #FAF8F5 100%);
+      border-bottom: 1px solid var(--gold-border);
+    }
+
+    .hero-ornament {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      color: var(--gold-primary);
+    }
+
+    .hero-ornament .line {
+      width: 40px;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--gold-primary));
+    }
+
+    .hero-ornament .line.right {
+      background: linear-gradient(to left, transparent, var(--gold-primary));
+    }
+
+    .hero-title {
+      font-family: var(--font-serif);
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #111827;
+      margin-bottom: 8px;
+      line-height: 1.15;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+      color: var(--gold-dark);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .hero-date-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #FFFFFF;
+      padding: 8px 20px;
+      border-radius: 9999px;
+      border: 1px solid var(--gold-border);
+      box-shadow: var(--shadow-soft);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-main);
+      margin-bottom: 20px;
+    }
+
+    .hero-desc {
+      max-width: 600px;
+      margin: 0 auto 28px;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    /* ==========================================================================
+       BUTTONS & INTERACTIVE ELEMENTS
+       ========================================================================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 9999px;
+      font-family: var(--font-sans);
+      font-size: 0.92rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.25s ease;
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, #D4AF37 0%, #C5A880 100%);
+      color: #FFFFFF;
+      box-shadow: 0 4px 15px rgba(197, 168, 128, 0.35);
+    }
+
+    .btn-gold:hover {
+      background: linear-gradient(135deg, #C5A880 0%, #A8895E 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(197, 168, 128, 0.45);
+    }
+
+    .btn-gold:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-outline {
+      background: #FFFFFF;
+      color: var(--text-main);
+      border: 1px solid var(--gold-border);
+    }
+
+    .btn-outline:hover {
+      background: var(--gold-light);
+      border-color: var(--gold-primary);
+      transform: translateY(-2px);
+    }
+
+    /* ==========================================================================
+       CATEGORY FILTER BAR & ACTION CONTROLS
+       ========================================================================== */
+    .filter-wrapper {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(250, 248, 245, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(197, 168, 128, 0.2);
+      padding: 14px 20px;
+    }
+
+    .filter-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .filter-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding: 2px 0;
+      flex: 1;
+    }
+
+    .filter-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .filter-pill {
+      white-space: nowrap;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      background: #FFFFFF;
+      color: var(--text-muted);
+      border: 1px solid rgba(197, 168, 128, 0.25);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .filter-pill:hover {
+      border-color: var(--gold-primary);
+      color: var(--text-main);
+    }
+
+    .filter-pill.active {
+      background: var(--gold-primary);
+      color: #FFFFFF;
+      border-color: var(--gold-primary);
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(197, 168, 128, 0.3);
+    }
+
+    .filter-pill .pill-count {
+      font-size: 0.75rem;
+      opacity: 0.85;
+      background: rgba(0, 0, 0, 0.08);
+      padding: 1px 7px;
+      border-radius: 9999px;
+    }
+
+    .filter-pill.active .pill-count {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .action-controls-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .ctrl-icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 1px solid var(--gold-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--gold-dark);
+      transition: all 0.2s ease;
+    }
+
+    .ctrl-icon-btn:hover {
+      background: var(--gold-light);
+      border-color: var(--gold-primary);
+      transform: scale(1.05);
+    }
+
+    .ctrl-icon-btn.admin-active {
+      background: var(--gold-primary);
+      color: #FFFFFF;
+      border-color: var(--gold-primary);
+    }
+
+    /* ==========================================================================
+       GALLERY GRID SECTION
+       ========================================================================== */
+    .gallery-container {
+      max-width: 1300px;
+      margin: 30px auto 80px;
+      padding: 0 20px;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    @media (min-width: 768px) {
+      .gallery-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .gallery-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 24px;
+      }
+    }
+
+    .photo-card {
+      position: relative;
+      background: var(--bg-card);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      aspect-ratio: 4 / 5;
+      box-shadow: var(--shadow-soft);
+      cursor: pointer;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid rgba(197, 168, 128, 0.15);
+    }
+
+    .photo-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-hover);
+      border-color: var(--gold-primary);
+    }
+
+    .photo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      background-color: #F1EFEA;
+    }
+
+    .photo-card:hover .photo-img {
+      transform: scale(1.05);
+    }
+
+    .photo-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0) 60%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 16px;
+      color: #FFFFFF;
+    }
+
+    .photo-card:hover .photo-overlay {
+      opacity: 1;
+    }
+
+    @media (hover: none) {
+      .photo-overlay {
+        opacity: 1;
+        background: linear-gradient(to top, rgba(15, 23, 42, 0.65) 0%, rgba(15, 23, 42, 0) 50%);
+      }
+    }
+
+    .photo-badge {
+      align-self: flex-start;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: rgba(197, 168, 128, 0.9);
+      color: #FFFFFF;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+
+    .photo-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .skeleton-card {
+      aspect-ratio: 4 / 5;
+      border-radius: var(--radius-card);
+      background: linear-gradient(90deg, #EFECE6 25%, #F8F6F2 50%, #EFECE6 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ==========================================================================
+       DEMO BANNER ALERT
+       ========================================================================== */
+    .demo-banner {
+      background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+      border-bottom: 1px solid #FDE68A;
+      color: #92400E;
+      padding: 12px 20px;
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-align: center;
+    }
+
+    /* ==========================================================================
+       MODAL LIGHTBOX (FULLSCREEN PHOTO VIEWER)
+       ========================================================================== */
+    .lightbox-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background-color: rgba(15, 23, 42, 0.96);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      flex-direction: column;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .lightbox-modal.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    .lightbox-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px;
+      color: #FFFFFF;
+      z-index: 10;
+    }
+
+    .lightbox-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .lightbox-counter {
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+    }
+
+    .lightbox-title {
+      font-family: var(--font-serif);
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    .lightbox-close {
+      background: rgba(255, 255, 255, 0.12);
+      border: none;
+      color: #FFFFFF;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .lightbox-close:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: scale(1.05);
+    }
+
+    .lightbox-body {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+      overflow: hidden;
+    }
+
+    .lightbox-img-wrapper {
+      max-width: 90vw;
+      max-height: 75vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.25s ease;
+    }
+
+    .lightbox-img {
+      max-width: 100%;
+      max-height: 75vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      user-select: none;
+    }
+
+    .lightbox-nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.12);
+      border: none;
+      color: #FFFFFF;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      z-index: 10;
+    }
+
+    .lightbox-nav-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-50%) scale(1.08);
+    }
+
+    .lightbox-nav-btn.prev { left: 20px; }
+    .lightbox-nav-btn.next { right: 20px; }
+
+    @media (max-width: 640px) {
+      .lightbox-nav-btn { width: 40px; height: 40px; }
+      .lightbox-nav-btn.prev { left: 8px; }
+      .lightbox-nav-btn.next { right: 8px; }
+    }
+
+    .lightbox-bottombar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding: 16px 24px 28px;
+      z-index: 10;
+    }
+
+    /* ==========================================================================
+       STAGE SLIDESHOW OVERLAY (MODE PANGGUNG)
+       ========================================================================== */
+    .slideshow-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      background-color: #0B0F19;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .slideshow-overlay.active {
+      display: flex;
+      flex-direction: column;
+      opacity: 1;
+    }
+
+    .slideshow-stage {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .slideshow-img {
+      position: absolute;
+      max-width: 95vw;
+      max-height: 85vh;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+      opacity: 0;
+      transform: scale(0.98);
+      transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .slideshow-img.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .slideshow-watermark {
+      position: absolute;
+      top: 30px;
+      left: 35px;
+      color: rgba(255, 255, 255, 0.85);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .slideshow-watermark h2 {
+      font-family: var(--font-serif);
+      font-size: 1.8rem;
+      letter-spacing: 0.05em;
+      color: var(--gold-primary);
+    }
+
+    .slideshow-watermark p {
+      font-size: 0.85rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      opacity: 0.7;
+    }
+
+    .slideshow-controls {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(10px);
+      padding: 8px 18px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      z-index: 10;
+    }
+
+    .slideshow-ctrl-btn {
+      background: none;
+      border: none;
+      color: #FFFFFF;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .slideshow-ctrl-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .slideshow-progress-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: var(--gold-primary);
+      width: 0%;
+      transition: width 0.1s linear;
+      z-index: 20;
+    }
+
+    /* ==========================================================================
+       MODAL ADMIN LOGIN & SETTINGS
+       ========================================================================== */
+    .admin-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 110;
+      background-color: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .admin-modal-overlay.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    .admin-card {
+      background: #FFFFFF;
+      width: 100%;
+      max-width: 540px;
+      border-radius: 20px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--gold-border);
+      overflow: hidden;
+      transform: scale(0.96);
+      transition: transform 0.25s ease;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .admin-modal-overlay.active .admin-card {
+      transform: scale(1);
+    }
+
+    .admin-card-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--gold-border);
+      background: radial-gradient(circle at 100% 0%, #FAF8F5 0%, #FFFFFF 100%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .admin-card-header h3 {
+      font-family: var(--font-serif);
+      font-size: 1.4rem;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .admin-card-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .admin-field-group {
+      margin-bottom: 18px;
+    }
+
+    .admin-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .admin-input {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 10px;
+      border: 1px solid #CBD5E1;
+      font-family: var(--font-sans);
+      font-size: 0.92rem;
+      color: var(--text-main);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .admin-input:focus {
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 0 3px rgba(197, 168, 128, 0.25);
+    }
+
+    .admin-help-text {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .admin-sync-box {
+      background: var(--gold-light);
+      border: 1px solid var(--gold-border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 20px;
+    }
+
+    .admin-sync-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .admin-sync-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--gold-dark);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .admin-alert-box {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .admin-alert-box.success {
+      background: #ECFDF5;
+      color: #065F46;
+      border: 1px solid #A7F3D0;
+      display: block;
+    }
+
+    .admin-alert-box.error {
+      background: #FEF2F2;
+      color: #991B1B;
+      border: 1px solid #FECACA;
+      display: block;
+    }
+
+    .admin-card-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #F1F5F9;
+      background: #FAF8F5;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 150;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: #1E293B;
+      color: #FFFFFF;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      border-left: 4px solid var(--gold-primary);
+      transform: translateY(-20px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: auto;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .spin {
+      animation: spinAnim 1s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spinAnim {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .footer {
+      text-align: center;
+      padding: 40px 20px 60px;
+      border-top: 1px solid var(--gold-border);
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    .footer-names {
+      font-family: var(--font-serif);
+      font-size: 1.4rem;
+      color: var(--gold-dark);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Demo Notice Banner -->
+  <div id="demoNotice" class="demo-banner" style="display: none;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <span><strong>Mode Demo Aktif:</strong> Menampilkan foto sampel. Klik ikon <strong>Gembok (Admin)</strong> untuk menghubungkan Google Apps Script Backend atau folder Google Drive Anda.</span>
+  </div>
+
+  <!-- Hero Header Section -->
+  <header class="hero">
+    <div class="hero-ornament">
+      <div class="line"></div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+      </svg>
+      <div class="line right"></div>
+    </div>
+
+    <h1 id="coupleName" class="hero-title">Romeo & Juliet</h1>
+    <div id="subtitle" class="hero-subtitle">The Wedding Gallery & Precious Memories</div>
+
+    <div class="hero-date-badge">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+      <span id="eventDate">15 November 2026</span>
+    </div>
+
+    <p id="welcomeMessage" class="hero-desc">Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.</p>
+
+    <div class="hero-actions">
+      <a href="#gallerySection" class="btn btn-gold">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+        <span>Jelajahi Galeri</span>
+      </a>
+
+      <button id="btnStartSlideshow" class="btn btn-outline" onclick="openSlideshow(0)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        <span>Mode Panggung (Slideshow)</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Sticky Filter Bar with Admin Trigger & Live Sync Indicator -->
+  <div class="filter-wrapper" id="gallerySection">
+    <div class="filter-container">
+      <div class="filter-scroll" id="categoryTabs">
+        <button class="filter-pill active" data-category="Semua Foto">
+          <span>Semua Foto</span>
+          <span class="pill-count" id="countAll">0</span>
+        </button>
+      </div>
+
+      <div class="action-controls-group">
+        <!-- Live Auto-Refresh Status Indicator & Manual Refresh Button -->
+        <button class="ctrl-icon-btn" onclick="fetchGalleryData(true)" title="Sinkronkan foto sekarang (Auto-sync aktif)">
+          <svg id="refreshIconSvg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6"></path>
+            <path d="M1 20v-6h6"></path>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+        </button>
+
+        <!-- Admin Access Button -->
+        <button id="adminBtn" class="ctrl-icon-btn" onclick="openAdminModal()" title="Menu Admin & Pengaturan Google Drive">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Photo Gallery Grid -->
+  <main class="gallery-container">
+    <div class="gallery-grid" id="photosGrid">
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    </div>
+  </main>
+
+  <!-- Lightbox Modal -->
+  <div id="lightbox" class="lightbox-modal">
+    <div class="lightbox-topbar">
+      <div class="lightbox-info">
+        <span class="lightbox-counter" id="lightboxCounter">FOTO 1 DARI 8</span>
+        <span class="lightbox-title" id="lightboxTitle">Judul Foto</span>
+      </div>
+      <button class="lightbox-close" onclick="closeLightbox()" title="Tutup (Esc)">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="lightbox-body" id="lightboxBody">
+      <button class="lightbox-nav-btn prev" onclick="navigateLightbox(-1)" title="Sebelumnya (Panah Kiri)">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      <div class="lightbox-img-wrapper">
+        <img id="lightboxImg" class="lightbox-img" src="" alt="Wedding Photo Preview" onerror="this.src='https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80';">
+      </div>
+
+      <button class="lightbox-nav-btn next" onclick="navigateLightbox(1)" title="Berikutnya (Panah Kanan)">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <div class="lightbox-bottombar">
+      <button id="lightboxDownloadBtn" class="btn btn-gold" onclick="downloadCurrentPhotoWithFrame()">
+        <svg id="downloadIconSvg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span id="downloadBtnLabel">Unduh Foto Asli</span>
+      </button>
+
+      <button class="btn btn-outline" onclick="startSlideshowFromCurrent()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        <span>Putar Slideshow</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Stage Slideshow Overlay (Mode Panggung Layar Penuh) -->
+  <div id="slideshowOverlay" class="slideshow-overlay">
+    <div class="slideshow-progress-bar" id="slideshowProgress"></div>
+
+    <div class="slideshow-watermark">
+      <h2 id="slideshowCouple">Romeo & Juliet</h2>
+      <p id="slideshowCategory">Precious Memories</p>
+    </div>
+
+    <div class="slideshow-stage">
+      <img id="slideshowImgA" class="slideshow-img visible" src="" alt="Slideshow A">
+      <img id="slideshowImgB" class="slideshow-img" src="" alt="Slideshow B">
+    </div>
+
+    <div class="slideshow-controls">
+      <button class="slideshow-ctrl-btn" onclick="prevSlide()" title="Sebelumnya">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      <button class="slideshow-ctrl-btn" id="slideshowPlayBtn" onclick="togglePlayPause()" title="Jeda / Putar">
+        <svg id="playIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        <svg id="pauseIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="6" y="4" width="4" height="16"></rect>
+          <rect x="14" y="4" width="4" height="16"></rect>
+        </svg>
+      </button>
+
+      <button class="slideshow-ctrl-btn" onclick="nextSlide()" title="Berikutnya">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+
+      <button class="slideshow-ctrl-btn" onclick="closeSlideshow()" title="Keluar Layar Penuh (Esc)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal 1: Login Admin -->
+  <div id="adminLoginModal" class="admin-modal-overlay">
+    <div class="admin-card" style="max-width: 400px;">
+      <div class="admin-card-header">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>Masuk Admin</span>
+        </h3>
+        <button class="ctrl-icon-btn" onclick="closeAdminLoginModal()" style="width: 32px; height: 32px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+        <div class="admin-card-body">
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
+            Masukkan PIN Admin untuk mengatur sambungan folder Google Drive, bingkai foto, dan rincian acara.
+          </p>
+
+          <div class="admin-field-group">
+            <label class="admin-label" for="adminPinInput">PIN Rahasia Admin</label>
+            <input type="password" id="adminPinInput" class="admin-input" placeholder="Masukkan PIN (Default: 123456)" required autocomplete="current-password">
+            <div class="admin-help-text">PIN bawaan awal adalah: <strong>123456</strong> (dapat diubah di dalam).</div>
+          </div>
+
+          <div id="loginAlertBox" class="admin-alert-box error"></div>
+        </div>
+
+        <div class="admin-card-footer">
+          <button type="button" class="btn btn-outline" onclick="closeAdminLoginModal()">Batal</button>
+          <button type="submit" id="loginSubmitBtn" class="btn btn-gold">
+            <span>Masuk</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Panel Pengaturan Admin, Vercel API & Bingkai Foto -->
+  <div id="adminSettingsModal" class="admin-modal-overlay">
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <h3>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>Pengaturan Admin & Vercel</span>
+        </h3>
+        <button class="ctrl-icon-btn" onclick="closeAdminSettingsModal()" style="width: 32px; height: 32px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="admin-card-body">
+        <!-- Bagian 1: Tautan API Google Apps Script (Untuk Vercel) -->
+        <div class="admin-sync-box" style="background: #F8FAFC; border-color: #CBD5E1;">
+          <div class="admin-sync-header">
+            <div class="admin-sync-title" style="color: #0F172A;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+              <span>Koneksi Backend Google Apps Script (Vercel)</span>
+            </div>
+            <span id="apiStatusBadge" style="font-size: 0.75rem; color: #10B981; font-weight: 600;"></span>
+          </div>
+
+          <div class="admin-field-group" style="margin-bottom: 8px;">
+            <label class="admin-label" for="cfgGasApiUrl">URL Web App Google Apps Script</label>
+            <input type="text" id="cfgGasApiUrl" class="admin-input" placeholder="https://script.google.com/macros/s/.../exec">
+            <div class="admin-help-text">
+              Salin URL Web App dari Google Apps Script (setelah Deploy: <em>Execute as: Me</em>, <em>Who has access: Anyone</em>).
+            </div>
+          </div>
+        </div>
+
+        <!-- Bagian 2: Folder Google Drive Foto -->
+        <div class="admin-sync-box">
+          <div class="admin-sync-header">
+            <div class="admin-sync-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <span>Folder Google Drive Foto</span>
+            </div>
+            <span style="font-size: 0.75rem; color: var(--gold-dark); font-weight: 600;">Live Auto-Sync (25d)</span>
+          </div>
+
+          <div class="admin-field-group" style="margin-bottom: 10px;">
+            <label class="admin-label" for="cfgDriveFolderId">ID / Tautan Folder Google Drive</label>
+            <input type="text" id="cfgDriveFolderId" class="admin-input" placeholder="Tempel ID Folder atau Tautan Google Drive di sini">
+            <div class="admin-help-text">
+              Salin kode dari URL Google Drive (contoh: <code>1ABCxyz...</code>). Pastikan izin folder: <em>"Anyone with the link can view"</em>.
+            </div>
+          </div>
+
+          <button type="button" id="btnSyncDrive" class="btn btn-gold" style="width: 100%; padding: 10px 18px; font-size: 0.88rem;" onclick="handleSyncDriveNow()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            <span id="syncBtnText">Sinkronkan Google Drive Sekarang</span>
+          </button>
+
+          <div id="syncResultAlert" class="admin-alert-box"></div>
+        </div>
+
+        <!-- Bagian 3: Bingkai Foto Kustom -->
+        <div class="admin-sync-box" style="background: #FDFBF7; border-color: rgba(197, 168, 128, 0.4);">
+          <div class="admin-sync-header">
+            <div class="admin-sync-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+              <span>Bingkai Foto Kustom Saat Download</span>
+            </div>
+            <span id="frameStatusBadge" style="font-size: 0.75rem; color: #10B981; font-weight: 600;"></span>
+          </div>
+
+          <div class="admin-field-group" style="margin-bottom: 8px;">
+            <label class="admin-label" for="cfgFrameImageUrl">Tautan / ID File Bingkai PNG Google Drive</label>
+            <input type="text" id="cfgFrameImageUrl" class="admin-input" placeholder="Contoh: https://drive.google.com/file/d/1XYZ.../view atau ID file">
+            <div class="admin-help-text">
+              Unggah file bingkai berformat <strong>PNG Transparan</strong> ke Google Drive, setel izin <em>"Anyone with the link can view"</em>, lalu tempel tautannya di sini.
+            </div>
+          </div>
+        </div>
+
+        <!-- Bagian 4: Rincian Pernikahan -->
+        <h4 style="font-size: 0.92rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px; border-bottom: 1px solid #E2E8F0; padding-bottom: 6px;">
+          Informasi Pernikahan
+        </h4>
+
+        <div class="admin-field-group">
+          <label class="admin-label" for="cfgCoupleName">Nama Pasangan Mempelai</label>
+          <input type="text" id="cfgCoupleName" class="admin-input" placeholder="Contoh: Romeo & Juliet">
+        </div>
+
+        <div class="admin-field-group">
+          <label class="admin-label" for="cfgSubtitle">Subjudul Galeri</label>
+          <input type="text" id="cfgSubtitle" class="admin-input" placeholder="Contoh: The Wedding Gallery & Memories">
+        </div>
+
+        <div class="admin-field-group">
+          <label class="admin-label" for="cfgEventDate">Tanggal Hari Bahagia</label>
+          <input type="text" id="cfgEventDate" class="admin-input" placeholder="Contoh: 15 November 2026">
+        </div>
+
+        <div class="admin-field-group">
+          <label class="admin-label" for="cfgWelcomeMessage">Kalimat Sambutan untuk Tamu</label>
+          <textarea id="cfgWelcomeMessage" class="admin-input" rows="3" placeholder="Pesan hangat bagi tamu undangan..."></textarea>
+        </div>
+
+        <!-- Bagian 5: Keamanan & PIN Admin -->
+        <h4 style="font-size: 0.92rem; font-weight: 700; color: var(--text-main); margin-top: 20px; margin-bottom: 12px; border-bottom: 1px solid #E2E8F0; padding-bottom: 6px;">
+          Keamanan & PIN Admin (Opsional)
+        </h4>
+
+        <div class="admin-field-group">
+          <label class="admin-label" for="cfgNewPin">Ganti PIN Admin Baru</label>
+          <input type="password" id="cfgNewPin" class="admin-input" placeholder="Kosongkan jika tidak ingin mengubah PIN">
+          <div class="admin-help-text">Minimal 4 karakter (angka atau kombinasi huruf).</div>
+        </div>
+
+        <div id="saveAlertBox" class="admin-alert-box"></div>
+      </div>
+
+      <div class="admin-card-footer">
+        <button type="button" class="btn btn-outline" onclick="handleAdminLogout()" style="color: #EF4444; border-color: #FECACA;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Keluar</span>
+        </button>
+
+        <button type="button" id="btnSaveSettings" class="btn btn-gold" onclick="handleSaveAllSettings()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>Simpan Perubahan</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-names">Romeo & Juliet</div>
+    <p>Diabadikan dengan cinta &bull; Terima kasih atas doa restunya.</p>
+  </footer>
+
+  <!-- ==========================================================================
+       CLIENT-SIDE JAVASCRIPT ENGINE (DUAL RUNTIME: VERCEL FETCH & GAS SCRIPT.RUN)
+       ========================================================================== -->
+  <script>
+    const state = {
+      allPhotos: [],
+      filteredPhotos: [],
+      categories: ["Semua Foto"],
+      activeCategory: "Semua Foto",
+      currentLightboxIndex: 0,
+      currentSlideIndex: 0,
+      slideshowTimer: null,
+      slideshowProgressTimer: null,
+      isSlideshowPlaying: true,
+      activeSlideTarget: 'A',
+      intervalMs: 4000,
+      
+      // Admin & Live Auto-Refresh State
+      isAdminLoggedIn: false,
+      adminPin: "",
+      activeConfig: {},
+      gasApiUrl: localStorage.getItem("WEDDING_GAS_API_URL") || "",
+      autoRefreshTimer: null,
+      autoRefreshIntervalMs: 25000,
+      isAutoRefreshing: false
+    };
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    document.addEventListener("DOMContentLoaded", function() {
+      setupTouchSwipe();
+      setupKeyboardNav();
+      
+      // Inisialisasi API URL input
+      const apiUrlInput = document.getElementById("cfgGasApiUrl");
+      if (apiUrlInput) apiUrlInput.value = state.gasApiUrl;
+
+      fetchGalleryData(false, false);
+      startLiveAutoRefresh();
+    });
+
+    /**
+     * Memulai Live Background Auto-Refresh (25 detik)
+     */
+    function startLiveAutoRefresh() {
+      if (state.autoRefreshTimer) clearInterval(state.autoRefreshTimer);
+      state.autoRefreshTimer = setInterval(function() {
+        if (!state.isAutoRefreshing) {
+          fetchGalleryData(false, true);
+        }
+      }, state.autoRefreshIntervalMs);
+    }
+
+    /**
+     * Helper Universal untuk Pemanggilan Backend (Mendukung Vercel fetch() & GAS google.script.run)
+     */
+    function callBackend(action, payload, onSuccess, onError) {
+      // 1. Jika berjalan di Google Apps Script langsung
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        if (action === "getGalleryData") {
+          google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).getGalleryData();
+        } else if (action === "adminLogin") {
+          google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).adminLogin(payload.pin);
+        } else if (action === "testAndSyncDriveFolder") {
+          google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).testAndSyncDriveFolder(payload.pin, payload.folderId);
+        } else if (action === "saveAdminSettings") {
+          google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).saveAdminSettings(payload.pin, payload.config || payload);
+        }
+        return;
+      }
+
+      // 2. Jika berjalan di Vercel (https://*.vercel.app)
+      const apiUrl = state.gasApiUrl ? state.gasApiUrl.trim() : "";
+      if (!apiUrl) {
+        console.warn("URL Google Apps Script API belum diatur pada Vercel.");
+        if (action === "getGalleryData") {
+          loadFallbackData("URL API Backend belum dihubungkan");
+        } else if (action === "adminLogin") {
+          if (payload.pin === "123456" || payload.pin === "admin") {
+            onSuccess({ success: true, message: "Login demo lokal berhasil!" });
+          } else {
+            onError({ message: "PIN salah. Gunakan default: 123456" });
+          }
+        } else {
+          onSuccess({ success: true, message: "Aksi tersimulasi di Vercel (Simpan URL API untuk sinkron live)." });
+        }
+        return;
+      }
+
+      // Kirim via GET dengan query params untuk kebal terhadap CORS preflight
+      const queryParams = new URLSearchParams({
+        action: action,
+        api: "true"
+      });
+
+      if (payload) {
+        for (const key in payload) {
+          if (typeof payload[key] === "object") {
+            queryParams.append(key, JSON.stringify(payload[key]));
+          } else {
+            queryParams.append(key, String(payload[key]));
+          }
+        }
+      }
+
+      const requestUrl = apiUrl + (apiUrl.includes("?") ? "&" : "?") + queryParams.toString();
+
+      fetch(requestUrl, {
+        method: "GET",
+        mode: "cors"
+      })
+      .then(function(res) {
+        if (!res.ok) throw new Error("HTTP Status " + res.status);
+        return res.json();
+      })
+      .then(function(data) {
+        onSuccess(data);
+      })
+      .catch(function(err) {
+        console.error("Gagal menghubungi Google Apps Script API via Vercel:", err);
+        onError(err);
+      });
+    }
+
+    /**
+     * Mengambil data foto dari backend
+     */
+    function fetchGalleryData(forceRefresh, isSilent) {
+      const photosGrid = document.getElementById("photosGrid");
+      state.isAutoRefreshing = true;
+
+      if (!isSilent && (forceRefresh || state.allPhotos.length === 0)) {
+        photosGrid.innerHTML = `
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+        `;
+      }
+
+      const refreshIcon = document.getElementById("refreshIconSvg");
+      if (forceRefresh && refreshIcon) refreshIcon.classList.add("spin");
+
+      callBackend("getGalleryData", {}, function(response) {
+        state.isAutoRefreshing = false;
+        if (refreshIcon) refreshIcon.classList.remove("spin");
+        handleGalleryResponse(response, isSilent);
+        if (forceRefresh) showToast("Galeri foto berhasil diperbarui!");
+      }, function(err) {
+        state.isAutoRefreshing = false;
+        if (refreshIcon) refreshIcon.classList.remove("spin");
+        console.error("Gagal memuat galeri:", err);
+        if (!isSilent) loadFallbackData("Gagal memuat data dari backend: " + err.message);
+      });
+    }
+
+    /**
+     * Memproses respon backend dan mendeteksi foto baru secara cerdas
+     */
+    function handleGalleryResponse(response, isSilent) {
+      if (!response || !response.photos) return;
+
+      const demoNotice = document.getElementById("demoNotice");
+      if (response.isDemo) {
+        demoNotice.style.display = "flex";
+      } else {
+        demoNotice.style.display = "none";
+      }
+
+      if (response.config) {
+        state.activeConfig = response.config;
+        populateConfigToUI(response.config);
+      }
+
+      const incomingPhotos = response.photos || [];
+
+      if (isSilent && state.allPhotos.length > 0) {
+        const existingIds = new Set(state.allPhotos.map(function(p) { return p.id; }));
+        const newPhotos = incomingPhotos.filter(function(p) { return !existingIds.has(p.id); });
+
+        if (newPhotos.length > 0) {
+          state.allPhotos = incomingPhotos;
+          state.categories = response.categories || ["Semua Foto"];
+          renderCategoryTabs();
+          applyCategoryFilter(state.activeCategory);
+          showToast("📸 " + newPhotos.length + " foto baru otomatis ditambahkan ke galeri!");
+          return;
+        }
+      }
+
+      state.allPhotos = incomingPhotos;
+      state.categories = response.categories || ["Semua Foto"];
+      
+      renderCategoryTabs();
+      applyCategoryFilter(state.activeCategory);
+    }
+
+    function populateConfigToUI(cfg) {
+      if (!cfg) return;
+      if (cfg.COUPLE_NAME) {
+        document.getElementById("coupleName").innerText = cfg.COUPLE_NAME;
+        document.getElementById("slideshowCouple").innerText = cfg.COUPLE_NAME;
+        document.querySelector(".footer-names").innerText = cfg.COUPLE_NAME;
+        document.title = cfg.COUPLE_NAME + " - Wedding Photo Gallery";
+      }
+      if (cfg.SUBTITLE) {
+        document.getElementById("subtitle").innerText = cfg.SUBTITLE;
+      }
+      if (cfg.EVENT_DATE) {
+        document.getElementById("eventDate").innerText = cfg.EVENT_DATE;
+      }
+      if (cfg.WELCOME_MESSAGE) {
+        document.getElementById("welcomeMessage").innerText = cfg.WELCOME_MESSAGE;
+      }
+      if (cfg.SLIDESHOW_INTERVAL_SEC) {
+        state.intervalMs = cfg.SLIDESHOW_INTERVAL_SEC * 1000;
+      }
+
+      document.getElementById("cfgDriveFolderId").value = cfg.DRIVE_FOLDER_ID || "";
+      document.getElementById("cfgCoupleName").value = cfg.COUPLE_NAME || "";
+      document.getElementById("cfgSubtitle").value = cfg.SUBTITLE || "";
+      document.getElementById("cfgEventDate").value = cfg.EVENT_DATE || "";
+      document.getElementById("cfgWelcomeMessage").value = cfg.WELCOME_MESSAGE || "";
+      document.getElementById("cfgFrameImageUrl").value = cfg.FRAME_IMAGE_URL || "";
+
+      const frameBadge = document.getElementById("frameStatusBadge");
+      if (cfg.FRAME_IMAGE_URL) {
+        frameBadge.innerText = "✓ Bingkai Aktif";
+        frameBadge.style.color = "#10B981";
+      } else {
+        frameBadge.innerText = "Tanpa Bingkai";
+        frameBadge.style.color = "#64748B";
+      }
+
+      const apiBadge = document.getElementById("apiStatusBadge");
+      if (state.gasApiUrl) {
+        apiBadge.innerText = "✓ Terhubung ke Apps Script";
+        apiBadge.style.color = "#10B981";
+      } else {
+        apiBadge.innerText = "Mode Pratinjau Lokal";
+        apiBadge.style.color = "#F59E0B";
+      }
+    }
+
+    function renderCategoryTabs() {
+      const container = document.getElementById("categoryTabs");
+      container.innerHTML = "";
+
+      state.categories.forEach(function(cat) {
+        const count = cat === "Semua Foto" 
+          ? state.allPhotos.length 
+          : state.allPhotos.filter(function(p) { return p.category === cat; }).length;
+
+        const pill = document.createElement("button");
+        pill.className = "filter-pill " + (cat === state.activeCategory ? "active" : "");
+        pill.setAttribute("data-category", cat);
+        pill.onclick = function() { selectCategory(cat); };
+        
+        pill.innerHTML = `
+          <span>${escapeHtml(cat)}</span>
+          <span class="pill-count">${count}</span>
+        `;
+        container.appendChild(pill);
+      });
+    }
+
+    function selectCategory(category) {
+      state.activeCategory = category;
+      
+      document.querySelectorAll(".filter-pill").forEach(function(el) {
+        if (el.getAttribute("data-category") === category) {
+          el.classList.add("active");
+        } else {
+          el.classList.remove("active");
+        }
+      });
+
+      applyCategoryFilter(category);
+    }
+
+    function applyCategoryFilter(category) {
+      if (category === "Semua Foto") {
+        state.filteredPhotos = state.allPhotos;
+      } else {
+        state.filteredPhotos = state.allPhotos.filter(function(p) {
+          return p.category === category;
+        });
+      }
+      renderPhotoGrid();
+    }
+
+    function renderPhotoGrid() {
+      const grid = document.getElementById("photosGrid");
+      grid.innerHTML = "";
+
+      if (state.filteredPhotos.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
+            <p style="font-size: 1.1rem; margin-bottom: 8px;">Belum ada foto dalam kategori ini.</p>
+            <p style="font-size: 0.9rem;">Unggah foto ke sub-folder terkait di Google Drive Anda.</p>
+          </div>
+        `;
+        return;
+      }
+
+      state.filteredPhotos.forEach(function(photo, index) {
+        const card = document.createElement("div");
+        card.className = "photo-card";
+        card.setAttribute("data-photo-id", photo.id);
+        card.onclick = function() { openLightbox(index); };
+
+        card.innerHTML = `
+          <img class="photo-img" 
+               src="${photo.thumbnailUrl}" 
+               alt="${escapeHtml(photo.name)}" 
+               loading="lazy" 
+               onerror="handlePhotoError(this, '${escapeHtml(photo.id)}');">
+          <div class="photo-overlay">
+            <span class="photo-badge">${escapeHtml(photo.category)}</span>
+            <div class="photo-name">${escapeHtml(photo.name)}</div>
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    function handlePhotoError(imgElement, photoId) {
+      const card = imgElement.closest('.photo-card');
+      if (card) card.remove();
+
+      state.allPhotos = state.allPhotos.filter(function(p) { return p.id !== photoId; });
+      state.filteredPhotos = state.filteredPhotos.filter(function(p) { return p.id !== photoId; });
+      renderCategoryTabs();
+    }
+
+    /* ==========================================================================
+       ADMIN LOGIN & SETTINGS WORKFLOW
+       ========================================================================== */
+    function openAdminModal() {
+      if (state.isAdminLoggedIn) {
+        openAdminSettingsModal();
+      } else {
+        document.getElementById("loginAlertBox").style.display = "none";
+        document.getElementById("adminPinInput").value = "";
+        document.getElementById("adminLoginModal").classList.add("active");
+        setTimeout(function() {
+          document.getElementById("adminPinInput").focus();
+        }, 150);
+      }
+    }
+
+    function closeAdminLoginModal() {
+      document.getElementById("adminLoginModal").classList.remove("active");
+    }
+
+    function handleAdminLogin(e) {
+      e.preventDefault();
+      const pin = document.getElementById("adminPinInput").value.trim();
+      const alertBox = document.getElementById("loginAlertBox");
+      const submitBtn = document.getElementById("loginSubmitBtn");
+
+      if (!pin) return;
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span>Memeriksa...</span>`;
+      alertBox.style.display = "none";
+
+      callBackend("adminLogin", { pin: pin }, function(res) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<span>Masuk</span>`;
+        if (res.success) {
+          state.isAdminLoggedIn = true;
+          state.adminPin = pin;
+          document.getElementById("adminBtn").classList.add("admin-active");
+          closeAdminLoginModal();
+          openAdminSettingsModal();
+          showToast("Selamat datang, Admin!");
+        } else {
+          alertBox.innerText = res.message || "PIN salah.";
+          alertBox.style.display = "block";
+        }
+      }, function(err) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<span>Masuk</span>`;
+        alertBox.innerText = "Terjadi gangguan: " + err.message;
+        alertBox.style.display = "block";
+      });
+    }
+
+    function openAdminSettingsModal() {
+      document.getElementById("syncResultAlert").style.display = "none";
+      document.getElementById("saveAlertBox").style.display = "none";
+      document.getElementById("cfgGasApiUrl").value = state.gasApiUrl;
+      document.getElementById("adminSettingsModal").classList.add("active");
+    }
+
+    function closeAdminSettingsModal() {
+      document.getElementById("adminSettingsModal").classList.remove("active");
+    }
+
+    function handleSyncDriveNow() {
+      const folderInput = document.getElementById("cfgDriveFolderId").value.trim();
+      const syncBtn = document.getElementById("btnSyncDrive");
+      const syncText = document.getElementById("syncBtnText");
+      const alertBox = document.getElementById("syncResultAlert");
+
+      if (!folderInput) {
+        alertBox.className = "admin-alert-box error";
+        alertBox.innerText = "Masukkan ID atau URL folder Google Drive terlebih dahulu.";
+        alertBox.style.display = "block";
+        return;
+      }
+
+      syncBtn.disabled = true;
+      syncText.innerText = "Menghubungkan ke Google Drive...";
+      alertBox.style.display = "none";
+
+      callBackend("testAndSyncDriveFolder", { pin: state.adminPin, folderId: folderInput }, function(res) {
+        syncBtn.disabled = false;
+        syncText.innerText = "Sinkronkan Google Drive Sekarang";
+
+        if (res.success) {
+          alertBox.className = "admin-alert-box success";
+          alertBox.innerHTML = `
+            <strong>Berhasil Terhubung!</strong><br>
+            Folder: ${escapeHtml(res.folderName)}<br>
+            Subfolder Momen: ${res.subfolderCount} kategori<br>
+            Foto Valid (>20KB): ${res.rootImageCount} foto
+          `;
+          alertBox.style.display = "block";
+
+          if (res.galleryData) {
+            handleGalleryResponse(res.galleryData, false);
+          }
+          showToast("Sinkronisasi Google Drive Berhasil!");
+        } else {
+          alertBox.className = "admin-alert-box error";
+          alertBox.innerText = res.message;
+          alertBox.style.display = "block";
+        }
+      }, function(err) {
+        syncBtn.disabled = false;
+        syncText.innerText = "Sinkronkan Google Drive Sekarang";
+        alertBox.className = "admin-alert-box error";
+        alertBox.innerText = "Error: " + err.message;
+        alertBox.style.display = "block";
+      });
+    }
+
+    function handleSaveAllSettings() {
+      const saveBtn = document.getElementById("btnSaveSettings");
+      const alertBox = document.getElementById("saveAlertBox");
+
+      const newApiUrl = document.getElementById("cfgGasApiUrl").value.trim();
+      state.gasApiUrl = newApiUrl;
+      localStorage.setItem("WEDDING_GAS_API_URL", newApiUrl);
+
+      const payload = {
+        DRIVE_FOLDER_ID: document.getElementById("cfgDriveFolderId").value.trim(),
+        FRAME_IMAGE_URL: document.getElementById("cfgFrameImageUrl").value.trim(),
+        COUPLE_NAME: document.getElementById("cfgCoupleName").value.trim(),
+        SUBTITLE: document.getElementById("cfgSubtitle").value.trim(),
+        EVENT_DATE: document.getElementById("cfgEventDate").value.trim(),
+        WELCOME_MESSAGE: document.getElementById("cfgWelcomeMessage").value.trim(),
+        NEW_PIN: document.getElementById("cfgNewPin").value.trim()
+      };
+
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = `<span>Menyimpan...</span>`;
+      alertBox.style.display = "none";
+
+      callBackend("saveAdminSettings", { pin: state.adminPin, config: payload }, function(res) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = `<polyline points="20 6 9 17 4 12"></polyline><span>Simpan Perubahan</span>`;
+
+        if (res.success) {
+          if (payload.NEW_PIN) {
+            state.adminPin = payload.NEW_PIN;
+            document.getElementById("cfgNewPin").value = "";
+          }
+          if (res.galleryData) {
+            handleGalleryResponse(res.galleryData, false);
+          } else {
+            populateConfigToUI(payload);
+          }
+          showToast("Pengaturan & Koneksi Vercel berhasil disimpan!");
+          closeAdminSettingsModal();
+        } else {
+          alertBox.className = "admin-alert-box error";
+          alertBox.innerText = res.message;
+          alertBox.style.display = "block";
+        }
+      }, function(err) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = `<span>Simpan Perubahan</span>`;
+        populateConfigToUI(payload);
+        showToast("Pengaturan tersimpan secara lokal!");
+        closeAdminSettingsModal();
+      });
+    }
+
+    function handleAdminLogout() {
+      state.isAdminLoggedIn = false;
+      state.adminPin = "";
+      document.getElementById("adminBtn").classList.remove("admin-active");
+      closeAdminSettingsModal();
+      showToast("Anda telah keluar dari mode admin.");
+    }
+
+    /* ==========================================================================
+       CANVAS COMPOSITOR: TEMPEL BINGKAI FOTO KUSTOM SAAT DOWNLOAD
+       ========================================================================== */
+    function downloadCurrentPhotoWithFrame() {
+      const photo = state.filteredPhotos[state.currentLightboxIndex];
+      if (!photo) return;
+
+      const frameUrl = state.activeConfig.FRAME_IMAGE_URL ? state.activeConfig.FRAME_IMAGE_URL.trim() : "";
+      const downloadBtn = document.getElementById("lightboxDownloadBtn");
+      const btnLabel = document.getElementById("downloadBtnLabel");
+
+      if (!frameUrl) {
+        triggerDirectDownload(photo);
+        return;
+      }
+
+      downloadBtn.disabled = true;
+      btnLabel.innerText = "Memproses Bingkai...";
+
+      const photoImg = new Image();
+      photoImg.crossOrigin = "Anonymous";
+
+      photoImg.onload = function() {
+        const frameImg = new Image();
+        frameImg.crossOrigin = "Anonymous";
+
+        frameImg.onload = function() {
+          try {
+            const canvas = document.createElement("canvas");
+            canvas.width = photoImg.naturalWidth || 1920;
+            canvas.height = photoImg.naturalHeight || 1080;
+            const ctx = canvas.getContext("2d");
+
+            ctx.drawImage(photoImg, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob(function(blob) {
+              if (blob) {
+                const blobUrl = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = blobUrl;
+                a.download = (photo.rawName || photo.name) + "-wedding-frame.jpg";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 2500);
+
+                resetDownloadButton();
+                showToast("Foto berbingkai berhasil diunduh!");
+              } else {
+                triggerDirectDownload(photo);
+              }
+            }, "image/jpeg", 0.95);
+
+          } catch (e) {
+            console.warn("Canvas compositing error, fallback to direct download:", e);
+            triggerDirectDownload(photo);
+          }
+        };
+
+        frameImg.onerror = function() {
+          console.warn("Gagal memuat gambar bingkai, mengunduh foto asli.");
+          triggerDirectDownload(photo);
+        };
+
+        frameImg.src = frameUrl;
+      };
+
+      photoImg.onerror = function() {
+        console.warn("Gagal memuat gambar foto untuk canvas, mengunduh foto langsung.");
+        triggerDirectDownload(photo);
+      };
+
+      photoImg.src = photo.highResUrl || photo.thumbnailUrl;
+    }
+
+    function triggerDirectDownload(photo) {
+      resetDownloadButton();
+      const a = document.createElement("a");
+      a.href = photo.downloadUrl || photo.highResUrl;
+      a.download = (photo.rawName || photo.name) + ".jpg";
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showToast("Mengunduh foto kualitas asli...");
+    }
+
+    function resetDownloadButton() {
+      const downloadBtn = document.getElementById("lightboxDownloadBtn");
+      const btnLabel = document.getElementById("downloadBtnLabel");
+      if (downloadBtn && btnLabel) {
+        downloadBtn.disabled = false;
+        btnLabel.innerText = "Unduh Foto Asli";
+      }
+    }
+
+    function showToast(message) {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+      toast.className = "toast";
+      toast.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 14 14"></polyline>
+        </svg>
+        <span>${escapeHtml(message)}</span>
+      `;
+      container.appendChild(toast);
+
+      setTimeout(function() { toast.classList.add("show"); }, 50);
+      setTimeout(function() {
+        toast.classList.remove("show");
+        setTimeout(function() { toast.remove(); }, 300);
+      }, 3500);
+    }
+
+    /* ==========================================================================
+       LIGHTBOX LOGIC
+       ========================================================================== */
+    function openLightbox(index) {
+      if (!state.filteredPhotos[index]) return;
+      state.currentLightboxIndex = index;
+
+      const modal = document.getElementById("lightbox");
+      modal.classList.add("active");
+      document.body.style.overflow = "hidden";
+
+      updateLightboxContent();
+    }
+
+    function closeLightbox() {
+      const modal = document.getElementById("lightbox");
+      modal.classList.remove("active");
+      document.body.style.overflow = "";
+      resetDownloadButton();
+    }
+
+    function navigateLightbox(direction) {
+      let newIndex = state.currentLightboxIndex + direction;
+      if (newIndex < 0) {
+        newIndex = state.filteredPhotos.length - 1;
+      } else if (newIndex >= state.filteredPhotos.length) {
+        newIndex = 0;
+      }
+      state.currentLightboxIndex = newIndex;
+      updateLightboxContent();
+    }
+
+    function updateLightboxContent() {
+      const photo = state.filteredPhotos[state.currentLightboxIndex];
+      if (!photo) return;
+
+      document.getElementById("lightboxCounter").innerText = 
+        `FOTO ${state.currentLightboxIndex + 1} DARI ${state.filteredPhotos.length}`;
+      document.getElementById("lightboxTitle").innerText = photo.name;
+      
+      const img = document.getElementById("lightboxImg");
+      img.src = photo.highResUrl || photo.thumbnailUrl;
+      resetDownloadButton();
+    }
+
+    function startSlideshowFromCurrent() {
+      closeLightbox();
+      openSlideshow(state.currentLightboxIndex);
+    }
+
+    /* ==========================================================================
+       STAGE SLIDESHOW LOGIC (MODE PANGGUNG)
+       ========================================================================== */
+    function openSlideshow(startIndex) {
+      if (state.filteredPhotos.length === 0) return;
+      state.currentSlideIndex = startIndex || 0;
+
+      const overlay = document.getElementById("slideshowOverlay");
+      overlay.classList.add("active");
+      document.body.style.overflow = "hidden";
+
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(function() {});
+      }
+
+      state.isSlideshowPlaying = true;
+      updatePlayPauseIcons();
+      showSlide(state.currentSlideIndex);
+      startSlideshowLoop();
+    }
+
+    function closeSlideshow() {
+      const overlay = document.getElementById("slideshowOverlay");
+      overlay.classList.remove("active");
+      document.body.style.overflow = "";
+
+      if (document.exitFullscreen && document.fullscreenElement) {
+        document.exitFullscreen().catch(function() {});
+      }
+
+      clearInterval(state.slideshowTimer);
+      clearInterval(state.slideshowProgressTimer);
+    }
+
+    function showSlide(index) {
+      const photo = state.filteredPhotos[index];
+      if (!photo) return;
+
+      document.getElementById("slideshowCategory").innerText = photo.category + " • " + photo.name;
+
+      const imgA = document.getElementById("slideshowImgA");
+      const imgB = document.getElementById("slideshowImgB");
+
+      if (state.activeSlideTarget === 'A') {
+        imgB.src = photo.highResUrl || photo.thumbnailUrl;
+        imgB.classList.add("visible");
+        imgA.classList.remove("visible");
+        state.activeSlideTarget = 'B';
+      } else {
+        imgA.src = photo.highResUrl || photo.thumbnailUrl;
+        imgA.classList.add("visible");
+        imgB.classList.remove("visible");
+        state.activeSlideTarget = 'A';
+      }
+
+      resetProgressBar();
+    }
+
+    function nextSlide() {
+      state.currentSlideIndex = (state.currentSlideIndex + 1) % state.filteredPhotos.length;
+      showSlide(state.currentSlideIndex);
+    }
+
+    function prevSlide() {
+      state.currentSlideIndex = (state.currentSlideIndex - 1 + state.filteredPhotos.length) % state.filteredPhotos.length;
+      showSlide(state.currentSlideIndex);
+    }
+
+    function togglePlayPause() {
+      state.isSlideshowPlaying = !state.isSlideshowPlaying;
+      updatePlayPauseIcons();
+
+      if (state.isSlideshowPlaying) {
+        startSlideshowLoop();
+      } else {
+        clearInterval(state.slideshowTimer);
+        clearInterval(state.slideshowProgressTimer);
+      }
+    }
+
+    function updatePlayPauseIcons() {
+      const playIcon = document.getElementById("playIcon");
+      const pauseIcon = document.getElementById("pauseIcon");
+      if (state.isSlideshowPlaying) {
+        playIcon.style.display = "none";
+        pauseIcon.style.display = "block";
+      } else {
+        playIcon.style.display = "block";
+        pauseIcon.style.display = "none";
+      }
+    }
+
+    function startSlideshowLoop() {
+      clearInterval(state.slideshowTimer);
+      state.slideshowTimer = setInterval(function() {
+        if (state.isSlideshowPlaying) {
+          nextSlide();
+        }
+      }, state.intervalMs);
+
+      resetProgressBar();
+    }
+
+    function resetProgressBar() {
+      clearInterval(state.slideshowProgressTimer);
+      const bar = document.getElementById("slideshowProgress");
+      bar.style.width = "0%";
+
+      if (!state.isSlideshowPlaying) return;
+
+      let progress = 0;
+      const step = 50;
+      const increment = (step / state.intervalMs) * 100;
+
+      state.slideshowProgressTimer = setInterval(function() {
+        progress += increment;
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(state.slideshowProgressTimer);
+        }
+        bar.style.width = progress + "%";
+      }, step);
+    }
+
+    /* ==========================================================================
+       KEYBOARD & TOUCH NAVIGATION
+       ========================================================================== */
+    function setupKeyboardNav() {
+      window.addEventListener("keydown", function(e) {
+        const lightboxActive = document.getElementById("lightbox").classList.contains("active");
+        const slideshowActive = document.getElementById("slideshowOverlay").classList.contains("active");
+        const adminLoginActive = document.getElementById("adminLoginModal").classList.contains("active");
+        const adminSettingsActive = document.getElementById("adminSettingsModal").classList.contains("active");
+
+        if (e.key === "Escape") {
+          if (adminLoginActive) closeAdminLoginModal();
+          else if (adminSettingsActive) closeAdminSettingsModal();
+          else if (slideshowActive) closeSlideshow();
+          else if (lightboxActive) closeLightbox();
+        } else if (e.key === "ArrowRight") {
+          if (slideshowActive) nextSlide();
+          else if (lightboxActive) navigateLightbox(1);
+        } else if (e.key === "ArrowLeft") {
+          if (slideshowActive) prevSlide();
+          else if (lightboxActive) navigateLightbox(-1);
+        } else if (e.key === " ") {
+          if (slideshowActive) {
+            e.preventDefault();
+            togglePlayPause();
+          }
+        }
+      });
+    }
+
+    function setupTouchSwipe() {
+      const lightboxBody = document.getElementById("lightboxBody");
+      lightboxBody.addEventListener("touchstart", function(e) {
+        touchStartX = e.changedTouches[0].screenX;
+      }, { passive: true });
+
+      lightboxBody.addEventListener("touchend", function(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipeGesture();
+      }, { passive: true });
+    }
+
+    function handleSwipeGesture() {
+      const diff = touchEndX - touchStartX;
+      if (Math.abs(diff) > 45) {
+        if (diff < 0) {
+          navigateLightbox(1);
+        } else {
+          navigateLightbox(-1);
+        }
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function loadFallbackData(reason) {
+      document.getElementById("demoNotice").style.display = "flex";
+      handleGalleryResponse({
+        isDemo: true,
+        config: {
+          COUPLE_NAME: "Romeo & Juliet",
+          SUBTITLE: "The Wedding Gallery & Precious Memories",
+          EVENT_DATE: "15 November 2026",
+          WELCOME_MESSAGE: "Terima kasih atas kehadiran dan doa restu keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
+          DRIVE_FOLDER_ID: "",
+          SLIDESHOW_INTERVAL_SEC: 4,
+          FRAME_IMAGE_URL: ""
+        },
+        categories: ["Semua Foto", "Prewedding", "Akad Nikah", "Resepsi", "Photobooth"],
+        photos: [
+          {
+            id: "d1",
+            name: "Tatapan Penuh Bahagia",
+            category: "Prewedding",
+            thumbnailUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
+            highResUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2000&q=90",
+            downloadUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2400&q=100"
+          },
+          {
+            id: "d2",
+            name: "Janji Suci Akad Nikah",
+            category: "Akad Nikah",
+            thumbnailUrl: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80",
+            highResUrl: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=2000&q=90",
+            downloadUrl: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=2400&q=100"
+          },
+          {
+            id: "d3",
+            name: "Cincin Pengikat Dua Jiwa",
+            category: "Akad Nikah",
+            thumbnailUrl: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=800&q=80",
+            highResUrl: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=2000&q=90",
+            downloadUrl: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=2400&q=100"
+          },
+          {
+            id: "d4",
+            name: "Bunga Tangan Mempelai",
+            category: "Resepsi",
+            thumbnailUrl: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=800&q=80",
+            highResUrl: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=2000&q=90",
+            downloadUrl: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=2400&q=100"
+          },
+          {
+            id: "d5",
+            name: "Senyum Bahagia Pelaminan",
+            category: "Resepsi",
+            thumbnailUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
+            highResUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=2000&q=90",
+            downloadUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=2400&q=100"
+          },
+          {
+            id: "d6",
+            name: "Keseruan Bersama Sahabat",
+            category: "Photobooth",
+            thumbnailUrl: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=800&q=80",
+            highResUrl: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=2000&q=90",
+            downloadUrl: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=2400&q=100"
+          },
+          {
+            id: "d7",
+            name: "Dansa Pertama Suami Istri",
+            category: "Resepsi",
+            thumbnailUrl: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=800&q=80",
+            highResUrl: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=2000&q=90",
+            downloadUrl: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=2400&q=100"
+          },
+          {
+            id: "d8",
+            name: "Kisah Kasih Abadi",
+            category: "Prewedding",
+            thumbnailUrl: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=800&q=80",
+            highResUrl: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=2000&q=90",
+            downloadUrl: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=2400&q=100"
+          }
+        ]
+      }, false);
+    }
+  </script>
+</body>
+</html>

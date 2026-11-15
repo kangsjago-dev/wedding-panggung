@@ -1,0 +1,17 @@
+{
+  "name": "wedding-panggung",
+  "version": "1.3.0",
+  "description": "Elegant Google Drive Wedding Photo Gallery Web App deployed on Vercel",
+  "scripts": {
+    "start": "serve ."
+  },
+  "keywords": [
+    "wedding",
+    "photo-gallery",
+    "google-drive",
+    "vercel"
+  ],
+  "author": "Romeo & Juliet",
+  "license": "MIT"
+}
+
