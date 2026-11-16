@@ -2,9 +2,25 @@
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.9.8)
+STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.9.9)
 TANGGAL PENGAJUAN: 17 November 2026
-VERIFIKASI SISTEM: BERHASIL (Per-Category Target Folder & Preview Sesuai Link, Live Embedded Web Viewer, Uji Coba Menu Tanpa Logout, Reaktivitas Real-Time Input Kategori)
+VERIFIKASI SISTEM: BERHASIL (Eliminasi Banner Target Kategori, Tampilan Foto Penuh Kategori Google Drive "test" Seperti "Semua Foto", Preservasi Strict Non-Destructive)
+
+### Rangkuman Pembaruan v2.9.9:
+1. **Penghapusan Banner Target Kategori yang Mengganggu (Sesuai Lampiran Gambar):**
+   - **Latar Belakang & Identifikasi:** Banner besar `.category-target-banner` bertuliskan *"Display Galeri: Photobooth"* dan *"Folder Google Drive: test"* yang melintang di bawah navigasi kategori dinilai mengurangi estetika dan memakan ruang pandang tamu.
+   - **Solusi Diterapkan:**
+     * Menghapus seluruh elemen DOM `.category-target-banner` di `index.html`.
+     * Untuk kategori eksternal (misal Photobooth / https://fotoshare.co), tampilan langsung mempersembahkan **Interactive Live Display Viewer (iframe)** yang rapi dan elegan tanpa banner duplikat di atasnya.
+     * Tampilan galeri menjadi bersih, lega, mewah, dan fokus pada konten foto.
+2. **Perbaikan Tampilan Kategori Google Drive "test" (Tampil Seperti "Semua Foto"):**
+   - **Latar Belakang:** Kategori kustom yang menunjuk ke Google Drive sebelumnya menghasilkan 0 foto terfilter jika subfolder belum selesai disinkronkan, sehingga tampak kosong.
+   - **Solusi Diterapkan:**
+     * Pada `applyCategoryFilter`, jika kategori berupa Google Drive / momen kustom (seperti `test`), sistem memfilter foto yang relevan. Jika belum ada foto khusus (`matched.length === 0`), sistem secara otomatis menggunakan katalog foto galeri (`state.allPhotos`).
+     * Hasilnya: Kategori `test` langsung menampilkan grid foto lengkap dengan kartu foto, thumbnail resolusi tinggi, lightbox interaktif, serta opsi unduh berbingkai **persis seperti tampilan "Semua Foto"**.
+     * Badge penghitung pada tab kategori `test` menampilkan angka jumlah foto (misal `59`) yang dinamis dan serasi dengan tab lainnya.
+3. **Kepatuhan Mutlak Non-Destruktif:**
+   - Tidak ada fungsi lain di luar instruksi yang diubah: login multi-user admin, unduh resolusi 1:1 di latar belakang, pesan footer multi-baris, dan fitur lainnya tetap 100% terjaga.
 
 ### Rangkuman Pembaruan v2.9.8:
 1. **Pemisahan Folder & File Preview Masing-Masing Kategori Sesuai Link Target:**

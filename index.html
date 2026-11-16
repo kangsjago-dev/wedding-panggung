@@ -2337,23 +2337,20 @@
 
         let countBadgeText = "";
         if (cat === "Semua Foto") {
-          const mainPhotos = state.allPhotos.filter(function(p) { return !p.customFolderId; });
-          countBadgeText = String(mainPhotos.length || state.allPhotos.length);
+          countBadgeText = String(state.allPhotos.length);
         } else if (isExt) {
           countBadgeText = "🌐 Live";
-        } else if (driveFolderId) {
-          const drivePhotos = state.allPhotos.filter(function(p) {
-            return (p.category && p.category.toLowerCase() === cat.toLowerCase()) || (p.customFolderId === driveFolderId);
-          });
-          countBadgeText = drivePhotos.length > 0 ? String(drivePhotos.length) : "📁 Drive";
         } else {
           const directMatch = state.allPhotos.filter(function(p) {
             if (p.category && p.category.toLowerCase() === cat.toLowerCase()) return true;
+            if (driveFolderId && p.customFolderId === driveFolderId) return true;
             if (p.name && p.name.toLowerCase().includes(cat.toLowerCase())) return true;
             if (p.rawName && p.rawName.toLowerCase().includes(cat.toLowerCase())) return true;
             return false;
           }).length;
-          countBadgeText = String(directMatch);
+          // Sesuai instruksi: Tampilkan seperti "Semua Foto"
+          const count = directMatch > 0 ? directMatch : state.allPhotos.length;
+          countBadgeText = String(count);
         }
 
         const pill = document.createElement("button");
@@ -2391,87 +2388,33 @@
         }
       }
 
-      const driveFolderId = extractDriveFolderId(targetUrl);
-      if (category !== "Semua Foto" && driveFolderId) {
-        // Cek apakah foto untuk folder Google Drive kategori ini sudah dimuat
-        const loadedPhotos = state.allPhotos.filter(function(p) {
-          return (p.category && p.category.toLowerCase() === category.toLowerCase()) || (p.customFolderId === driveFolderId);
-        });
-
-        if (loadedPhotos.length > 0) {
-          state.filteredPhotos = loadedPhotos;
-          renderPhotoGrid(targetUrl, category);
-        } else {
-          // Tampilkan kerangka skeleton dan ambil berkas langsung dari folder Google Drive tersebut
-          const grid = document.getElementById("photosGrid");
-          grid.innerHTML = `
-            <div class="category-target-banner" style="grid-column: 1 / -1; margin-bottom: 14px;">
-              <div style="background: linear-gradient(135deg, rgba(197, 168, 128, 0.12), rgba(255, 255, 255, 0.85)); border: 1px solid rgba(197, 168, 128, 0.35); border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <div style="width: 38px; height: 38px; border-radius: 10px; background: var(--gold-primary); color: #0F172A; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">📁</div>
-                  <div>
-                    <div style="font-weight: 700; font-size: 0.92rem; color: var(--text-main);">Folder Google Drive: ${escapeHtml(category)}</div>
-                    <div style="font-size: 0.76rem; color: var(--text-muted);">Sedang memindai foto langsung dari Google Drive...</div>
-                  </div>
-                </div>
-                <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-gold" style="padding: 8px 16px; font-size: 0.82rem; text-decoration: none;">
-                  <span>Buka di Google Drive ↗</span>
-                </a>
-              </div>
-            </div>
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-          `;
-
-          callBackend("getCategoryPhotos", { folderId: driveFolderId, category: category }, function(res) {
-            if (res && res.photos && res.photos.length > 0) {
-              const existIds = new Set(state.allPhotos.map(p => p.id));
-              res.photos.forEach(function(p) {
-                p.category = category;
-                p.customFolderId = driveFolderId;
-                if (!existIds.has(p.id)) state.allPhotos.push(p);
-              });
-              state.filteredPhotos = res.photos;
-              renderCategoryTabs();
-              renderPhotoGrid(targetUrl, category);
-            } else {
-              state.filteredPhotos = [];
-              renderPhotoGrid(targetUrl, category);
-            }
-          }, function(err) {
-            state.filteredPhotos = [];
-            renderPhotoGrid(targetUrl, category);
-          });
-          return;
-        }
-      } else {
-        applyCategoryFilter(category, targetUrl);
-      }
+      applyCategoryFilter(category, targetUrl);
     }
 
     function applyCategoryFilter(category, targetUrl) {
+      const isExt = isExternalWebLink(targetUrl);
+
       if (category === "Semua Foto") {
-        state.filteredPhotos = state.allPhotos.filter(function(p) {
-          return !p.customFolderId;
-        });
-        if (state.filteredPhotos.length === 0) {
-          state.filteredPhotos = state.allPhotos;
-        }
+        state.filteredPhotos = state.allPhotos;
+      } else if (isExt) {
+        // Tautan web eksternal (misal: fotoshare.co)
+        state.filteredPhotos = [];
       } else {
-        const isExt = isExternalWebLink(targetUrl);
-        if (isExt) {
-          state.filteredPhotos = [];
-        } else {
-          state.filteredPhotos = state.allPhotos.filter(function(p) {
-            if (p.category && p.category.toLowerCase() === category.toLowerCase()) return true;
-            if (p.name && p.name.toLowerCase().includes(category.toLowerCase())) return true;
-            if (p.rawName && p.rawName.toLowerCase().includes(category.toLowerCase())) return true;
-            return false;
-          });
+        const driveFolderId = extractDriveFolderId(targetUrl);
+        let matched = state.allPhotos.filter(function(p) {
+          if (p.category && p.category.toLowerCase() === category.toLowerCase()) return true;
+          if (driveFolderId && p.customFolderId === driveFolderId) return true;
+          if (p.name && p.name.toLowerCase().includes(category.toLowerCase())) return true;
+          if (p.rawName && p.rawName.toLowerCase().includes(category.toLowerCase())) return true;
+          return false;
+        });
+        // Sesuai instruksi: Tampilkan seperti "Semua Foto"
+        if (matched.length === 0 && state.allPhotos.length > 0) {
+          matched = state.allPhotos;
         }
+        state.filteredPhotos = matched;
       }
+
       renderPhotoGrid(targetUrl, category);
     }
 
@@ -2479,47 +2422,11 @@
       const grid = document.getElementById("photosGrid");
       grid.innerHTML = "";
 
-      const driveFolderId = extractDriveFolderId(targetUrl);
       const isExt = isExternalWebLink(targetUrl);
 
-      // 1. Tampilkan banner terstruktur jika ada targetUrl
-      if (targetUrl) {
-        const banner = document.createElement("div");
-        banner.className = "category-target-banner";
-        banner.style.cssText = "grid-column: 1 / -1; margin-bottom: 14px;";
-        const icon = driveFolderId ? "📁" : "🌐";
-        const labelTitle = driveFolderId 
-          ? `Folder Google Drive: ${escapeHtml(categoryName || state.activeCategory)}` 
-          : `Display Galeri: ${escapeHtml(categoryName || state.activeCategory)}`;
-        const btnText = driveFolderId
-          ? `Buka Folder Google Drive`
-          : `Buka Tautan Galeri`;
+      // Sesuai instruksi: Banner .category-target-banner dihapus sepenuhnya agar tampilan lebih bersih, mewah, dan menarik!
 
-        banner.innerHTML = `
-          <div style="background: linear-gradient(135deg, rgba(197, 168, 128, 0.12), rgba(255, 255, 255, 0.85)); border: 1px solid rgba(197, 168, 128, 0.35); border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
-            <div style="display: flex; align-items: center; gap: 10px; min-width: 200px;">
-              <div style="width: 38px; height: 38px; border-radius: 10px; background: var(--gold-primary); color: #0F172A; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
-                ${icon}
-              </div>
-              <div>
-                <div style="font-weight: 700; font-size: 0.92rem; color: var(--text-main);">${labelTitle}</div>
-                <div style="font-size: 0.76rem; color: var(--text-muted); word-break: break-all;">Tautan: <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" style="color: var(--gold-dark); text-decoration: underline;">${escapeHtml(targetUrl)}</a></div>
-              </div>
-            </div>
-            <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-gold" style="padding: 8px 16px; font-size: 0.82rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
-              <span>${btnText}</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <line x1="10" y1="14" x2="21" y2="3"></line>
-              </svg>
-            </a>
-          </div>
-        `;
-        grid.appendChild(banner);
-      }
-
-      // 2. Jika merupakan tautan web eksternal (seperti https://fotoshare.co), sematkan Live Embedded Viewer!
+      // 1. Jika merupakan tautan web eksternal (seperti https://fotoshare.co), sematkan Live Embedded Viewer!
       if (isExt) {
         const frameContainer = document.createElement("div");
         frameContainer.className = "external-gallery-frame-container";
@@ -2539,28 +2446,13 @@
         return;
       }
 
-      // 3. Jika foto kosong untuk kategori ini
+      // 2. Jika foto kosong (seluruh galeri kosong)
       if (state.filteredPhotos.length === 0) {
-        if (driveFolderId) {
-          const emptyDriveCard = document.createElement("div");
-          emptyDriveCard.style.cssText = "grid-column: 1 / -1; text-align: center; padding: 50px 20px;";
-          emptyDriveCard.innerHTML = `
-            <div style="width: 54px; height: 54px; border-radius: 50%; background: rgba(197, 168, 128, 0.15); color: var(--gold-primary); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 14px;">📁</div>
-            <h4 style="font-family: var(--font-serif); font-size: 1.25rem; color: var(--text-main); margin-bottom: 6px;">Folder ${escapeHtml(categoryName || state.activeCategory)} Masih Kosong</h4>
-            <p style="font-size: 0.88rem; color: var(--text-muted); max-width: 440px; margin: 0 auto 18px; line-height: 1.5;">Belum ada foto yang diunggah ke folder Google Drive khusus momen ini.</p>
-            <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-gold" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 20px; font-size: 0.84rem; text-decoration: none;">
-              <span>Buka Folder Google Drive</span>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-            </a>
-          `;
-          grid.appendChild(emptyDriveCard);
-        } else {
-          grid.innerHTML += `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
-              <p style="font-size: 1.05rem; font-weight: 500;">Momen berharga akan segera hadir di sini.</p>
-            </div>
-          `;
-        }
+        grid.innerHTML += `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
+            <p style="font-size: 1.05rem; font-weight: 500;">Momen berharga akan segera hadir di sini.</p>
+          </div>
+        `;
         return;
       }
 
