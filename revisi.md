@@ -1,10 +1,24 @@
-# RENCANA REVISI LENGKAP: ELIMINASI BLINK NAMA, ZERO-SAMPLE EMPTY DRIVE & CLEAN HERO UI
+# RENCANA REVISI LENGKAP: PENYEMPURNAAN TATA BAHASA GALERI & MINIMALISASI LOGIN ADMIN
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUDAH DITERAPKAN & TERVERIFIKASI PENUH (v2.9.1)
+STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.9.2)
 TANGGAL PENGAJUAN: 16 November 2026
-VERIFIKASI SISTEM: BERHASIL (Dual-Layer Filter: Zero Blink, Zero Sample on Empty Drive, Clean Hero Header)
+VERIFIKASI SISTEM: BERHASIL (Bahasa Galeri & Login Admin Rapi, Minimalis, Terverifikasi Penuh)
+
+### Rangkuman Pembaruan v2.9.2:
+1. **Penyempurnaan Bahasa Status Galeri Kosong:**
+   - Mengganti teks status kosong `"Belum ada foto dalam kategori ini."` menjadi kalimat yang lebih hangat, elegan, dan estetik: **`"Momen berharga akan segera hadir di sini."`**.
+   - Menghapus bersih baris instruksi teknis: `"Unggah foto ke sub-folder terkait di Google Drive Anda."`.
+2. **Minimalisasi & Penyempurnaan Tata Bahasa Halaman Login Admin:**
+   - **Penghapusan Teks Deskripsi Panjang:** Menghapus paragraf `"Masukkan PIN Admin untuk mengatur sambungan folder Google Drive, bingkai foto, dan koneksi API."` sehingga tampilan modal login menjadi sangat bersih, ringkas, dan fokus.
+   - **Penyempurnaan Tata Bahasa Form:**
+     * Label input diperhalus menjadi **`"PIN Keamanan"`**.
+     * Placeholder input disederhanakan menjadi **`"Masukkan PIN"`**.
+     * Status tombol saat memproses diperhalus menjadi **`"Memverifikasi..."`**.
+     * Pesan kesalahan diperhalus menjadi: **`"PIN yang Anda masukkan tidak sesuai. Silakan coba kembali."`**.
+3. **Prinsip Non-Destruktif:**
+   - Tidak mengubah logika sistem, integrasi live Google Drive, unduh foto berbingkai full-HD, atau pengaturan lain yang tidak diperintahkan.
 
 ### Rangkuman Pembaruan Menyeluruh (v2.9.1):
 1. **Penyebab Mengapa Tampilan Sebelumnya Belum Terlihat Berubah & Solusi Definitifnya:**

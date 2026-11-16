@@ -1290,14 +1290,10 @@
       </div>
 
       <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
-        <div class="admin-card-body">
-          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
-            Masukkan PIN Admin untuk mengatur sambungan folder Google Drive, bingkai foto, dan koneksi API.
-          </p>
-
+        <div class="admin-card-body" style="padding-top: 8px;">
           <div class="admin-field-group">
-            <label class="admin-label" for="adminPinInput">PIN Rahasia Admin</label>
-            <input type="password" id="adminPinInput" class="admin-input" placeholder="Masukkan PIN Rahasia" required autocomplete="current-password">
+            <label class="admin-label" for="adminPinInput">PIN Keamanan</label>
+            <input type="password" id="adminPinInput" class="admin-input" placeholder="Masukkan PIN" required autocomplete="current-password">
           </div>
 
           <div id="loginAlertBox" class="admin-alert-box error"></div>
@@ -2063,8 +2059,7 @@
       if (state.filteredPhotos.length === 0) {
         grid.innerHTML = `
           <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
-            <p style="font-size: 1.1rem; margin-bottom: 8px;">Belum ada foto dalam kategori ini.</p>
-            <p style="font-size: 0.9rem;">Unggah foto ke sub-folder terkait di Google Drive Anda.</p>
+            <p style="font-size: 1.05rem; font-weight: 500;">Momen berharga akan segera hadir di sini.</p>
           </div>
         `;
         return;
@@ -2136,7 +2131,7 @@
       if (!pin) return;
 
       submitBtn.disabled = true;
-      submitBtn.innerHTML = `<span>Memeriksa...</span>`;
+      submitBtn.innerHTML = `<span>Memverifikasi...</span>`;
       alertBox.style.display = "none";
 
       callBackend("adminLogin", { pin: pin }, function(res) {
@@ -2155,13 +2150,13 @@
           openAdminSettingsModal();
           showToast("Selamat datang, " + (state.currentAdminUser.name || "Admin") + "!");
         } else {
-          alertBox.innerText = res.message || "PIN salah.";
+          alertBox.innerText = res.message || "PIN yang Anda masukkan tidak sesuai. Silakan coba kembali.";
           alertBox.style.display = "block";
         }
       }, function(err) {
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<span>Masuk</span>`;
-        alertBox.innerText = "Terjadi gangguan: " + err.message;
+        alertBox.innerText = "Koneksi terputus. Silakan periksa jaringan dan coba kembali.";
         alertBox.style.display = "block";
       });
     }

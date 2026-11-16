@@ -793,7 +793,7 @@ function adminLogin(pin) {
   try {
     var inputPin = String(pin || "").trim();
     if (!inputPin) {
-      return { success: false, message: "PIN Admin tidak boleh kosong." };
+      return { success: false, message: "Mohon masukkan PIN Anda." };
     }
 
     var users = getAdminUsersList();
@@ -824,7 +824,7 @@ function adminLogin(pin) {
     } else {
       return {
         success: false,
-        message: "PIN Admin salah atau tidak terdaftar. Silakan coba lagi."
+        message: "PIN yang Anda masukkan tidak sesuai. Silakan coba kembali."
       };
     }
   } catch (e) {
