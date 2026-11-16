@@ -1070,20 +1070,21 @@
        ========================================================================== */
     .download-progress-widget {
       position: fixed;
-      bottom: 24px;
+      top: 20px;
       right: 24px;
-      z-index: 200;
+      bottom: auto;
+      z-index: 9999;
       background: #0F172A;
       color: #FFFFFF;
       width: 380px;
       max-width: calc(100vw - 32px);
-      border-radius: 16px;
+      border-radius: 14px;
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(197, 168, 128, 0.35);
-      padding: 16px 18px;
+      padding: 12px 16px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      transform: translateY(140%);
+      gap: 10px;
+      transform: translateY(-140%);
       opacity: 0;
       pointer-events: none;
       transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
@@ -1099,13 +1100,13 @@
     .dpw-header {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .dpw-icon-box {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
       background: rgba(197, 168, 128, 0.15);
       color: var(--gold-primary);
       display: flex;
@@ -1120,7 +1121,7 @@
     }
 
     .dpw-title {
-      font-size: 0.88rem;
+      font-size: 0.85rem;
       font-weight: 600;
       color: #F8F6F2;
       white-space: nowrap;
@@ -1129,7 +1130,7 @@
     }
 
     .dpw-subtitle {
-      font-size: 0.74rem;
+      font-size: 0.72rem;
       color: #94A3B8;
       margin-top: 2px;
       white-space: nowrap;
@@ -1140,16 +1141,36 @@
     .dpw-badge {
       font-size: 0.7rem;
       font-weight: 700;
-      padding: 3px 9px;
-      border-radius: 20px;
+      padding: 3px 8px;
+      border-radius: 12px;
       background: var(--gold-primary);
       color: #0F172A;
       flex-shrink: 0;
+      letter-spacing: 0.3px;
+    }
+
+    .dpw-close-btn {
+      background: transparent;
+      border: none;
+      color: #94A3B8;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      font-size: 13px;
+      transition: color 0.2s ease, background 0.2s ease;
+    }
+    .dpw-close-btn:hover {
+      color: #FFFFFF;
+      background: rgba(255, 255, 255, 0.1);
     }
 
     .dpw-progress-track {
       width: 100%;
-      height: 6px;
+      height: 5px;
       background: rgba(255, 255, 255, 0.12);
       border-radius: 9999px;
       overflow: hidden;
@@ -1165,7 +1186,7 @@
     }
 
     .dpw-footer-note {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       color: #38BDF8;
       display: flex;
       align-items: center;
@@ -1174,10 +1195,13 @@
 
     @media (max-width: 640px) {
       .download-progress-widget {
-        bottom: 16px;
-        right: 16px;
-        left: 16px;
+        top: 72px;
+        right: 14px;
+        left: 14px;
+        bottom: auto;
         width: auto;
+        max-width: calc(100vw - 28px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(197, 168, 128, 0.35);
       }
     }
   </style>
@@ -1191,11 +1215,11 @@
   <div id="downloadProgressWidget" class="download-progress-widget">
     <div class="dpw-header">
       <div class="dpw-icon-box">
-        <svg id="dpwIconSpinner" class="spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <svg id="dpwIconSpinner" class="spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.25"></circle>
           <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"></path>
         </svg>
-        <svg id="dpwIconCheck" style="display: none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5">
+        <svg id="dpwIconCheck" style="display: none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5">
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
       </div>
@@ -1204,6 +1228,7 @@
         <div class="dpw-subtitle" id="dpwSubtitle">Resolusi Asli • Berjalan di latar belakang</div>
       </div>
       <span class="dpw-badge" id="dpwBadge">1 Foto</span>
+      <button type="button" class="dpw-close-btn" onclick="dismissDownloadWidget()" title="Sembunyikan notifikasi">✕</button>
     </div>
 
     <div class="dpw-progress-track">
@@ -1211,13 +1236,14 @@
     </div>
 
     <div class="dpw-footer-note">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"></circle>
         <line x1="12" y1="16" x2="12" y2="12"></line>
         <line x1="12" y1="8" x2="12.01" y2="8"></line>
       </svg>
-      <span>Berjalan di latar belakang • Anda bebas melihat foto lainnya</span>
+      <span id="dpwFooterText">Berjalan di latar belakang • Anda bebas melihat foto lainnya</span>
     </div>
+  </div>
   </div>
 
   <!-- Demo Notice Banner -->
@@ -2696,9 +2722,15 @@
     // ==========================================================================
     const downloadQueue = {
       items: [],
+      currentPhoto: null,
       isProcessing: false,
       hideTimer: null
     };
+
+    function dismissDownloadWidget() {
+      const widget = document.getElementById("downloadProgressWidget");
+      if (widget) widget.classList.remove("active");
+    }
 
     function updateDownloadWidget(percent, title, subtitle, isComplete) {
       const widget = document.getElementById("downloadProgressWidget");
@@ -2723,10 +2755,16 @@
 
       const remaining = downloadQueue.items.length + (downloadQueue.isProcessing ? 1 : 0);
       if (badgeEl) {
-        badgeEl.innerText = remaining > 1 ? (remaining + " Foto") : "1 Foto";
+        if (isComplete && remaining === 0) {
+          badgeEl.innerText = "Selesai";
+        } else if (remaining > 1) {
+          badgeEl.innerText = remaining + " Antrean";
+        } else {
+          badgeEl.innerText = "1 Unduhan";
+        }
       }
 
-      if (isComplete) {
+      if (isComplete && remaining === 0) {
         if (spinnerEl) spinnerEl.style.display = "none";
         if (checkEl) checkEl.style.display = "block";
         if (fillEl) fillEl.style.width = "100%";
@@ -2748,13 +2786,34 @@
       const photo = state.filteredPhotos[state.currentLightboxIndex];
       if (!photo) return;
 
-      // Berikan umpan balik instan pada tombol unduh tanpa memblokir navigasi sama sekali
+      // Cek apakah foto ini sudah ada dalam antrean atau sedang diproses
+      const isAlreadyQueued = downloadQueue.items.some(function(item) {
+        return (item.id && photo.id && item.id === photo.id) || (item.name && photo.name && item.name === photo.name);
+      });
+      const isCurrentProcessing = downloadQueue.currentPhoto && (
+        (downloadQueue.currentPhoto.id && photo.id && downloadQueue.currentPhoto.id === photo.id) ||
+        (downloadQueue.currentPhoto.name && photo.name && downloadQueue.currentPhoto.name === photo.name)
+      );
+
       const btnLabel = document.getElementById("downloadBtnLabel");
+      if (isAlreadyQueued || isCurrentProcessing) {
+        if (btnLabel) {
+          const prev = btnLabel.innerText;
+          btnLabel.innerText = "✓ Sudah Dalam Antrean";
+          setTimeout(function() {
+            if (btnLabel && btnLabel.innerText === "✓ Sudah Dalam Antrean") btnLabel.innerText = prev;
+          }, 1500);
+        }
+        showToast("Foto ini sudah ada dalam antrean unduh.");
+        return;
+      }
+
+      // Berikan umpan balik instan pada tombol unduh tanpa memblokir tombol berikutnya
       if (btnLabel) {
         const prevText = btnLabel.innerText;
-        btnLabel.innerText = "✓ Mengunduh di Latar Belakang";
+        btnLabel.innerText = "✓ Masuk Antrean Unduh";
         setTimeout(function() {
-          if (btnLabel && btnLabel.innerText === "✓ Mengunduh di Latar Belakang") {
+          if (btnLabel && btnLabel.innerText === "✓ Masuk Antrean Unduh") {
             btnLabel.innerText = prevText;
           }
         }, 1500);
@@ -2762,9 +2821,15 @@
 
       // Masukkan ke antrean unduh latar belakang (non-blocking, bebas swipe foto lain)
       downloadQueue.items.push(photo);
-      updateDownloadWidget(15, "Menyiapkan Kenangan Berbingkai...", (photo.name || "Foto") + " • Masuk antrean", false);
 
-      if (!downloadQueue.isProcessing) {
+      const remaining = downloadQueue.items.length + (downloadQueue.isProcessing ? 1 : 0);
+
+      if (downloadQueue.isProcessing) {
+        const badgeEl = document.getElementById("dpwBadge");
+        if (badgeEl) badgeEl.innerText = remaining + " Antrean";
+        showToast("✓ Foto ditambahkan ke antrean (" + remaining + " foto antre)");
+      } else {
+        updateDownloadWidget(15, "Menyiapkan Kenangan Berbingkai...", (photo.name || "Foto") + " • Masuk antrean", false);
         processNextDownloadQueue();
       }
     }
@@ -2772,11 +2837,13 @@
     function processNextDownloadQueue() {
       if (downloadQueue.items.length === 0) {
         downloadQueue.isProcessing = false;
+        downloadQueue.currentPhoto = null;
         return;
       }
 
       downloadQueue.isProcessing = true;
       const photo = downloadQueue.items.shift();
+      downloadQueue.currentPhoto = photo;
       const rawFrameConfig = state.activeConfig.FRAME_IMAGE_URL ? state.activeConfig.FRAME_IMAGE_URL.trim() : "";
       const frameUrl = normalizeDriveImageUrl(rawFrameConfig);
 
@@ -2785,7 +2852,9 @@
         return;
       }
 
-      updateDownloadWidget(30, "Memuat Foto & Bingkai Kualitas Penuh...", (photo.name || "Foto") + " • Resolusi Asli", false);
+      const remaining = downloadQueue.items.length + 1;
+      const queueSuffix = remaining > 1 ? (" (Antrean: " + remaining + ")") : "";
+      updateDownloadWidget(30, "Memuat Foto & Bingkai Kualitas Penuh...", (photo.name || "Foto") + " • Resolusi Asli" + queueSuffix, false);
 
       function prepareCanvasSource(urlOrId, callback, errCallback) {
         if (!urlOrId) { errCallback(); return; }
@@ -2931,27 +3000,33 @@
               if (blob) {
                 const cleanName = (photo.rawName || photo.name || "wedding-photo").replace(/\.[^/.]+$/, "");
                 saveBlobToDevice(blob, cleanName + "-berbingkai.jpg");
-                updateDownloadWidget(100, "✓ Berhasil Disimpan!", cleanName + "-berbingkai.jpg", true);
-                showToast("✓ Foto berbingkai berhasil tersimpan ke perangkat!");
+                const hasMore = downloadQueue.items.length > 0;
+                if (hasMore) {
+                  updateDownloadWidget(100, "✓ Foto Tersimpan! Melanjutkan antrean...", (cleanName + "-berbingkai.jpg"), false);
+                  showToast("✓ Foto tersimpan! Memproses antrean berikutnya (" + downloadQueue.items.length + " tersisa)...");
+                } else {
+                  updateDownloadWidget(100, "✓ Berhasil Disimpan!", cleanName + "-berbingkai.jpg", true);
+                  showToast("✓ Foto berbingkai berhasil tersimpan ke perangkat!");
+                }
               } else {
                 processDirectDownloadTask(photo);
               }
               // Lanjutkan ke antrean berikutnya jika ada
-              setTimeout(processNextDownloadQueue, 600);
+              setTimeout(processNextDownloadQueue, 500);
             }, "image/jpeg", 0.98);
 
           } catch (eCanvas) {
             console.warn("Canvas compositing error, fallback to direct download:", eCanvas);
             processDirectDownloadTask(photo);
-            setTimeout(processNextDownloadQueue, 600);
+            setTimeout(processNextDownloadQueue, 500);
           }
         }, function() {
           processDirectDownloadTask(photo);
-          setTimeout(processNextDownloadQueue, 600);
+          setTimeout(processNextDownloadQueue, 500);
         });
       }, function() {
         processDirectDownloadTask(photo);
-        setTimeout(processNextDownloadQueue, 600);
+        setTimeout(processNextDownloadQueue, 500);
       });
     }
 
@@ -2969,9 +3044,15 @@
         })
         .then(function(blob) {
           saveBlobToDevice(blob, fileName);
-          updateDownloadWidget(100, "✓ Berhasil Disimpan!", fileName, true);
-          showToast("✓ Foto asli berhasil tersimpan ke perangkat!");
-          setTimeout(processNextDownloadQueue, 600);
+          const hasMore = downloadQueue.items.length > 0;
+          if (hasMore) {
+            updateDownloadWidget(100, "✓ Foto Tersimpan! Melanjutkan antrean...", fileName, false);
+            showToast("✓ Foto tersimpan! Memproses antrean berikutnya (" + downloadQueue.items.length + " tersisa)...");
+          } else {
+            updateDownloadWidget(100, "✓ Berhasil Disimpan!", fileName, true);
+            showToast("✓ Foto asli berhasil tersimpan ke perangkat!");
+          }
+          setTimeout(processNextDownloadQueue, 500);
         })
         .catch(function() {
           if (photo.id && (state.gasApiUrl || (typeof google !== 'undefined' && google.script))) {
@@ -2986,28 +3067,46 @@
                 const byteArray = new Uint8Array(byteNumbers);
                 const blob = new Blob([byteArray], { type: res.contentType || "image/jpeg" });
                 saveBlobToDevice(blob, fileName);
-                updateDownloadWidget(100, "✓ Berhasil Disimpan!", fileName, true);
-                showToast("✓ Foto asli berhasil tersimpan ke perangkat!");
+                const hasMore = downloadQueue.items.length > 0;
+                if (hasMore) {
+                  updateDownloadWidget(100, "✓ Foto Tersimpan! Melanjutkan antrean...", fileName, false);
+                  showToast("✓ Foto tersimpan! Memproses antrean berikutnya (" + downloadQueue.items.length + " tersisa)...");
+                } else {
+                  updateDownloadWidget(100, "✓ Berhasil Disimpan!", fileName, true);
+                  showToast("✓ Foto asli berhasil tersimpan ke perangkat!");
+                }
               } else {
                 fallbackSaveLink(directUrl, fileName);
               }
-              setTimeout(processNextDownloadQueue, 600);
+              setTimeout(processNextDownloadQueue, 500);
             }, function() {
               fallbackSaveLink(directUrl, fileName);
-              setTimeout(processNextDownloadQueue, 600);
+              setTimeout(processNextDownloadQueue, 500);
             });
           } else {
             fallbackSaveLink(directUrl, fileName);
-            setTimeout(processNextDownloadQueue, 600);
+            setTimeout(processNextDownloadQueue, 500);
           }
         });
     }
 
     function triggerDirectDownload(photo) {
       if (!photo) return;
+      const isAlreadyQueued = downloadQueue.items.some(function(item) {
+        return (item.id && photo.id && item.id === photo.id) || (item.name && photo.name && item.name === photo.name);
+      });
+      if (isAlreadyQueued) {
+        showToast("Foto ini sudah ada dalam antrean unduh.");
+        return;
+      }
       downloadQueue.items.push(photo);
-      updateDownloadWidget(20, "Mengunduh Foto Asli...", photo.name || "Foto", false);
-      if (!downloadQueue.isProcessing) {
+      const remaining = downloadQueue.items.length + (downloadQueue.isProcessing ? 1 : 0);
+      if (downloadQueue.isProcessing) {
+        const badgeEl = document.getElementById("dpwBadge");
+        if (badgeEl) badgeEl.innerText = remaining + " Antrean";
+        showToast("✓ Foto ditambahkan ke antrean (" + remaining + " foto antre)");
+      } else {
+        updateDownloadWidget(20, "Mengunduh Foto Asli...", photo.name || "Foto", false);
         processNextDownloadQueue();
       }
     }

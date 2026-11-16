@@ -210,8 +210,28 @@ VERIFIKASI SISTEM: BERHASIL (Resolusi Asli 1:1 Terjaga, Background Multi-Downloa
 ### 4. Prinsip Non-Destruktif
 - Seluruh fitur eksisting yang berjalan baik (tema Romantic Ivory & Soft Gold, Lightbox navigation, Slideshow TV, live auto-refresh Google Drive, dan multi-user login) tetap dipertahankan 100%.
 
-================================================================================
-KONFIRMASI:
-Jika draf rencana revisi di atas sudah tepat dan sesuai dengan seluruh instruksi Anda, silakan berikan konfirmasi dengan mengetik:
-👉 **"OKE TERAPKAN"**
-================================================================================
+---
+
+## Catatan Rilis v2.9.4: Reposisi Widget Progress Bar & Penyempurnaan Antrean Unduh Multi-Foto Latar Belakang (Non-Blocking)
+
+### 1. Masalah yang Diselesaikan
+- **Progress Bar Menghalangi Tombol Download Foto Berikutnya:**
+  - Sebelumnya widget progress bar melayang di area bawah layar (`bottom: 16px` pada mobile), sehingga menutupi tombol *"✨ Simpan Kenangan Berbingkai"* dan bilah navigasi lightbox. Akibatnya, pengguna di perangkat mobile tidak dapat menekan tombol download pada foto berikutnya saat proses unduh sedang berjalan.
+- **Antrean Unduh Latar Belakang (Background Queue) Multi-Foto:**
+  - Memastikan pengguna dapat langsung menggeser (*swipe*) atau berpindah ke foto-foto berikutnya dan menekan tombol simpan secara beruntun tanpa harus menunggu proses unduh foto sebelumnya selesai.
+
+### 2. Implementasi Perbaikan
+1. **Reposisi Widget ke Bagian Atas Layar (Top Floating Island Banner):**
+   - Pada desktop: `top: 20px; right: 24px; bottom: auto;`.
+   - Pada mobile (`@media (max-width: 640px)`): `top: 72px; left: 14px; right: 14px; bottom: auto;`.
+   - Penempatan pada `top: 72px` di mobile berada tepat di bawah header lightbox (sehingga tidak menghalangi tombol silang '✕' di atas) dan **100% bebas dari bilah tombol simpan di bagian bawah layar**.
+   - Dilengkapi tombol tutup cepat `✕` (`.dpw-close-btn`) jika pengguna ingin menyembunyikan notifikasi seketika tanpa memutus proses unduh di latar belakang.
+2. **Penyempurnaan Antrean Unduh Multi-Foto (Sequential Non-Blocking Queue):**
+   - Penambahan deteksi duplikasi instan agar foto yang sama tidak diantrekan ganda jika tertekan berkali-kali.
+   - Pemberian umpan balik instan pada tombol simpan: berubah menjadi `"✓ Masuk Antrean Unduh"` selama 1.5 detik lalu siap ditekan kembali tanpa terkunci.
+   - Perbaruan badge antrean dinamis: menampilkan jumlah foto yang sedang mengantre (misal: `"2 Antrean"`, `"3 Antrean"`).
+   - Rantai proses sekuensial yang mulus: saat foto pertama selesai disimpan ke perangkat, sistem langsung memproses foto berikutnya tanpa mereset atau menutup widget secara prematur hingga seluruh antrean tuntas.
+   - Tombol navigasi dan swipe foto pada lightbox tetap aktif dan responsif 100%.
+
+### 3. Jaminan Non-Destruktif
+- Seluruh fungsi lain (resolusi asli 1:1 tanpa kompresi, framing transparan, sinkronisasi Google Drive, login admin minimalis, kalender date picker) tetap berjalan normal tanpa perubahan yang tidak diinstruksikan.
