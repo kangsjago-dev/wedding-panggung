@@ -1064,12 +1064,161 @@
       margin-bottom: 6px;
       font-weight: 600;
     }
+
+    /* ==========================================================================
+       FLOATING BACKGROUND DOWNLOAD PROGRESS WIDGET
+       ========================================================================== */
+    .download-progress-widget {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 200;
+      background: #0F172A;
+      color: #FFFFFF;
+      width: 380px;
+      max-width: calc(100vw - 32px);
+      border-radius: 16px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(197, 168, 128, 0.35);
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transform: translateY(140%);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+      font-family: var(--font-sans);
+    }
+
+    .download-progress-widget.active {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .dpw-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .dpw-icon-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: rgba(197, 168, 128, 0.15);
+      color: var(--gold-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .dpw-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .dpw-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #F8F6F2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dpw-subtitle {
+      font-size: 0.74rem;
+      color: #94A3B8;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dpw-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: var(--gold-primary);
+      color: #0F172A;
+      flex-shrink: 0;
+    }
+
+    .dpw-progress-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 9999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .dpw-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--gold-primary) 0%, #F59E0B 50%, #10B981 100%);
+      border-radius: 9999px;
+      transition: width 0.35s ease;
+    }
+
+    .dpw-footer-note {
+      font-size: 0.72rem;
+      color: #38BDF8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    @media (max-width: 640px) {
+      .download-progress-widget {
+        bottom: 16px;
+        right: 16px;
+        left: 16px;
+        width: auto;
+      }
+    }
   </style>
 </head>
 <body>
 
   <!-- Floating Toast Notification Container -->
   <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Floating Background Download Progress Bar Widget -->
+  <div id="downloadProgressWidget" class="download-progress-widget">
+    <div class="dpw-header">
+      <div class="dpw-icon-box">
+        <svg id="dpwIconSpinner" class="spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.25"></circle>
+          <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"></path>
+        </svg>
+        <svg id="dpwIconCheck" style="display: none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <div class="dpw-info">
+        <div class="dpw-title" id="dpwTitle">Menyiapkan Kenangan Berbingkai...</div>
+        <div class="dpw-subtitle" id="dpwSubtitle">Resolusi Asli • Berjalan di latar belakang</div>
+      </div>
+      <span class="dpw-badge" id="dpwBadge">1 Foto</span>
+    </div>
+
+    <div class="dpw-progress-track">
+      <div class="dpw-progress-fill" id="dpwProgressFill" style="width: 15%;"></div>
+    </div>
+
+    <div class="dpw-footer-note">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      <span>Berjalan di latar belakang • Anda bebas melihat foto lainnya</span>
+    </div>
+  </div>
 
   <!-- Demo Notice Banner -->
   <div id="demoNotice" class="demo-banner" style="display: none;">
@@ -2542,24 +2691,102 @@
       return raw;
     }
 
+    // ==========================================================================
+    // BACKGROUND ASYNCHRONOUS DOWNLOAD QUEUE & HIGH-RES ENGINE
+    // ==========================================================================
+    const downloadQueue = {
+      items: [],
+      isProcessing: false,
+      hideTimer: null
+    };
+
+    function updateDownloadWidget(percent, title, subtitle, isComplete) {
+      const widget = document.getElementById("downloadProgressWidget");
+      const titleEl = document.getElementById("dpwTitle");
+      const subtitleEl = document.getElementById("dpwSubtitle");
+      const fillEl = document.getElementById("dpwProgressFill");
+      const badgeEl = document.getElementById("dpwBadge");
+      const spinnerEl = document.getElementById("dpwIconSpinner");
+      const checkEl = document.getElementById("dpwIconCheck");
+
+      if (!widget) return;
+
+      if (downloadQueue.hideTimer) {
+        clearTimeout(downloadQueue.hideTimer);
+        downloadQueue.hideTimer = null;
+      }
+
+      widget.classList.add("active");
+      if (title && titleEl) titleEl.innerText = title;
+      if (subtitle && subtitleEl) subtitleEl.innerText = subtitle;
+      if (fillEl) fillEl.style.width = Math.min(100, Math.max(5, percent)) + "%";
+
+      const remaining = downloadQueue.items.length + (downloadQueue.isProcessing ? 1 : 0);
+      if (badgeEl) {
+        badgeEl.innerText = remaining > 1 ? (remaining + " Foto") : "1 Foto";
+      }
+
+      if (isComplete) {
+        if (spinnerEl) spinnerEl.style.display = "none";
+        if (checkEl) checkEl.style.display = "block";
+        if (fillEl) fillEl.style.width = "100%";
+
+        downloadQueue.hideTimer = setTimeout(function() {
+          widget.classList.remove("active");
+          setTimeout(function() {
+            if (spinnerEl) spinnerEl.style.display = "block";
+            if (checkEl) checkEl.style.display = "none";
+          }, 400);
+        }, 3500);
+      } else {
+        if (spinnerEl) spinnerEl.style.display = "block";
+        if (checkEl) checkEl.style.display = "none";
+      }
+    }
+
     function downloadCurrentPhotoWithFrame() {
       const photo = state.filteredPhotos[state.currentLightboxIndex];
       if (!photo) return;
 
-      const rawFrameConfig = state.activeConfig.FRAME_IMAGE_URL ? state.activeConfig.FRAME_IMAGE_URL.trim() : "";
-      const frameUrl = normalizeDriveImageUrl(rawFrameConfig);
-      const downloadBtn = document.getElementById("lightboxDownloadBtn");
+      // Berikan umpan balik instan pada tombol unduh tanpa memblokir navigasi sama sekali
       const btnLabel = document.getElementById("downloadBtnLabel");
+      if (btnLabel) {
+        const prevText = btnLabel.innerText;
+        btnLabel.innerText = "✓ Mengunduh di Latar Belakang";
+        setTimeout(function() {
+          if (btnLabel && btnLabel.innerText === "✓ Mengunduh di Latar Belakang") {
+            btnLabel.innerText = prevText;
+          }
+        }, 1500);
+      }
 
-      if (!frameUrl) {
-        triggerDirectDownload(photo);
+      // Masukkan ke antrean unduh latar belakang (non-blocking, bebas swipe foto lain)
+      downloadQueue.items.push(photo);
+      updateDownloadWidget(15, "Menyiapkan Kenangan Berbingkai...", (photo.name || "Foto") + " • Masuk antrean", false);
+
+      if (!downloadQueue.isProcessing) {
+        processNextDownloadQueue();
+      }
+    }
+
+    function processNextDownloadQueue() {
+      if (downloadQueue.items.length === 0) {
+        downloadQueue.isProcessing = false;
         return;
       }
 
-      if (downloadBtn) downloadBtn.disabled = true;
-      if (btnLabel) btnLabel.innerText = "Menyiapkan Kenangan Berbingkai...";
+      downloadQueue.isProcessing = true;
+      const photo = downloadQueue.items.shift();
+      const rawFrameConfig = state.activeConfig.FRAME_IMAGE_URL ? state.activeConfig.FRAME_IMAGE_URL.trim() : "";
+      const frameUrl = normalizeDriveImageUrl(rawFrameConfig);
 
-      // Helper untuk memuat gambar aman ke Canvas (mencegah blokir CORS)
+      if (!frameUrl) {
+        processDirectDownloadTask(photo);
+        return;
+      }
+
+      updateDownloadWidget(30, "Memuat Foto & Bingkai Kualitas Penuh...", (photo.name || "Foto") + " • Resolusi Asli", false);
+
       function prepareCanvasSource(urlOrId, callback, errCallback) {
         if (!urlOrId) { errCallback(); return; }
         if (urlOrId.startsWith("data:")) {
@@ -2574,7 +2801,6 @@
         img.crossOrigin = "anonymous";
         img.onload = function() { callback(img); };
         img.onerror = function() {
-          // Jika gambar gagal dimuat secara cross-origin, minta Base64 dari backend
           callBackend("getImageBase64", { fileId: urlOrId }, function(res) {
             if (res && res.success && res.dataUrl) {
               const b64Img = new Image();
@@ -2584,20 +2810,20 @@
             } else {
               errCallback();
             }
-          }, function() {
-            errCallback();
-          });
+          }, errCallback);
         };
         img.src = urlOrId;
       }
 
-      const photoSrc = photo.highResUrl || photo.downloadUrl || photo.thumbnailUrl;
+      // Prioritaskan downloadUrl (berkas kamera asli tanpa kompresi pratinjau)
+      const photoSrc = photo.downloadUrl || photo.highResUrl || photo.thumbnailUrl;
       const photoIdOrSrc = photo.id || photoSrc;
 
       prepareCanvasSource(photoIdOrSrc, function(photoImg) {
+        updateDownloadWidget(55, "Menggabungkan Foto Beresolusi Penuh...", (photo.name || "Foto") + " • Menjaga Ukuran Asli", false);
+
         prepareCanvasSource(frameUrl, function(frameImg) {
           try {
-            // Deteksi batas jendela transparan bingkai secara instan (<3ms)
             const fw = frameImg.naturalWidth || 2400;
             const fh = frameImg.naturalHeight || 1600;
             const scanMax = 500;
@@ -2618,7 +2844,6 @@
             for (let y = 0; y < scanH; y++) {
               for (let x = 0; x < scanW; x++) {
                 const alpha = scanData[(y * scanW + x) * 4 + 3];
-                // Anggap piksel transparan / jendela foto jika alpha < 80
                 if (alpha < 80) {
                   transparentCount++;
                   if (x < minX) minX = x;
@@ -2629,7 +2854,6 @@
               }
             }
 
-            // Hitung koordinat cutout (jendela transparan)
             let cutoutX, cutoutY, cutoutW, cutoutH;
             if (transparentCount > (scanW * scanH * 0.05) && maxX > minX && maxY > minY) {
               cutoutX = Math.round(minX / scanScale);
@@ -2643,85 +2867,101 @@
               cutoutH = fh;
             }
 
-            // Canvas akhir berukuran resolusi tinggi mengikuti dimensi asli bingkai
-            const canvas = document.createElement("canvas");
-            canvas.width = fw;
-            canvas.height = fh;
-            const ctx = canvas.getContext("2d");
-
-            // 1. Gambar latar belakang putih bersih
-            ctx.fillStyle = "#FFFFFF";
-            ctx.fillRect(0, 0, fw, fh);
-
-            // 2. Gambar foto asli di lapisan dasar
+            // DIMENSI ASLI FOTO (pw, ph)
             const pw = photoImg.naturalWidth || photoImg.width || 1920;
             const ph = photoImg.naturalHeight || photoImg.height || 1080;
-            const photoAspect = pw / ph;
-            const cutoutAspect = cutoutW / cutoutH;
 
-            let drawX = 0, drawY = 0, drawW = cutoutW, drawH = cutoutH;
+            // FAKTOR SKALA DINAMIS: Pastikan kanvas SELALU mengikuti resolusi penuh asli foto (tanpa downscale/penurunan ukuran file)
+            const scale = Math.max(1, pw / cutoutW, ph / cutoutH);
+            const targetW = Math.round(fw * scale);
+            const targetH = Math.round(fh * scale);
+
+            const canvas = document.createElement("canvas");
+            canvas.width = targetW;
+            canvas.height = targetH;
+            const ctx = canvas.getContext("2d");
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+
+            // Skalakan batas cutout jendela transparan
+            const scaledCutoutX = Math.round(cutoutX * scale);
+            const scaledCutoutY = Math.round(cutoutY * scale);
+            const scaledCutoutW = Math.round(cutoutW * scale);
+            const scaledCutoutH = Math.round(cutoutH * scale);
+
+            const photoAspect = pw / ph;
+            const cutoutAspect = scaledCutoutW / scaledCutoutH;
+
+            let drawX = scaledCutoutX;
+            let drawY = scaledCutoutY;
+            let drawW = scaledCutoutW;
+            let drawH = scaledCutoutH;
+
             if (Math.abs(photoAspect - cutoutAspect) < 0.05) {
-              // Aspek rasio sama (misal sama-sama 16:9) -> isi penuh jendela transparan
-              drawX = cutoutX;
-              drawY = cutoutY;
-              drawW = cutoutW;
-              drawH = cutoutH;
+              drawX = scaledCutoutX;
+              drawY = scaledCutoutY;
+              drawW = scaledCutoutW;
+              drawH = scaledCutoutH;
             } else if (photoAspect > cutoutAspect) {
-              // Foto lebih lebar dibanding jendela bingkai -> kunci lebar jendela, pusatkan vertikal
-              drawW = cutoutW;
-              drawH = cutoutW / photoAspect;
-              drawX = cutoutX;
-              drawY = cutoutY + (cutoutH - drawH) / 2;
+              drawW = scaledCutoutW;
+              drawH = scaledCutoutW / photoAspect;
+              drawX = scaledCutoutX;
+              drawY = scaledCutoutY + (scaledCutoutH - drawH) / 2;
             } else {
-              // Foto lebih tinggi dibanding jendela bingkai -> kunci tinggi jendela, pusatkan horizontal
-              drawH = cutoutH;
-              drawW = cutoutH * photoAspect;
-              drawY = cutoutY;
-              drawX = cutoutX + (cutoutW - drawW) / 2;
+              drawH = scaledCutoutH;
+              drawW = scaledCutoutH * photoAspect;
+              drawY = scaledCutoutY;
+              drawX = scaledCutoutX + (scaledCutoutW - drawW) / 2;
             }
 
-            // Gambar foto asli tepat di dalam jendela transparan bingkai
+            // 1. Gambar latar belakang putih
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(0, 0, targetW, targetH);
+
+            // 2. Gambar foto asli dengan resolusi penuh 100% tanpa kompresi/downscaling
             ctx.drawImage(photoImg, drawX, drawY, drawW, drawH);
 
-            // 3. Gambar bingkai PNG di atasnya (elemen dekoratif dan teks nama pengantin)
-            ctx.drawImage(frameImg, 0, 0, fw, fh);
+            // 3. Gambar bingkai PNG di atasnya dengan resolusi ultra-tinggi yang tajam
+            ctx.drawImage(frameImg, 0, 0, targetW, targetH);
 
-            // 4. Ekspor ke Blob kualitas tinggi dan simpan langsung ke file sistem perangkat
+            updateDownloadWidget(85, "Menyimpan ke Memori Perangkat...", (photo.name || "Foto") + " • Kualitas Asli", false);
+
+            // 4. Ekspor ke Blob kualitas ultra-tinggi 0.98 agar ukuran berkas setara asli (~1.9MB - 2.8MB)
             canvas.toBlob(function(blob) {
               if (blob) {
                 const cleanName = (photo.rawName || photo.name || "wedding-photo").replace(/\.[^/.]+$/, "");
                 saveBlobToDevice(blob, cleanName + "-berbingkai.jpg");
-                resetDownloadButton();
-                showToast("✓ Kenangan berbingkai berhasil tersimpan ke perangkat!");
+                updateDownloadWidget(100, "✓ Berhasil Disimpan!", cleanName + "-berbingkai.jpg", true);
+                showToast("✓ Foto berbingkai berhasil tersimpan ke perangkat!");
               } else {
-                triggerDirectDownload(photo);
+                processDirectDownloadTask(photo);
               }
-            }, "image/jpeg", 0.95);
+              // Lanjutkan ke antrean berikutnya jika ada
+              setTimeout(processNextDownloadQueue, 600);
+            }, "image/jpeg", 0.98);
 
           } catch (eCanvas) {
             console.warn("Canvas compositing error, fallback to direct download:", eCanvas);
-            triggerDirectDownload(photo);
+            processDirectDownloadTask(photo);
+            setTimeout(processNextDownloadQueue, 600);
           }
         }, function() {
-          showToast("⚠️ Bingkai tidak dapat dimuat, mengunduh foto asli langsung ke perangkat.");
-          triggerDirectDownload(photo);
+          processDirectDownloadTask(photo);
+          setTimeout(processNextDownloadQueue, 600);
         });
       }, function() {
-        triggerDirectDownload(photo);
+        processDirectDownloadTask(photo);
+        setTimeout(processNextDownloadQueue, 600);
       });
     }
 
-    function triggerDirectDownload(photo) {
-      const downloadBtn = document.getElementById("lightboxDownloadBtn");
-      const btnLabel = document.getElementById("downloadBtnLabel");
-      if (downloadBtn) downloadBtn.disabled = true;
-      if (btnLabel) btnLabel.innerText = "Menyimpan ke Perangkat...";
-
+    function processDirectDownloadTask(photo) {
       const cleanName = (photo.rawName || photo.name || "wedding-photo").replace(/\.[^/.]+$/, "");
       const fileName = cleanName + ".jpg";
-      const directUrl = photo.highResUrl || photo.downloadUrl || photo.thumbnailUrl;
+      const directUrl = photo.downloadUrl || photo.highResUrl || photo.thumbnailUrl;
 
-      // Ambil berkas sebagai Blob agar langsung tersimpan di memori perangkat tanpa membuka tab baru
+      updateDownloadWidget(60, "Mengunduh Foto Asli Langsung...", fileName, false);
+
       fetch(directUrl)
         .then(function(res) {
           if (!res.ok) throw new Error("HTTP error " + res.status);
@@ -2729,11 +2969,11 @@
         })
         .then(function(blob) {
           saveBlobToDevice(blob, fileName);
-          resetDownloadButton();
-          showToast("✓ Foto kenangan berhasil tersimpan ke perangkat!");
+          updateDownloadWidget(100, "✓ Berhasil Disimpan!", fileName, true);
+          showToast("✓ Foto asli berhasil tersimpan ke perangkat!");
+          setTimeout(processNextDownloadQueue, 600);
         })
-        .catch(function(errFetch) {
-          // Jika fetch langsung diblokir oleh CORS browser, ambil via Base64 backend
+        .catch(function() {
           if (photo.id && (state.gasApiUrl || (typeof google !== 'undefined' && google.script))) {
             callBackend("getImageBase64", { fileId: photo.id }, function(res) {
               if (res && res.success && res.dataUrl) {
@@ -2746,18 +2986,30 @@
                 const byteArray = new Uint8Array(byteNumbers);
                 const blob = new Blob([byteArray], { type: res.contentType || "image/jpeg" });
                 saveBlobToDevice(blob, fileName);
-                resetDownloadButton();
-                showToast("✓ Foto kenangan berhasil tersimpan ke perangkat!");
+                updateDownloadWidget(100, "✓ Berhasil Disimpan!", fileName, true);
+                showToast("✓ Foto asli berhasil tersimpan ke perangkat!");
               } else {
                 fallbackSaveLink(directUrl, fileName);
               }
+              setTimeout(processNextDownloadQueue, 600);
             }, function() {
               fallbackSaveLink(directUrl, fileName);
+              setTimeout(processNextDownloadQueue, 600);
             });
           } else {
             fallbackSaveLink(directUrl, fileName);
+            setTimeout(processNextDownloadQueue, 600);
           }
         });
+    }
+
+    function triggerDirectDownload(photo) {
+      if (!photo) return;
+      downloadQueue.items.push(photo);
+      updateDownloadWidget(20, "Mengunduh Foto Asli...", photo.name || "Foto", false);
+      if (!downloadQueue.isProcessing) {
+        processNextDownloadQueue();
+      }
     }
 
     function saveBlobToDevice(blob, fileName) {

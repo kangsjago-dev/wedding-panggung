@@ -1,10 +1,23 @@
-# RENCANA REVISI LENGKAP: PENYEMPURNAAN TATA BAHASA GALERI & MINIMALISASI LOGIN ADMIN
+# RENCANA REVISI LENGKAP: PRESERVASI RESOLUSI PENUH ASLI & BACKGROUND MULTI-DOWNLOAD PROGRESS
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.9.2)
+STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.9.3)
 TANGGAL PENGAJUAN: 16 November 2026
-VERIFIKASI SISTEM: BERHASIL (Bahasa Galeri & Login Admin Rapi, Minimalis, Terverifikasi Penuh)
+VERIFIKASI SISTEM: BERHASIL (Resolusi Asli 1:1 Terjaga, Background Multi-Download Queue Aktif, Floating Progress Bar)
+
+### Rangkuman Pembaruan v2.9.3:
+1. **Preservasi Ukuran & Resolusi Asli Foto Saat Download Berbingkai:**
+   - **Penyebab Masalah (Ukuran Berkurang 1.9MB -> 555KB):** Sebelumnya dimensi kanvas dibatasi pada ukuran bingkai (`1920x1080`), sehingga foto kamera resolusi tinggi dari fotografer ter-downscale lebih dari 50%, serta menggunakan kompresi 0.95 pada file pratinjau.
+   - **Solusi Diterapkan:**
+     * Menghitung resolusi kanvas dinamis berbasis resolusi asli foto (`scale = Math.max(1, pw / cutoutW, ph / cutoutH)`). Jika foto asli beresolusi 2500x1406 atau 4000x2250, kanvas dibuat pada resolusi penuh tersebut sehingga foto dipetakan 1:1 tanpa kehilangan piksel sama sekali.
+     * Menggunakan kualitas ekspor ultra-tinggi (`0.98`) sehingga ukuran file tetap setara dengan aslinya (~1.9MB - 2.8MB).
+     * Memprioritaskan `photo.downloadUrl` agar mengambil berkas kamera asli tanpa kompresi pratinjau Google Drive.
+2. **Widget Progress Bar Mengambang & Antrean Download Latar Belakang (Non-Blocking):**
+   - **Pencegahan Kesan Hang / Stuck:** Saat tombol unduh diklik, antarmuka TIDAK dibekukan. Tombol tidak mendisable layar, pengguna dapat langsung berpindah ke foto berikutnya (`Next`/`Prev`), menutup modal, atau mengklik unduh pada banyak foto sekaligus (*multiple background downloads*).
+   - **Widget Progress Bar Interaktif:** Disediakan kartu indikator progres mengambang (`#downloadProgressWidget`) di sudut bawah layar dengan bilah progres animasi (persentase memuat foto, menggabungkan bingkai, dan menyimpan ke perangkat) serta label penenang: *"✓ Berjalan di latar belakang • Anda bebas melihat foto lainnya"*.
+3. **Prinsip Non-Destruktif:**
+   - Seluruh fungsi lain (auto-sync 20 detik, date picker kalender, multi-user admin, dan keamanan PIN) tetap berjalan 100% normal.
 
 ### Rangkuman Pembaruan v2.9.2:
 1. **Penyempurnaan Bahasa Status Galeri Kosong:**
