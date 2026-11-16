@@ -2,9 +2,29 @@
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.9.3)
-TANGGAL PENGAJUAN: 16 November 2026
-VERIFIKASI SISTEM: BERHASIL (Resolusi Asli 1:1 Terjaga, Background Multi-Download Queue Aktif, Floating Progress Bar)
+STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.9.7)
+TANGGAL PENGAJUAN: 17 November 2026
+VERIFIKASI SISTEM: BERHASIL (Preview Kategori Lain/Photobooth Aktif, Multi-line Footer Enter, Persistensi Kategori Bebas Teapai, Menu Sinkron Kategori, Eliminasi Loop Notifikasi Palsu)
+
+### Rangkuman Pembaruan v2.9.7:
+1. **Tampilan Preview Image pada Kategori Lainnya (Photobooth):**
+   - **Akar Masalah:** Sebelumnya jika pengguna mengklik kategori kustom (misal "Photobooth") yang foto-fotonya tersimpan di folder utama Google Drive (bukan di subfolder bernama "Photobooth"), filter kategori menghasilkan 0 foto dan menampilkan kartu kosong bertombol tanpa foto sama sekali.
+   - **Solusi:** `applyCategoryFilter` dan `renderCategoryTabs` kini secara cerdas menampilkan foto galeri sebagai preview lengkap dengan thumbnail gambar, judul, badge, Lightbox layar penuh, dan unduh berbingkai jika belum ada subfolder khusus di Google Drive. Banner tautan resmi (`Display Galeri [Photobooth]` dengan link ke fotoshare.co / Google Drive) tetap anggun terpasang di atas grid foto.
+2. **Pesan Penutup Footer Multi-baris (Mendukung Tombol Enter):**
+   - Mengubah input `cfgFooterMessage` di panel Admin dari `<input type="text">` menjadi `<textarea rows="2">`.
+   - Mengatur elemen `#footerBlessing` dengan CSS `white-space: pre-line; line-height: 1.6;` sehingga baris baru yang dienter oleh admin langsung terformat rapi baris per baris di bagian bawah halaman web.
+3. **Persistensi Pengaturan Kategori & Eliminasi Total Kategori Teapai:**
+   - Menghapus kategori bawaan `Teapai` dari seluruh berkas (`config.json`, `index.html`, `code.gs`).
+   - Menyimpan kategori kustom yang diedit/dihapus admin langsung ke `localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES")` sehingga saat halaman di-refresh, perubahan tidak akan pernah kembali ke kondisi lama.
+   - Memperbaiki serialisasi `writeConfigToSheet` di `code.gs` agar nilai bertipe objek/array diserialisasi via `JSON.stringify` untuk mencegah korupsi `[object Object]` pada Google Sheets.
+4. **Tombol Menu Sinkron Kategori Momen & Tautan Display:**
+   - Menambahkan tombol khusus **`🔄 Sinkronkan Kategori & Tautan`** di tab **Foto & Bingkai** panel Admin.
+   - Admin dapat langsung menyinkronkan daftar kategori dan link display secara instan ke browser lokal dan ke Google Apps Script / Google Sheets hanya dengan satu kali klik.
+5. **Eliminasi Loop Notifikasi Palsu ("1 foto baru otomatis ditambahkan"):**
+   - **Akar Masalah:** Ketika sebuah thumbnail foto memicu `onerror`, fungsi `handlePhotoError` sebelumnya menghapus foto tersebut dari `state.allPhotos`. Setiap 20 detik saat background auto-refresh berjalan, API Google Drive mengembalikan kembali foto tersebut, dideteksi sebagai foto baru, memicu toast notifikasi palsu berulang-ulang tanpa henti.
+   - **Solusi:** Sistem kini mencatat ID foto yang bermasalah pada `state.failedPhotoIds`. Foto yang rusak otomatis disaring keluar dari deteksi foto baru sehingga notifikasi palsu tidak akan pernah muncul lagi.
+6. **Prinsip Non-Destruktif:**
+   - Seluruh fungsi lain (unduh resolusi penuh 1:1, multi-download background queue, floating progress bar auto-close, login admin unik) 100% terjaga dan berfungsi normal.
 
 ### Rangkuman Pembaruan v2.9.3:
 1. **Preservasi Ukuran & Resolusi Asli Foto Saat Download Berbingkai:**

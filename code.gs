@@ -25,11 +25,11 @@ const WEDDING_CONFIG = {
   // Pesan Sambutan untuk Tamu
   WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
 
-  // Pesan Penutup Footer
-  FOOTER_MESSAGE: "Diabadikan dengan cinta • Terima kasih atas doa restunya.",
+  // Pesan Penutup Footer (Mendukung Enter / Multi-baris)
+  FOOTER_MESSAGE: "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
 
   // Kategori Kustom & Tautan Target Display Galeri
-  CUSTOM_CATEGORIES: '[{"name":"Teapai","url":""},{"name":"Photobooth","url":"https://fotoshare.co"}]',
+  CUSTOM_CATEGORIES: '[{"name":"Photobooth","url":"https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs"}]',
 
   // Konfigurasi Teknis (Dapat dikelola admin via web & spreadsheet)
   DRIVE_FOLDER_ID: "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxl5",
@@ -300,6 +300,9 @@ function writeConfigToSheet(ss, configDict) {
       if (configDict.hasOwnProperty(prop)) {
         var newVal = configDict[prop];
         if (newVal === undefined || newVal === null) continue;
+        if (typeof newVal === "object") {
+          newVal = JSON.stringify(newVal);
+        }
         if (rowIndexMap[prop]) {
           sheet.getRange(rowIndexMap[prop], 2).setValue(String(newVal));
         } else {
@@ -392,7 +395,7 @@ function getEffectiveConfig() {
     SUBTITLE: sheetConfig.SUBTITLE || props.SUBTITLE || WEDDING_CONFIG.SUBTITLE,
     WELCOME_MESSAGE: sheetConfig.WELCOME_MESSAGE || props.WELCOME_MESSAGE || WEDDING_CONFIG.WELCOME_MESSAGE,
     FOOTER_MESSAGE: sheetConfig.FOOTER_MESSAGE || props.FOOTER_MESSAGE || WEDDING_CONFIG.FOOTER_MESSAGE,
-    CUSTOM_CATEGORIES: sheetConfig.CUSTOM_CATEGORIES || props.CUSTOM_CATEGORIES || WEDDING_CONFIG.CUSTOM_CATEGORIES,
+    CUSTOM_CATEGORIES: (sheetConfig.CUSTOM_CATEGORIES && sheetConfig.CUSTOM_CATEGORIES !== "[object Object]") ? sheetConfig.CUSTOM_CATEGORIES : ((props.CUSTOM_CATEGORIES && props.CUSTOM_CATEGORIES !== "[object Object]") ? props.CUSTOM_CATEGORIES : WEDDING_CONFIG.CUSTOM_CATEGORIES),
 
     // Konfigurasi Teknis: Dapat dikelola Admin via Web & Sheets
     DRIVE_FOLDER_ID: sheetConfig.DRIVE_FOLDER_ID || props.DRIVE_FOLDER_ID || WEDDING_CONFIG.DRIVE_FOLDER_ID,

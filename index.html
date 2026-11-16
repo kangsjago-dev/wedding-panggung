@@ -1547,7 +1547,8 @@
 
           <div class="admin-field-group">
             <label class="admin-label" for="cfgFooterMessage">Pesan Penutup Footer (Di Bagian Bawah)</label>
-            <input type="text" id="cfgFooterMessage" class="admin-input" placeholder="Contoh: Diabadikan dengan cinta • Terima kasih atas doa restunya.">
+            <textarea id="cfgFooterMessage" class="admin-input" rows="2" style="resize: vertical; font-family: inherit; font-size: 0.88rem; box-sizing: border-box; width: 100%;" placeholder="Diabadikan dengan cinta&#10;Terima kasih atas doa restunya."></textarea>
+            <span style="font-size: 0.72rem; color: #64748B; margin-top: 3px; display: block;">Mendukung tombol Enter / baris baru untuk tampilan multi-baris di footer.</span>
           </div>
         </div>
 
@@ -1590,9 +1591,17 @@
 
             <div id="adminCategoriesContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;"></div>
 
-            <button type="button" class="btn btn-outline" style="width: 100%; justify-content: center; font-size: 0.82rem; padding: 8px;" onclick="addCategoryConfigRow('', '')">
-              <span>+ Tambah Kategori / Folder Galeri</span>
-            </button>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-outline" style="flex: 1; min-width: 140px; justify-content: center; font-size: 0.82rem; padding: 8px;" onclick="addCategoryConfigRow('', '')">
+                <span>+ Tambah Kategori</span>
+              </button>
+              <button type="button" id="btnSyncCategories" class="btn btn-gold" style="flex: 1; min-width: 170px; justify-content: center; font-size: 0.82rem; padding: 8px;" onclick="syncCategoriesAndDisplayLinks()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+                <span>Sinkronkan Kategori & Tautan</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1675,7 +1684,7 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="footer-names">Wilson & Felicia</div>
-    <p id="footerBlessing">Diabadikan dengan cinta &bull; Terima kasih atas doa restunya.</p>
+    <p id="footerBlessing" style="white-space: pre-line; line-height: 1.6;">Diabadikan dengan cinta&#10;Terima kasih atas doa restunya.</p>
   </footer>
 
   <!-- ==========================================================================
@@ -1689,10 +1698,9 @@
       EVENT_VENUE: "Upperhills Convention Centre, Makassar",
       SUBTITLE: "The Wedding Gallery & Precious Memories",
       WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
-      FOOTER_MESSAGE: "Diabadikan dengan cinta • Terima kasih atas doa restunya.",
+      FOOTER_MESSAGE: "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
       CUSTOM_CATEGORIES: [
-        { name: "Teapai", url: "" },
-        { name: "Photobooth", url: "https://fotoshare.co" }
+        { name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs" }
       ],
       DRIVE_FOLDER_ID: "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxI5",
       FRAME_IMAGE_URL: "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing",
@@ -1707,9 +1715,9 @@
       filteredPhotos: [],
       categories: ["Semua Foto"],
       customCategories: [
-        { name: "Teapai", url: "" },
-        { name: "Photobooth", url: "https://fotoshare.co" }
+        { name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs" }
       ],
+      failedPhotoIds: new Set(),
       activeCategory: "Semua Foto",
       currentLightboxIndex: 0,
       currentSlideIndex: 0,
@@ -1770,6 +1778,12 @@
 
       // 2. Muat konfigurasi cadangan lokal jika ada (bersihkan cache nama lama seketika)
       try {
+        const savedCatsStr = localStorage.getItem("WEDDING_SAVED_CUSTOM_CATEGORIES");
+        if (savedCatsStr) {
+          try {
+            state.customCategories = JSON.parse(savedCatsStr);
+          } catch (eCat) {}
+        }
         const savedCfgStr = localStorage.getItem("WEDDING_SAVED_CONFIG");
         if (savedCfgStr) {
           const savedCfg = JSON.parse(savedCfgStr);
@@ -1777,6 +1791,9 @@
             delete savedCfg.EVENT_NAME;
             delete savedCfg.COUPLE_NAME;
             localStorage.setItem("WEDDING_SAVED_CONFIG", JSON.stringify(savedCfg));
+          }
+          if (savedCatsStr && state.customCategories) {
+            savedCfg.CUSTOM_CATEGORIES = state.customCategories;
           }
           state.activeConfig = Object.assign({}, GLOBAL_CONFIG, savedCfg);
           populateConfigToUI(state.activeConfig);
@@ -1797,6 +1814,13 @@
               state.gasApiUrl = remoteCfg.GAS_API_URL;
               const apiUrlInput = document.getElementById("cfgGasApiUrl");
               if (apiUrlInput) apiUrlInput.value = remoteCfg.GAS_API_URL;
+            }
+            // Pertahankan kategori yang disimpan admin secara lokal jika ada
+            const savedCatsStr = localStorage.getItem("WEDDING_SAVED_CUSTOM_CATEGORIES");
+            if (savedCatsStr) {
+              try {
+                remoteCfg.CUSTOM_CATEGORIES = JSON.parse(savedCatsStr);
+              } catch (eCat) {}
             }
             state.activeConfig = Object.assign({}, GLOBAL_CONFIG, remoteCfg);
             populateConfigToUI(state.activeConfig);
@@ -2004,9 +2028,10 @@
         populateConfigToUI(response.config);
       }
 
-      // Filter ketat: Buang seluruh foto demo / sampel jika folder Google Drive kosong
+      // Filter ketat: Buang seluruh foto demo / sampel jika folder Google Drive kosong, serta foto yang tercatat rusak
       const incomingPhotos = (response.photos || []).filter(function(p) {
         if (!p || !p.id) return false;
+        if (state.failedPhotoIds && state.failedPhotoIds.has(p.id)) return false;
         const sId = String(p.id).toLowerCase();
         if (sId.startsWith("demo-") || sId.startsWith("demo_") || /^d\d+$/.test(sId)) return false;
         if (p.thumbnailUrl && p.thumbnailUrl.includes("images.unsplash.com")) return false;
@@ -2023,7 +2048,10 @@
 
       if (isSilent && state.allPhotos.length > 0) {
         const existingIds = new Set(state.allPhotos.map(function(p) { return p.id; }));
-        const newPhotos = incomingPhotos.filter(function(p) { return !existingIds.has(p.id); });
+        // Hanya anggap foto baru jika ID belum pernah ada dan bukan foto yang tercatat error sebelumnya
+        const newPhotos = incomingPhotos.filter(function(p) { 
+          return !existingIds.has(p.id) && !(state.failedPhotoIds && state.failedPhotoIds.has(p.id)); 
+        });
 
         if (newPhotos.length > 0) {
           const now = Date.now();
@@ -2143,17 +2171,29 @@
       }
       if (cfg.FOOTER_MESSAGE) {
         const footerBlessingEl = document.getElementById("footerBlessing");
-        if (footerBlessingEl) footerBlessingEl.innerText = cfg.FOOTER_MESSAGE;
+        if (footerBlessingEl) footerBlessingEl.textContent = cfg.FOOTER_MESSAGE;
       }
-      if (cfg.CUSTOM_CATEGORIES) {
+      const savedCatsStr = localStorage.getItem("WEDDING_SAVED_CUSTOM_CATEGORIES");
+      if (savedCatsStr) {
         try {
-          state.customCategories = typeof cfg.CUSTOM_CATEGORIES === "string" 
+          state.customCategories = JSON.parse(savedCatsStr);
+          renderCategoryTabs();
+        } catch (e) {}
+      } else if (cfg.CUSTOM_CATEGORIES) {
+        try {
+          const parsed = typeof cfg.CUSTOM_CATEGORIES === "string" 
             ? JSON.parse(cfg.CUSTOM_CATEGORIES) 
             : cfg.CUSTOM_CATEGORIES;
+          if (Array.isArray(parsed)) {
+            state.customCategories = parsed.filter(function(c) {
+              const cName = String((c && c.name) || c || "").trim();
+              return cName && cName.toLowerCase() !== "teapai";
+            });
+            renderCategoryTabs();
+          }
         } catch (e) {
           state.customCategories = [];
         }
-        renderCategoryTabs();
       }
       if (cfg.SLIDESHOW_INTERVAL_SEC) {
         state.intervalMs = cfg.SLIDESHOW_INTERVAL_SEC * 1000;
@@ -2179,7 +2219,7 @@
         const cfgWelcomeEl = document.getElementById("cfgWelcomeMessage");
         if (cfgWelcomeEl) cfgWelcomeEl.value = cfg.WELCOME_MESSAGE || "";
         const cfgFooterEl = document.getElementById("cfgFooterMessage");
-        if (cfgFooterEl) cfgFooterEl.value = cfg.FOOTER_MESSAGE || "Diabadikan dengan cinta • Terima kasih atas doa restunya.";
+        if (cfgFooterEl) cfgFooterEl.value = cfg.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.";
       }
 
       const frameBadge = document.getElementById("frameStatusBadge");
@@ -2238,9 +2278,19 @@
       state.categories = uniqueCategories;
 
       state.categories.forEach(function(cat) {
-        const count = cat === "Semua Foto" 
-          ? state.allPhotos.length 
-          : state.allPhotos.filter(function(p) { return p.category === cat; }).length;
+        let count = 0;
+        if (cat === "Semua Foto") {
+          count = state.allPhotos.length;
+        } else {
+          const directMatch = state.allPhotos.filter(function(p) {
+            if (p.category && p.category.toLowerCase() === cat.toLowerCase()) return true;
+            if (p.name && p.name.toLowerCase().includes(cat.toLowerCase())) return true;
+            if (p.rawName && p.rawName.toLowerCase().includes(cat.toLowerCase())) return true;
+            return false;
+          }).length;
+          // Sesuai instruksi: Tampilkan jumlah preview foto jika tidak ada subfolder khusus di Google Drive
+          count = directMatch > 0 ? directMatch : state.allPhotos.length;
+        }
 
         // Cek apakah ada custom link target untuk kategori ini
         let targetUrl = "";
@@ -2295,9 +2345,17 @@
       if (category === "Semua Foto") {
         state.filteredPhotos = state.allPhotos;
       } else {
-        state.filteredPhotos = state.allPhotos.filter(function(p) {
-          return p.category === category;
+        let matched = state.allPhotos.filter(function(p) {
+          if (p.category && p.category.toLowerCase() === category.toLowerCase()) return true;
+          if (p.name && p.name.toLowerCase().includes(category.toLowerCase())) return true;
+          if (p.rawName && p.rawName.toLowerCase().includes(category.toLowerCase())) return true;
+          return false;
         });
+        // Sesuai instruksi: Tampilkan preview image pada kategori lainnya (seperti Photobooth), seperti tampilan semua photo
+        if (matched.length === 0 && state.allPhotos.length > 0) {
+          matched = state.allPhotos;
+        }
+        state.filteredPhotos = matched;
       }
       renderPhotoGrid(targetUrl, category);
     }
@@ -2393,6 +2451,7 @@
     }
 
     function handlePhotoError(imgElement, photoId) {
+      if (state.failedPhotoIds) state.failedPhotoIds.add(photoId);
       const card = imgElement.closest('.photo-card');
       if (card) card.remove();
 
@@ -2559,7 +2618,7 @@
       if (cfgWelcomeMessageEl) cfgWelcomeMessageEl.value = state.activeConfig.WELCOME_MESSAGE || "";
 
       const cfgFooterEl = document.getElementById("cfgFooterMessage");
-      if (cfgFooterEl) cfgFooterEl.value = state.activeConfig.FOOTER_MESSAGE || "Diabadikan dengan cinta • Terima kasih atas doa restunya.";
+      if (cfgFooterEl) cfgFooterEl.value = state.activeConfig.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.";
 
       renderAdminCategoriesManager();
 
@@ -2572,17 +2631,16 @@
       container.innerHTML = "";
 
       let categories = state.customCategories;
-      if (!Array.isArray(categories) || categories.length === 0) {
+      if (!Array.isArray(categories)) {
         categories = [
-          { name: "Teapai", url: "" },
-          { name: "Photobooth", url: "https://fotoshare.co" }
+          { name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs" }
         ];
       }
 
       categories.forEach(function(item) {
         const catName = String((item && item.name) || item || "").trim();
         const catUrl = String((item && item.url) || "").trim();
-        if (catName && catName !== "Semua Foto") {
+        if (catName && catName !== "Semua Foto" && catName.toLowerCase() !== "teapai") {
           addCategoryConfigRow(catName, catUrl);
         }
       });
@@ -2598,7 +2656,7 @@
       row.innerHTML = `
         <div>
           <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 3px;">Nama Kategori</label>
-          <input type="text" class="admin-input cat-name-input" value="${escapeHtml(name || '')}" placeholder="Misal: Teapai / Photobooth" style="padding: 7px 10px; font-size: 0.82rem;">
+          <input type="text" class="admin-input cat-name-input" value="${escapeHtml(name || '')}" placeholder="Misal: Photobooth / Resepsi" style="padding: 7px 10px; font-size: 0.82rem;">
         </div>
         <div>
           <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 3px;">Tautan Display Galeri (Opsional)</label>
@@ -2634,6 +2692,51 @@
         }
       });
       return list;
+    }
+
+    function syncCategoriesAndDisplayLinks() {
+      const syncBtn = document.getElementById("btnSyncCategories");
+      const customCategoriesList = getCategoriesFromAdminInputs();
+      state.customCategories = customCategoriesList;
+      state.activeConfig.CUSTOM_CATEGORIES = customCategoriesList;
+
+      try {
+        localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(customCategoriesList));
+        localStorage.setItem("WEDDING_SAVED_CONFIG", JSON.stringify(state.activeConfig));
+      } catch (e) {}
+
+      renderCategoryTabs();
+      applyCategoryFilter(state.activeCategory);
+
+      if (syncBtn) {
+        syncBtn.disabled = true;
+        syncBtn.innerHTML = `<span>Menyinkronkan...</span>`;
+      }
+
+      if (state.gasApiUrl) {
+        callBackend("saveAdminSettings", {
+          pin: state.adminPin,
+          config: { CUSTOM_CATEGORIES: customCategoriesList }
+        }, function(res) {
+          if (syncBtn) {
+            syncBtn.disabled = false;
+            syncBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg><span>Sinkronkan Kategori & Tautan</span>`;
+          }
+          showToast("✓ Kategori momen dan tautan display berhasil disinkronkan!");
+        }, function(err) {
+          if (syncBtn) {
+            syncBtn.disabled = false;
+            syncBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg><span>Sinkronkan Kategori & Tautan</span>`;
+          }
+          showToast("✓ Kategori momen dan tautan display tersimpan di browser!");
+        });
+      } else {
+        if (syncBtn) {
+          syncBtn.disabled = false;
+          syncBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg><span>Sinkronkan Kategori & Tautan</span>`;
+        }
+        showToast("✓ Kategori momen dan tautan display tersimpan di browser!");
+      }
     }
 
     /* ==========================================================================
@@ -2796,7 +2899,7 @@
         EVENT_VENUE: eventVenueInput || state.activeConfig.EVENT_VENUE || "Upperhills Convention Centre, Makassar",
         SUBTITLE: subtitleInput || state.activeConfig.SUBTITLE || "The Wedding Gallery & Precious Memories",
         WELCOME_MESSAGE: welcomeInput || state.activeConfig.WELCOME_MESSAGE || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
-        FOOTER_MESSAGE: footerInput || state.activeConfig.FOOTER_MESSAGE || "Diabadikan dengan cinta • Terima kasih atas doa restunya.",
+        FOOTER_MESSAGE: footerInput || state.activeConfig.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
         CUSTOM_CATEGORIES: customCategoriesList,
         DRIVE_FOLDER_ID: driveFolderInput,
         FRAME_IMAGE_URL: frameUrlInput,
@@ -2807,6 +2910,7 @@
       state.activeConfig = Object.assign({}, state.activeConfig, payload);
       state.customCategories = customCategoriesList;
       try {
+        localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(customCategoriesList));
         localStorage.setItem("WEDDING_SAVED_CONFIG", JSON.stringify(state.activeConfig));
       } catch (e) {}
 
