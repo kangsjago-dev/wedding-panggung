@@ -2,9 +2,26 @@
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.9.7)
+STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.9.8)
 TANGGAL PENGAJUAN: 17 November 2026
-VERIFIKASI SISTEM: BERHASIL (Preview Kategori Lain/Photobooth Aktif, Multi-line Footer Enter, Persistensi Kategori Bebas Teapai, Menu Sinkron Kategori, Eliminasi Loop Notifikasi Palsu)
+VERIFIKASI SISTEM: BERHASIL (Per-Category Target Folder & Preview Sesuai Link, Live Embedded Web Viewer, Uji Coba Menu Tanpa Logout, Reaktivitas Real-Time Input Kategori)
+
+### Rangkuman Pembaruan v2.9.8:
+1. **Pemisahan Folder & File Preview Masing-Masing Kategori Sesuai Link Target:**
+   - **Akar Masalah:** Sebelumnya, seluruh kategori yang tidak memiliki kecocokan nama langsung diarahkan untuk menampilkan semua foto dari folder utama Google Drive ("Katalog Foto Google Drive"). Akibatnya, mengubah link target kategori seolah tidak berdampak apa-apa karena foto yang ditampilkan tetap foto folder utama yang sama.
+   - **Solusi Diterapkan:**
+     * **Kategori dengan Tautan Folder Google Drive:** Sistem mendeteksi URL Google Drive folder (misal: `https://drive.google.com/drive/folders/...`). Sistem secara mandiri memindai berkas foto langsung dari folder Google Drive spesifik tersebut melalui endpoint backend `getCategoryPhotos` / `getFolderPhotos`, sehingga kategori memiliki katalog fotonya masing-masing yang berdiri sendiri (tidak lagi tercampur atau menampilkan foto utama).
+     * **Kategori dengan Tautan Web Eksternal (misal `https://fotoshare.co`):** Sistem menyematkan **Interactive Live Display Viewer (iframe)** terintegrasi beresolusi penuh langsung di bawah banner kategori, sehingga pengunjung dapat menjelajahi dan berinteraksi dengan tampilan galeri resmi dari tautan tersebut tanpa meninggalkan halaman web pernikahan.
+     * **Kategori Subfolder / Internal:** Tetap memfilter foto spesifik dari subfolder momen Google Drive.
+     * **Kategori "Semua Foto":** Khusus menampilkan foto-foto momen utama pernikahan dari Google Drive.
+2. **Kemudahan Uji Coba & Penjelajahan Menu Galeri bagi Admin Tanpa Logout:**
+   - **Tombol "👁️ Lihat / Test Galeri":** Ditambahkan pada header dan footer modal pengaturan admin. Admin dapat menutup/meminimalisasi jendela pengaturan kapan saja untuk menjelajahi galeri, menguji coba kategori, melihat tampilan foto, dan mengunduh foto tanpa harus keluar (logout) dari akun admin.
+   - **Floating Admin Bar:** Saat admin sedang aktif menjelajahi galeri web, bilah melayang elegan di bagian bawah layar muncul mengindikasikan status sesi admin aktif (`Mode Admin: [Nama User]`) dilengkapi tombol cepat **`⚙️ Buka Pengaturan`** untuk memunculkan kembali form pengaturan dalam 1 klik, serta tombol **`Keluar`**.
+3. **Reaktivitas Penuh Form Kategori Momen (Bebas Diedit Kapan Saja):**
+   - Menambahkan event listener `oninput` pada setiap input nama kategori dan tautan display di baris kategori admin.
+   - Setiap ketikan atau perubahan langsung tersimpan ke memori aktif `state.customCategories` dan `localStorage` secara instan, menjamin setelan kategori tidak pernah macet atau tertimpa saat diedit.
+4. **Prinsip Non-Destruktif:**
+   - Seluruh fungsi lain (unduh resolusi asli 1:1, antrean download background, validasi PIN unik, format pesan footer multi-baris) 100% terjaga dan berfungsi normal.
 
 ### Rangkuman Pembaruan v2.9.7:
 1. **Tampilan Preview Image pada Kategori Lainnya (Photobooth):**

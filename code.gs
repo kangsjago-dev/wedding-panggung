@@ -495,6 +495,10 @@ function handleApiRequest(e) {
       return deleteAdminUser(params.pin, params.targetUserId);
     } else if (action === "changeAdminPin") {
       return changeAdminPin(params.pin, params.newPin);
+    } else if (action === "getFolderPhotos" || action === "getCategoryPhotos") {
+      var targetFolder = params.folderId || params.url;
+      var catName = params.category || "Kategori";
+      return getCategoryDrivePhotos(targetFolder, catName);
     } else if (action === "getImageBase64") {
       return getImageBase64(params.fileId);
     } else {
@@ -543,6 +547,40 @@ function getGalleryData() {
       // Pindai folder Google Drive secara langsung
       var driveScan = scanDriveFolderDirectly(folderId);
       if (driveScan.success) {
+        // Pindai folder Google Drive terpisah jika ada di CUSTOM_CATEGORIES
+        if (safeConfig.CUSTOM_CATEGORIES) {
+          try {
+            var rawCats = safeConfig.CUSTOM_CATEGORIES;
+            if (typeof rawCats === "string") rawCats = JSON.parse(rawCats);
+            if (Array.isArray(rawCats)) {
+              for (var cIdx = 0; cIdx < rawCats.length; cIdx++) {
+                var cItem = rawCats[cIdx];
+                var cName = (cItem && cItem.name) ? String(cItem.name).trim() : "";
+                var cUrl = (cItem && cItem.url) ? String(cItem.url).trim() : "";
+                if (!cName || !cUrl) continue;
+                var cFolderMatch = cUrl.match(/folders\/([a-zA-Z0-9_\-]+)/);
+                var cFolderId = (cFolderMatch && cFolderMatch[1]) ? cFolderMatch[1] : (cUrl.indexOf("http") !== 0 && cUrl.length > 20 ? cUrl : "");
+                if (cFolderId && cFolderId !== folderId) {
+                  var customScan = scanDriveFolderDirectly(cFolderId);
+                  if (customScan.success && customScan.photos && customScan.photos.length > 0) {
+                    for (var cpIdx = 0; cpIdx < customScan.photos.length; cpIdx++) {
+                      var cpPhoto = customScan.photos[cpIdx];
+                      cpPhoto.category = cName;
+                      cpPhoto.customFolderId = cFolderId;
+                      driveScan.photos.push(cpPhoto);
+                    }
+                    if (driveScan.categories.indexOf(cName) === -1) {
+                      driveScan.categories.push(cName);
+                    }
+                  }
+                }
+              }
+            }
+          } catch (eCats) {
+            Logger.log("Info scan custom category folders: " + eCats.toString());
+          }
+        }
+
         if (driveScan.photos && driveScan.photos.length > 0) {
           // Simpan di ScriptCache selama 20 detik untuk mencegah over-quota
           try {
@@ -601,6 +639,41 @@ function getGalleryData() {
       categories: ["Semua Foto"],
       photos: []
     };
+  }
+}
+
+/**
+ * Mengambil foto dari folder Google Drive khusus kategori tertentu
+ */
+function getCategoryDrivePhotos(folderTarget, catName) {
+  try {
+    var cleanId = String(folderTarget || "").trim();
+    var match = cleanId.match(/folders\/([a-zA-Z0-9_\-]+)/);
+    if (match && match[1]) cleanId = match[1];
+
+    if (!cleanId) {
+      return { success: false, message: "ID Folder Google Drive tidak valid.", photos: [] };
+    }
+
+    var scanResult = scanDriveFolderDirectly(cleanId);
+    if (scanResult.success && scanResult.photos) {
+      var photos = scanResult.photos.map(function(p) {
+        p.category = catName;
+        p.customFolderId = cleanId;
+        return p;
+      });
+      return {
+        success: true,
+        category: catName,
+        folderId: cleanId,
+        photos: photos,
+        totalPhotos: photos.length
+      };
+    } else {
+      return { success: false, message: scanResult.message || "Gagal memindai folder", photos: [] };
+    }
+  } catch (err) {
+    return { success: false, error: err.toString(), photos: [] };
   }
 }
 

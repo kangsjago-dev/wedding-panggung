@@ -1493,12 +1493,17 @@
             👤 Masuk sebagai: <span id="adminGreetingName">Super Admin</span>
           </div>
         </div>
-        <button class="ctrl-icon-btn" onclick="closeAdminSettingsModal()" style="width: 32px; height: 32px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" class="btn btn-outline" onclick="closeAdminSettingsModal()" style="font-size: 0.78rem; padding: 5px 12px; border-color: #CBD5E1; color: #334155; white-space: nowrap;" title="Lihat dan uji coba galeri tanpa keluar dari mode admin">
+            👁️ Lihat / Test Galeri
+          </button>
+          <button class="ctrl-icon-btn" onclick="closeAdminSettingsModal()" style="width: 32px; height: 32px;" title="Tutup Pengaturan">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div class="admin-card-body">
@@ -1661,7 +1666,7 @@
         <div id="saveAlertBox" class="admin-alert-box"></div>
       </div>
 
-      <div class="admin-card-footer">
+      <div class="admin-card-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
         <button type="button" class="btn btn-outline" onclick="handleAdminLogout()" style="color: #EF4444; border-color: #FECACA;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -1671,6 +1676,10 @@
           <span>Keluar</span>
         </button>
 
+        <button type="button" class="btn btn-outline" onclick="closeAdminSettingsModal()" style="font-size: 0.84rem; padding: 8px 16px; border-color: var(--gold-dark); color: var(--gold-dark); font-weight: 600;" title="Tutup jendela pengaturan untuk melihat & menguji coba menu galeri">
+          <span>👁️ Lihat / Test Galeri</span>
+        </button>
+
         <button type="button" id="btnSaveSettings" class="btn btn-gold" onclick="handleSaveAllSettings()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="20 6 9 17 4 12"></polyline>
@@ -1678,6 +1687,22 @@
           <span>Simpan Perubahan</span>
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- Floating Bar Mode Admin Aktif (Memungkinkan Admin Uji Coba Menu & Galeri Tanpa Logout) -->
+  <div id="adminActiveFloatingBar" style="display: none; position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 8500; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); color: #fff; padding: 8px 18px; border-radius: 9999px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); border: 1px solid rgba(197, 168, 128, 0.5); align-items: center; gap: 14px; font-size: 0.84rem;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="width: 9px; height: 9px; border-radius: 50%; background: #10B981; box-shadow: 0 0 10px #10B981;"></span>
+      <span>Mode Admin: <strong id="floatingBarAdminName" style="color: var(--gold-primary);">Admin</strong></span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button type="button" class="btn btn-gold" style="padding: 5px 14px; font-size: 0.78rem;" onclick="openAdminSettingsModal()">
+        ⚙️ Buka Pengaturan
+      </button>
+      <button type="button" class="btn btn-outline" style="padding: 5px 12px; font-size: 0.78rem; color: #FCA5A5; border-color: #7F1D1D; background: rgba(239, 68, 68, 0.15);" onclick="handleAdminLogout()">
+        Keluar
+      </button>
     </div>
   </div>
 
@@ -2245,6 +2270,24 @@
       }
     }
 
+    function extractDriveFolderId(url) {
+      if (!url) return null;
+      const s = String(url).trim();
+      const m = s.match(/folders\/([a-zA-Z0-9_\-]+)/);
+      if (m && m[1]) return m[1];
+      if (!s.startsWith("http") && s.length >= 25 && /^[a-zA-Z0-9_\-]+$/.test(s)) return s;
+      return null;
+    }
+
+    function isExternalWebLink(url) {
+      if (!url) return false;
+      const s = String(url).trim().toLowerCase();
+      if (!s.startsWith("http")) return false;
+      if (s.includes("drive.google.com/drive/folders/")) return false;
+      if (s.includes("drive.google.com/open?id=")) return false;
+      return true;
+    }
+
     function renderCategoryTabs() {
       const container = document.getElementById("categoryTabs");
       if (!container) return;
@@ -2256,7 +2299,7 @@
       seen["Semua Foto"] = true;
       uniqueCategories.push("Semua Foto");
 
-      // 1. Tambahkan kategori kustom yang dikonfigurasi di admin (misal Teapai, Photobooth)
+      // 1. Tambahkan kategori kustom yang dikonfigurasi di admin (misal Photobooth, Resepsi)
       if (Array.isArray(state.customCategories)) {
         state.customCategories.forEach(function(item) {
           const catName = String((item && item.name) || item || "").trim();
@@ -2278,20 +2321,6 @@
       state.categories = uniqueCategories;
 
       state.categories.forEach(function(cat) {
-        let count = 0;
-        if (cat === "Semua Foto") {
-          count = state.allPhotos.length;
-        } else {
-          const directMatch = state.allPhotos.filter(function(p) {
-            if (p.category && p.category.toLowerCase() === cat.toLowerCase()) return true;
-            if (p.name && p.name.toLowerCase().includes(cat.toLowerCase())) return true;
-            if (p.rawName && p.rawName.toLowerCase().includes(cat.toLowerCase())) return true;
-            return false;
-          }).length;
-          // Sesuai instruksi: Tampilkan jumlah preview foto jika tidak ada subfolder khusus di Google Drive
-          count = directMatch > 0 ? directMatch : state.allPhotos.length;
-        }
-
         // Cek apakah ada custom link target untuk kategori ini
         let targetUrl = "";
         if (Array.isArray(state.customCategories)) {
@@ -2303,16 +2332,40 @@
           }
         }
 
+        const driveFolderId = extractDriveFolderId(targetUrl);
+        const isExt = isExternalWebLink(targetUrl);
+
+        let countBadgeText = "";
+        if (cat === "Semua Foto") {
+          const mainPhotos = state.allPhotos.filter(function(p) { return !p.customFolderId; });
+          countBadgeText = String(mainPhotos.length || state.allPhotos.length);
+        } else if (isExt) {
+          countBadgeText = "🌐 Live";
+        } else if (driveFolderId) {
+          const drivePhotos = state.allPhotos.filter(function(p) {
+            return (p.category && p.category.toLowerCase() === cat.toLowerCase()) || (p.customFolderId === driveFolderId);
+          });
+          countBadgeText = drivePhotos.length > 0 ? String(drivePhotos.length) : "📁 Drive";
+        } else {
+          const directMatch = state.allPhotos.filter(function(p) {
+            if (p.category && p.category.toLowerCase() === cat.toLowerCase()) return true;
+            if (p.name && p.name.toLowerCase().includes(cat.toLowerCase())) return true;
+            if (p.rawName && p.rawName.toLowerCase().includes(cat.toLowerCase())) return true;
+            return false;
+          }).length;
+          countBadgeText = String(directMatch);
+        }
+
         const pill = document.createElement("button");
         pill.className = "filter-pill " + (cat === state.activeCategory ? "active" : "");
         pill.setAttribute("data-category", cat);
         pill.onclick = function() { selectCategory(cat, targetUrl); };
         
-        const extIconHtml = targetUrl ? `<span style="font-size: 0.75rem; margin-left: 2px; color: var(--gold-dark); font-weight: bold;" title="Tautan Display Galeri: ${escapeHtml(targetUrl)}">↗</span>` : '';
+        const extIconHtml = targetUrl ? `<span style="font-size: 0.75rem; margin-left: 2px; color: var(--gold-dark); font-weight: bold;" title="Tautan: ${escapeHtml(targetUrl)}">↗</span>` : '';
 
         pill.innerHTML = `
           <span>${escapeHtml(cat)}</span>${extIconHtml}
-          <span class="pill-count">${count}</span>
+          <span class="pill-count">${countBadgeText}</span>
         `;
         container.appendChild(pill);
       });
@@ -2338,24 +2391,86 @@
         }
       }
 
-      applyCategoryFilter(category, targetUrl);
+      const driveFolderId = extractDriveFolderId(targetUrl);
+      if (category !== "Semua Foto" && driveFolderId) {
+        // Cek apakah foto untuk folder Google Drive kategori ini sudah dimuat
+        const loadedPhotos = state.allPhotos.filter(function(p) {
+          return (p.category && p.category.toLowerCase() === category.toLowerCase()) || (p.customFolderId === driveFolderId);
+        });
+
+        if (loadedPhotos.length > 0) {
+          state.filteredPhotos = loadedPhotos;
+          renderPhotoGrid(targetUrl, category);
+        } else {
+          // Tampilkan kerangka skeleton dan ambil berkas langsung dari folder Google Drive tersebut
+          const grid = document.getElementById("photosGrid");
+          grid.innerHTML = `
+            <div class="category-target-banner" style="grid-column: 1 / -1; margin-bottom: 14px;">
+              <div style="background: linear-gradient(135deg, rgba(197, 168, 128, 0.12), rgba(255, 255, 255, 0.85)); border: 1px solid rgba(197, 168, 128, 0.35); border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div style="width: 38px; height: 38px; border-radius: 10px; background: var(--gold-primary); color: #0F172A; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">📁</div>
+                  <div>
+                    <div style="font-weight: 700; font-size: 0.92rem; color: var(--text-main);">Folder Google Drive: ${escapeHtml(category)}</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted);">Sedang memindai foto langsung dari Google Drive...</div>
+                  </div>
+                </div>
+                <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-gold" style="padding: 8px 16px; font-size: 0.82rem; text-decoration: none;">
+                  <span>Buka di Google Drive ↗</span>
+                </a>
+              </div>
+            </div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          `;
+
+          callBackend("getCategoryPhotos", { folderId: driveFolderId, category: category }, function(res) {
+            if (res && res.photos && res.photos.length > 0) {
+              const existIds = new Set(state.allPhotos.map(p => p.id));
+              res.photos.forEach(function(p) {
+                p.category = category;
+                p.customFolderId = driveFolderId;
+                if (!existIds.has(p.id)) state.allPhotos.push(p);
+              });
+              state.filteredPhotos = res.photos;
+              renderCategoryTabs();
+              renderPhotoGrid(targetUrl, category);
+            } else {
+              state.filteredPhotos = [];
+              renderPhotoGrid(targetUrl, category);
+            }
+          }, function(err) {
+            state.filteredPhotos = [];
+            renderPhotoGrid(targetUrl, category);
+          });
+          return;
+        }
+      } else {
+        applyCategoryFilter(category, targetUrl);
+      }
     }
 
     function applyCategoryFilter(category, targetUrl) {
       if (category === "Semua Foto") {
-        state.filteredPhotos = state.allPhotos;
-      } else {
-        let matched = state.allPhotos.filter(function(p) {
-          if (p.category && p.category.toLowerCase() === category.toLowerCase()) return true;
-          if (p.name && p.name.toLowerCase().includes(category.toLowerCase())) return true;
-          if (p.rawName && p.rawName.toLowerCase().includes(category.toLowerCase())) return true;
-          return false;
+        state.filteredPhotos = state.allPhotos.filter(function(p) {
+          return !p.customFolderId;
         });
-        // Sesuai instruksi: Tampilkan preview image pada kategori lainnya (seperti Photobooth), seperti tampilan semua photo
-        if (matched.length === 0 && state.allPhotos.length > 0) {
-          matched = state.allPhotos;
+        if (state.filteredPhotos.length === 0) {
+          state.filteredPhotos = state.allPhotos;
         }
-        state.filteredPhotos = matched;
+      } else {
+        const isExt = isExternalWebLink(targetUrl);
+        if (isExt) {
+          state.filteredPhotos = [];
+        } else {
+          state.filteredPhotos = state.allPhotos.filter(function(p) {
+            if (p.category && p.category.toLowerCase() === category.toLowerCase()) return true;
+            if (p.name && p.name.toLowerCase().includes(category.toLowerCase())) return true;
+            if (p.rawName && p.rawName.toLowerCase().includes(category.toLowerCase())) return true;
+            return false;
+          });
+        }
       }
       renderPhotoGrid(targetUrl, category);
     }
@@ -2364,24 +2479,35 @@
       const grid = document.getElementById("photosGrid");
       grid.innerHTML = "";
 
-      // Jika kategori ini memiliki custom link target (Google Drive atau fotoshare.co, dll)
+      const driveFolderId = extractDriveFolderId(targetUrl);
+      const isExt = isExternalWebLink(targetUrl);
+
+      // 1. Tampilkan banner terstruktur jika ada targetUrl
       if (targetUrl) {
         const banner = document.createElement("div");
         banner.className = "category-target-banner";
         banner.style.cssText = "grid-column: 1 / -1; margin-bottom: 14px;";
+        const icon = driveFolderId ? "📁" : "🌐";
+        const labelTitle = driveFolderId 
+          ? `Folder Google Drive: ${escapeHtml(categoryName || state.activeCategory)}` 
+          : `Display Galeri: ${escapeHtml(categoryName || state.activeCategory)}`;
+        const btnText = driveFolderId
+          ? `Buka Folder Google Drive`
+          : `Buka Tautan Galeri`;
+
         banner.innerHTML = `
           <div style="background: linear-gradient(135deg, rgba(197, 168, 128, 0.12), rgba(255, 255, 255, 0.85)); border: 1px solid rgba(197, 168, 128, 0.35); border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
             <div style="display: flex; align-items: center; gap: 10px; min-width: 200px;">
               <div style="width: 38px; height: 38px; border-radius: 10px; background: var(--gold-primary); color: #0F172A; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
-                📸
+                ${icon}
               </div>
               <div>
-                <div style="font-weight: 700; font-size: 0.92rem; color: var(--text-main);">Display Galeri ${escapeHtml(categoryName || state.activeCategory)}</div>
+                <div style="font-weight: 700; font-size: 0.92rem; color: var(--text-main);">${labelTitle}</div>
                 <div style="font-size: 0.76rem; color: var(--text-muted); word-break: break-all;">Tautan: <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" style="color: var(--gold-dark); text-decoration: underline;">${escapeHtml(targetUrl)}</a></div>
               </div>
             </div>
             <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-gold" style="padding: 8px 16px; font-size: 0.82rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
-              <span>Buka Galeri ${escapeHtml(categoryName || state.activeCategory)}</span>
+              <span>${btnText}</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                 <polyline points="15 3 21 3 21 9"></polyline>
@@ -2393,22 +2519,41 @@
         grid.appendChild(banner);
       }
 
-      if (state.filteredPhotos.length === 0) {
-        if (targetUrl) {
-          const emptyCard = document.createElement("div");
-          emptyCard.style.cssText = "grid-column: 1 / -1; text-align: center; padding: 45px 20px;";
-          emptyCard.innerHTML = `
-            <div style="width: 54px; height: 54px; border-radius: 50%; background: rgba(197, 168, 128, 0.15); color: var(--gold-primary); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 14px;">
-              📸
+      // 2. Jika merupakan tautan web eksternal (seperti https://fotoshare.co), sematkan Live Embedded Viewer!
+      if (isExt) {
+        const frameContainer = document.createElement("div");
+        frameContainer.className = "external-gallery-frame-container";
+        frameContainer.style.cssText = "grid-column: 1 / -1; width: 100%; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.06); border: 1px solid rgba(197, 168, 128, 0.4); background: #fff; margin-top: 4px;";
+        frameContainer.innerHTML = `
+          <div style="background: #FAF8F5; padding: 10px 16px; border-bottom: 1px solid rgba(197, 168, 128, 0.25); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div style="font-size: 0.84rem; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+              <span>🌐 Pratinjau Langsung (Live Display): <strong>${escapeHtml(categoryName || state.activeCategory)}</strong></span>
             </div>
-            <h4 style="font-family: var(--font-serif); font-size: 1.25rem; color: var(--text-main); margin-bottom: 6px;">Galeri ${escapeHtml(categoryName || state.activeCategory)}</h4>
-            <p style="font-size: 0.88rem; color: var(--text-muted); max-width: 440px; margin: 0 auto 18px; line-height: 1.5;">Foto untuk momen ini dapat diakses dan dilihat langsung melalui display galeri resmi di bawah ini:</p>
-            <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-gold" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px; font-size: 0.88rem; text-decoration: none;">
-              <span>Kunjungi Galeri ${escapeHtml(categoryName || state.activeCategory)}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-outline" style="padding: 5px 12px; font-size: 0.76rem;">
+              <span>Buka di Layar Penuh ↗</span>
+            </a>
+          </div>
+          <iframe src="${escapeHtml(targetUrl)}" style="width: 100%; min-height: 640px; border: none; display: block;" loading="lazy" allowfullscreen></iframe>
+        `;
+        grid.appendChild(frameContainer);
+        return;
+      }
+
+      // 3. Jika foto kosong untuk kategori ini
+      if (state.filteredPhotos.length === 0) {
+        if (driveFolderId) {
+          const emptyDriveCard = document.createElement("div");
+          emptyDriveCard.style.cssText = "grid-column: 1 / -1; text-align: center; padding: 50px 20px;";
+          emptyDriveCard.innerHTML = `
+            <div style="width: 54px; height: 54px; border-radius: 50%; background: rgba(197, 168, 128, 0.15); color: var(--gold-primary); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 14px;">📁</div>
+            <h4 style="font-family: var(--font-serif); font-size: 1.25rem; color: var(--text-main); margin-bottom: 6px;">Folder ${escapeHtml(categoryName || state.activeCategory)} Masih Kosong</h4>
+            <p style="font-size: 0.88rem; color: var(--text-muted); max-width: 440px; margin: 0 auto 18px; line-height: 1.5;">Belum ada foto yang diunggah ke folder Google Drive khusus momen ini.</p>
+            <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-gold" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 20px; font-size: 0.84rem; text-decoration: none;">
+              <span>Buka Folder Google Drive</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
             </a>
           `;
-          grid.appendChild(emptyCard);
+          grid.appendChild(emptyDriveCard);
         } else {
           grid.innerHTML += `
             <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
@@ -2622,6 +2767,9 @@
 
       renderAdminCategoriesManager();
 
+      const floatBar = document.getElementById("adminActiveFloatingBar");
+      if (floatBar) floatBar.style.display = "none";
+
       document.getElementById("adminSettingsModal").classList.add("active");
     }
 
@@ -2656,11 +2804,11 @@
       row.innerHTML = `
         <div>
           <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 3px;">Nama Kategori</label>
-          <input type="text" class="admin-input cat-name-input" value="${escapeHtml(name || '')}" placeholder="Misal: Photobooth / Resepsi" style="padding: 7px 10px; font-size: 0.82rem;">
+          <input type="text" class="admin-input cat-name-input" value="${escapeHtml(name || '')}" oninput="onCategoryRowInput()" placeholder="Misal: Photobooth / Resepsi" style="padding: 7px 10px; font-size: 0.82rem;">
         </div>
         <div>
           <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 3px;">Tautan Display Galeri (Opsional)</label>
-          <input type="text" class="admin-input cat-url-input" value="${escapeHtml(url || '')}" placeholder="Google Drive / https://fotoshare.co/..." style="padding: 7px 10px; font-size: 0.82rem;">
+          <input type="text" class="admin-input cat-url-input" value="${escapeHtml(url || '')}" oninput="onCategoryRowInput()" placeholder="Google Drive / https://fotoshare.co/..." style="padding: 7px 10px; font-size: 0.82rem;">
         </div>
         <div>
           <button type="button" class="ctrl-icon-btn" onclick="removeCategoryConfigRow(this)" title="Hapus Kategori" style="width: 32px; height: 32px; color: #EF4444; border-color: #FECACA; background: #FFF;">
@@ -2676,7 +2824,19 @@
 
     function removeCategoryConfigRow(btn) {
       const row = btn.closest(".category-config-row");
-      if (row) row.remove();
+      if (row) {
+        row.remove();
+        onCategoryRowInput();
+      }
+    }
+
+    function onCategoryRowInput() {
+      const list = getCategoriesFromAdminInputs();
+      state.customCategories = list;
+      state.activeConfig.CUSTOM_CATEGORIES = list;
+      try {
+        localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(list));
+      } catch (e) {}
     }
 
     function getCategoriesFromAdminInputs() {
@@ -2865,6 +3025,12 @@
 
     function closeAdminSettingsModal() {
       document.getElementById("adminSettingsModal").classList.remove("active");
+      const floatBar = document.getElementById("adminActiveFloatingBar");
+      if (floatBar && state.isAdminLoggedIn) {
+        floatBar.style.display = "flex";
+        const nameEl = document.getElementById("floatingBarAdminName");
+        if (nameEl) nameEl.innerText = (state.currentAdminUser && state.currentAdminUser.name) ? state.currentAdminUser.name : "Admin";
+      }
     }
 
     function handleSaveAllSettings() {
@@ -2960,6 +3126,8 @@
     function handleAdminLogout() {
       state.isAdminLoggedIn = false;
       state.adminPin = "";
+      const floatBar = document.getElementById("adminActiveFloatingBar");
+      if (floatBar) floatBar.style.display = "none";
       document.getElementById("adminBtn").classList.remove("admin-active");
       closeAdminSettingsModal();
       showToast("Anda telah keluar dari mode admin.");
