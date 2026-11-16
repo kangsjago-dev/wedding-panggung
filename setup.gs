@@ -176,7 +176,7 @@ function setupTargetSpreadsheetDatabase() {
 
   // Parameter Konfigurasi Master
   var defaultParams = [
-    ["EVENT_NAME", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.EVENT_NAME) ? WEDDING_CONFIG.EVENT_NAME : "Hans & Yurike", "Nama Event / Pasangan Pengantin"],
+    ["EVENT_NAME", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.EVENT_NAME) ? WEDDING_CONFIG.EVENT_NAME : "Wilson & Felicia", "Nama Event / Pasangan Pengantin"],
     ["EVENT_DATE", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.EVENT_DATE) ? WEDDING_CONFIG.EVENT_DATE : "14 November 2026", "Tanggal Pelaksanaan Acara"],
     ["EVENT_VENUE", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.EVENT_VENUE) ? WEDDING_CONFIG.EVENT_VENUE : "Upperhills Convention Centre, Makassar", "Venue / Lokasi Gedung Acara"],
     ["SUBTITLE", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.SUBTITLE) ? WEDDING_CONFIG.SUBTITLE : "The Wedding Gallery & Precious Memories", "Subjudul Galeri Foto"],

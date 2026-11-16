@@ -1082,8 +1082,20 @@
       <div class="line right"></div>
     </div>
 
-    <!-- Nama Event Acara Pernikahan -->
-    <h1 id="coupleName" class="hero-title">Hans & Yurike</h1>
+    <!-- Nama Event Acara Pernikahan (Langsung Wilson & Felicia dengan hidrasi instan anti-blink) -->
+    <h1 id="coupleName" class="hero-title">Wilson & Felicia</h1>
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem("wedding_panggung_config");
+          if (saved) {
+            var c = JSON.parse(saved);
+            var n = c.EVENT_NAME || c.COUPLE_NAME;
+            if (n) document.getElementById("coupleName").textContent = n;
+          }
+        } catch(e) {}
+      })();
+    </script>
     <div id="subtitle" class="hero-subtitle">The Wedding Gallery & Precious Memories</div>
 
     <!-- Badge Tanggal dan Venue (Lokasi Acara) -->
@@ -1108,24 +1120,6 @@
     </div>
 
     <p id="welcomeMessage" class="hero-desc">Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.</p>
-
-    <div class="hero-actions">
-      <a href="#gallerySection" class="btn btn-gold">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-          <circle cx="8.5" cy="8.5" r="1.5"></circle>
-          <polyline points="21 15 16 10 5 21"></polyline>
-        </svg>
-        <span>Jelajahi Galeri</span>
-      </a>
-
-      <button id="btnStartSlideshow" class="btn btn-outline" onclick="openSlideshow(0)">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="5 3 19 12 5 21 5 3"></polygon>
-        </svg>
-        <span>Mode Panggung (Slideshow)</span>
-      </button>
-    </div>
   </header>
 
   <!-- Sticky Filter Bar with Admin Trigger & Live Sync Indicator -->
@@ -1226,7 +1220,7 @@
     <div class="slideshow-progress-bar" id="slideshowProgress"></div>
 
     <div class="slideshow-watermark">
-      <h2 id="slideshowCouple">Hans & Yurike</h2>
+      <h2 id="slideshowCouple">Wilson & Felicia</h2>
       <p id="slideshowCategory">14 November 2026 • Upperhills Convention Centre, Makassar</p>
     </div>
 
@@ -1355,7 +1349,7 @@
         <div class="admin-tab-pane active" id="tabPane-event">
           <div class="admin-field-group">
             <label class="admin-label" for="cfgCoupleName">Nama Event / Pasangan Pengantin</label>
-            <input type="text" id="cfgCoupleName" class="admin-input" placeholder="Contoh: Hans & Yurike">
+            <input type="text" id="cfgCoupleName" class="admin-input" placeholder="Contoh: Wilson & Felicia">
           </div>
 
           <div class="admin-field-group">
@@ -1485,7 +1479,7 @@
 
   <!-- Footer -->
   <footer class="footer">
-    <div class="footer-names">Hans & Yurike</div>
+    <div class="footer-names">Wilson & Felicia</div>
     <p>Diabadikan dengan cinta &bull; Terima kasih atas doa restunya.</p>
   </footer>
 
@@ -1495,7 +1489,7 @@
   <script>
     const GLOBAL_CONFIG = {
       GAS_API_URL: "https://script.google.com/macros/s/AKfycbzGgpibRzZboG9vNrTyxzko5mGkW6LfabNYfBxm2v6c-gO9O_iKLqMocxCZ5GVdiM1l/exec",
-      EVENT_NAME: "Hans & Yurike",
+      EVENT_NAME: "Wilson & Felicia",
       EVENT_DATE: "14 November 2026",
       EVENT_VENUE: "Upperhills Convention Centre, Makassar",
       SUBTITLE: "The Wedding Gallery & Precious Memories",
@@ -1906,7 +1900,7 @@
 
     function populateConfigToUI(cfg) {
       if (!cfg) return;
-      const eventName = cfg.EVENT_NAME || cfg.COUPLE_NAME || "Hans & Yurike";
+      const eventName = cfg.EVENT_NAME || cfg.COUPLE_NAME || "Wilson & Felicia";
       const rawDate = cfg.EVENT_DATE || "14 November 2026";
       const displayDate = formatIndonesianDate(rawDate);
       const eventVenue = cfg.EVENT_VENUE || "Upperhills Convention Centre, Makassar";
@@ -2399,7 +2393,7 @@
 
       // Format tanggal ke format bahasa Indonesia untuk display dan penyimpanan
       const formattedDate = eventDateInput ? formatIndonesianDate(eventDateInput) : (state.activeConfig.EVENT_DATE || "14 November 2026");
-      const finalEventName = eventNameInput || state.activeConfig.EVENT_NAME || "Hans & Yurike";
+      const finalEventName = eventNameInput || state.activeConfig.EVENT_NAME || "Wilson & Felicia";
 
       const payload = {
         EVENT_NAME: finalEventName,
@@ -3038,13 +3032,14 @@
     }
 
     function loadFallbackData(reason) {
-      document.getElementById("demoNotice").style.display = "flex";
+      const demoNotice = document.getElementById("demoNotice");
+      if (demoNotice) demoNotice.style.display = "none";
       const liveEventName = state.activeConfig.EVENT_NAME || GLOBAL_CONFIG.EVENT_NAME;
       const liveEventDate = state.activeConfig.EVENT_DATE || GLOBAL_CONFIG.EVENT_DATE;
       const liveEventVenue = state.activeConfig.EVENT_VENUE || GLOBAL_CONFIG.EVENT_VENUE;
 
       handleGalleryResponse({
-        isDemo: true,
+        isDemo: false,
         config: {
           EVENT_NAME: liveEventName,
           COUPLE_NAME: liveEventName,
@@ -3058,81 +3053,8 @@
           SPREADSHEET_ID: state.activeConfig.SPREADSHEET_ID || GLOBAL_CONFIG.SPREADSHEET_ID || "",
           SPREADSHEET_URL: state.activeConfig.SPREADSHEET_URL || GLOBAL_CONFIG.SPREADSHEET_URL || ""
         },
-        categories: ["Semua Foto", "Prewedding", "Akad Nikah", "Resepsi", "Photobooth"],
-        photos: [
-          {
-            id: "d1",
-            name: "Tatapan Penuh Bahagia",
-            category: "Prewedding",
-            thumbnailUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
-            highResUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2000&q=90",
-            downloadUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2400&q=100",
-            timestamp: Date.now() - 60000 // Foto baru (1 menit lalu) -> menampilkan badge 'Baru'
-          },
-          {
-            id: "d2",
-            name: "Janji Suci Akad Nikah",
-            category: "Akad Nikah",
-            thumbnailUrl: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80",
-            highResUrl: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=2000&q=90",
-            downloadUrl: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=2400&q=100",
-            timestamp: Date.now() - 180000 // Foto baru (3 menit lalu) -> menampilkan badge 'Baru'
-          },
-          {
-            id: "d3",
-            name: "Cincin Pengikat Dua Jiwa",
-            category: "Akad Nikah",
-            thumbnailUrl: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=800&q=80",
-            highResUrl: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=2000&q=90",
-            downloadUrl: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=2400&q=100",
-            timestamp: Date.now() - 3600000
-          },
-          {
-            id: "d4",
-            name: "Bunga Tangan Mempelai",
-            category: "Resepsi",
-            thumbnailUrl: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=800&q=80",
-            highResUrl: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=2000&q=90",
-            downloadUrl: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=2400&q=100",
-            timestamp: Date.now() - 7200000
-          },
-          {
-            id: "d5",
-            name: "Senyum Bahagia Pelaminan",
-            category: "Resepsi",
-            thumbnailUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
-            highResUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=2000&q=90",
-            downloadUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=2400&q=100",
-            timestamp: Date.now() - 10800000
-          },
-          {
-            id: "d6",
-            name: "Keseruan Bersama Sahabat",
-            category: "Photobooth",
-            thumbnailUrl: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=800&q=80",
-            highResUrl: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=2000&q=90",
-            downloadUrl: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=2400&q=100",
-            timestamp: Date.now() - 14400000
-          },
-          {
-            id: "d7",
-            name: "Dansa Pertama Suami Istri",
-            category: "Resepsi",
-            thumbnailUrl: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=800&q=80",
-            highResUrl: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=2000&q=90",
-            downloadUrl: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=2400&q=100",
-            timestamp: Date.now() - 18000000
-          },
-          {
-            id: "d8",
-            name: "Kisah Kasih Abadi",
-            category: "Prewedding",
-            thumbnailUrl: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=800&q=80",
-            highResUrl: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=2000&q=90",
-            downloadUrl: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=2400&q=100",
-            timestamp: Date.now() - 21600000
-          }
-        ]
+        categories: ["Semua Foto"],
+        photos: []
       }, false);
     }
   </script>

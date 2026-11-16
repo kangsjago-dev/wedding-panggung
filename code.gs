@@ -11,7 +11,7 @@
 // ================================================================================
 const WEDDING_CONFIG = {
   // Nama Event Acara
-  EVENT_NAME: "Hans & Yurike",
+  EVENT_NAME: "Wilson & Felicia",
 
   // Tanggal Acara
   EVENT_DATE: "14 November 2026",
@@ -531,23 +531,28 @@ function getGalleryData() {
 
       // Pindai folder Google Drive secara langsung
       var driveScan = scanDriveFolderDirectly(folderId);
-      if (driveScan.success && driveScan.photos.length > 0) {
-        // Simpan di ScriptCache selama 20 detik untuk mencegah over-quota
-        try {
-          cache.put(cacheKey, JSON.stringify({
-            categories: driveScan.categories,
-            photos: driveScan.photos
-          }), 20);
-        } catch (ePut) {}
+      if (driveScan.success) {
+        if (driveScan.photos && driveScan.photos.length > 0) {
+          // Simpan di ScriptCache selama 20 detik untuk mencegah over-quota
+          try {
+            cache.put(cacheKey, JSON.stringify({
+              categories: driveScan.categories,
+              photos: driveScan.photos
+            }), 20);
+          } catch (ePut) {}
+        }
 
+        // Jika folder ada tapi kosong, kembalikan galeri kosong tanpa foto sampel
         return {
           success: true,
           isDemo: false,
-          message: "Berhasil memindai " + driveScan.photos.length + " foto langsung dari Google Drive",
+          message: (driveScan.photos && driveScan.photos.length > 0) 
+            ? ("Berhasil memindai " + driveScan.photos.length + " foto langsung dari Google Drive")
+            : "Folder Google Drive kosong.",
           config: safeConfig,
-          categories: driveScan.categories,
-          photos: driveScan.photos,
-          totalPhotos: driveScan.photos.length
+          categories: (driveScan.categories && driveScan.categories.length > 0) ? driveScan.categories : ["Semua Foto"],
+          photos: driveScan.photos || [],
+          totalPhotos: driveScan.photos ? driveScan.photos.length : 0
         };
       }
     }
@@ -557,27 +562,26 @@ function getGalleryData() {
     if (!ss) {
       return {
         success: true,
-        isDemo: true,
-        message: "Folder Google Drive belum diatur. Menampilkan galeri contoh.",
+        isDemo: false,
+        message: "Folder Google Drive belum diatur atau kosong.",
         config: safeConfig,
-        categories: ["Semua Foto", "Prewedding", "Akad Nikah", "Resepsi", "Photobooth"],
-        photos: getDemoPhotos(),
-        totalPhotos: getDemoPhotos().length
+        categories: ["Semua Foto"],
+        photos: [],
+        totalPhotos: 0
       };
     }
 
     // Fallback: Jika ada data di sheet Daftar_Foto lama
     var sheetPhotos = ss.getSheetByName("Daftar_Foto");
     if (!sheetPhotos || sheetPhotos.getLastRow() < 2) {
-      var initialDemo = getDemoPhotos();
       return {
         success: true,
-        isDemo: true,
-        message: "Folder Google Drive belum diatur. Menampilkan foto contoh.",
+        isDemo: false,
+        message: "Galeri foto kosong.",
         config: safeConfig,
-        categories: ["Semua Foto", "Prewedding", "Akad Nikah", "Resepsi", "Photobooth"],
-        photos: initialDemo,
-        totalPhotos: initialDemo.length
+        categories: ["Semua Foto"],
+        photos: [],
+        totalPhotos: 0
       };
     }
 
@@ -664,7 +668,7 @@ function getGalleryData() {
       message: error.toString(),
       config: safeConfig,
       categories: ["Semua Foto"],
-      photos: getDemoPhotos()
+      photos: []
     };
   }
 }

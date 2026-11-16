@@ -1,10 +1,27 @@
-# RENCANA REVISI LENGKAP: MINIMALIS ADMIN, FOUC FIX, SMART-FIT FRAME DOWNLOAD & VERCEL READY
+# RENCANA REVISI LENGKAP: ELIMINASI BLINK NAMA, ZERO-SAMPLE EMPTY DRIVE & CLEAN HERO UI
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.8.0)
+STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.9.0)
 TANGGAL PENGAJUAN: 16 November 2026
-VERIFIKASI SISTEM: BERHASIL (94 Foto Live Google Drive, Full HD Frame Composite, Clean Mobile Grid)
+VERIFIKASI SISTEM: BERHASIL (Zero Blink Wilson & Felicia, No Sample on Empty Folder, Clean Hero Header)
+
+### Rangkuman Pembaruan v2.9.0:
+1. **Eliminasi Total Blink Nama ("Wilson & Felicia"):**
+   - **Akar Masalah:** HTML statis `index.html`, `config.json`, dan `code.gs` masih memuat teks bawaan `"Hans & Yurike"`, sehingga saat refresh browser menampilkan nama lama sekejap sebelum JavaScript selesai memuat data baru.
+   - **Solusi:** 
+     - Memperbarui teks markup HTML di `#coupleName`, `#slideshowCouple`, dan `.footer-names` secara langsung menjadi `"Wilson & Felicia"`.
+     - Memperbarui `EVENT_NAME` pada `config.json`, `GLOBAL_CONFIG`, dan `code.gs` menjadi `"Wilson & Felicia"`.
+     - Menambahkan script hidrasi sinkron di awal dokumen agar nama dari `localStorage` langsung terpasang sebelum browser selesai merender (0 milidetik blink).
+2. **Pengosongan Galeri Saat Folder Google Drive Kosong (Eliminasi Foto Sampel):**
+   - **Akar Masalah:** Logika backend `code.gs` dan fallback frontend sebelumnya memuat 8 foto sampel (Unsplash) jika mendeteksi 0 foto di Drive.
+   - **Solusi:**
+     - Pada `code.gs`, jika pemindaian folder Google Drive selesai namun berisi 0 file (folder kosong), backend wajib mengembalikan array kosong `photos: []`, `isDemo: false`, dan `categories: ["Semua Foto"]`. Dilarang memicu `getDemoPhotos()`.
+     - Pada `index.html`, jika folder kosong atau terjadi kegagalan jaringan, galeri tetap kosong (`state.allPhotos = []`) dengan pesan ramah *"Belum ada foto dalam galeri ini"*, dan sembunyikan banner demo notice (`#demoNotice`).
+3. **Penghapusan Tombol "Jelajahi Galeri" & "Mode Panggung (Slideshow)":**
+   - Menghapus elemen tombol `<div class="hero-actions">...</div>` pada bagian Hero Header `index.html` sehingga tampilan atas menjadi sangat bersih, ringkas, dan fokus pada informasi acara pernikahan.
+4. **Prinsip Non-Destruktif:**
+   - Menjaga seluruh fungsi lainnya (auto-sync 20 detik, date picker, download foto berbingkai full-HD, multi-user admin, login PIN rahasia) tetap utuh 100%.
 
 ### Rangkuman Pembaruan v2.8.0:
 1. **Perbaikan Hasil Unduh Foto Berbingkai (Full Resolution Canvas 1920x1080):**
