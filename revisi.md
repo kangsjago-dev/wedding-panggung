@@ -261,3 +261,34 @@ VERIFIKASI SISTEM: BERHASIL (Resolusi Asli 1:1 Terjaga, Background Multi-Downloa
 
 ### 3. Jaminan Non-Destruktif
 - Seluruh fitur lain (resolusi asli 1:1, antrean multi-download latar belakang, mode mobile di `top: 72px`, sinkronisasi Google Drive & admin) tetap berjalan utuh 100%.
+
+---
+
+## Catatan Rilis v2.9.6: Custom Link Target Kategori Galeri, Hapus Slideshow dari Menu Download, & Kustomisasi Pesan Footer
+
+### 1. Masalah & Kebutuhan Pengguna
+1. **Set Kategori / Folder Galeri dengan Custom Link Target:**
+   - Kebutuhan untuk mengatur kategori/folder galeri tertentu (misalnya *Teapai, Photobooth, Akad Nikah, Resepsi*) dan mengaitkan tautan target display galeri (bisa berupa Google Drive maupun link pihak ketiga seperti *https://fotoshare.co*).
+2. **Hapus Menu "Putar Slideshow" pada Menu Download Foto:**
+   - Menghapus tombol *"Putar Slideshow"* yang sebelumnya berada di bilah bawah lightbox samping tombol download foto agar tampilan menu download fokus dan rapi.
+3. **Kustomisasi Pesan Penutup Footer:**
+   - Membuat teks *"Diabadikan dengan cinta • Terima kasih atas doa restunya."* dapat dikustomisasi secara bebas melalui panel pengaturan admin.
+
+### 2. Implementasi Perbaikan
+1. **Sistem Kategori Kustom & Link Target Display Galeri:**
+   - Di panel Admin (`Tab 2: Foto & Bingkai`), ditambahkan modul pengelola kategori dinamis:
+     - Input **Nama Kategori** (misal *Teapai*, *Photobooth*).
+     - Input **Tautan Display Galeri** (misal URL Google Drive atau tautan *https://fotoshare.co*).
+     - Tombol tambah baris baru `+ Tambah Kategori / Folder Galeri` dan tombol hapus baris.
+   - Pada halaman utama galeri:
+     - Kategori dengan custom link target otomatis menampilkan indikator `↗`.
+     - Ketika diklik, jika kategori memiliki link target display, akan ditampilkan banner khusus di bagian atas grid foto dengan tombol langsung *"Buka Galeri [Nama Kategori] ↗"*.
+     - Jika kategori belum memiliki foto lokal (misal seluruh foto photobooth berada di *fotoshare.co*), sistem menampilkan kartu display elegan berlatar emas dengan tombol untuk langsung membuka galeri tujuan di tab baru.
+2. **Pembersihan Menu Download Foto:**
+   - Menghapus tombol *"Putar Slideshow"* dari `.lightbox-bottombar` di modal unduh foto, menyisakan hanya tombol download resolusi asli yang bersih dan elegan.
+3. **Kustomisasi Pesan Footer:**
+   - Ditambahkan input *"Pesan Penutup Footer"* di panel Admin (`Tab 1: Acara`).
+   - Teks footer di bagian bawah halaman web langsung sinkron dengan `config.FOOTER_MESSAGE` baik di browser maupun database Google Spreadsheet.
+
+### 3. Jaminan Non-Destruktif
+- Seluruh fitur lain (resolusi asli 1:1, antrean download non-blocking, posisi progress bar desktop di `top: 88px` dan mobile di `top: 72px`, auto-close 2.5s, multi-user admin login) tetap berjalan utuh 100%.

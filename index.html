@@ -1389,13 +1389,6 @@
         </svg>
         <span id="downloadBtnLabel">Simpan Foto Asli</span>
       </button>
-
-      <button class="btn btn-outline" onclick="startSlideshowFromCurrent()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="5 3 19 12 5 21 5 3"></polygon>
-        </svg>
-        <span>Putar Slideshow</span>
-      </button>
     </div>
   </div>
 
@@ -1551,6 +1544,11 @@
             <label class="admin-label" for="cfgWelcomeMessage">Pesan Sambutan Tamu</label>
             <textarea id="cfgWelcomeMessage" class="admin-input" rows="3" style="resize: vertical; font-family: inherit; font-size: 0.88rem; box-sizing: border-box; width: 100%;" placeholder="Pesan sambutan hangat untuk tamu undangan..."></textarea>
           </div>
+
+          <div class="admin-field-group">
+            <label class="admin-label" for="cfgFooterMessage">Pesan Penutup Footer (Di Bagian Bawah)</label>
+            <input type="text" id="cfgFooterMessage" class="admin-input" placeholder="Contoh: Diabadikan dengan cinta • Terima kasih atas doa restunya.">
+          </div>
         </div>
 
         <!-- Tab 2: Foto & Bingkai -->
@@ -1578,6 +1576,23 @@
             </div>
             <input type="text" id="cfgFrameImageUrl" class="admin-input" placeholder="Tautan / ID File Bingkai PNG Google Drive">
             <div class="admin-help-text">Unggah file bingkai berformat PNG transparan ke Google Drive dengan izin <em>"Anyone with the link can view"</em>.</div>
+          </div>
+
+          <!-- Pengaturan Kategori & Tautan Display Galeri Kustom -->
+          <div class="admin-field-group" style="margin-top: 16px; border-top: 1px solid #E2E8F0; padding-top: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="admin-label" style="margin-bottom: 0;">📁 Kategori Momen & Tautan Display Galeri</label>
+              <span style="font-size: 0.72rem; color: var(--gold-dark); font-weight: 600;">Google Drive / Link Lain</span>
+            </div>
+            <div class="admin-help-text" style="margin-bottom: 10px;">
+              Atur kategori / folder galeri (misal: <em>Teapai, Photobooth, Akad Nikah, Resepsi</em>) dan custom link target display (misal Google Drive atau <em>https://fotoshare.co</em>).
+            </div>
+
+            <div id="adminCategoriesContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;"></div>
+
+            <button type="button" class="btn btn-outline" style="width: 100%; justify-content: center; font-size: 0.82rem; padding: 8px;" onclick="addCategoryConfigRow('', '')">
+              <span>+ Tambah Kategori / Folder Galeri</span>
+            </button>
           </div>
         </div>
 
@@ -1660,7 +1675,7 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="footer-names">Wilson & Felicia</div>
-    <p>Diabadikan dengan cinta &bull; Terima kasih atas doa restunya.</p>
+    <p id="footerBlessing">Diabadikan dengan cinta &bull; Terima kasih atas doa restunya.</p>
   </footer>
 
   <!-- ==========================================================================
@@ -1674,6 +1689,11 @@
       EVENT_VENUE: "Upperhills Convention Centre, Makassar",
       SUBTITLE: "The Wedding Gallery & Precious Memories",
       WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
+      FOOTER_MESSAGE: "Diabadikan dengan cinta • Terima kasih atas doa restunya.",
+      CUSTOM_CATEGORIES: [
+        { name: "Teapai", url: "" },
+        { name: "Photobooth", url: "https://fotoshare.co" }
+      ],
       DRIVE_FOLDER_ID: "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxI5",
       FRAME_IMAGE_URL: "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing",
       SPREADSHEET_ID: "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20",
@@ -1686,6 +1706,10 @@
       allPhotos: [],
       filteredPhotos: [],
       categories: ["Semua Foto"],
+      customCategories: [
+        { name: "Teapai", url: "" },
+        { name: "Photobooth", url: "https://fotoshare.co" }
+      ],
       activeCategory: "Semua Foto",
       currentLightboxIndex: 0,
       currentSlideIndex: 0,
@@ -2117,6 +2141,20 @@
       if (cfg.WELCOME_MESSAGE) {
         document.getElementById("welcomeMessage").innerText = cfg.WELCOME_MESSAGE;
       }
+      if (cfg.FOOTER_MESSAGE) {
+        const footerBlessingEl = document.getElementById("footerBlessing");
+        if (footerBlessingEl) footerBlessingEl.innerText = cfg.FOOTER_MESSAGE;
+      }
+      if (cfg.CUSTOM_CATEGORIES) {
+        try {
+          state.customCategories = typeof cfg.CUSTOM_CATEGORIES === "string" 
+            ? JSON.parse(cfg.CUSTOM_CATEGORIES) 
+            : cfg.CUSTOM_CATEGORIES;
+        } catch (e) {
+          state.customCategories = [];
+        }
+        renderCategoryTabs();
+      }
       if (cfg.SLIDESHOW_INTERVAL_SEC) {
         state.intervalMs = cfg.SLIDESHOW_INTERVAL_SEC * 1000;
       }
@@ -2140,6 +2178,8 @@
         if (cfgSubEl) cfgSubEl.value = cfg.SUBTITLE || "";
         const cfgWelcomeEl = document.getElementById("cfgWelcomeMessage");
         if (cfgWelcomeEl) cfgWelcomeEl.value = cfg.WELCOME_MESSAGE || "";
+        const cfgFooterEl = document.getElementById("cfgFooterMessage");
+        if (cfgFooterEl) cfgFooterEl.value = cfg.FOOTER_MESSAGE || "Diabadikan dengan cinta • Terima kasih atas doa restunya.";
       }
 
       const frameBadge = document.getElementById("frameStatusBadge");
@@ -2167,21 +2207,34 @@
 
     function renderCategoryTabs() {
       const container = document.getElementById("categoryTabs");
+      if (!container) return;
       container.innerHTML = "";
 
       // Deduplikasi kategori secara ketat (mencegah duplikasi pil Semua Foto pada mobile)
       const uniqueCategories = [];
       const seen = {};
-      (state.categories || ["Semua Foto"]).forEach(function(c) {
+      seen["Semua Foto"] = true;
+      uniqueCategories.push("Semua Foto");
+
+      // 1. Tambahkan kategori kustom yang dikonfigurasi di admin (misal Teapai, Photobooth)
+      if (Array.isArray(state.customCategories)) {
+        state.customCategories.forEach(function(item) {
+          const catName = String((item && item.name) || item || "").trim();
+          if (catName && catName !== "Semua Foto" && !seen[catName]) {
+            seen[catName] = true;
+            uniqueCategories.push(catName);
+          }
+        });
+      }
+
+      // 2. Tambahkan kategori yang ditemukan dari subfolder Google Drive
+      (state.categories || []).forEach(function(c) {
         const catName = String(c || "").trim();
         if (catName && !seen[catName]) {
           seen[catName] = true;
           uniqueCategories.push(catName);
         }
       });
-      if (!seen["Semua Foto"]) {
-        uniqueCategories.unshift("Semua Foto");
-      }
       state.categories = uniqueCategories;
 
       state.categories.forEach(function(cat) {
@@ -2189,20 +2242,33 @@
           ? state.allPhotos.length 
           : state.allPhotos.filter(function(p) { return p.category === cat; }).length;
 
+        // Cek apakah ada custom link target untuk kategori ini
+        let targetUrl = "";
+        if (Array.isArray(state.customCategories)) {
+          const matchCat = state.customCategories.find(function(it) {
+            return String((it && it.name) || "").trim().toLowerCase() === cat.toLowerCase();
+          });
+          if (matchCat && matchCat.url) {
+            targetUrl = String(matchCat.url).trim();
+          }
+        }
+
         const pill = document.createElement("button");
         pill.className = "filter-pill " + (cat === state.activeCategory ? "active" : "");
         pill.setAttribute("data-category", cat);
-        pill.onclick = function() { selectCategory(cat); };
+        pill.onclick = function() { selectCategory(cat, targetUrl); };
         
+        const extIconHtml = targetUrl ? `<span style="font-size: 0.75rem; margin-left: 2px; color: var(--gold-dark); font-weight: bold;" title="Tautan Display Galeri: ${escapeHtml(targetUrl)}">↗</span>` : '';
+
         pill.innerHTML = `
-          <span>${escapeHtml(cat)}</span>
+          <span>${escapeHtml(cat)}</span>${extIconHtml}
           <span class="pill-count">${count}</span>
         `;
         container.appendChild(pill);
       });
     }
 
-    function selectCategory(category) {
+    function selectCategory(category, targetUrl) {
       state.activeCategory = category;
       
       document.querySelectorAll(".filter-pill").forEach(function(el) {
@@ -2213,10 +2279,19 @@
         }
       });
 
-      applyCategoryFilter(category);
+      if (!targetUrl && Array.isArray(state.customCategories)) {
+        const matchCat = state.customCategories.find(function(it) {
+          return String((it && it.name) || "").trim().toLowerCase() === category.toLowerCase();
+        });
+        if (matchCat && matchCat.url) {
+          targetUrl = String(matchCat.url).trim();
+        }
+      }
+
+      applyCategoryFilter(category, targetUrl);
     }
 
-    function applyCategoryFilter(category) {
+    function applyCategoryFilter(category, targetUrl) {
       if (category === "Semua Foto") {
         state.filteredPhotos = state.allPhotos;
       } else {
@@ -2224,19 +2299,65 @@
           return p.category === category;
         });
       }
-      renderPhotoGrid();
+      renderPhotoGrid(targetUrl, category);
     }
 
-    function renderPhotoGrid() {
+    function renderPhotoGrid(targetUrl, categoryName) {
       const grid = document.getElementById("photosGrid");
       grid.innerHTML = "";
 
-      if (state.filteredPhotos.length === 0) {
-        grid.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
-            <p style="font-size: 1.05rem; font-weight: 500;">Momen berharga akan segera hadir di sini.</p>
+      // Jika kategori ini memiliki custom link target (Google Drive atau fotoshare.co, dll)
+      if (targetUrl) {
+        const banner = document.createElement("div");
+        banner.className = "category-target-banner";
+        banner.style.cssText = "grid-column: 1 / -1; margin-bottom: 14px;";
+        banner.innerHTML = `
+          <div style="background: linear-gradient(135deg, rgba(197, 168, 128, 0.12), rgba(255, 255, 255, 0.85)); border: 1px solid rgba(197, 168, 128, 0.35); border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
+            <div style="display: flex; align-items: center; gap: 10px; min-width: 200px;">
+              <div style="width: 38px; height: 38px; border-radius: 10px; background: var(--gold-primary); color: #0F172A; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+                📸
+              </div>
+              <div>
+                <div style="font-weight: 700; font-size: 0.92rem; color: var(--text-main);">Display Galeri ${escapeHtml(categoryName || state.activeCategory)}</div>
+                <div style="font-size: 0.76rem; color: var(--text-muted); word-break: break-all;">Tautan: <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" style="color: var(--gold-dark); text-decoration: underline;">${escapeHtml(targetUrl)}</a></div>
+              </div>
+            </div>
+            <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-gold" style="padding: 8px 16px; font-size: 0.82rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+              <span>Buka Galeri ${escapeHtml(categoryName || state.activeCategory)}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+            </a>
           </div>
         `;
+        grid.appendChild(banner);
+      }
+
+      if (state.filteredPhotos.length === 0) {
+        if (targetUrl) {
+          const emptyCard = document.createElement("div");
+          emptyCard.style.cssText = "grid-column: 1 / -1; text-align: center; padding: 45px 20px;";
+          emptyCard.innerHTML = `
+            <div style="width: 54px; height: 54px; border-radius: 50%; background: rgba(197, 168, 128, 0.15); color: var(--gold-primary); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 14px;">
+              📸
+            </div>
+            <h4 style="font-family: var(--font-serif); font-size: 1.25rem; color: var(--text-main); margin-bottom: 6px;">Galeri ${escapeHtml(categoryName || state.activeCategory)}</h4>
+            <p style="font-size: 0.88rem; color: var(--text-muted); max-width: 440px; margin: 0 auto 18px; line-height: 1.5;">Foto untuk momen ini dapat diakses dan dilihat langsung melalui display galeri resmi di bawah ini:</p>
+            <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-gold" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px; font-size: 0.88rem; text-decoration: none;">
+              <span>Kunjungi Galeri ${escapeHtml(categoryName || state.activeCategory)}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            </a>
+          `;
+          grid.appendChild(emptyCard);
+        } else {
+          grid.innerHTML += `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
+              <p style="font-size: 1.05rem; font-weight: 500;">Momen berharga akan segera hadir di sini.</p>
+            </div>
+          `;
+        }
         return;
       }
 
@@ -2437,7 +2558,82 @@
       const cfgWelcomeMessageEl = document.getElementById("cfgWelcomeMessage");
       if (cfgWelcomeMessageEl) cfgWelcomeMessageEl.value = state.activeConfig.WELCOME_MESSAGE || "";
 
+      const cfgFooterEl = document.getElementById("cfgFooterMessage");
+      if (cfgFooterEl) cfgFooterEl.value = state.activeConfig.FOOTER_MESSAGE || "Diabadikan dengan cinta • Terima kasih atas doa restunya.";
+
+      renderAdminCategoriesManager();
+
       document.getElementById("adminSettingsModal").classList.add("active");
+    }
+
+    function renderAdminCategoriesManager() {
+      const container = document.getElementById("adminCategoriesContainer");
+      if (!container) return;
+      container.innerHTML = "";
+
+      let categories = state.customCategories;
+      if (!Array.isArray(categories) || categories.length === 0) {
+        categories = [
+          { name: "Teapai", url: "" },
+          { name: "Photobooth", url: "https://fotoshare.co" }
+        ];
+      }
+
+      categories.forEach(function(item) {
+        const catName = String((item && item.name) || item || "").trim();
+        const catUrl = String((item && item.url) || "").trim();
+        if (catName && catName !== "Semua Foto") {
+          addCategoryConfigRow(catName, catUrl);
+        }
+      });
+    }
+
+    function addCategoryConfigRow(name, url) {
+      const container = document.getElementById("adminCategoriesContainer");
+      if (!container) return;
+
+      const row = document.createElement("div");
+      row.className = "category-config-row";
+      row.style.cssText = "display: grid; grid-template-columns: 1.1fr 1.6fr auto; gap: 8px; align-items: flex-end; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 10px;";
+      row.innerHTML = `
+        <div>
+          <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 3px;">Nama Kategori</label>
+          <input type="text" class="admin-input cat-name-input" value="${escapeHtml(name || '')}" placeholder="Misal: Teapai / Photobooth" style="padding: 7px 10px; font-size: 0.82rem;">
+        </div>
+        <div>
+          <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 3px;">Tautan Display Galeri (Opsional)</label>
+          <input type="text" class="admin-input cat-url-input" value="${escapeHtml(url || '')}" placeholder="Google Drive / https://fotoshare.co/..." style="padding: 7px 10px; font-size: 0.82rem;">
+        </div>
+        <div>
+          <button type="button" class="ctrl-icon-btn" onclick="removeCategoryConfigRow(this)" title="Hapus Kategori" style="width: 32px; height: 32px; color: #EF4444; border-color: #FECACA; background: #FFF;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
+      `;
+      container.appendChild(row);
+    }
+
+    function removeCategoryConfigRow(btn) {
+      const row = btn.closest(".category-config-row");
+      if (row) row.remove();
+    }
+
+    function getCategoriesFromAdminInputs() {
+      const rows = document.querySelectorAll("#adminCategoriesContainer .category-config-row");
+      const list = [];
+      rows.forEach(function(r) {
+        const nameInput = r.querySelector(".cat-name-input");
+        const urlInput = r.querySelector(".cat-url-input");
+        const nameVal = (nameInput ? nameInput.value : "").trim();
+        const urlVal = (urlInput ? urlInput.value : "").trim();
+        if (nameVal && nameVal.toLowerCase() !== "semua foto") {
+          list.push({ name: nameVal, url: urlVal });
+        }
+      });
+      return list;
     }
 
     /* ==========================================================================
@@ -2579,6 +2775,8 @@
       const eventVenueInput = (document.getElementById("cfgEventVenue")?.value || "").trim();
       const subtitleInput = (document.getElementById("cfgSubtitle")?.value || "").trim();
       const welcomeInput = (document.getElementById("cfgWelcomeMessage")?.value || "").trim();
+      const footerInput = (document.getElementById("cfgFooterMessage")?.value || "").trim();
+      const customCategoriesList = getCategoriesFromAdminInputs();
       const frameUrlInput = (document.getElementById("cfgFrameImageUrl")?.value || "").trim();
       const newPinInput = (document.getElementById("cfgNewPin")?.value || "").trim();
 
@@ -2598,6 +2796,8 @@
         EVENT_VENUE: eventVenueInput || state.activeConfig.EVENT_VENUE || "Upperhills Convention Centre, Makassar",
         SUBTITLE: subtitleInput || state.activeConfig.SUBTITLE || "The Wedding Gallery & Precious Memories",
         WELCOME_MESSAGE: welcomeInput || state.activeConfig.WELCOME_MESSAGE || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
+        FOOTER_MESSAGE: footerInput || state.activeConfig.FOOTER_MESSAGE || "Diabadikan dengan cinta • Terima kasih atas doa restunya.",
+        CUSTOM_CATEGORIES: customCategoriesList,
         DRIVE_FOLDER_ID: driveFolderInput,
         FRAME_IMAGE_URL: frameUrlInput,
         GAS_API_URL: newApiUrl,
@@ -2605,12 +2805,14 @@
       };
 
       state.activeConfig = Object.assign({}, state.activeConfig, payload);
+      state.customCategories = customCategoriesList;
       try {
         localStorage.setItem("WEDDING_SAVED_CONFIG", JSON.stringify(state.activeConfig));
       } catch (e) {}
 
       // Langsung perbarui tampilan visual seketika (Instant UI Update)
       populateConfigToUI(state.activeConfig);
+      renderCategoryTabs();
 
       saveBtn.disabled = true;
       saveBtn.innerHTML = `<span>Menyimpan Pengaturan...</span>`;

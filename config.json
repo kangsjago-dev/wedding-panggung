@@ -4,6 +4,11 @@
   "EVENT_VENUE": "Upperhills Convention Centre, Makassar",
   "SUBTITLE": "The Wedding Gallery & Precious Memories",
   "WELCOME_MESSAGE": "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
+  "FOOTER_MESSAGE": "Diabadikan dengan cinta • Terima kasih atas doa restunya.",
+  "CUSTOM_CATEGORIES": [
+    { "name": "Teapai", "url": "" },
+    { "name": "Photobooth", "url": "https://fotoshare.co" }
+  ],
   "DRIVE_FOLDER_ID": "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxI5",
   "FRAME_IMAGE_URL": "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing",
   "SPREADSHEET_ID": "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20",

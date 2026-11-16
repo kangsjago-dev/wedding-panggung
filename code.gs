@@ -25,6 +25,12 @@ const WEDDING_CONFIG = {
   // Pesan Sambutan untuk Tamu
   WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
 
+  // Pesan Penutup Footer
+  FOOTER_MESSAGE: "Diabadikan dengan cinta • Terima kasih atas doa restunya.",
+
+  // Kategori Kustom & Tautan Target Display Galeri
+  CUSTOM_CATEGORIES: '[{"name":"Teapai","url":""},{"name":"Photobooth","url":"https://fotoshare.co"}]',
+
   // Konfigurasi Teknis (Dapat dikelola admin via web & spreadsheet)
   DRIVE_FOLDER_ID: "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxl5",
   DEFAULT_ADMIN_PIN: "123456",
@@ -385,6 +391,8 @@ function getEffectiveConfig() {
     EVENT_VENUE: sheetConfig.EVENT_VENUE || props.EVENT_VENUE || WEDDING_CONFIG.EVENT_VENUE,
     SUBTITLE: sheetConfig.SUBTITLE || props.SUBTITLE || WEDDING_CONFIG.SUBTITLE,
     WELCOME_MESSAGE: sheetConfig.WELCOME_MESSAGE || props.WELCOME_MESSAGE || WEDDING_CONFIG.WELCOME_MESSAGE,
+    FOOTER_MESSAGE: sheetConfig.FOOTER_MESSAGE || props.FOOTER_MESSAGE || WEDDING_CONFIG.FOOTER_MESSAGE,
+    CUSTOM_CATEGORIES: sheetConfig.CUSTOM_CATEGORIES || props.CUSTOM_CATEGORIES || WEDDING_CONFIG.CUSTOM_CATEGORIES,
 
     // Konfigurasi Teknis: Dapat dikelola Admin via Web & Sheets
     DRIVE_FOLDER_ID: sheetConfig.DRIVE_FOLDER_ID || props.DRIVE_FOLDER_ID || WEDDING_CONFIG.DRIVE_FOLDER_ID,
@@ -1143,6 +1151,17 @@ function saveAdminSettings(pin, updatedConfig) {
 
     if (updatedConfig.WELCOME_MESSAGE !== undefined && String(updatedConfig.WELCOME_MESSAGE).trim()) {
       props.setProperty("WELCOME_MESSAGE", String(updatedConfig.WELCOME_MESSAGE).trim());
+    }
+
+    if (updatedConfig.FOOTER_MESSAGE !== undefined && String(updatedConfig.FOOTER_MESSAGE).trim()) {
+      props.setProperty("FOOTER_MESSAGE", String(updatedConfig.FOOTER_MESSAGE).trim());
+    }
+
+    if (updatedConfig.CUSTOM_CATEGORIES !== undefined) {
+      var catVal = typeof updatedConfig.CUSTOM_CATEGORIES === "string" 
+        ? updatedConfig.CUSTOM_CATEGORIES 
+        : JSON.stringify(updatedConfig.CUSTOM_CATEGORIES);
+      props.setProperty("CUSTOM_CATEGORIES", catVal);
     }
 
     var dbSpreadsheet = getDatabaseSpreadsheet(updatedConfig.SPREADSHEET_ID);
