@@ -11,14 +11,23 @@
   <script>
     (function() {
       try {
+        ['WEDDING_SAVED_CONFIG', 'wedding_panggung_config'].forEach(function(k) {
+          var val = localStorage.getItem(k);
+          if (val && val.indexOf('Hans & Yurike') >= 0) {
+            var o = JSON.parse(val);
+            delete o.EVENT_NAME;
+            delete o.COUPLE_NAME;
+            localStorage.setItem(k, JSON.stringify(o));
+          }
+        });
         var s = localStorage.getItem("WEDDING_SAVED_CONFIG");
+        var name = "Wilson & Felicia";
         if (s) {
           var c = JSON.parse(s);
-          var name = c.EVENT_NAME || c.COUPLE_NAME;
-          if (name) {
-            document.title = name + " - Wedding Photo Gallery";
-          }
+          if (c.EVENT_NAME && c.EVENT_NAME !== "Hans & Yurike") name = c.EVENT_NAME;
+          else if (c.COUPLE_NAME && c.COUPLE_NAME !== "Hans & Yurike") name = c.COUPLE_NAME;
         }
+        document.title = name + " - Wedding Photo Gallery";
       } catch(e) {}
     })();
   </script>
@@ -1186,7 +1195,7 @@
       </button>
 
       <div class="lightbox-img-wrapper">
-        <img id="lightboxImg" class="lightbox-img" src="" alt="Wedding Photo Preview" onerror="this.src='https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80';">
+        <img id="lightboxImg" class="lightbox-img" src="" alt="Wedding Photo Preview" onerror="this.style.opacity='0.5';">
       </div>
 
       <button class="lightbox-nav-btn next" onclick="navigateLightbox(1)" title="Berikutnya (Panah Kanan)">
@@ -1564,11 +1573,16 @@
         if (apiUrlInput) apiUrlInput.value = savedApiUrl;
       }
 
-      // 2. Muat konfigurasi cadangan lokal jika ada
+      // 2. Muat konfigurasi cadangan lokal jika ada (bersihkan cache nama lama seketika)
       try {
         const savedCfgStr = localStorage.getItem("WEDDING_SAVED_CONFIG");
         if (savedCfgStr) {
           const savedCfg = JSON.parse(savedCfgStr);
+          if (savedCfg.EVENT_NAME === "Hans & Yurike" || savedCfg.COUPLE_NAME === "Hans & Yurike") {
+            delete savedCfg.EVENT_NAME;
+            delete savedCfg.COUPLE_NAME;
+            localStorage.setItem("WEDDING_SAVED_CONFIG", JSON.stringify(savedCfg));
+          }
           state.activeConfig = Object.assign({}, GLOBAL_CONFIG, savedCfg);
           populateConfigToUI(state.activeConfig);
         } else {
@@ -1785,21 +1799,32 @@
     }
 
     function handleGalleryResponse(response, isSilent) {
-      if (!response || !response.photos) return;
+      if (!response) return;
 
       const demoNotice = document.getElementById("demoNotice");
-      if (response.isDemo) {
-        demoNotice.style.display = "flex";
-      } else {
-        demoNotice.style.display = "none";
-      }
+      if (demoNotice) demoNotice.style.display = "none";
 
       if (response.config) {
         state.activeConfig = response.config;
         populateConfigToUI(response.config);
       }
 
-      const incomingPhotos = response.photos || [];
+      // Filter ketat: Buang seluruh foto demo / sampel jika folder Google Drive kosong
+      const incomingPhotos = (response.photos || []).filter(function(p) {
+        if (!p || !p.id) return false;
+        const sId = String(p.id).toLowerCase();
+        if (sId.startsWith("demo-") || sId.startsWith("demo_") || /^d\d+$/.test(sId)) return false;
+        if (p.thumbnailUrl && p.thumbnailUrl.includes("images.unsplash.com")) return false;
+        return true;
+      });
+
+      if (incomingPhotos.length === 0) {
+        state.allPhotos = [];
+        state.categories = ["Semua Foto"];
+        renderCategoryTabs();
+        applyCategoryFilter("Semua Foto");
+        return;
+      }
 
       if (isSilent && state.allPhotos.length > 0) {
         const existingIds = new Set(state.allPhotos.map(function(p) { return p.id; }));
@@ -1900,7 +1925,8 @@
 
     function populateConfigToUI(cfg) {
       if (!cfg) return;
-      const eventName = cfg.EVENT_NAME || cfg.COUPLE_NAME || "Wilson & Felicia";
+      const rawName = cfg.EVENT_NAME || cfg.COUPLE_NAME;
+      const eventName = (rawName && rawName !== "Hans & Yurike") ? rawName : "Wilson & Felicia";
       const rawDate = cfg.EVENT_DATE || "14 November 2026";
       const displayDate = formatIndonesianDate(rawDate);
       const eventVenue = cfg.EVENT_VENUE || "Upperhills Convention Centre, Makassar";

@@ -2,9 +2,24 @@
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v2.9.0)
+STATUS: SUDAH DITERAPKAN & TERVERIFIKASI PENUH (v2.9.1)
 TANGGAL PENGAJUAN: 16 November 2026
-VERIFIKASI SISTEM: BERHASIL (Zero Blink Wilson & Felicia, No Sample on Empty Folder, Clean Hero Header)
+VERIFIKASI SISTEM: BERHASIL (Dual-Layer Filter: Zero Blink, Zero Sample on Empty Drive, Clean Hero Header)
+
+### Rangkuman Pembaruan Menyeluruh (v2.9.1):
+1. **Penyebab Mengapa Tampilan Sebelumnya Belum Terlihat Berubah & Solusi Definitifnya:**
+   - **Masalah Foto Sampel Tetap Muncul:** Spreadsheet pengguna pada lembar `Daftar_Foto` masih menyimpan 8 baris demo (`demo-1` hingga `demo-8`). Backend Google Apps Script yang sedang aktif membacanya dan mengirimkannya ke frontend saat folder Google Drive kosong.
+   - **Solusi Filter Ganda (Dual-Layer Zero-Sample):**
+     * **Lapisan Frontend (`index.html`):** Fungsi `handleGalleryResponse` kini secara ketat menyaring dan membuang semua data foto dengan ID `demo-*`, `d*`, atau berlabel demo Unsplash. Jika folder Google Drive kosong, `incomingPhotos` dijamin menjadi array kosong murni `[]`, galeri 100% KOSONG (*"Belum ada foto dalam galeri ini"*), dan banner demo tetap tersembunyi.
+     * **Lapisan Backend (`code.gs`):** Menghapus seluruh logika pembacaan sheet `Daftar_Foto` dan pemanggilan `getDemoPhotos()`. Backend kini HANYA memindai Google Drive murni. Jika folder Drive kosong, dikembalikan `photos: []` tanpa sampel.
+   - **Masalah Kedipan (Blink) Nama "Hans & Yurike":**
+     * Browser pengguna menyimpan cache `localStorage` dengan kunci `WEDDING_SAVED_CONFIG` dari sesi pengujian lama yang masih berisi `"Hans & Yurike"`.
+     * Ditambahkan script sanitasi otomatis di `<head>` dan saat `DOMContentLoaded` yang mendeteksi dan langsung MENGHAPUS `"Hans & Yurike"` dari `localStorage`.
+     * Ditambahkan filter penolakan di `populateConfigToUI`: jika nilai adalah `"Hans & Yurike"`, otomatis ditolak dan digantikan oleh `"Wilson & Felicia"`.
+   - **Penghapusan Tombol Jelajahi Galeri & Mode Panggung:**
+     * Blok tombol `<div class="hero-actions">...</div>` telah dihilangkan seutuhnya dari markup Hero Header di `index.html`.
+2. **Prinsip Non-Destruktif:**
+   - Seluruh fungsi lain (auto-sync 20 detik, download foto berbingkai full-HD 1920x1080, validasi PIN admin unik, date picker kalender) tetap berjalan 100% normal.
 
 ### Rangkuman Pembaruan v2.9.0:
 1. **Eliminasi Total Blink Nama ("Wilson & Felicia"):**
