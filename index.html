@@ -1070,7 +1070,7 @@
        ========================================================================== */
     .download-progress-widget {
       position: fixed;
-      top: 20px;
+      top: 88px;
       right: 24px;
       bottom: auto;
       z-index: 9999;
@@ -1084,7 +1084,7 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      transform: translateY(-140%);
+      transform: translateY(-180%);
       opacity: 0;
       pointer-events: none;
       transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
@@ -2754,17 +2754,9 @@
       if (fillEl) fillEl.style.width = Math.min(100, Math.max(5, percent)) + "%";
 
       const remaining = downloadQueue.items.length + (downloadQueue.isProcessing ? 1 : 0);
-      if (badgeEl) {
-        if (isComplete && remaining === 0) {
-          badgeEl.innerText = "Selesai";
-        } else if (remaining > 1) {
-          badgeEl.innerText = remaining + " Antrean";
-        } else {
-          badgeEl.innerText = "1 Unduhan";
-        }
-      }
 
-      if (isComplete && remaining === 0) {
+      if (isComplete) {
+        if (badgeEl) badgeEl.innerText = "Selesai";
         if (spinnerEl) spinnerEl.style.display = "none";
         if (checkEl) checkEl.style.display = "block";
         if (fillEl) fillEl.style.width = "100%";
@@ -2775,8 +2767,15 @@
             if (spinnerEl) spinnerEl.style.display = "block";
             if (checkEl) checkEl.style.display = "none";
           }, 400);
-        }, 3500);
+        }, 2500);
       } else {
+        if (badgeEl) {
+          if (remaining > 1) {
+            badgeEl.innerText = remaining + " Antrean";
+          } else {
+            badgeEl.innerText = "1 Unduhan";
+          }
+        }
         if (spinnerEl) spinnerEl.style.display = "block";
         if (checkEl) checkEl.style.display = "none";
       }
@@ -3004,29 +3003,27 @@
                 if (hasMore) {
                   updateDownloadWidget(100, "✓ Foto Tersimpan! Melanjutkan antrean...", (cleanName + "-berbingkai.jpg"), false);
                   showToast("✓ Foto tersimpan! Memproses antrean berikutnya (" + downloadQueue.items.length + " tersisa)...");
+                  setTimeout(processNextDownloadQueue, 500);
                 } else {
+                  downloadQueue.isProcessing = false;
+                  downloadQueue.currentPhoto = null;
                   updateDownloadWidget(100, "✓ Berhasil Disimpan!", cleanName + "-berbingkai.jpg", true);
                   showToast("✓ Foto berbingkai berhasil tersimpan ke perangkat!");
                 }
               } else {
                 processDirectDownloadTask(photo);
               }
-              // Lanjutkan ke antrean berikutnya jika ada
-              setTimeout(processNextDownloadQueue, 500);
             }, "image/jpeg", 0.98);
 
           } catch (eCanvas) {
             console.warn("Canvas compositing error, fallback to direct download:", eCanvas);
             processDirectDownloadTask(photo);
-            setTimeout(processNextDownloadQueue, 500);
           }
         }, function() {
           processDirectDownloadTask(photo);
-          setTimeout(processNextDownloadQueue, 500);
         });
       }, function() {
         processDirectDownloadTask(photo);
-        setTimeout(processNextDownloadQueue, 500);
       });
     }
 
@@ -3048,11 +3045,13 @@
           if (hasMore) {
             updateDownloadWidget(100, "✓ Foto Tersimpan! Melanjutkan antrean...", fileName, false);
             showToast("✓ Foto tersimpan! Memproses antrean berikutnya (" + downloadQueue.items.length + " tersisa)...");
+            setTimeout(processNextDownloadQueue, 500);
           } else {
+            downloadQueue.isProcessing = false;
+            downloadQueue.currentPhoto = null;
             updateDownloadWidget(100, "✓ Berhasil Disimpan!", fileName, true);
             showToast("✓ Foto asli berhasil tersimpan ke perangkat!");
           }
-          setTimeout(processNextDownloadQueue, 500);
         })
         .catch(function() {
           if (photo.id && (state.gasApiUrl || (typeof google !== 'undefined' && google.script))) {
@@ -3071,21 +3070,21 @@
                 if (hasMore) {
                   updateDownloadWidget(100, "✓ Foto Tersimpan! Melanjutkan antrean...", fileName, false);
                   showToast("✓ Foto tersimpan! Memproses antrean berikutnya (" + downloadQueue.items.length + " tersisa)...");
+                  setTimeout(processNextDownloadQueue, 500);
                 } else {
+                  downloadQueue.isProcessing = false;
+                  downloadQueue.currentPhoto = null;
                   updateDownloadWidget(100, "✓ Berhasil Disimpan!", fileName, true);
                   showToast("✓ Foto asli berhasil tersimpan ke perangkat!");
                 }
               } else {
                 fallbackSaveLink(directUrl, fileName);
               }
-              setTimeout(processNextDownloadQueue, 500);
             }, function() {
               fallbackSaveLink(directUrl, fileName);
-              setTimeout(processNextDownloadQueue, 500);
             });
           } else {
             fallbackSaveLink(directUrl, fileName);
-            setTimeout(processNextDownloadQueue, 500);
           }
         });
     }
@@ -3131,6 +3130,14 @@
       a.click();
       a.remove();
       showToast("Menyimpan foto...");
+      const hasMore = downloadQueue.items.length > 0;
+      if (hasMore) {
+        setTimeout(processNextDownloadQueue, 500);
+      } else {
+        downloadQueue.isProcessing = false;
+        downloadQueue.currentPhoto = null;
+        updateDownloadWidget(100, "✓ Berhasil Disimpan!", fileName, true);
+      }
     }
 
     function resetDownloadButton() {

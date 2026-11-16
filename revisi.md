@@ -235,3 +235,29 @@ VERIFIKASI SISTEM: BERHASIL (Resolusi Asli 1:1 Terjaga, Background Multi-Downloa
 
 ### 3. Jaminan Non-Destruktif
 - Seluruh fungsi lain (resolusi asli 1:1 tanpa kompresi, framing transparan, sinkronisasi Google Drive, login admin minimalis, kalender date picker) tetap berjalan normal tanpa perubahan yang tidak diinstruksikan.
+
+---
+
+## Catatan Rilis v2.9.5: Perbaikan Posisi Desktop (Bebas Tombol Close) & Otomatisasi Tutup Status Bar Selesai Unduh
+
+### 1. Masalah yang Diselesaikan
+- **Progress Bar Desktop Menutupi Tombol Close Lightbox:**
+  - Sebelumnya widget berada di `top: 20px; right: 24px;` pada desktop, yang menutupi tombol silang close (`.lightbox-close` pada header lightbox). Akibatnya pengguna desktop kesulitan menutup lightbox untuk memilih foto lain dari galeri.
+- **Status Bar Tidak Otomatis Tertutup Setelah Selesai Unduh:**
+  - Terjadi kondisi logika di mana evaluasi `remaining === 0` tidak terpenuhi saat status unduh selesai karena flag `isProcessing` masih aktif, sehingga timer penutupan otomatis (`hideTimer`) tidak terpicu dan ikon spinner tetap muncul bersamaan dengan teks "✓ Berhasil Disimpan!".
+
+### 2. Implementasi Perbaikan
+1. **Reposisi Presisi pada Desktop Mode:**
+   - Mengubah posisi widget desktop menjadi **`top: 88px; right: 24px;`**.
+   - Header lightbox berada pada `y = 0` hingga `y = 80px` dan tombol close berada pada `top: 18px; right: 24px;` (tinggi 44px, berakhir pada `y = 62px`).
+   - Dengan jarak `top: 88px`, terdapat celah aman sebesar 26px di bawah tombol close. **Tombol close lightbox 100% bebas dari halangan dan dapat diklik kapan saja**.
+2. **Otomatisasi Penutupan Status Bar (Auto-Close Dismiss):**
+   - Menghapus pembatasan kondisi `remaining === 0` pada blok `isComplete`. Saat unduhan selesai:
+     - Ikon spinner dinonaktifkan (`display: none`).
+     - Ikon centang hijau (`dpwIconCheck`) ditampilkan.
+     - Badge beralih ke status `"Selesai"`.
+     - Timer otomatis 2,5 detik dipicu secara pasti untuk menarik kembali status bar ke atas layar (`transform: translateY(-180%)`).
+   - Pengaturan flag `downloadQueue.isProcessing = false` disinkronkan tepat sebelum pemanggilan penyelesaian unduh.
+
+### 3. Jaminan Non-Destruktif
+- Seluruh fitur lain (resolusi asli 1:1, antrean multi-download latar belakang, mode mobile di `top: 72px`, sinkronisasi Google Drive & admin) tetap berjalan utuh 100%.
