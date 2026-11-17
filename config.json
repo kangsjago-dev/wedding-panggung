@@ -1,4 +1,42 @@
 {
+  "ACTIVE_EVENT_ID": "wilson-felicia",
+  "ALL_PHOTOS_LABEL": "Semua Foto",
+  "ADMIN_ACCOUNTS": [
+    {
+      "username": "admin",
+      "password": "123",
+      "name": "Administrator",
+      "role": "superadmin"
+    }
+  ],
+  "EVENTS": [
+    {
+      "id": "wilson-felicia",
+      "name": "Wilson & Felicia",
+      "date": "14 November 2026",
+      "venue": "Upperhills Convention Centre, Makassar",
+      "subtitle": "The Wedding Gallery & Precious Memories",
+      "welcomeMessage": "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
+      "footerMessage": "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
+      "allPhotosLabel": "Semua Foto",
+      "driveFolderId": "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxI5",
+      "frameImageUrl": "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing",
+      "customCategories": [
+        {
+          "name": "Photobooth",
+          "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs"
+        }
+      ],
+      "coverSettings": {
+        "enabled": true,
+        "style": "romantic-collage",
+        "heading": "The Wedding Celebration",
+        "subheading": "A Journey of Two Hearts Joined as One",
+        "quote": "Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda.",
+        "photos": []
+      }
+    }
+  ],
   "EVENT_NAME": "Wilson & Felicia",
   "EVENT_DATE": "14 November 2026",
   "EVENT_VENUE": "Upperhills Convention Centre, Makassar",
@@ -6,7 +44,10 @@
   "WELCOME_MESSAGE": "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
   "FOOTER_MESSAGE": "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
   "CUSTOM_CATEGORIES": [
-    { "name": "Photobooth", "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs" }
+    {
+      "name": "Photobooth",
+      "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs"
+    }
   ],
   "DRIVE_FOLDER_ID": "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxI5",
   "FRAME_IMAGE_URL": "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing",

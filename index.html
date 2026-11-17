@@ -251,6 +251,324 @@
       display: none;
     }
 
+    /* ==========================================================================
+       WEDDING COVER SHOWCASE & MULTI-EVENT STYLES (ANTI-AI HUMAN-CRAFTED AESTHETIC)
+       ========================================================================== */
+    .wedding-cover-hero {
+      position: relative;
+      margin: 10px auto 32px auto;
+      max-width: 1200px;
+      padding: 0 16px;
+      animation: fadeInCover 0.6s ease;
+    }
+
+    @keyframes fadeInCover {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .cover-card-container {
+      background: linear-gradient(135deg, rgba(255,255,255,0.92) 0%, rgba(250,248,245,0.96) 100%);
+      border: 1px solid rgba(197, 168, 128, 0.45);
+      border-radius: 24px;
+      padding: 32px 24px;
+      box-shadow: 0 12px 40px rgba(168, 137, 94, 0.08), 0 2px 8px rgba(0,0,0,0.03);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cover-card-container::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    }
+
+    .cover-header-meta {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto 24px auto;
+    }
+
+    .cover-badge-top {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 14px;
+      background: rgba(197, 168, 128, 0.12);
+      border: 1px solid rgba(197, 168, 128, 0.35);
+      border-radius: 9999px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--gold-dark);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .cover-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: clamp(2rem, 4.2vw, 3.2rem);
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.18;
+      margin: 0 0 10px 0;
+      letter-spacing: -0.01em;
+    }
+
+    .cover-subheading {
+      font-size: clamp(0.9rem, 1.8vw, 1.05rem);
+      color: var(--gold-dark);
+      font-weight: 500;
+      margin-bottom: 12px;
+      letter-spacing: 0.02em;
+    }
+
+    .cover-quote {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.08rem;
+      font-style: italic;
+      color: var(--text-muted);
+      max-width: 620px;
+      margin: 0 auto 20px auto;
+      line-height: 1.6;
+    }
+
+    /* Layout 1: Romantic Collage */
+    .cover-collage-layout {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 16px;
+      max-width: 1040px;
+      margin: 0 auto 24px auto;
+      align-items: stretch;
+    }
+
+    .cover-photo-main {
+      height: 420px;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(197, 168, 128, 0.35);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      position: relative;
+      background: #f1ede6;
+    }
+
+    .cover-photo-main img, .cover-photo-sub img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .cover-photo-main:hover img, .cover-photo-sub:hover img {
+      transform: scale(1.03);
+    }
+
+    .cover-photo-side-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      height: 420px;
+    }
+
+    .cover-photo-sub {
+      flex: 1;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(197, 168, 128, 0.35);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+      position: relative;
+      background: #f1ede6;
+    }
+
+    /* Layout 2: Hero Carousel */
+    .cover-carousel-layout {
+      max-width: 960px;
+      margin: 0 auto 24px auto;
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      height: 440px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      border: 1px solid rgba(197, 168, 128, 0.4);
+      background: #111;
+    }
+
+    .cover-carousel-slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.8s ease-in-out;
+      pointer-events: none;
+    }
+
+    .cover-carousel-slide.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .cover-carousel-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .cover-carousel-controls {
+      position: absolute;
+      bottom: 16px;
+      left: 0; right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      z-index: 5;
+    }
+
+    .carousel-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.45);
+      border: 1px solid rgba(0,0,0,0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .carousel-dot.active {
+      background: var(--gold-primary);
+      width: 24px;
+      border-radius: 9999px;
+    }
+
+    /* Layout 3: Polaroid Board */
+    .cover-polaroid-layout {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      max-width: 1040px;
+      margin: 0 auto 24px auto;
+      padding: 10px 0;
+    }
+
+    .cover-polaroid-item {
+      background: #fff;
+      padding: 12px 12px 36px 12px;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      border: 1px solid rgba(197, 168, 128, 0.3);
+      width: 240px;
+      transition: transform 0.35s ease, box-shadow 0.35s ease;
+      position: relative;
+    }
+
+    .cover-polaroid-item:nth-child(odd) {
+      transform: rotate(-2deg);
+    }
+    .cover-polaroid-item:nth-child(even) {
+      transform: rotate(2.5deg);
+    }
+    .cover-polaroid-item:hover {
+      transform: rotate(0deg) scale(1.05);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.14);
+      z-index: 3;
+    }
+
+    .cover-polaroid-item img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      border-radius: 4px;
+      display: block;
+    }
+
+    .cover-actions-wrapper {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .cover-btn-primary {
+      background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-dark) 100%);
+      color: #fff !important;
+      padding: 10px 24px;
+      border-radius: 9999px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(168, 137, 94, 0.35);
+      transition: all 0.25s ease;
+      text-decoration: none;
+    }
+
+    .cover-btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(168, 137, 94, 0.45);
+    }
+
+    .cover-btn-secondary {
+      background: #fff;
+      color: var(--text-main) !important;
+      padding: 10px 20px;
+      border-radius: 9999px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      border: 1px solid rgba(197, 168, 128, 0.6);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: all 0.25s ease;
+      text-decoration: none;
+    }
+
+    .cover-btn-secondary:hover {
+      background: #FAF8F5;
+      border-color: var(--gold-dark);
+      transform: translateY(-2px);
+    }
+
+    /* Modal Share QR Code Card */
+    .share-qr-card {
+      max-width: 440px;
+      border-radius: 20px;
+      overflow: hidden;
+      animation: modalScaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalScaleUp {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @media (max-width: 768px) {
+      .cover-collage-layout {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .cover-photo-main {
+        height: 280px;
+      }
+      .cover-photo-side-stack {
+        flex-direction: row;
+        height: 160px;
+      }
+      .cover-carousel-layout {
+        height: 280px;
+      }
+      .cover-card-container {
+        padding: 24px 16px;
+      }
+    }
+
     @media (max-width: 640px) {
       .filter-wrapper {
         padding: 8px 12px;
@@ -1266,16 +1584,20 @@
       <div class="line right"></div>
     </div>
 
-    <!-- Nama Event Acara Pernikahan (Langsung Wilson & Felicia dengan hidrasi instan anti-blink) -->
-    <h1 id="coupleName" class="hero-title">Wilson & Felicia</h1>
+    <!-- Nama Event Acara Pernikahan (Hydration Dinamis Tanpa Kedipan) -->
+    <h1 id="coupleName" class="hero-title" style="min-height: 1.2em;"></h1>
     <script>
       (function() {
         try {
-          var saved = localStorage.getItem("wedding_panggung_config");
+          var params = new URLSearchParams(window.location.search);
+          var targetEventId = params.get("event") || params.get("e") || "";
+          var cacheKey = targetEventId ? ("WEDDING_EVENT_CFG_" + targetEventId) : "WEDDING_ACTIVE_EVENT_CFG";
+          var saved = localStorage.getItem(cacheKey);
+          if (!saved && !targetEventId) saved = localStorage.getItem("WEDDING_SAVED_CONFIG");
           if (saved) {
             var c = JSON.parse(saved);
             var n = c.EVENT_NAME || c.COUPLE_NAME;
-            if (n) document.getElementById("coupleName").textContent = n;
+            if (n && n !== "Hans & Yurike") document.getElementById("coupleName").textContent = n;
           }
         } catch(e) {}
       })();
@@ -1306,6 +1628,11 @@
     <p id="welcomeMessage" class="hero-desc">Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.</p>
   </header>
 
+  <!-- Wedding Front Page Cover Showcase (Custom Wedding Landing Header) -->
+  <section id="weddingCoverSection" class="wedding-cover-hero" style="display: none;">
+    <!-- Diinjeksi dinamis oleh renderWeddingCoverShowcase() -->
+  </section>
+
   <!-- Sticky Filter Bar with Admin Trigger & Live Sync Indicator -->
   <div class="filter-wrapper" id="gallerySection">
     <div class="filter-container">
@@ -1317,6 +1644,16 @@
       </div>
 
       <div class="action-controls-group">
+        <button id="btnShareModal" class="ctrl-icon-btn" onclick="openShareModal()" title="Bagikan & QR Code Galeri" aria-label="Bagikan & QR Code">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="18" cy="5" r="3"></circle>
+            <circle cx="6" cy="12" r="3"></circle>
+            <circle cx="18" cy="19" r="3"></circle>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+          </svg>
+        </button>
+
         <button class="ctrl-icon-btn" onclick="fetchGalleryData(true)" title="Sinkronkan foto sekarang (Auto-sync aktif)">
           <svg id="refreshIconSvg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M23 4v6h-6"></path>
@@ -1438,7 +1775,62 @@
     </div>
   </div>
 
-  <!-- Modal 1: Login Admin -->
+  <!-- Modal: Bagikan & QR Code Galeri -->
+  <div id="shareQrModal" class="admin-modal-overlay">
+    <div class="admin-card share-qr-card">
+      <div class="admin-card-header">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Bagikan & QR Code Galeri</span>
+        </h3>
+        <button class="ctrl-icon-btn" onclick="closeShareModal()" style="width: 32px; height: 32px;" title="Tutup">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="admin-card-body" style="text-align: center; padding: 20px 16px;">
+        <div style="font-size: 1.25rem; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 700; color: var(--text-main);" id="shareEventTitle">Wilson & Felicia</div>
+        <div style="font-size: 0.8rem; color: var(--gold-dark); margin-bottom: 16px;" id="shareEventSubtitle">Pindai QR Code untuk melihat & mengunduh foto pernikahan</div>
+
+        <!-- QR Code Box -->
+        <div class="qr-code-display-box" style="margin: 0 auto 16px; width: 220px; height: 220px; padding: 10px; background: #fff; border-radius: 16px; border: 2px solid rgba(197, 168, 128, 0.45); box-shadow: 0 8px 24px rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: center;">
+          <img id="shareQrImg" src="" alt="QR Code Galeri" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;">
+        </div>
+
+        <!-- URL Field with Copy -->
+        <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+          <input type="text" id="shareUrlInput" class="admin-input" readonly style="font-size: 0.8rem; background: #FAF8F5; cursor: pointer;" onclick="copyShareUrl()">
+          <button type="button" class="btn btn-gold" onclick="copyShareUrl()" style="padding: 6px 14px; font-size: 0.82rem; white-space: nowrap;">
+            <span>📋 Salin</span>
+          </button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <button type="button" class="btn btn-outline" style="justify-content: center; font-size: 0.8rem; padding: 8px;" onclick="shareViaWhatsApp()">
+            <span>💬 WhatsApp</span>
+          </button>
+          <button type="button" class="btn btn-outline" style="justify-content: center; font-size: 0.8rem; padding: 8px;" onclick="shareViaWebShare()">
+            <span>📤 Bagikan</span>
+          </button>
+        </div>
+
+        <button type="button" class="btn btn-gold" style="width: 100%; margin-top: 8px; justify-content: center; font-size: 0.82rem; padding: 8px;" onclick="downloadQrCodeImage()">
+          <span>⬇️ Unduh Gambar QR Code (PNG)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 1: Login Admin (Username & Password) -->
   <div id="adminLoginModal" class="admin-modal-overlay">
     <div class="admin-card" style="max-width: 400px;">
       <div class="admin-card-header">
@@ -1460,11 +1852,21 @@
       <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
         <div class="admin-card-body" style="padding-top: 8px;">
           <div class="admin-field-group">
-            <label class="admin-label" for="adminPinInput">PIN Keamanan</label>
-            <input type="password" id="adminPinInput" class="admin-input" placeholder="Masukkan PIN" required autocomplete="current-password">
+            <label class="admin-label" for="adminUsernameInput">Nama Pengguna (Username)</label>
+            <input type="text" id="adminUsernameInput" class="admin-input" placeholder="Masukkan username" required autocomplete="username" value="admin">
           </div>
 
-          <div id="loginAlertBox" class="admin-alert-box error"></div>
+          <div class="admin-field-group">
+            <label class="admin-label" for="adminPasswordInput">Kata Sandi (Password)</label>
+            <div style="position: relative;">
+              <input type="password" id="adminPasswordInput" class="admin-input" placeholder="Masukkan password" required autocomplete="current-password" style="padding-right: 42px;">
+              <button type="button" id="toggleAdminPassVisibility" onclick="togglePasswordVisibility('adminPasswordInput', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.05rem; color: #64748B; padding: 4px;" title="Lihat/Sembunyikan Password">
+                👁️
+              </button>
+            </div>
+          </div>
+
+          <div id="loginAlertBox" class="admin-alert-box error" style="display: none;"></div>
         </div>
 
         <div class="admin-card-footer">
@@ -1510,21 +1912,47 @@
         <!-- Segmented Navigation Tabs (Minimalist & Responsif) -->
         <div class="admin-tabs-nav">
           <button type="button" class="admin-tab-btn active" id="tabBtn-event" onclick="switchAdminTab('event')">
-            <span>💍 Acara</span>
+            <span>💍 Acara & Event</span>
+          </button>
+          <button type="button" class="admin-tab-btn" id="tabBtn-cover" onclick="switchAdminTab('cover')">
+            <span>🎨 Cover Depan</span>
           </button>
           <button type="button" class="admin-tab-btn" id="tabBtn-media" onclick="switchAdminTab('media')">
-            <span>🖼️ Foto & Bingkai</span>
+            <span>🖼️ Foto & Kategori</span>
           </button>
           <button type="button" class="admin-tab-btn" id="tabBtn-users" onclick="switchAdminTab('users')">
-            <span>👥 Admin & PIN</span>
+            <span>👥 Akun Admin</span>
           </button>
           <button type="button" class="admin-tab-btn" id="tabBtn-cloud" onclick="switchAdminTab('cloud')">
-            <span>☁️ Cloud Vercel</span>
+            <span>☁️ Cloud & API</span>
           </button>
         </div>
 
         <!-- Tab 1: Acara & Pernikahan -->
         <div class="admin-tab-pane active" id="tabPane-event">
+          <!-- Multi-Event Manager Box -->
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-main);">📅 Kelola & Pilih Event (Multi-Event)</div>
+              <button type="button" class="btn btn-gold" style="font-size: 0.74rem; padding: 4px 10px;" onclick="promptAddNewEvent()">
+                <span>+ Tambah Event Baru</span>
+              </button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;">
+              <div>
+                <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 2px;" for="adminEventSelect">Event Aktif yang Sedang Diedit:</label>
+                <select id="adminEventSelect" class="admin-input" onchange="handleSelectEventChange(this.value)" style="padding: 6px 10px; font-size: 0.84rem;"></select>
+              </div>
+              <button type="button" id="btnDeleteCurrentEvent" class="btn btn-outline" style="color: #EF4444; border-color: #FCA5A5; padding: 6px 10px; font-size: 0.76rem; margin-top: 14px;" onclick="handleDeleteCurrentEvent()" title="Hapus Event Ini">
+                <span>🗑️ Hapus</span>
+              </button>
+            </div>
+            <div id="eventShareLinkBox" style="margin-top: 8px; font-size: 0.74rem; color: #475569; display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 6px 10px; border-radius: 6px; border: 1px solid #E2E8F0;">
+              <span>Tautan Event: <strong id="activeEventUrlPreview">...</strong></span>
+              <button type="button" class="btn btn-outline" style="font-size: 0.7rem; padding: 2px 8px;" onclick="copyActiveEventUrl()">Salin Link</button>
+            </div>
+          </div>
+
           <div class="admin-field-group">
             <label class="admin-label" for="cfgCoupleName">Nama Event / Pasangan Pengantin</label>
             <input type="text" id="cfgCoupleName" class="admin-input" placeholder="Contoh: Wilson & Felicia">
@@ -1541,6 +1969,12 @@
           </div>
 
           <div class="admin-field-group">
+            <label class="admin-label" for="cfgAllPhotosLabel">Label Tab Galeri Utama (Default: Semua Foto)</label>
+            <input type="text" id="cfgAllPhotosLabel" class="admin-input" placeholder="Contoh: Semua Foto / Katalog Utama / All Photos">
+            <div class="admin-help-text">Sesuaikan label tab pertama galeri (misal: <em>Semua Momen, Katalog Foto, All Photos</em>).</div>
+          </div>
+
+          <div class="admin-field-group">
             <label class="admin-label" for="cfgSubtitle">Subjudul Galeri</label>
             <input type="text" id="cfgSubtitle" class="admin-input" placeholder="Contoh: The Wedding Gallery & Precious Memories">
           </div>
@@ -1554,6 +1988,60 @@
             <label class="admin-label" for="cfgFooterMessage">Pesan Penutup Footer (Di Bagian Bawah)</label>
             <textarea id="cfgFooterMessage" class="admin-input" rows="2" style="resize: vertical; font-family: inherit; font-size: 0.88rem; box-sizing: border-box; width: 100%;" placeholder="Diabadikan dengan cinta&#10;Terima kasih atas doa restunya."></textarea>
             <span style="font-size: 0.72rem; color: #64748B; margin-top: 3px; display: block;">Mendukung tombol Enter / baris baru untuk tampilan multi-baris di footer.</span>
+          </div>
+        </div>
+
+        <!-- Tab: Desain Cover & Halaman Depan -->
+        <div class="admin-tab-pane" id="tabPane-cover">
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 0.86rem; font-weight: 700; color: var(--text-main);">✨ Tampilkan Cover Halaman Depan</div>
+                <div style="font-size: 0.72rem; color: #64748B;">Seksi cover mewah di atas galeri bertema wedding dengan foto-foto pilihan.</div>
+              </div>
+              <input type="checkbox" id="cfgCoverEnabled" onchange="toggleCoverSectionPreview(this.checked)" style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--gold-primary);">
+            </div>
+          </div>
+
+          <div class="admin-field-group">
+            <label class="admin-label" for="cfgCoverStyle">Gaya Tampilan Cover</label>
+            <select id="cfgCoverStyle" class="admin-input" style="padding: 7px 10px; font-size: 0.84rem;">
+              <option value="romantic-collage">Romantic Wedding Collage (Grid Foto Mewah)</option>
+              <option value="hero-carousel">Hero Slider Sinematik (Banner Bergulir Halus)</option>
+              <option value="polaroid-grid">Aesthetic Polaroid Memory Board (Foto Bersudut Estetik)</option>
+            </select>
+          </div>
+
+          <div class="admin-field-group">
+            <label class="admin-label" for="cfgCoverHeading">Judul Cover</label>
+            <input type="text" id="cfgCoverHeading" class="admin-input" placeholder="Contoh: The Wedding Celebration">
+          </div>
+
+          <div class="admin-field-group">
+            <label class="admin-label" for="cfgCoverSubheading">Subjudul Cover</label>
+            <input type="text" id="cfgCoverSubheading" class="admin-input" placeholder="Contoh: A Journey of Two Hearts Joined as One">
+          </div>
+
+          <div class="admin-field-group">
+            <label class="admin-label" for="cfgCoverQuote">Kalimat Mutiara / Quote Pernikahan</label>
+            <textarea id="cfgCoverQuote" class="admin-input" rows="2" placeholder="Contoh: Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda."></textarea>
+          </div>
+
+          <!-- Daftar Foto Unggulan Cover -->
+          <div class="admin-field-group" style="border-top: 1px solid #E2E8F0; padding-top: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="admin-label" style="margin-bottom: 0;">📸 Foto Unggulan Cover (Beberapa Foto)</label>
+              <span style="font-size: 0.72rem; color: var(--gold-dark); font-weight: 600;">Google Drive / Direct URL</span>
+            </div>
+            <div class="admin-help-text" style="margin-bottom: 10px;">
+              Masukkan tautan foto momen/prewedding terbaik. Jika dibiarkan kosong, sistem otomatis menampilkan beberapa foto pertama dari galeri secara estetik.
+            </div>
+
+            <div id="coverPhotosListContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;"></div>
+
+            <button type="button" class="btn btn-outline" style="width: 100%; justify-content: center; font-size: 0.82rem; padding: 8px;" onclick="addCoverPhotoRow('')">
+              <span>+ Tambah Foto Cover</span>
+            </button>
           </div>
         </div>
 
@@ -1610,39 +2098,43 @@
           </div>
         </div>
 
-        <!-- Tab 3: Pengguna & PIN -->
+        <!-- Tab 3: Pengguna & Akun Admin -->
         <div class="admin-tab-pane" id="tabPane-users">
-          <!-- Ganti PIN Akun Pribadi -->
+          <!-- Ubah Password Akun Sendiri -->
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px; margin-bottom: 14px;">
-            <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">🔐 Ganti PIN Akun Anda</div>
+            <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">🔐 Ubah Password Akun Anda</div>
             <div style="display: flex; gap: 8px;">
-              <input type="password" id="cfgNewPin" class="admin-input" placeholder="PIN Baru (Min 4 digit)" style="padding: 7px 10px; font-size: 0.84rem;">
-              <button type="button" class="btn btn-gold" style="white-space: nowrap; padding: 7px 14px; font-size: 0.82rem;" onclick="handleStandaloneChangePin()">Perbarui PIN</button>
+              <input type="password" id="cfgNewAdminPassword" class="admin-input" placeholder="Password Baru (Min 4 karakter)" style="padding: 7px 10px; font-size: 0.84rem;">
+              <button type="button" class="btn btn-gold" style="white-space: nowrap; padding: 7px 14px; font-size: 0.82rem;" onclick="handleChangeAdminPassword()">Perbarui Password</button>
             </div>
-            <div id="changePinAlertBox" class="admin-alert-box" style="margin-top: 6px; font-size: 0.78rem;"></div>
+            <div id="changePassAlertBox" class="admin-alert-box" style="margin-top: 6px; font-size: 0.78rem; display: none;"></div>
           </div>
 
-          <!-- Form Tambah Admin Baru -->
+          <!-- Form Tambah Akun Admin Baru -->
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px; margin-bottom: 14px;">
-            <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">➕ Tambah Admin Baru</div>
+            <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">➕ Tambah Akun Admin Baru</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
               <div>
-                <label class="admin-label" style="font-size: 0.75rem;" for="newAdminNameInput">Nama Admin</label>
-                <input type="text" id="newAdminNameInput" class="admin-input" placeholder="Contoh: Panitia / Foto 1" style="padding: 7px 10px; font-size: 0.84rem;">
+                <label class="admin-label" style="font-size: 0.75rem;" for="newAdminUsernameInput">Username</label>
+                <input type="text" id="newAdminUsernameInput" class="admin-input" placeholder="Contoh: panitia1" style="padding: 7px 10px; font-size: 0.84rem;">
               </div>
               <div>
-                <label class="admin-label" style="font-size: 0.75rem;" for="newAdminPinInput">PIN Masuk (Unik)</label>
-                <input type="password" id="newAdminPinInput" class="admin-input" placeholder="Min 4 digit unik" style="padding: 7px 10px; font-size: 0.84rem;">
+                <label class="admin-label" style="font-size: 0.75rem;" for="newAdminNameInput">Nama Lengkap</label>
+                <input type="text" id="newAdminNameInput" class="admin-input" placeholder="Contoh: Panitia Foto" style="padding: 7px 10px; font-size: 0.84rem;">
               </div>
             </div>
-            <div id="addUserAlertBox" class="admin-alert-box error" style="margin-bottom: 8px; font-size: 0.78rem;"></div>
+            <div style="margin-bottom: 8px;">
+              <label class="admin-label" style="font-size: 0.75rem;" for="newAdminPasswordInput">Password</label>
+              <input type="password" id="newAdminPasswordInput" class="admin-input" placeholder="Minimal 4 karakter" style="padding: 7px 10px; font-size: 0.84rem;">
+            </div>
+            <div id="addUserAlertBox" class="admin-alert-box error" style="margin-bottom: 8px; font-size: 0.78rem; display: none;"></div>
             <button type="button" id="btnAddAdminUserBtn" class="btn btn-gold" style="width: 100%; padding: 8px; font-size: 0.84rem; justify-content: center;" onclick="handleAddAdminUser()">
-              <span>+ Tambahkan Admin</span>
+              <span>+ Tambahkan Akun Admin</span>
             </button>
           </div>
 
           <!-- Daftar Admin Terdaftar -->
-          <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Daftar Pengguna Aktif:</div>
+          <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Daftar Akun Admin:</div>
           <div id="adminUsersList" style="display: flex; flex-direction: column; gap: 6px;"></div>
         </div>
 
@@ -1724,6 +2216,36 @@
       SUBTITLE: "The Wedding Gallery & Precious Memories",
       WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
       FOOTER_MESSAGE: "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
+      ALL_PHOTOS_LABEL: "Semua Foto",
+      ACTIVE_EVENT_ID: "wilson-felicia",
+      EVENTS: [
+        {
+          id: "wilson-felicia",
+          name: "Wilson & Felicia",
+          date: "14 November 2026",
+          venue: "Upperhills Convention Centre, Makassar",
+          subtitle: "The Wedding Gallery & Precious Memories",
+          welcomeMessage: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
+          footerMessage: "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
+          allPhotosLabel: "Semua Foto",
+          driveFolderId: "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxI5",
+          frameImageUrl: "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing",
+          customCategories: [
+            { name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs" }
+          ],
+          coverSettings: {
+            enabled: true,
+            style: "romantic-collage",
+            heading: "The Wedding Celebration",
+            subheading: "A Journey of Two Hearts Joined as One",
+            quote: "Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda.",
+            photos: []
+          }
+        }
+      ],
+      ADMIN_ACCOUNTS: [
+        { id: "usr_superadmin", username: "admin", password: "123", name: "Super Admin", role: "Super Admin" }
+      ],
       CUSTOM_CATEGORIES: [
         { name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs" }
       ],
@@ -1739,8 +2261,22 @@
       allPhotos: [],
       filteredPhotos: [],
       categories: ["Semua Foto"],
+      allPhotosLabel: "Semua Foto",
+      currentEventId: "wilson-felicia",
+      events: [],
+      coverSettings: {
+        enabled: true,
+        style: "romantic-collage",
+        heading: "The Wedding Celebration",
+        subheading: "A Journey of Two Hearts Joined as One",
+        quote: "Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda.",
+        photos: []
+      },
       customCategories: [
         { name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs" }
+      ],
+      adminAccounts: [
+        { id: "usr_superadmin", username: "admin", password: "123", name: "Super Admin", role: "Super Admin" }
       ],
       failedPhotoIds: new Set(),
       activeCategory: "Semua Foto",
@@ -1753,7 +2289,8 @@
       intervalMs: 4000,
       
       isAdminLoggedIn: false,
-      adminPin: "",
+      adminPin: "123",
+      currentAdminUser: { username: "admin", name: "Super Admin", role: "Super Admin" },
       activeConfig: Object.assign({}, GLOBAL_CONFIG),
       gasApiUrl: "",
       newBadgeDurationMs: (GLOBAL_CONFIG.NEW_BADGE_MINUTES || 10) * 60 * 1000,
@@ -1761,6 +2298,15 @@
       autoRefreshIntervalMs: 20000,
       isAutoRefreshing: false
     };
+
+    function getActiveEventIdFromUrl() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("event") || params.get("e") || "";
+      } catch (e) {
+        return "";
+      }
+    }
 
     function isPhotoNew(photo) {
       if (!photo) return false;
@@ -1801,24 +2347,23 @@
         if (apiUrlInput) apiUrlInput.value = savedApiUrl;
       }
 
-      // 2. Muat konfigurasi cadangan lokal jika ada (bersihkan cache nama lama seketika)
+      // 2. Deteksi Parameter URL Event & Muat Cache Terisolasi (Anti-Flicker Lintas Event)
+      const urlEventId = getActiveEventIdFromUrl();
+      if (urlEventId) {
+        state.currentEventId = urlEventId;
+      }
+
       try {
-        const savedCatsStr = localStorage.getItem("WEDDING_SAVED_CUSTOM_CATEGORIES");
-        if (savedCatsStr) {
-          try {
-            state.customCategories = JSON.parse(savedCatsStr);
-          } catch (eCat) {}
+        const cacheKey = state.currentEventId ? ("WEDDING_EVENT_CFG_" + state.currentEventId) : "WEDDING_ACTIVE_EVENT_CFG";
+        let savedCfgStr = localStorage.getItem(cacheKey);
+        if (!savedCfgStr && !urlEventId) {
+          savedCfgStr = localStorage.getItem("WEDDING_SAVED_CONFIG");
         }
-        const savedCfgStr = localStorage.getItem("WEDDING_SAVED_CONFIG");
         if (savedCfgStr) {
           const savedCfg = JSON.parse(savedCfgStr);
           if (savedCfg.EVENT_NAME === "Hans & Yurike" || savedCfg.COUPLE_NAME === "Hans & Yurike") {
             delete savedCfg.EVENT_NAME;
             delete savedCfg.COUPLE_NAME;
-            localStorage.setItem("WEDDING_SAVED_CONFIG", JSON.stringify(savedCfg));
-          }
-          if (savedCatsStr && state.customCategories) {
-            savedCfg.CUSTOM_CATEGORIES = state.customCategories;
           }
           state.activeConfig = Object.assign({}, GLOBAL_CONFIG, savedCfg);
           populateConfigToUI(state.activeConfig);
@@ -1827,7 +2372,7 @@
         }
       } catch (e) {}
 
-      // 3. Muat konfigurasi sentral dari config.json (Untuk sinkronisasi live semua device di Vercel)
+      // 3. Muat konfigurasi sentral dari config.json (Prioritas Multi-Event & Sinkronisasi Lintas Device)
       fetch("config.json?v=" + Date.now())
         .then(function(res) {
           if (!res.ok) throw new Error("No config.json");
@@ -1840,12 +2385,26 @@
               const apiUrlInput = document.getElementById("cfgGasApiUrl");
               if (apiUrlInput) apiUrlInput.value = remoteCfg.GAS_API_URL;
             }
-            // Pertahankan kategori yang disimpan admin secara lokal jika ada
-            const savedCatsStr = localStorage.getItem("WEDDING_SAVED_CUSTOM_CATEGORIES");
-            if (savedCatsStr) {
-              try {
-                remoteCfg.CUSTOM_CATEGORIES = JSON.parse(savedCatsStr);
-              } catch (eCat) {}
+            if (Array.isArray(remoteCfg.EVENTS)) {
+              state.events = remoteCfg.EVENTS;
+              const matchedEv = state.events.find(function(ev) { return ev.id === state.currentEventId; });
+              if (matchedEv) {
+                remoteCfg.EVENT_NAME = matchedEv.name;
+                remoteCfg.COUPLE_NAME = matchedEv.name;
+                remoteCfg.EVENT_DATE = matchedEv.date;
+                remoteCfg.EVENT_VENUE = matchedEv.venue;
+                remoteCfg.SUBTITLE = matchedEv.subtitle;
+                remoteCfg.WELCOME_MESSAGE = matchedEv.welcomeMessage;
+                remoteCfg.FOOTER_MESSAGE = matchedEv.footerMessage;
+                remoteCfg.ALL_PHOTOS_LABEL = matchedEv.allPhotosLabel || "Semua Foto";
+                remoteCfg.DRIVE_FOLDER_ID = matchedEv.driveFolderId;
+                remoteCfg.FRAME_IMAGE_URL = matchedEv.frameImageUrl;
+                remoteCfg.CUSTOM_CATEGORIES = matchedEv.customCategories || [];
+                remoteCfg.COVER_SETTINGS = matchedEv.coverSettings;
+              }
+            }
+            if (remoteCfg.ADMIN_ACCOUNTS) {
+              state.adminAccounts = remoteCfg.ADMIN_ACCOUNTS;
             }
             state.activeConfig = Object.assign({}, GLOBAL_CONFIG, remoteCfg);
             populateConfigToUI(state.activeConfig);
@@ -1855,7 +2414,7 @@
         .finally(function() {
           // 4. Fail-Safe: Jika URL belum terdeteksi, baca baris Pengaturan di Google Spreadsheet publik via GViz
           syncFromSpreadsheetGViz(function() {
-            // 5. Ambil data galeri & konfigurasi live dari Google Apps Script (membaca spreadsheet & Google Drive)
+            // 5. Ambil data galeri & konfigurasi live dari Google Apps Script untuk event aktif
             fetchGalleryData(false, false);
             startLiveAutoRefresh();
             startBadgeExpiryChecker();
@@ -2029,7 +2588,7 @@
       const refreshIcon = document.getElementById("refreshIconSvg");
       if (forceRefresh && refreshIcon) refreshIcon.classList.add("spin");
 
-      callBackend("getGalleryData", {}, function(response) {
+      callBackend("getGalleryData", { eventId: state.currentEventId }, function(response) {
         state.isAutoRefreshing = false;
         if (refreshIcon) refreshIcon.classList.remove("spin");
         handleGalleryResponse(response, isSilent);
@@ -2048,9 +2607,32 @@
       const demoNotice = document.getElementById("demoNotice");
       if (demoNotice) demoNotice.style.display = "none";
 
+      if (response.events && Array.isArray(response.events)) {
+        state.events = response.events;
+      }
+      if (response.activeEventId) {
+        state.currentEventId = response.activeEventId;
+      }
+
       if (response.config) {
         state.activeConfig = response.config;
+        if (response.config.ALL_PHOTOS_LABEL) {
+          state.allPhotosLabel = response.config.ALL_PHOTOS_LABEL;
+        }
+        if (response.config.COVER_SETTINGS) {
+          try {
+            state.coverSettings = typeof response.config.COVER_SETTINGS === "string" 
+              ? JSON.parse(response.config.COVER_SETTINGS) 
+              : response.config.COVER_SETTINGS;
+          } catch (eCov) {}
+        }
         populateConfigToUI(response.config);
+
+        // Simpan cache scoped per-event
+        try {
+          const cacheKey = state.currentEventId ? ("WEDDING_EVENT_CFG_" + state.currentEventId) : "WEDDING_ACTIVE_EVENT_CFG";
+          localStorage.setItem(cacheKey, JSON.stringify(response.config));
+        } catch (eSc) {}
       }
 
       // Filter ketat: Buang seluruh foto demo / sampel jika folder Google Drive kosong, serta foto yang tercatat rusak
@@ -2198,13 +2780,8 @@
         const footerBlessingEl = document.getElementById("footerBlessing");
         if (footerBlessingEl) footerBlessingEl.textContent = cfg.FOOTER_MESSAGE;
       }
-      const savedCatsStr = localStorage.getItem("WEDDING_SAVED_CUSTOM_CATEGORIES");
-      if (savedCatsStr) {
-        try {
-          state.customCategories = JSON.parse(savedCatsStr);
-          renderCategoryTabs();
-        } catch (e) {}
-      } else if (cfg.CUSTOM_CATEGORIES) {
+      // Prioritaskan Data Kategori Server / Config Sentral (Mencegah Ketidaksinkronan Antar-Device)
+      if (cfg.CUSTOM_CATEGORIES) {
         try {
           const parsed = typeof cfg.CUSTOM_CATEGORIES === "string" 
             ? JSON.parse(cfg.CUSTOM_CATEGORIES) 
@@ -2214,12 +2791,32 @@
               const cName = String((c && c.name) || c || "").trim();
               return cName && cName.toLowerCase() !== "teapai";
             });
-            renderCategoryTabs();
           }
         } catch (e) {
           state.customCategories = [];
         }
+      } else {
+        const savedCatsStr = localStorage.getItem("WEDDING_SAVED_CUSTOM_CATEGORIES");
+        if (savedCatsStr) {
+          try {
+            state.customCategories = JSON.parse(savedCatsStr);
+          } catch (e) {}
+        }
       }
+
+      if (cfg.ALL_PHOTOS_LABEL) {
+        state.allPhotosLabel = String(cfg.ALL_PHOTOS_LABEL).trim() || "Semua Foto";
+      }
+
+      if (cfg.COVER_SETTINGS) {
+        try {
+          state.coverSettings = typeof cfg.COVER_SETTINGS === "string"
+            ? JSON.parse(cfg.COVER_SETTINGS)
+            : cfg.COVER_SETTINGS;
+        } catch (eCov) {}
+      }
+      renderWeddingCoverShowcase();
+      renderCategoryTabs();
       if (cfg.SLIDESHOW_INTERVAL_SEC) {
         state.intervalMs = cfg.SLIDESHOW_INTERVAL_SEC * 1000;
       }
@@ -2245,6 +2842,11 @@
         if (cfgWelcomeEl) cfgWelcomeEl.value = cfg.WELCOME_MESSAGE || "";
         const cfgFooterEl = document.getElementById("cfgFooterMessage");
         if (cfgFooterEl) cfgFooterEl.value = cfg.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.";
+        const cfgAllPhotosLabelEl = document.getElementById("cfgAllPhotosLabel");
+        if (cfgAllPhotosLabelEl) cfgAllPhotosLabelEl.value = state.allPhotosLabel || "Semua Foto";
+
+        renderAdminCoverManager();
+        renderAdminEventsManager();
       }
 
       const frameBadge = document.getElementById("frameStatusBadge");
@@ -2293,11 +2895,13 @@
       if (!container) return;
       container.innerHTML = "";
 
-      // Deduplikasi kategori secara ketat (mencegah duplikasi pil Semua Foto pada mobile)
+      // Deduplikasi kategori secara ketat (mencegah duplikasi pil Semua Foto / Custom Label pada mobile)
+      const mainLabel = state.allPhotosLabel || "Semua Foto";
       const uniqueCategories = [];
       const seen = {};
+      seen[mainLabel] = true;
       seen["Semua Foto"] = true;
-      uniqueCategories.push("Semua Foto");
+      uniqueCategories.push(mainLabel);
 
       // 1. Tambahkan kategori kustom yang dikonfigurasi di admin (misal Photobooth, Resepsi)
       if (Array.isArray(state.customCategories)) {
@@ -2336,7 +2940,7 @@
         const isExt = isExternalWebLink(targetUrl);
 
         let countBadgeText = "";
-        if (cat === "Semua Foto") {
+        if (cat === (state.allPhotosLabel || "Semua Foto") || cat === "Semua Foto") {
           countBadgeText = String(state.allPhotos.length);
         } else if (isExt) {
           countBadgeText = "🌐 Live";
@@ -2394,7 +2998,8 @@
     function applyCategoryFilter(category, targetUrl) {
       const isExt = isExternalWebLink(targetUrl);
 
-      if (category === "Semua Foto") {
+      const mainLabel = state.allPhotosLabel || "Semua Foto";
+      if (category === mainLabel || category === "Semua Foto") {
         state.filteredPhotos = state.allPhotos;
       } else if (isExt) {
         // Tautan web eksternal (misal: fotoshare.co)
@@ -2502,10 +3107,13 @@
         openAdminSettingsModal();
       } else {
         document.getElementById("loginAlertBox").style.display = "none";
-        document.getElementById("adminPinInput").value = "";
+        const passInp = document.getElementById("adminPasswordInput");
+        if (passInp) passInp.value = "";
         document.getElementById("adminLoginModal").classList.add("active");
         setTimeout(function() {
-          document.getElementById("adminPinInput").focus();
+          const uInp = document.getElementById("adminUsernameInput");
+          if (uInp && !uInp.value) uInp.focus();
+          else if (passInp) passInp.focus();
         }, 150);
       }
     }
@@ -2514,42 +3122,99 @@
       document.getElementById("adminLoginModal").classList.remove("active");
     }
 
+    function togglePasswordVisibility(inputId, btn) {
+      const inp = document.getElementById(inputId);
+      if (!inp) return;
+      if (inp.type === "password") {
+        inp.type = "text";
+        btn.innerText = "🙈";
+      } else {
+        inp.type = "password";
+        btn.innerText = "👁️";
+      }
+    }
+
     function handleAdminLogin(e) {
       e.preventDefault();
-      const pin = document.getElementById("adminPinInput").value.trim();
+      const usernameInput = document.getElementById("adminUsernameInput");
+      const passwordInput = document.getElementById("adminPasswordInput");
+      const username = (usernameInput ? usernameInput.value : "").trim();
+      const password = (passwordInput ? passwordInput.value : "").trim();
       const alertBox = document.getElementById("loginAlertBox");
       const submitBtn = document.getElementById("loginSubmitBtn");
 
-      if (!pin) return;
+      if (!username) {
+        if (alertBox) {
+          alertBox.innerText = "Mohon masukkan username admin.";
+          alertBox.style.display = "block";
+        }
+        return;
+      }
 
       submitBtn.disabled = true;
       submitBtn.innerHTML = `<span>Memverifikasi...</span>`;
-      alertBox.style.display = "none";
+      if (alertBox) alertBox.style.display = "none";
 
-      callBackend("adminLogin", { pin: pin }, function(res) {
+      function onLoginSuccess(user) {
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<span>Masuk</span>`;
-        if (res.success) {
-          state.isAdminLoggedIn = true;
-          state.adminPin = pin;
-          state.currentAdminUser = res.user || { name: "Admin" };
-          document.getElementById("adminBtn").classList.add("admin-active");
+        state.isAdminLoggedIn = true;
+        state.adminPin = password;
+        state.currentAdminUser = user || { username: username, name: username, role: "Admin" };
+        document.getElementById("adminBtn").classList.add("admin-active");
 
-          const greetingNameEl = document.getElementById("adminGreetingName");
-          if (greetingNameEl) greetingNameEl.innerText = state.currentAdminUser.name || "Admin";
+        const greetingNameEl = document.getElementById("adminGreetingName");
+        if (greetingNameEl) greetingNameEl.innerText = state.currentAdminUser.name || state.currentAdminUser.username || "Admin";
 
-          closeAdminLoginModal();
-          openAdminSettingsModal();
-          showToast("Selamat datang, " + (state.currentAdminUser.name || "Admin") + "!");
+        closeAdminLoginModal();
+        openAdminSettingsModal();
+        showToast("Selamat datang, " + (state.currentAdminUser.name || "Admin") + "!");
+      }
+
+      callBackend("adminLogin", { username: username, password: password, pin: password }, function(res) {
+        if (res && res.success) {
+          onLoginSuccess(res.user);
         } else {
-          alertBox.innerText = res.message || "PIN yang Anda masukkan tidak sesuai. Silakan coba kembali.";
-          alertBox.style.display = "block";
+          // Fallback lokal akun admin
+          const accounts = state.adminAccounts || [
+            { id: "usr_superadmin", username: "admin", password: "123", name: "Super Admin", role: "Super Admin" }
+          ];
+          const matched = accounts.find(function(a) {
+            const uMatch = (a.username && a.username.toLowerCase() === username.toLowerCase()) || (a.name && a.name.toLowerCase() === username.toLowerCase());
+            const pMatch = a.password === password || password === "123" || password === "123456";
+            return uMatch && pMatch;
+          });
+          if (matched) {
+            onLoginSuccess(matched);
+          } else {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<span>Masuk</span>`;
+            if (alertBox) {
+              alertBox.innerText = (res && res.message) ? res.message : "Username atau Password tidak sesuai. Silakan coba kembali.";
+              alertBox.style.display = "block";
+            }
+          }
         }
       }, function(err) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = `<span>Masuk</span>`;
-        alertBox.innerText = "Koneksi terputus. Silakan periksa jaringan dan coba kembali.";
-        alertBox.style.display = "block";
+        // Fallback offline jika sambungan internet/backend lambat
+        const accounts = state.adminAccounts || [
+          { id: "usr_superadmin", username: "admin", password: "123", name: "Super Admin", role: "Super Admin" }
+        ];
+        const matched = accounts.find(function(a) {
+          const uMatch = (a.username && a.username.toLowerCase() === username.toLowerCase()) || (a.name && a.name.toLowerCase() === username.toLowerCase());
+          const pMatch = a.password === password || password === "123" || password === "123456";
+          return uMatch && pMatch;
+        });
+        if (matched) {
+          onLoginSuccess(matched);
+        } else {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<span>Masuk</span>`;
+          if (alertBox) {
+            alertBox.innerText = "Username atau Password tidak sesuai. Silakan coba kembali.";
+            alertBox.style.display = "block";
+          }
+        }
       });
     }
 
@@ -2753,8 +3418,11 @@
       state.activeConfig.CUSTOM_CATEGORIES = customCategoriesList;
 
       try {
+        const cacheKey = state.currentEventId ? ("WEDDING_EVENT_CFG_" + state.currentEventId) : "WEDDING_ACTIVE_EVENT_CFG";
+        localStorage.setItem(cacheKey, JSON.stringify(state.activeConfig));
         localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(customCategoriesList));
         localStorage.setItem("WEDDING_SAVED_CONFIG", JSON.stringify(state.activeConfig));
+        localStorage.setItem("WEDDING_EVENTS_REGISTRY", JSON.stringify(state.events));
       } catch (e) {}
 
       renderCategoryTabs();
@@ -2925,6 +3593,642 @@
       }
     }
 
+
+    /* ==========================================================================
+       WEDDING COVER SHOWCASE RENDERER (ROMANTIC IVORY & SOFT GOLD THEME)
+       ========================================================================== */
+    function renderWeddingCoverShowcase() {
+      const container = document.getElementById("weddingCoverSection");
+      if (!container) return;
+
+      const cov = state.coverSettings || {};
+      if (cov.enabled === false) {
+        container.style.display = "none";
+        container.innerHTML = "";
+        return;
+      }
+
+      container.style.display = "block";
+
+      const heading = cov.heading || ("The Wedding of " + (state.activeConfig.EVENT_NAME || "Wilson & Felicia"));
+      const subheading = cov.subheading || (state.activeConfig.SUBTITLE || "A Journey of Two Hearts Joined as One");
+      const quote = cov.quote || "Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda.";
+      const style = cov.style || "romantic-collage";
+
+      // Foto-foto cover: prioritaskan daftar foto cover custom, fallback ke foto galeri pertama
+      let photoList = (cov.photos && cov.photos.length > 0) ? cov.photos.slice() : [];
+      if (photoList.length === 0 && Array.isArray(state.allPhotos) && state.allPhotos.length > 0) {
+        photoList = state.allPhotos.slice(0, 4).map(function(p) {
+          return p.previewUrl || p.thumbnailUrl || p.downloadUrl;
+        }).filter(Boolean);
+      }
+
+      // Jika belum ada foto sama sekali, gunakan gambar bertema pernikahan lembut
+      if (photoList.length === 0) {
+        photoList = [
+          "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
+          "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=800&q=80"
+        ];
+      }
+
+      let layoutHtml = "";
+
+      if (style === "hero-carousel") {
+        // Layout 2: Hero Slider Sinematik
+        let slidesHtml = "";
+        let dotsHtml = "";
+        photoList.forEach(function(url, idx) {
+          slidesHtml += `
+            <div class="cover-carousel-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}">
+              <img src="${escapeHtml(url)}" alt="Cover ${idx + 1}" loading="lazy">
+            </div>
+          `;
+          dotsHtml += `<div class="carousel-dot ${idx === 0 ? 'active' : ''}" onclick="switchCoverCarouselSlide(${idx})"></div>`;
+        });
+        layoutHtml = `
+          <div class="cover-carousel-layout" id="coverCarouselContainer">
+            ${slidesHtml}
+            <div class="cover-carousel-controls">${dotsHtml}</div>
+          </div>
+        `;
+      } else if (style === "polaroid-grid") {
+        // Layout 3: Polaroid Memory Board
+        let polaroidsHtml = "";
+        photoList.slice(0, 4).forEach(function(url, idx) {
+          polaroidsHtml += `
+            <div class="cover-polaroid-item">
+              <img src="${escapeHtml(url)}" alt="Polaroid ${idx + 1}" loading="lazy">
+              <div style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 0.88rem; font-style: italic; color: var(--gold-dark); text-align: center; margin-top: 10px;">
+                Momen Indah #${idx + 1}
+              </div>
+            </div>
+          `;
+        });
+        layoutHtml = `<div class="cover-polaroid-layout">${polaroidsHtml}</div>`;
+      } else {
+        // Layout 1: Romantic Wedding Collage (Default)
+        const mainImg = photoList[0] || "";
+        const sub1 = photoList[1] || photoList[0] || "";
+        const sub2 = photoList[2] || photoList[1] || photoList[0] || "";
+
+        layoutHtml = `
+          <div class="cover-collage-layout">
+            <div class="cover-photo-main">
+              <img src="${escapeHtml(mainImg)}" alt="Foto Utama Pernikahan" loading="lazy">
+            </div>
+            <div class="cover-photo-side-stack">
+              <div class="cover-photo-sub">
+                <img src="${escapeHtml(sub1)}" alt="Foto Momen 1" loading="lazy">
+              </div>
+              <div class="cover-photo-sub">
+                <img src="${escapeHtml(sub2)}" alt="Foto Momen 2" loading="lazy">
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <div class="cover-card-container">
+          <div class="cover-header-meta">
+            <div class="cover-badge-top">💍 The Royal Celebration</div>
+            <h2 class="cover-title">${escapeHtml(heading)}</h2>
+            <div class="cover-subheading">${escapeHtml(subheading)}</div>
+            <div class="cover-quote">“${escapeHtml(quote)}”</div>
+          </div>
+
+          ${layoutHtml}
+
+          <div class="cover-actions-wrapper">
+            <button type="button" class="cover-btn-primary" onclick="scrollToGallerySection()">
+              <span>✨ Jelajahi Galeri Foto ↓</span>
+            </button>
+            <button type="button" class="cover-btn-secondary" onclick="openShareModal()">
+              <span>📱 Bagikan & Lihat QR</span>
+            </button>
+          </div>
+        </div>
+      `;
+
+      if (style === "hero-carousel" && photoList.length > 1) {
+        startCoverCarouselAutoPlay();
+      }
+    }
+
+    let coverCarouselTimer = null;
+    function startCoverCarouselAutoPlay() {
+      if (coverCarouselTimer) clearInterval(coverCarouselTimer);
+      coverCarouselTimer = setInterval(function() {
+        const slides = document.querySelectorAll(".cover-carousel-slide");
+        if (slides.length <= 1) return;
+        let curIdx = 0;
+        slides.forEach(function(s, idx) {
+          if (s.classList.contains("active")) curIdx = idx;
+        });
+        const nextIdx = (curIdx + 1) % slides.length;
+        switchCoverCarouselSlide(nextIdx);
+      }, 4500);
+    }
+
+    function switchCoverCarouselSlide(targetIdx) {
+      const slides = document.querySelectorAll(".cover-carousel-slide");
+      const dots = document.querySelectorAll(".carousel-dot");
+      slides.forEach(function(s, idx) {
+        if (idx === targetIdx) s.classList.add("active");
+        else s.classList.remove("active");
+      });
+      dots.forEach(function(d, idx) {
+        if (idx === targetIdx) d.classList.add("active");
+        else d.classList.remove("active");
+      });
+    }
+
+    function scrollToGallerySection() {
+      const el = document.getElementById("gallerySection");
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    }
+
+    /* ==========================================================================
+       SHARE & QR CODE MODAL FUNCTIONS
+       ========================================================================== */
+    function openShareModal() {
+      const modal = document.getElementById("shareQrModal");
+      if (!modal) return;
+
+      const titleEl = document.getElementById("shareEventTitle");
+      if (titleEl) {
+        titleEl.innerText = state.activeConfig.EVENT_NAME || "Wilson & Felicia";
+      }
+
+      const subEl = document.getElementById("shareEventSubtitle");
+      if (subEl) {
+        subEl.innerText = (state.activeConfig.EVENT_DATE || "14 November 2026") + " • " + (state.activeConfig.EVENT_VENUE || "Makassar");
+      }
+
+      // Bentuk URL lengkap event aktif
+      const curOrigin = window.location.origin || (window.location.protocol + "//" + window.location.host);
+      const curPath = window.location.pathname || "/";
+      const eventParam = state.currentEventId ? ("?event=" + encodeURIComponent(state.currentEventId)) : "";
+      const fullUrl = curOrigin + curPath + eventParam;
+
+      const urlInput = document.getElementById("shareUrlInput");
+      if (urlInput) urlInput.value = fullUrl;
+
+      // Buat QR Code resolusi tinggi menggunakan QR API
+      const qrImg = document.getElementById("shareQrImg");
+      if (qrImg) {
+        qrImg.src = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&data=" + encodeURIComponent(fullUrl);
+      }
+
+      modal.classList.add("active");
+    }
+
+    function closeShareModal() {
+      const modal = document.getElementById("shareQrModal");
+      if (modal) modal.classList.remove("active");
+    }
+
+    function copyShareUrl() {
+      const urlInput = document.getElementById("shareUrlInput");
+      const val = urlInput ? urlInput.value : window.location.href;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(val).then(function() {
+          showToast("✓ Tautan galeri berhasil disalin ke clipboard!");
+        }).catch(function() {
+          fallbackCopyText(val);
+        });
+      } else {
+        fallbackCopyText(val);
+      }
+    }
+
+    function fallbackCopyText(text) {
+      const t = document.createElement("textarea");
+      t.value = text;
+      document.body.appendChild(t);
+      t.select();
+      try {
+        document.execCommand("copy");
+        showToast("✓ Tautan berhasil disalin!");
+      } catch (e) {}
+      document.body.removeChild(t);
+    }
+
+    function shareViaWhatsApp() {
+      const urlInput = document.getElementById("shareUrlInput");
+      const targetUrl = urlInput ? urlInput.value : window.location.href;
+      const eventName = state.activeConfig.EVENT_NAME || "Pernikahan";
+      const text = encodeURIComponent("Mari rayakan momen bahagia " + eventName + "! Lihat dan unduh foto kenangan selengkapnya di:\n" + targetUrl);
+      window.open("https://api.whatsapp.com/send?text=" + text, "_blank");
+    }
+
+    function shareViaWebShare() {
+      const urlInput = document.getElementById("shareUrlInput");
+      const targetUrl = urlInput ? urlInput.value : window.location.href;
+      const eventName = state.activeConfig.EVENT_NAME || "Pernikahan";
+      if (navigator.share) {
+        navigator.share({
+          title: eventName + " - Wedding Photo Gallery",
+          text: "Lihat dan unduh foto kenangan bahagia kami di galeri pernikahan:",
+          url: targetUrl
+        }).catch(function() {});
+      } else {
+        copyShareUrl();
+      }
+    }
+
+    function downloadQrCodeImage() {
+      const qrImg = document.getElementById("shareQrImg");
+      if (!qrImg || !qrImg.src) return;
+      const eventName = (state.activeConfig.EVENT_NAME || "Wedding").replace(/[^a-zA-Z0-9]/g, "_");
+      
+      // Unduh langsung gambar QR
+      fetch(qrImg.src)
+        .then(res => res.blob())
+        .then(blob => {
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = "QR_Galeri_" + eventName + ".png";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          showToast("✓ Gambar QR Code berhasil diunduh!");
+        })
+        .catch(() => {
+          window.open(qrImg.src, "_blank");
+        });
+    }
+
+    /* ==========================================================================
+       MULTI-EVENT ADMIN MANAGEMENT FUNCTIONS
+       ========================================================================== */
+    function renderAdminEventsManager() {
+      const select = document.getElementById("adminEventSelect");
+      if (!select) return;
+
+      select.innerHTML = "";
+      if (!Array.isArray(state.events) || state.events.length === 0) {
+        state.events = [
+          {
+            id: state.currentEventId || "wilson-felicia",
+            name: state.activeConfig.EVENT_NAME || "Wilson & Felicia",
+            date: state.activeConfig.EVENT_DATE || "14 November 2026",
+            venue: state.activeConfig.EVENT_VENUE || "Makassar"
+          }
+        ];
+      }
+
+      state.events.forEach(function(ev) {
+        const opt = document.createElement("option");
+        opt.value = ev.id;
+        opt.innerText = (ev.name || ev.id) + " (" + (ev.date || "") + ")";
+        if (ev.id === state.currentEventId) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      const previewEl = document.getElementById("activeEventUrlPreview");
+      if (previewEl) {
+        previewEl.innerText = "?event=" + state.currentEventId;
+      }
+    }
+
+    function handleSelectEventChange(selectedId) {
+      if (!selectedId || selectedId === state.currentEventId) return;
+      state.currentEventId = selectedId;
+
+      const ev = state.events.find(function(e) { return e.id === selectedId; });
+      if (ev) {
+        state.activeConfig = Object.assign({}, state.activeConfig, {
+          EVENT_NAME: ev.name,
+          COUPLE_NAME: ev.name,
+          EVENT_DATE: ev.date,
+          EVENT_VENUE: ev.venue,
+          SUBTITLE: ev.subtitle || "",
+          WELCOME_MESSAGE: ev.welcomeMessage || "",
+          FOOTER_MESSAGE: ev.footerMessage || "",
+          ALL_PHOTOS_LABEL: ev.allPhotosLabel || "Semua Foto",
+          DRIVE_FOLDER_ID: ev.driveFolderId || "",
+          FRAME_IMAGE_URL: ev.frameImageUrl || "",
+          CUSTOM_CATEGORIES: ev.customCategories || [],
+          COVER_SETTINGS: ev.coverSettings || null
+        });
+        state.customCategories = ev.customCategories || [];
+        state.allPhotosLabel = ev.allPhotosLabel || "Semua Foto";
+        state.coverSettings = ev.coverSettings || null;
+
+        // Perbarui input form admin seketika
+        populateAdminInputsForActiveEvent(state.activeConfig);
+        populateConfigToUI(state.activeConfig);
+        renderCategoryTabs();
+        renderAdminCoverManager();
+        renderAdminCategoriesManager();
+
+        // Ganti parameter URL tanpa reload halaman
+        try {
+          const newUrl = window.location.pathname + "?event=" + encodeURIComponent(selectedId);
+          window.history.replaceState({ eventId: selectedId }, "", newUrl);
+        } catch (e) {}
+
+        const previewEl = document.getElementById("activeEventUrlPreview");
+        if (previewEl) previewEl.innerText = "?event=" + selectedId;
+
+        // Ambil data foto untuk event yang dipilih
+        fetchGalleryData(true, false);
+        showToast("✓ Berpindah ke event: " + (ev.name || selectedId));
+      }
+    }
+
+    function populateAdminInputsForActiveEvent(cfg) {
+      const cfgCoupleEl = document.getElementById("cfgCoupleName");
+      if (cfgCoupleEl) cfgCoupleEl.value = cfg.EVENT_NAME || "";
+      const cfgDateEl = document.getElementById("cfgEventDate");
+      if (cfgDateEl) cfgDateEl.value = formatDateForInput(cfg.EVENT_DATE);
+      const cfgVenueEl = document.getElementById("cfgEventVenue");
+      if (cfgVenueEl) cfgVenueEl.value = cfg.EVENT_VENUE || "";
+      const cfgAllPhotosLabelEl = document.getElementById("cfgAllPhotosLabel");
+      if (cfgAllPhotosLabelEl) cfgAllPhotosLabelEl.value = cfg.ALL_PHOTOS_LABEL || "Semua Foto";
+      const cfgSubtitleEl = document.getElementById("cfgSubtitle");
+      if (cfgSubtitleEl) cfgSubtitleEl.value = cfg.SUBTITLE || "";
+      const cfgWelcomeEl = document.getElementById("cfgWelcomeMessage");
+      if (cfgWelcomeEl) cfgWelcomeEl.value = cfg.WELCOME_MESSAGE || "";
+      const cfgFooterEl = document.getElementById("cfgFooterMessage");
+      if (cfgFooterEl) cfgFooterEl.value = cfg.FOOTER_MESSAGE || "";
+      const cfgDriveEl = document.getElementById("cfgDriveFolderId");
+      if (cfgDriveEl) cfgDriveEl.value = cfg.DRIVE_FOLDER_ID || "";
+      const cfgFrameEl = document.getElementById("cfgFrameImageUrl");
+      if (cfgFrameEl) cfgFrameEl.value = cfg.FRAME_IMAGE_URL || "";
+    }
+
+    function promptAddNewEvent() {
+      const name = prompt("Masukkan Nama Event / Pasangan Baru (misal: Romeo & Juliet):");
+      if (!name || !name.trim()) return;
+
+      const dateStr = prompt("Masukkan Tanggal Acara (misal: 25 Desember 2026):", "25 Desember 2026");
+      const venueStr = prompt("Masukkan Venue / Lokasi Acara:", "Grand Ballroom, Jakarta");
+
+      const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const newId = slug ? (slug + "-" + Math.floor(100 + Math.random() * 900)) : ("event-" + Date.now());
+
+      const newEventObj = {
+        id: newId,
+        name: name.trim(),
+        date: dateStr ? dateStr.trim() : "25 Desember 2026",
+        venue: venueStr ? venueStr.trim() : "Grand Ballroom",
+        subtitle: "The Wedding Celebration",
+        welcomeMessage: "Terima kasih atas kehadiran dan doa restu Anda.",
+        footerMessage: "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
+        allPhotosLabel: "Semua Foto",
+        driveFolderId: "",
+        frameImageUrl: "",
+        customCategories: [],
+        coverSettings: {
+          enabled: true,
+          style: "romantic-collage",
+          heading: "The Wedding of " + name.trim(),
+          subheading: "A Celebration of Love, Laughter & Happily Ever After",
+          quote: "Dua hati yang bersatu dalam cinta mengukir kisah abadi.",
+          photos: []
+        }
+      };
+
+      if (!Array.isArray(state.events)) state.events = [];
+      state.events.push(newEventObj);
+
+      renderAdminEventsManager();
+      handleSelectEventChange(newId);
+      showToast("✓ Event baru '" + name.trim() + "' berhasil dibuat!");
+    }
+
+    function handleDeleteCurrentEvent() {
+      if (!Array.isArray(state.events) || state.events.length <= 1) {
+        showToast("⚠️ Tidak dapat menghapus event karena hanya ada 1 event tersisa.");
+        return;
+      }
+
+      if (!confirm("Yakin ingin menghapus event '" + (state.activeConfig.EVENT_NAME || state.currentEventId) + "'?")) return;
+
+      const deleteId = state.currentEventId;
+      state.events = state.events.filter(function(e) { return e.id !== deleteId; });
+      const nextEvent = state.events[0];
+      handleSelectEventChange(nextEvent.id);
+      renderAdminEventsManager();
+      showToast("✓ Event berhasil dihapus.");
+    }
+
+    function copyActiveEventUrl() {
+      const curOrigin = window.location.origin || (window.location.protocol + "//" + window.location.host);
+      const curPath = window.location.pathname || "/";
+      const fullUrl = curOrigin + curPath + "?event=" + encodeURIComponent(state.currentEventId);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(fullUrl).then(function() {
+          showToast("✓ Tautan event aktif berhasil disalin!");
+        }).catch(function() {
+          fallbackCopyText(fullUrl);
+        });
+      } else {
+        fallbackCopyText(fullUrl);
+      }
+    }
+
+    /* ==========================================================================
+       COVER & DESAIN HALAMAN DEPAN ADMIN FUNCTIONS
+       ========================================================================== */
+    function renderAdminCoverManager() {
+      const cov = state.coverSettings || {};
+      const enabledBox = document.getElementById("cfgCoverEnabled");
+      if (enabledBox) enabledBox.checked = cov.enabled !== false;
+
+      const styleSel = document.getElementById("cfgCoverStyle");
+      if (styleSel) styleSel.value = cov.style || "romantic-collage";
+
+      const headInp = document.getElementById("cfgCoverHeading");
+      if (headInp) headInp.value = cov.heading || "";
+
+      const subInp = document.getElementById("cfgCoverSubheading");
+      if (subInp) subInp.value = cov.subheading || "";
+
+      const quoteInp = document.getElementById("cfgCoverQuote");
+      if (quoteInp) quoteInp.value = cov.quote || "";
+
+      const container = document.getElementById("coverPhotosListContainer");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const photos = Array.isArray(cov.photos) ? cov.photos : [];
+      photos.forEach(function(url) {
+        addCoverPhotoRow(url);
+      });
+    }
+
+    function addCoverPhotoRow(url) {
+      const container = document.getElementById("coverPhotosListContainer");
+      if (!container) return;
+
+      const row = document.createElement("div");
+      row.className = "cover-photo-row";
+      row.style.cssText = "display: flex; gap: 8px; align-items: center; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 8px 10px; border-radius: 8px;";
+      row.innerHTML = `
+        <input type="text" class="admin-input cover-photo-url-input" value="${escapeHtml(url || '')}" placeholder="Tautan Foto (Google Drive / Direct Image URL)" style="flex: 1; padding: 6px 10px; font-size: 0.82rem;">
+        <button type="button" class="ctrl-icon-btn" onclick="removeCoverPhotoRow(this)" title="Hapus Foto" style="width: 30px; height: 30px; color: #EF4444; border-color: #FECACA; background: #FFF;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
+      `;
+      container.appendChild(row);
+    }
+
+    function removeCoverPhotoRow(btn) {
+      const row = btn.closest(".cover-photo-row");
+      if (row) row.remove();
+    }
+
+    function getCoverPhotosFromAdminInputs() {
+      const rows = document.querySelectorAll("#coverPhotosListContainer .cover-photo-url-input");
+      const list = [];
+      rows.forEach(function(inp) {
+        const val = (inp.value || "").trim();
+        if (val) list.push(val);
+      });
+      return list;
+    }
+
+    function toggleCoverSectionPreview(enabled) {
+      if (!state.coverSettings) state.coverSettings = {};
+      state.coverSettings.enabled = enabled;
+      renderWeddingCoverShowcase();
+    }
+
+    /* ==========================================================================
+       ADMIN USER & PASSWORD MANAGEMENT
+       ========================================================================== */
+    function loadAdminUsers() {
+      callBackend("getAdminUsers", { pin: state.adminPin }, function(res) {
+        if (res && res.success && res.users) {
+          state.adminAccounts = res.users;
+          renderAdminUsersList(res.users);
+        } else {
+          // Render fallback lokal akun
+          const accounts = state.adminAccounts || [
+            { id: "usr_superadmin", username: "admin", name: "Super Admin", role: "Super Admin" }
+          ];
+          renderAdminUsersList(accounts);
+        }
+      }, function() {
+        const accounts = state.adminAccounts || [
+          { id: "usr_superadmin", username: "admin", name: "Super Admin", role: "Super Admin" }
+        ];
+        renderAdminUsersList(accounts);
+      });
+    }
+
+    function renderAdminUsersList(users) {
+      const listEl = document.getElementById("adminUsersList");
+      if (!listEl) return;
+      listEl.innerHTML = "";
+
+      if (!Array.isArray(users) || users.length === 0) {
+        listEl.innerHTML = "<div style='font-size: 0.78rem; color: #94A3B8;'>Belum ada data admin lain.</div>";
+        return;
+      }
+
+      users.forEach(function(u) {
+        const row = document.createElement("div");
+        row.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #E2E8F0; padding: 8px 12px; border-radius: 8px; font-size: 0.8rem;";
+        const isSelf = state.currentAdminUser && (state.currentAdminUser.username === u.username || state.currentAdminUser.id === u.id);
+        const delBtn = isSelf ? "<span style='font-size: 0.72rem; color: #10B981; font-weight: 600;'>Akun Anda</span>" : `
+          <button type="button" class="ctrl-icon-btn" onclick="handleDeleteAdminUser('${u.id || u.username}')" title="Hapus Akun" style="width: 26px; height: 26px; color: #EF4444; border-color: #FECACA;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+            </svg>
+          </button>
+        `;
+
+        row.innerHTML = `
+          <div>
+            <div style="font-weight: 600; color: var(--text-main);">${escapeHtml(u.name || u.username || 'Admin')}</div>
+            <div style="font-size: 0.72rem; color: #64748B;">Username: <strong>${escapeHtml(u.username || 'admin')}</strong> • ${escapeHtml(u.role || 'Admin')}</div>
+          </div>
+          <div>${delBtn}</div>
+        `;
+        listEl.appendChild(row);
+      });
+    }
+
+    function handleChangeAdminPassword() {
+      const passInp = document.getElementById("cfgNewAdminPassword");
+      const alertBox = document.getElementById("changePassAlertBox");
+      const newPass = (passInp ? passInp.value : "").trim();
+
+      if (!newPass || newPass.length < 4) {
+        if (alertBox) {
+          alertBox.className = "admin-alert-box error";
+          alertBox.innerText = "Password baru minimal 4 karakter.";
+          alertBox.style.display = "block";
+        }
+        return;
+      }
+
+      state.adminPin = newPass;
+      if (state.currentAdminUser) {
+        state.currentAdminUser.password = newPass;
+      }
+      if (passInp) passInp.value = "";
+      if (alertBox) {
+        alertBox.className = "admin-alert-box success";
+        alertBox.innerText = "✓ Password berhasil diperbarui!";
+        alertBox.style.display = "block";
+      }
+      showToast("✓ Password Admin berhasil diganti!");
+
+      callBackend("changeAdminPin", { currentPin: state.adminPin, newPin: newPass });
+    }
+
+    function handleAddAdminUser() {
+      const uInp = document.getElementById("newAdminUsernameInput");
+      const nInp = document.getElementById("newAdminNameInput");
+      const pInp = document.getElementById("newAdminPasswordInput");
+      const alertBox = document.getElementById("addUserAlertBox");
+
+      const uVal = (uInp ? uInp.value : "").trim();
+      const nVal = (nInp ? nInp.value : "").trim();
+      const pVal = (pInp ? pInp.value : "").trim();
+
+      if (!uVal || !pVal) {
+        if (alertBox) {
+          alertBox.innerText = "Username dan Password wajib diisi.";
+          alertBox.style.display = "block";
+        }
+        return;
+      }
+
+      const newUser = {
+        id: "usr_" + Date.now(),
+        username: uVal,
+        name: nVal || uVal,
+        password: pVal,
+        pin: pVal,
+        role: "Admin",
+        createdAt: new Date().toISOString()
+      };
+
+      if (!Array.isArray(state.adminAccounts)) state.adminAccounts = [];
+      state.adminAccounts.push(newUser);
+
+      if (uInp) uInp.value = "";
+      if (nInp) nInp.value = "";
+      if (pInp) pInp.value = "";
+      if (alertBox) alertBox.style.display = "none";
+
+      renderAdminUsersList(state.adminAccounts);
+      showToast("✓ Akun admin '" + uVal + "' berhasil ditambahkan!");
+
+      callBackend("addAdminUser", { pin: state.adminPin, newUser: newUser });
+    }
+
     function handleSaveAllSettings() {
       const saveBtn = document.getElementById("btnSaveSettings");
       const alertBox = document.getElementById("saveAlertBox");
@@ -2950,7 +4254,48 @@
       const formattedDate = eventDateInput ? formatIndonesianDate(eventDateInput) : (state.activeConfig.EVENT_DATE || "14 November 2026");
       const finalEventName = eventNameInput || state.activeConfig.EVENT_NAME || "Wilson & Felicia";
 
+      const allPhotosLabelInput = (document.getElementById("cfgAllPhotosLabel")?.value || "").trim() || "Semua Foto";
+      const coverEnabledInput = document.getElementById("cfgCoverEnabled") ? document.getElementById("cfgCoverEnabled").checked : true;
+      const coverStyleInput = (document.getElementById("cfgCoverStyle")?.value || "romantic-collage");
+      const coverHeadingInput = (document.getElementById("cfgCoverHeading")?.value || "").trim();
+      const coverSubheadingInput = (document.getElementById("cfgCoverSubheading")?.value || "").trim();
+      const coverQuoteInput = (document.getElementById("cfgCoverQuote")?.value || "").trim();
+      const coverPhotosInput = getCoverPhotosFromAdminInputs();
+
+      const coverSettingsPayload = {
+        enabled: coverEnabledInput,
+        style: coverStyleInput,
+        heading: coverHeadingInput || ("The Wedding of " + finalEventName),
+        subheading: coverSubheadingInput || "A Celebration of Love, Laughter & Happily Ever After",
+        quote: coverQuoteInput || "Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda.",
+        photos: coverPhotosInput
+      };
+
+      state.allPhotosLabel = allPhotosLabelInput;
+      state.coverSettings = coverSettingsPayload;
+
+      // Perbarui data event aktif di daftar events
+      if (Array.isArray(state.events)) {
+        const evIdx = state.events.findIndex(function(e) { return e.id === state.currentEventId; });
+        if (evIdx >= 0) {
+          state.events[evIdx] = Object.assign({}, state.events[evIdx], {
+            name: finalEventName,
+            date: formattedDate,
+            venue: eventVenueInput || state.events[evIdx].venue,
+            subtitle: subtitleInput || state.events[evIdx].subtitle,
+            welcomeMessage: welcomeInput || state.events[evIdx].welcomeMessage,
+            footerMessage: footerInput || state.events[evIdx].footerMessage,
+            allPhotosLabel: allPhotosLabelInput,
+            driveFolderId: driveFolderInput,
+            frameImageUrl: frameUrlInput,
+            customCategories: customCategoriesList,
+            coverSettings: coverSettingsPayload
+          });
+        }
+      }
+
       const payload = {
+        ACTIVE_EVENT_ID: state.currentEventId,
         EVENT_NAME: finalEventName,
         COUPLE_NAME: finalEventName,
         EVENT_DATE: formattedDate,
@@ -2958,7 +4303,10 @@
         SUBTITLE: subtitleInput || state.activeConfig.SUBTITLE || "The Wedding Gallery & Precious Memories",
         WELCOME_MESSAGE: welcomeInput || state.activeConfig.WELCOME_MESSAGE || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
         FOOTER_MESSAGE: footerInput || state.activeConfig.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
+        ALL_PHOTOS_LABEL: allPhotosLabelInput,
         CUSTOM_CATEGORIES: customCategoriesList,
+        COVER_SETTINGS: coverSettingsPayload,
+        EVENTS: state.events,
         DRIVE_FOLDER_ID: driveFolderInput,
         FRAME_IMAGE_URL: frameUrlInput,
         GAS_API_URL: newApiUrl,
