@@ -1418,7 +1418,7 @@
   </header>
 
   <!-- Wedding Front Page Cover Showcase (Custom Wedding Landing Header) -->
-  <section id="weddingCoverSection" class="wedding-cover-hero" style="display: none;">
+  <section id="weddingCoverSection" class="wedding-cover-hero" style="display: none !important;">
     <!-- Diinjeksi dinamis oleh renderWeddingCoverShowcase() -->
   </section>
 
@@ -2023,7 +2023,7 @@
             { name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs" }
           ],
           coverSettings: {
-            enabled: true,
+            enabled: false,
             style: "romantic-collage",
             heading: "The Wedding Celebration",
             subheading: "A Journey of Two Hearts Joined as One",
@@ -2571,27 +2571,30 @@
         if (footerBlessingEl) footerBlessingEl.textContent = cfg.FOOTER_MESSAGE;
       }
       // Prioritaskan Data Kategori Server / Config Sentral (Mencegah Ketidaksinkronan Antar-Device)
+      let loadedCats = null;
       if (cfg.CUSTOM_CATEGORIES) {
-        try {
-          const parsed = typeof cfg.CUSTOM_CATEGORIES === "string" 
-            ? JSON.parse(cfg.CUSTOM_CATEGORIES) 
-            : cfg.CUSTOM_CATEGORIES;
-          if (Array.isArray(parsed)) {
-            state.customCategories = parsed.filter(function(c) {
-              const cName = String((c && c.name) || c || "").trim();
-              return cName && cName.toLowerCase() !== "teapai";
-            });
+        if (typeof cfg.CUSTOM_CATEGORIES === "string") {
+          if (!cfg.CUSTOM_CATEGORIES.includes("[object Object]")) {
+            try { loadedCats = JSON.parse(cfg.CUSTOM_CATEGORIES); } catch(e) {}
           }
-        } catch (e) {
-          state.customCategories = [];
+        } else if (Array.isArray(cfg.CUSTOM_CATEGORIES)) {
+          loadedCats = cfg.CUSTOM_CATEGORIES;
         }
-      } else {
-        const savedCatsStr = localStorage.getItem("WEDDING_SAVED_CUSTOM_CATEGORIES");
-        if (savedCatsStr) {
-          try {
-            state.customCategories = JSON.parse(savedCatsStr);
-          } catch (e) {}
+      }
+      if (!Array.isArray(loadedCats) || loadedCats.length === 0) {
+        try {
+          const savedCatsStr = localStorage.getItem("WEDDING_SAVED_CUSTOM_CATEGORIES");
+          if (savedCatsStr) loadedCats = JSON.parse(savedCatsStr);
+        } catch(e) {}
+        if (!Array.isArray(loadedCats) || loadedCats.length === 0) {
+          loadedCats = GLOBAL_CONFIG.CUSTOM_CATEGORIES || [];
         }
+      }
+      if (Array.isArray(loadedCats)) {
+        state.customCategories = loadedCats.filter(function(c) {
+          const cName = String((c && c.name) || c || "").trim();
+          return cName && cName.toLowerCase() !== "teapai";
+        });
       }
 
       if (cfg.ALL_PHOTOS_LABEL) {
@@ -2789,7 +2792,7 @@
 
     function fetchFotosharePhotos(cat, url, callback) {
       if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
-      if (state.categoryPhotosMap[cat]) {
+      if (state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0) {
         if (callback) callback(state.categoryPhotosMap[cat]);
         return;
       }
@@ -2799,26 +2802,58 @@
           if (!res.ok) throw new Error("HTTP " + res.status);
           return res.text();
         })
-        .then(function(html) {
-          const regex = /(https:\/\/cdn-bz-op\.fotoshare\.co\/[^\s"'<>]+\.JPG)/gi;
-          let m;
-          const set = new Set();
-          const list = [];
-          while ((m = regex.exec(html)) !== null) {
-            const u = m[1];
-            if (!set.has(u)) {
-              set.add(u);
-              list.push({
-                id: "pb_" + (list.length + 1),
-                name: "Photobooth " + (list.length + 1),
-                category: cat,
-                thumbnailUrl: u,
-                previewUrl: u,
-                downloadUrl: u,
-                timestamp: Date.now()
-              });
+        .then(function(htmlText) {
+          let list = [];
+          const sessionMatch = htmlText.match(/let\s+sessionImages\s*=\s*(\{[\s\S]*?\});/);
+          if (sessionMatch) {
+            try {
+              const sessionObj = JSON.parse(sessionMatch[1]);
+              let idx = 0;
+              for (const sKey in sessionObj) {
+                const sess = sessionObj[sKey];
+                for (const imgKey in sess) {
+                  const it = sess[imgKey];
+                  idx++;
+                  const fullWebUrl = it.url ? ("https://fotoshare.co" + it.url) : ("https://fotoshare.co/i/" + (it.hash || ""));
+                  list.push({
+                    id: it.hash || ("pb_" + idx),
+                    name: "Photobooth " + idx,
+                    category: cat,
+                    thumbnailUrl: it.thumb_url || it.img,
+                    previewUrl: it.img,
+                    downloadUrl: it.img,
+                    originalWebUrl: fullWebUrl,
+                    img: it.img,
+                    timestamp: it.date_added ? new Date(it.date_added).getTime() : Date.now()
+                  });
+                }
+              }
+            } catch (eJson) {}
+          }
+
+          if (list.length === 0) {
+            const regex = /(https:\/\/cdn-bz-op\.fotoshare\.co\/[^\s"'<>]+\.JPG)/gi;
+            let m;
+            const set = new Set();
+            while ((m = regex.exec(htmlText)) !== null) {
+              const u = m[1];
+              if (!set.has(u)) {
+                set.add(u);
+                list.push({
+                  id: "pb_" + (list.length + 1),
+                  name: "Photobooth " + (list.length + 1),
+                  category: cat,
+                  thumbnailUrl: u,
+                  previewUrl: u,
+                  downloadUrl: u,
+                  originalWebUrl: url || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+                  img: u,
+                  timestamp: Date.now()
+                });
+              }
             }
           }
+
           state.categoryPhotosMap[cat] = list;
           if (callback) callback(list);
         })
@@ -2826,6 +2861,47 @@
           console.error("Gagal mengambil foto fotoshare:", err);
           state.categoryPhotosMap[cat] = [];
           if (callback) callback([]);
+        });
+    }
+
+    function handlePhotoboothPhotoClick(photo) {
+      if (!photo) return;
+      // 1. Buka sesuai dengan link asli websitenya di tab baru
+      const targetWebUrl = photo.originalWebUrl || ("https://fotoshare.co" + (photo.url || "")) || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
+      window.open(targetWebUrl, '_blank');
+
+      // 2. Gambar di-download langsung dari web aslinya
+      const downloadUrl = photo.downloadUrl || photo.img || photo.previewUrl || photo.thumbnailUrl;
+      if (downloadUrl) {
+        downloadOriginalImageDirectly(downloadUrl, (photo.name || "Photobooth") + ".jpg");
+      }
+    }
+
+    function downloadOriginalImageDirectly(imgUrl, fileName) {
+      fetch(imgUrl)
+        .then(function(res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.blob();
+        })
+        .then(function(blob) {
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 3000);
+          showToast("✓ Foto Photobooth asli sedang diunduh dari web!");
+        })
+        .catch(function(err) {
+          const a = document.createElement("a");
+          a.href = imgUrl;
+          a.target = "_blank";
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
         });
     }
 
@@ -2953,9 +3029,47 @@
       grid.innerHTML = "";
 
       const activeCat = categoryName || state.activeCategory;
+      const isPhotobooth = (activeCat.toLowerCase().includes("photobooth") || (targetUrl && targetUrl.includes("fotoshare.co")));
 
       // Jika foto kosong untuk kategori ini
       if (!state.filteredPhotos || state.filteredPhotos.length === 0) {
+        const driveFolderId = extractDriveFolderId(targetUrl);
+        if (driveFolderId) {
+          grid.innerHTML = `
+            <div style="grid-column: 1 / -1; width: 100%; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid rgba(197, 168, 128, 0.4); background: #fff; margin-top: 4px;">
+              <div style="background: #FAF8F5; padding: 12px 18px; border-bottom: 1px solid rgba(197, 168, 128, 0.25); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 1.25rem;">📁</span>
+                  <span>Folder Google Drive: <strong>${escapeHtml(activeCat)}</strong></span>
+                </div>
+                <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-gold" style="padding: 7px 16px; font-size: 0.82rem; text-decoration: none; border-radius: 8px;">
+                  <span>Buka Folder Google Drive ↗</span>
+                </a>
+              </div>
+              <iframe src="https://drive.google.com/embeddedfolderview?id=${driveFolderId}#grid" style="width: 100%; min-height: 540px; border: none; display: block;" loading="lazy"></iframe>
+            </div>
+          `;
+          return;
+        }
+
+        if (targetUrl && isExternalWebLink(targetUrl) && !targetUrl.includes("fotoshare.co")) {
+          grid.innerHTML = `
+            <div style="grid-column: 1 / -1; width: 100%; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid rgba(197, 168, 128, 0.4); background: #fff; margin-top: 4px;">
+              <div style="background: #FAF8F5; padding: 12px 18px; border-bottom: 1px solid rgba(197, 168, 128, 0.25); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 1.25rem;">🌐</span>
+                  <span>Tautan Galeri: <strong>${escapeHtml(activeCat)}</strong></span>
+                </div>
+                <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-gold" style="padding: 7px 16px; font-size: 0.82rem; text-decoration: none; border-radius: 8px;">
+                  <span>Buka Tautan Galeri ↗</span>
+                </a>
+              </div>
+              <iframe src="${escapeHtml(targetUrl)}" style="width: 100%; min-height: 540px; border: none; display: block;" loading="lazy" allowfullscreen></iframe>
+            </div>
+          `;
+          return;
+        }
+
         grid.innerHTML = `
           <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
             <div style="font-size: 2.2rem; margin-bottom: 12px; opacity: 0.7;">🖼️</div>
@@ -2970,7 +3084,16 @@
         const card = document.createElement("div");
         card.className = "photo-card";
         card.setAttribute("data-photo-id", photo.id);
-        card.onclick = function() { openLightbox(index); };
+
+        if (isPhotobooth) {
+          card.onclick = function() {
+            handlePhotoboothPhotoClick(photo);
+          };
+        } else {
+          card.onclick = function() {
+            openLightbox(index);
+          };
+        }
 
         const photoIsNew = isPhotoNew(photo);
         const newBadgeHtml = photoIsNew ? `
@@ -2980,6 +3103,14 @@
           </div>
         ` : '';
 
+        const overlayBadge = isPhotobooth 
+          ? `<span class="photo-badge" style="background: rgba(180, 83, 9, 0.85);">${escapeHtml(photo.category || activeCat)} ↗</span>`
+          : `<span class="photo-badge">${escapeHtml(photo.category || activeCat)}</span>`;
+
+        const overlayActionHint = isPhotobooth
+          ? `<div style="font-size: 0.72rem; color: #FFF; opacity: 0.9; margin-top: 2px;">↗ Buka web asli & unduh</div>`
+          : '';
+
         card.innerHTML = `
           ${newBadgeHtml}
           <img class="photo-img" 
@@ -2988,8 +3119,9 @@
                loading="lazy" 
                onerror="handlePhotoError(this, '${escapeHtml(photo.id)}');">
           <div class="photo-overlay">
-            <span class="photo-badge">${escapeHtml(photo.category || activeCat)}</span>
+            ${overlayBadge}
             <div class="photo-name">${escapeHtml(photo.name)}</div>
+            ${overlayActionHint}
           </div>
         `;
 
@@ -3299,6 +3431,7 @@
       try {
         localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(list));
       } catch (e) {}
+      renderCategoryTabs();
     }
 
     function getCategoriesFromAdminInputs() {
@@ -3507,7 +3640,7 @@
       if (!container) return;
 
       const cov = state.coverSettings || {};
-      if (cov.enabled === false) {
+      if (!cov || cov.enabled !== true) {
         container.style.display = "none";
         container.innerHTML = "";
         return;
@@ -4201,7 +4334,7 @@
         WELCOME_MESSAGE: welcomeInput || state.activeConfig.WELCOME_MESSAGE || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
         FOOTER_MESSAGE: footerInput || state.activeConfig.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
         ALL_PHOTOS_LABEL: allPhotosLabelInput,
-        CUSTOM_CATEGORIES: customCategoriesList,
+        CUSTOM_CATEGORIES: JSON.stringify(customCategoriesList),
         COVER_SETTINGS: coverSettingsPayload,
         EVENTS: state.events,
         DRIVE_FOLDER_ID: driveFolderInput,

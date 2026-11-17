@@ -28,7 +28,7 @@
         }
       ],
       "coverSettings": {
-        "enabled": true,
+        "enabled": false,
         "style": "romantic-collage",
         "heading": "The Wedding Celebration",
         "subheading": "A Journey of Two Hearts Joined as One",
@@ -56,5 +56,8 @@
   "DEFAULT_ADMIN_PIN": "123456",
   "SLIDESHOW_INTERVAL_SEC": 4,
   "AUTO_REFRESH_INTERVAL_SEC": 20,
-  "NEW_BADGE_MINUTES": 10
+  "NEW_BADGE_MINUTES": 10,
+  "coverSettings": {
+    "enabled": false
+  }
 }
