@@ -1,46 +1,28 @@
-# RENCANA REVISI LENGKAP: MULTI-EVENT ARCHITECTURE, USERNAME/PASSWORD LOGIN, CUSTOM COVER SHOWCASE & LINTAS-PERANGKAT SYNC
+# RENCANA REVISI & CATATAN RILIS SISTEM: v3.1.0
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v3.0.0)
+STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v3.1.0)
 TANGGAL PENGAJUAN: 17 November 2026
-VERIFIKASI SISTEM: BERHASIL (Kustomisasi Label "Semua Foto", Multi-Event Registry Per-Event Settings, Eliminasi Kedipan/Flicker Lintas Event, Share & QR Code Modal, Login Username & Password, Sinkronisasi Kategori Lintas Perangkat Server-First, Custom Front Page Wedding Cover Showcase)
+VERIFIKASI SISTEM: BERHASIL (Pembersihan Tombol Cover, Proporsi Foto Landscape Bebas Potong, Navigasi Tab Admin Flex-Wrap Bebas Potong, Galeri Native Kartu Foto untuk Photobooth, Pemisahan Foto Akurat Tiap Kategori Tanpa Fallback Palsu, Sinkronisasi Kategori Lintas-Perangkat Terpusat)
 
-### Rangkuman 7 Pembaruan Utama v3.0.0:
-1. **Kustomisasi Nama "Semua Foto" (Custom Main Gallery Label):**
-   - Menambahkan pengaturan `ALL_PHOTOS_LABEL` pada konfigurasi dan panel admin tab *💍 Acara & Event* (`cfgAllPhotosLabel`).
-   - Admin bebas mengubah label galeri utama (misal: *"Semua Momen"*, *"Katalog Foto"*, *"All Photos"*). Tab galeri, penghitung foto, dan filter kategori secara dinamis mengikuti label kustom ini.
-2. **Arsitektur Multi-Event (Tambah Event & Settingan Admin Mandiri Per-Event):**
-   - Mendukung penambahan event tanpa batas melalui skema `EVENTS` dan `ACTIVE_EVENT_ID`.
-   - Setiap event memiliki data tersendiri yang berdiri sendiri secara utuh: Nama Mempelai, Tanggal, Lokasi/Venue, ID Folder Google Drive, Bingkai Foto PNG, Kategori Momen & Tautan Display, Cover Halaman Depan, Pesan Sambutan, dan Pesan Penutup Footer.
-   - Admin dapat berpindah antar-event dengan dropdown, menambah event baru via tombol `+ Tambah Event Baru`, menghapus event, dan membagikan tautan langsung per-event menggunakan parameter URL (`?event=event_id`).
-3. **Eliminasi Total Kedipan (Flicker) & Perubahan Tiba-Tiba dari Event Sebelumnya:**
-   - Menghapus teks statis pasangan lama dari berkas HTML dasar (diganti dengan container dinamis ber-transisi halus).
-   - Menghapus pembacaan cache global tanpa filter yang sebelumnya menyebabkan nama event lama berkedip sesaat sebelum data event baru selesai dimuat.
-   - Menerapkan cache terisolasi berbasis Event ID (`WEDDING_EVENT_CFG_[eventId]`). Pembukaan event baru tidak akan pernah membocorkan data dari event sebelumnya.
-4. **Menu Berbagi (Share) & Tampilan QR Code Interaktif:**
-   - Menambahkan tombol menu elegan `[📱 Bagikan & QR Code]` pada bar kontrol utama galeri.
-   - Menyediakan modal interaktif `#shareQrModal` lengkap dengan:
-     * Pratinjau QR Code resolusi tinggi dinamis sesuai URL event aktif.
-     * Kolom tautan lengkap dengan tombol `📋 Salin Tautan` satu klik.
-     * Tombol berbagi langsung ke WhatsApp dengan draf pesan undangan ramah.
-     * Tombol berbagi via Web Share API native pada perangkat ponsel pintar.
-     * Tombol `⬇️ Unduh Gambar QR Code (PNG)` untuk kemudahan cetak di meja tamu / kartu souvenir.
-5. **Autentikasi Admin Berbasis Username dan Password:**
-   - Memperbarui antarmuka login admin (`#adminLoginModal`) menggunakan form kredensial **Username** (default: `admin`) dan **Password** (default: `123`) yang dilengkapi tombol mata toggle *show/hide password*.
-   - Tab *👥 Akun Admin* pada panel pengaturan memungkinkan admin memperbarui password akun aktif serta mendaftarkan akun admin baru dengan peran dan kredensial masing-masing.
-6. **Perbaikan Sinkronisasi Kategori Lintas Perangkat (PC vs Mobile Photobooth):**
-   - **Akar Masalah:** Sebelumnya, `localStorage` lokal menimpa data server dan mengisolasi penambahan kategori hanya pada perangkat tempat setting dibuat (sehingga folder Photobooth tampil di HP namun tidak muncul di PC).
-   - **Solusi Diterapkan:** Menjadikan server backend dan `config.json` sebagai satu-satunya *Single Source of Truth*. Data kategori dimuat langsung dari server dan tidak lagi dibajak oleh cache lokal peramban yang usang. Sekarang folder Photobooth dan seluruh kategori kustom tampil konsisten 100% di semua perangkat (PC, HP, Tablet).
-7. **Kustomisasi Halaman Depan Event Bertema Wedding (Cover Showcase):**
-   - Menambahkan tab khusus *🎨 Cover Depan* di panel admin untuk mengonfigurasi halaman depan:
-     * Sakelar aktifkan/nonaktifkan Cover Showcase.
-     * Pilihan 3 gaya tata letak mewah Anti-AI:
-       1. **Romantic Wedding Collage:** Susunan grid asimetris berbingkai emas lembut (1 foto utama + 2 foto pendamping).
-       2. **Hero Slider Sinematik:** Banner layar lebar bergulir otomatis dengan kontrol titik navigasi.
-       3. **Aesthetic Polaroid Board:** Kartu foto bergaya polaroid dengan sudut rotasi estetik.
-     * Kustomisasi Judul Cover, Subjudul, dan Kalimat Mutiara / Quote Pernikahan.
-     * Pengaturan foto-foto cover unggulan (bebas memasukkan beberapa tautan foto, dengan fallback cerdas ke foto galeri pertama jika belum diisi).
-     * Tombol interaktif berkelas: `✨ Jelajahi Galeri Foto ↓` (smooth scroll) dan `📱 Bagikan & Lihat QR`.
-8. **Prinsip Non-Destruktif (Strict Non-Destructive):**
-   - Seluruh fitur unduh resolusi asli 1:1, antrean unduh di latar belakang (background queue), penutupan otomatis status bar, dan format pesan footer multi-baris tetap 100% terjaga dan berfungsi normal.
+### Rangkuman 6 Pembaruan Utama v3.1.0:
+1. **Pembersihan Tombol Aksi Cover Depan:**
+   - Menghapus tombol `[✨ Jelajahi Galeri Foto ↓]` dan `[📱 Bagikan & Lihat QR]` pada container showcase cover halaman depan sesuai instruksi dan lampiran gambar user.
+   - Halaman depan kini tampil lebih tenang, mewah, dan fokus pada keindahan foto panggung pernikahan (*Romantic Wedding Aesthetic*).
+2. **Perbaikan Proporsi Foto Halaman Depan (Anti-Terpotong / Landscape Friendly):**
+   - **Akar Masalah:** Sebelumnya, container `.cover-photo-main` dan `.cover-photo-side-stack` memiliki tinggi kaku `420px` dengan `object-position: center;`, sehingga foto panggung yang berformat mendatar (landscape 16:9) terpotong bagian kepala dan sisi badannya.
+   - **Solusi Diterapkan:** Memperbarui CSS grid `.cover-collage-layout` menjadi rasio adaptif berkelas `aspect-ratio: 16 / 10;`, `min-height: 280px;`, serta `object-position: center 25%;`. Di mobile, susunan stack samping berubah menjadi 2 kolom proporsional. Seluruh orang dan dekorasi panggung tampil utuh, tajam, dan tidak lagi terpotong.
+3. **Perbaikan Navigasi Tab Admin (Anti-Terpotong):**
+   - **Akar Masalah:** Navigasi `.admin-tabs-nav` memiliki `overflow-x: auto` dengan scrollbar tersembunyi pada modal `max-width: 520px;`, menyebabkan tab ke-4 (`👥 Akun Admin`) dan tab ke-5 (`☁️ Cloud & API`) terpotong atau tersembunyi di tepi kanan.
+   - **Solusi Diterapkan:** Memperlebar modal admin menjadi `max-width: 600px;` pada desktop dan menerapkan `flex-wrap: wrap; gap: 6px;` pada `.admin-tabs-nav` dengan `.admin-tab-btn` berbasis `flex: 1 1 calc(33.333% - 6px); min-width: 105px;`. Seluruh 5 tab membungkus secara simetris dan rapi di semua ukuran layar tanpa ada yang terpotong.
+4. **Tampilan Galeri Native Kartu Foto untuk "Photobooth" (Pengganti Iframe):**
+   - **Akar Masalah:** Kategori tautan eksternal sebelumnya disematkan menggunakan `<iframe>` live viewer yang terasa asing dan berbeda dari tab "Semua Foto".
+   - **Solusi Diterapkan:** Menghapus sepenuhnya penyematan `<iframe>` pada `renderPhotoGrid`. Foto-foto dari tautan Photobooth (`https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs`) diambil langsung menggunakan parser regex client-side (didukung header CORS `*` dari CDN fotoshare) dan dirender sebagai kartu foto native yang sama persis seperti "Semua Foto": memiliki thumbnail, nama foto, lencana kategori, Lightbox layar penuh, dan unduhan foto berbingkai dengan resolusi asli. Tab Photobooth menampilkan lencana jumlah foto real (318 foto) tanpa ikon `↗ 🌐 Live`.
+5. **Pemisahan Foto Akurat Tiap Kategori (Eliminasi Fallback 59 Foto ke Kategori Kosong):**
+   - **Akar Masalah:** Sebelumnya terdapat kode `if (matched.length === 0 && state.allPhotos.length > 0) { matched = state.allPhotos; }` pada `applyCategoryFilter`. Akibatnya, setiap kali membuka kategori yang belum memiliki foto atau memiliki subfolder/link lain, sistem selalu salah menampilkan 59 foto dari galeri utama.
+   - **Solusi Diterapkan:** Menghapus kode fallback tersebut secara tuntas. Setiap kategori kini hanya menampilkan foto yang benar-benar cocok dengan link atau subfoldernya. Jika suatu kategori belum memiliki foto, sistem menyajikan status kosong yang elegan: `"Belum ada foto dalam kategori [Nama Kategori]"`.
+6. **Sinkronisasi Kategori Lintas-Perangkat Terpusat (PC & Mobile Konsisten 100%):**
+   - Menyelaraskan daftar kategori kustom di `config.json` dan `GLOBAL_CONFIG` sehingga browser di PC maupun smartphone memuat kategori yang persis sama tanpa terfragmentasi oleh perbedaan `localStorage` peramban lokal.
+7. **Prinsip Non-Destruktif (Strict Non-Destructive):**
+   - Seluruh fungsionalitas unduh foto resolusi asli 1:1, antrean unduh di latar belakang (background queue), penutupan otomatis status bar, multi-event switcher, dan login username/password admin tetap 100% aktif dan berjalan optimal.

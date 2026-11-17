@@ -336,230 +336,23 @@
 
     /* Layout 1: Romantic Collage */
     .cover-collage-layout {
-      display: grid;
-      grid-template-columns: 1.4fr 1fr;
-      gap: 16px;
-      max-width: 1040px;
-      margin: 0 auto 24px auto;
-      align-items: stretch;
-    }
-
-    .cover-photo-main {
-      height: 420px;
-      border-radius: 18px;
-      overflow: hidden;
-      border: 1px solid rgba(197, 168, 128, 0.35);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-      position: relative;
-      background: #f1ede6;
-    }
-
-    .cover-photo-main img, .cover-photo-sub img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .cover-photo-main:hover img, .cover-photo-sub:hover img {
-      transform: scale(1.03);
-    }
-
-    .cover-photo-side-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      height: 420px;
-    }
-
-    .cover-photo-sub {
-      flex: 1;
-      border-radius: 16px;
-      overflow: hidden;
-      border: 1px solid rgba(197, 168, 128, 0.35);
-      box-shadow: 0 6px 18px rgba(0,0,0,0.05);
-      position: relative;
-      background: #f1ede6;
-    }
-
-    /* Layout 2: Hero Carousel */
-    .cover-carousel-layout {
-      max-width: 960px;
-      margin: 0 auto 24px auto;
-      position: relative;
-      border-radius: 20px;
-      overflow: hidden;
-      height: 440px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-      border: 1px solid rgba(197, 168, 128, 0.4);
-      background: #111;
-    }
-
-    .cover-carousel-slide {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      transition: opacity 0.8s ease-in-out;
-      pointer-events: none;
-    }
-
-    .cover-carousel-slide.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .cover-carousel-slide img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .cover-carousel-controls {
-      position: absolute;
-      bottom: 16px;
-      left: 0; right: 0;
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      z-index: 5;
-    }
-
-    .carousel-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.45);
-      border: 1px solid rgba(0,0,0,0.2);
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .carousel-dot.active {
-      background: var(--gold-primary);
-      width: 24px;
-      border-radius: 9999px;
-    }
-
-    /* Layout 3: Polaroid Board */
-    .cover-polaroid-layout {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 20px;
-      max-width: 1040px;
-      margin: 0 auto 24px auto;
-      padding: 10px 0;
-    }
-
-    .cover-polaroid-item {
-      background: #fff;
-      padding: 12px 12px 36px 12px;
-      border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-      border: 1px solid rgba(197, 168, 128, 0.3);
-      width: 240px;
-      transition: transform 0.35s ease, box-shadow 0.35s ease;
-      position: relative;
-    }
-
-    .cover-polaroid-item:nth-child(odd) {
-      transform: rotate(-2deg);
-    }
-    .cover-polaroid-item:nth-child(even) {
-      transform: rotate(2.5deg);
-    }
-    .cover-polaroid-item:hover {
-      transform: rotate(0deg) scale(1.05);
-      box-shadow: 0 16px 36px rgba(0,0,0,0.14);
-      z-index: 3;
-    }
-
-    .cover-polaroid-item img {
-      width: 100%;
-      height: 220px;
-      object-fit: cover;
-      border-radius: 4px;
-      display: block;
-    }
-
-    .cover-actions-wrapper {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
-
-    .cover-btn-primary {
-      background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-dark) 100%);
-      color: #fff !important;
-      padding: 10px 24px;
-      border-radius: 9999px;
-      font-size: 0.92rem;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 16px rgba(168, 137, 94, 0.35);
-      transition: all 0.25s ease;
-      text-decoration: none;
-    }
-
-    .cover-btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(168, 137, 94, 0.45);
-    }
-
-    .cover-btn-secondary {
-      background: #fff;
-      color: var(--text-main) !important;
-      padding: 10px 20px;
-      border-radius: 9999px;
-      font-size: 0.92rem;
-      font-weight: 600;
-      border: 1px solid rgba(197, 168, 128, 0.6);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      transition: all 0.25s ease;
-      text-decoration: none;
-    }
-
-    .cover-btn-secondary:hover {
-      background: #FAF8F5;
-      border-color: var(--gold-dark);
-      transform: translateY(-2px);
-    }
-
-    /* Modal Share QR Code Card */
-    .share-qr-card {
-      max-width: 440px;
-      border-radius: 20px;
-      overflow: hidden;
-      animation: modalScaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    @keyframes modalScaleUp {
-      from { opacity: 0; transform: scale(0.92); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    @media (max-width: 768px) {
-      .cover-collage-layout {
         grid-template-columns: 1fr;
         gap: 12px;
       }
       .cover-photo-main {
-        height: 280px;
+        aspect-ratio: 16 / 10;
+        min-height: 200px;
+        height: auto;
       }
       .cover-photo-side-stack {
-        flex-direction: row;
-        height: 160px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        height: auto;
+      }
+      .cover-photo-sub {
+        aspect-ratio: 16 / 10;
+        min-height: 110px;
       }
       .cover-carousel-layout {
         height: 280px;
@@ -1129,7 +922,7 @@
     .admin-card {
       background: #FFFFFF;
       width: 94%;
-      max-width: 520px;
+      max-width: 600px;
       box-sizing: border-box;
       border-radius: 20px;
       box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
@@ -1212,26 +1005,21 @@
 
     .admin-tabs-nav {
       display: flex;
+      flex-wrap: wrap;
       gap: 6px;
       background: #F1F5F9;
-      padding: 5px;
+      padding: 6px;
       border-radius: 12px;
       margin-bottom: 20px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-
-    .admin-tabs-nav::-webkit-scrollbar {
-      display: none;
     }
 
     .admin-tab-btn {
-      flex: 1;
+      flex: 1 1 calc(33.333% - 6px);
+      min-width: 105px;
       white-space: nowrap;
-      padding: 9px 12px;
+      padding: 8px 10px;
       border-radius: 9px;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 600;
       color: #64748B;
       background: transparent;
@@ -1246,6 +1034,7 @@
 
     .admin-tab-btn:hover {
       color: var(--text-main);
+      background: rgba(255, 255, 255, 0.5);
     }
 
     .admin-tab-btn.active {
@@ -2280,6 +2069,7 @@
       ],
       failedPhotoIds: new Set(),
       activeCategory: "Semua Foto",
+      categoryPhotosMap: {},
       currentLightboxIndex: 0,
       currentSlideIndex: 0,
       slideshowTimer: null,
@@ -2895,7 +2685,6 @@
       if (!container) return;
       container.innerHTML = "";
 
-      // Deduplikasi kategori secara ketat (mencegah duplikasi pil Semua Foto / Custom Label pada mobile)
       const mainLabel = state.allPhotosLabel || "Semua Foto";
       const uniqueCategories = [];
       const seen = {};
@@ -2903,7 +2692,7 @@
       seen["Semua Foto"] = true;
       uniqueCategories.push(mainLabel);
 
-      // 1. Tambahkan kategori kustom yang dikonfigurasi di admin (misal Photobooth, Resepsi)
+      // 1. Kategori kustom dari admin / config
       if (Array.isArray(state.customCategories)) {
         state.customCategories.forEach(function(item) {
           const catName = String((item && item.name) || item || "").trim();
@@ -2914,7 +2703,7 @@
         });
       }
 
-      // 2. Tambahkan kategori yang ditemukan dari subfolder Google Drive
+      // 2. Kategori yang ditemukan dari subfolder Google Drive
       (state.categories || []).forEach(function(c) {
         const catName = String(c || "").trim();
         if (catName && !seen[catName]) {
@@ -2925,7 +2714,6 @@
       state.categories = uniqueCategories;
 
       state.categories.forEach(function(cat) {
-        // Cek apakah ada custom link target untuk kategori ini
         let targetUrl = "";
         if (Array.isArray(state.customCategories)) {
           const matchCat = state.customCategories.find(function(it) {
@@ -2936,15 +2724,16 @@
           }
         }
 
-        const driveFolderId = extractDriveFolderId(targetUrl);
-        const isExt = isExternalWebLink(targetUrl);
-
+        const isMain = (cat === mainLabel || cat === "Semua Foto");
         let countBadgeText = "";
-        if (cat === (state.allPhotosLabel || "Semua Foto") || cat === "Semua Foto") {
+
+        if (isMain) {
           countBadgeText = String(state.allPhotos.length);
-        } else if (isExt) {
-          countBadgeText = "🌐 Live";
+        } else if (state.categoryPhotosMap && state.categoryPhotosMap[cat]) {
+          countBadgeText = String(state.categoryPhotosMap[cat].length);
         } else {
+          // Cek kecocokan lokal di allPhotos
+          const driveFolderId = extractDriveFolderId(targetUrl);
           const directMatch = state.allPhotos.filter(function(p) {
             if (p.category && p.category.toLowerCase() === cat.toLowerCase()) return true;
             if (driveFolderId && p.customFolderId === driveFolderId) return true;
@@ -2952,29 +2741,119 @@
             if (p.rawName && p.rawName.toLowerCase().includes(cat.toLowerCase())) return true;
             return false;
           }).length;
-          // Sesuai instruksi: Tampilkan seperti "Semua Foto"
-          const count = directMatch > 0 ? directMatch : state.allPhotos.length;
-          countBadgeText = String(count);
+
+          if (directMatch > 0) {
+            countBadgeText = String(directMatch);
+          } else if (targetUrl && (targetUrl.includes("fotoshare.co") || driveFolderId)) {
+            // Pre-fetch count di latar belakang secara asinkron
+            countBadgeText = "...";
+            prefetchCategoryPhotos(cat, targetUrl);
+          } else {
+            countBadgeText = "0";
+          }
         }
 
         const pill = document.createElement("button");
         pill.className = "filter-pill " + (cat === state.activeCategory ? "active" : "");
         pill.setAttribute("data-category", cat);
         pill.onclick = function() { selectCategory(cat, targetUrl); };
-        
-        const extIconHtml = targetUrl ? `<span style="font-size: 0.75rem; margin-left: 2px; color: var(--gold-dark); font-weight: bold;" title="Tautan: ${escapeHtml(targetUrl)}">↗</span>` : '';
 
         pill.innerHTML = `
-          <span>${escapeHtml(cat)}</span>${extIconHtml}
-          <span class="pill-count">${countBadgeText}</span>
+          <span>${escapeHtml(cat)}</span>
+          <span class="pill-count" id="pill-count-${escapeHtml(cat.replace(/\s+/g, '_'))}">${countBadgeText}</span>
         `;
         container.appendChild(pill);
       });
     }
 
+    function updateCategoryPillCount(cat, count) {
+      const el = document.getElementById("pill-count-" + escapeHtml(cat.replace(/\s+/g, '_')));
+      if (el) el.innerText = String(count);
+    }
+
+    function prefetchCategoryPhotos(cat, targetUrl) {
+      if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
+      if (state.categoryPhotosMap[cat]) return;
+
+      const driveFolderId = extractDriveFolderId(targetUrl);
+      if (targetUrl && targetUrl.includes("fotoshare.co")) {
+        fetchFotosharePhotos(cat, targetUrl, function(photos) {
+          updateCategoryPillCount(cat, photos.length);
+        });
+      } else if (driveFolderId) {
+        fetchDriveCategoryPhotos(cat, driveFolderId, function(photos) {
+          updateCategoryPillCount(cat, photos.length);
+        });
+      }
+    }
+
+    function fetchFotosharePhotos(cat, url, callback) {
+      if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
+      if (state.categoryPhotosMap[cat]) {
+        if (callback) callback(state.categoryPhotosMap[cat]);
+        return;
+      }
+
+      fetch(url)
+        .then(function(res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.text();
+        })
+        .then(function(html) {
+          const regex = /(https:\/\/cdn-bz-op\.fotoshare\.co\/[^\s"'<>]+\.JPG)/gi;
+          let m;
+          const set = new Set();
+          const list = [];
+          while ((m = regex.exec(html)) !== null) {
+            const u = m[1];
+            if (!set.has(u)) {
+              set.add(u);
+              list.push({
+                id: "pb_" + (list.length + 1),
+                name: "Photobooth " + (list.length + 1),
+                category: cat,
+                thumbnailUrl: u,
+                previewUrl: u,
+                downloadUrl: u,
+                timestamp: Date.now()
+              });
+            }
+          }
+          state.categoryPhotosMap[cat] = list;
+          if (callback) callback(list);
+        })
+        .catch(function(err) {
+          console.error("Gagal mengambil foto fotoshare:", err);
+          state.categoryPhotosMap[cat] = [];
+          if (callback) callback([]);
+        });
+    }
+
+    function fetchDriveCategoryPhotos(cat, driveFolderId, callback) {
+      if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
+      if (state.categoryPhotosMap[cat]) {
+        if (callback) callback(state.categoryPhotosMap[cat]);
+        return;
+      }
+
+      callBackend("getCategoryPhotos", { folderId: driveFolderId, category: cat }, function(res) {
+        if (res && res.success && Array.isArray(res.photos)) {
+          state.categoryPhotosMap[cat] = res.photos;
+          if (callback) callback(res.photos);
+        } else {
+          state.categoryPhotosMap[cat] = [];
+          if (callback) callback([]);
+        }
+      }, function(err) {
+        console.error("Gagal mengambil foto folder Google Drive:", err);
+        state.categoryPhotosMap[cat] = [];
+        if (callback) callback([]);
+      });
+    }
+
     function selectCategory(category, targetUrl) {
       state.activeCategory = category;
-      
+
       document.querySelectorAll(".filter-pill").forEach(function(el) {
         if (el.getAttribute("data-category") === category) {
           el.classList.add("active");
@@ -2996,30 +2875,76 @@
     }
 
     function applyCategoryFilter(category, targetUrl) {
-      const isExt = isExternalWebLink(targetUrl);
-
       const mainLabel = state.allPhotosLabel || "Semua Foto";
-      if (category === mainLabel || category === "Semua Foto") {
+      const isMain = (category === mainLabel || category === "Semua Foto");
+
+      if (isMain) {
         state.filteredPhotos = state.allPhotos;
-      } else if (isExt) {
-        // Tautan web eksternal (misal: fotoshare.co)
-        state.filteredPhotos = [];
-      } else {
-        const driveFolderId = extractDriveFolderId(targetUrl);
-        let matched = state.allPhotos.filter(function(p) {
-          if (p.category && p.category.toLowerCase() === category.toLowerCase()) return true;
-          if (driveFolderId && p.customFolderId === driveFolderId) return true;
-          if (p.name && p.name.toLowerCase().includes(category.toLowerCase())) return true;
-          if (p.rawName && p.rawName.toLowerCase().includes(category.toLowerCase())) return true;
-          return false;
-        });
-        // Sesuai instruksi: Tampilkan seperti "Semua Foto"
-        if (matched.length === 0 && state.allPhotos.length > 0) {
-          matched = state.allPhotos;
-        }
-        state.filteredPhotos = matched;
+        renderPhotoGrid(targetUrl, category);
+        return;
       }
 
+      if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
+
+      // 1. Jika sudah ada cache foto kategori
+      if (state.categoryPhotosMap[category]) {
+        state.filteredPhotos = state.categoryPhotosMap[category];
+        renderPhotoGrid(targetUrl, category);
+        return;
+      }
+
+      // 2. Jika tautan eksternal fotoshare
+      if (targetUrl && targetUrl.includes("fotoshare.co")) {
+        const grid = document.getElementById("photosGrid");
+        if (grid) {
+          grid.innerHTML = `
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          `;
+        }
+        fetchFotosharePhotos(category, targetUrl, function(photos) {
+          updateCategoryPillCount(category, photos.length);
+          if (state.activeCategory === category) {
+            state.filteredPhotos = photos;
+            renderPhotoGrid(targetUrl, category);
+          }
+        });
+        return;
+      }
+
+      // 3. Jika tautan folder Google Drive
+      const driveFolderId = extractDriveFolderId(targetUrl);
+      if (driveFolderId) {
+        const grid = document.getElementById("photosGrid");
+        if (grid) {
+          grid.innerHTML = `
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          `;
+        }
+        fetchDriveCategoryPhotos(category, driveFolderId, function(photos) {
+          updateCategoryPillCount(category, photos.length);
+          if (state.activeCategory === category) {
+            state.filteredPhotos = photos;
+            renderPhotoGrid(targetUrl, category);
+          }
+        });
+        return;
+      }
+
+      // 4. Filter dari foto yang sudah ada di galeri lokal
+      let matched = state.allPhotos.filter(function(p) {
+        if (p.category && p.category.toLowerCase() === category.toLowerCase()) return true;
+        if (p.name && p.name.toLowerCase().includes(category.toLowerCase())) return true;
+        if (p.rawName && p.rawName.toLowerCase().includes(category.toLowerCase())) return true;
+        return false;
+      });
+
+      state.filteredPhotos = matched;
       renderPhotoGrid(targetUrl, category);
     }
 
@@ -3027,35 +2952,15 @@
       const grid = document.getElementById("photosGrid");
       grid.innerHTML = "";
 
-      const isExt = isExternalWebLink(targetUrl);
+      const activeCat = categoryName || state.activeCategory;
 
-      // Sesuai instruksi: Banner .category-target-banner dihapus sepenuhnya agar tampilan lebih bersih, mewah, dan menarik!
-
-      // 1. Jika merupakan tautan web eksternal (seperti https://fotoshare.co), sematkan Live Embedded Viewer!
-      if (isExt) {
-        const frameContainer = document.createElement("div");
-        frameContainer.className = "external-gallery-frame-container";
-        frameContainer.style.cssText = "grid-column: 1 / -1; width: 100%; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.06); border: 1px solid rgba(197, 168, 128, 0.4); background: #fff; margin-top: 4px;";
-        frameContainer.innerHTML = `
-          <div style="background: #FAF8F5; padding: 10px 16px; border-bottom: 1px solid rgba(197, 168, 128, 0.25); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-            <div style="font-size: 0.84rem; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
-              <span>🌐 Pratinjau Langsung (Live Display): <strong>${escapeHtml(categoryName || state.activeCategory)}</strong></span>
-            </div>
-            <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-outline" style="padding: 5px 12px; font-size: 0.76rem;">
-              <span>Buka di Layar Penuh ↗</span>
-            </a>
-          </div>
-          <iframe src="${escapeHtml(targetUrl)}" style="width: 100%; min-height: 640px; border: none; display: block;" loading="lazy" allowfullscreen></iframe>
-        `;
-        grid.appendChild(frameContainer);
-        return;
-      }
-
-      // 2. Jika foto kosong (seluruh galeri kosong)
-      if (state.filteredPhotos.length === 0) {
-        grid.innerHTML += `
+      // Jika foto kosong untuk kategori ini
+      if (!state.filteredPhotos || state.filteredPhotos.length === 0) {
+        grid.innerHTML = `
           <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
-            <p style="font-size: 1.05rem; font-weight: 500;">Momen berharga akan segera hadir di sini.</p>
+            <div style="font-size: 2.2rem; margin-bottom: 12px; opacity: 0.7;">🖼️</div>
+            <p style="font-size: 1.05rem; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">Belum ada foto dalam kategori "${escapeHtml(activeCat)}".</p>
+            <p style="font-size: 0.88rem; opacity: 0.8;">Momen indah untuk kategori ini akan tampil di sini setelah diunggah.</p>
           </div>
         `;
         return;
@@ -3083,7 +2988,7 @@
                loading="lazy" 
                onerror="handlePhotoError(this, '${escapeHtml(photo.id)}');">
           <div class="photo-overlay">
-            <span class="photo-badge">${escapeHtml(photo.category)}</span>
+            <span class="photo-badge">${escapeHtml(photo.category || activeCat)}</span>
             <div class="photo-name">${escapeHtml(photo.name)}</div>
           </div>
         `;
@@ -3700,15 +3605,7 @@
 
           ${layoutHtml}
 
-          <div class="cover-actions-wrapper">
-            <button type="button" class="cover-btn-primary" onclick="scrollToGallerySection()">
-              <span>✨ Jelajahi Galeri Foto ↓</span>
-            </button>
-            <button type="button" class="cover-btn-secondary" onclick="openShareModal()">
-              <span>📱 Bagikan & Lihat QR</span>
-            </button>
           </div>
-        </div>
       `;
 
       if (style === "hero-carousel" && photoList.length > 1) {
