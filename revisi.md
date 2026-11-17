@@ -1,29 +1,43 @@
-# RENCANA REVISI & CATATAN RILIS SISTEM: v3.2.0
+# RENCANA REVISI & CATATAN RILIS SISTEM: v3.3.0
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v3.2.0)
+STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v3.3.0)
 TANGGAL PENGAJUAN: 18 November 2026
-VERIFIKASI SISTEM: BERHASIL (Penghapusan Cover Halaman Depan Sesuai Lampiran, Pembukaan Link Web Asli & Unduh Otomatis dari Web Asli Khusus Kategori Photobooth, Reaktivitas Real-Time Kategori Momen & Penampilan Display Galeri Google Drive / Web Interaktif untuk Kategori Lainnya)
+VERIFIKASI SISTEM: BERHASIL (Modularisasi Berkas CSS & JS, Kustomisasi Bebas Nama Kategori Galeri Utama, Proteksi Kategori Khusus Photobooth, Lightbox & Unduh Langsung Kualitas Asli Tanpa Bingkai Khusus Photobooth, Tampilan Native Photo Cards untuk Kategori Lainnya Tanpa Iframe, Tautan & Tombol Sinkronisasi Tiap Kategori, Sinkronisasi Multi-Device 100%)
 
-### Rangkuman 3 Pembaruan Utama v3.2.0:
-1. **Penghapusan Cover Halaman Depan (Sesuai Lampiran Gambar 1):**
-   - Menghapus tampilan cover showcase pernikahan (`#weddingCoverSection`) yang berisi kartu *"💍 The Royal Celebration - The Wedding Celebration"* dan foto panggung.
-   - Mengatur `coverSettings.enabled = false` pada konfigurasi sentral [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/config.json), `GLOBAL_CONFIG`, serta menambahkan perlindungan `display: none !important;`. Halaman langsung berfokus pada galeri foto utama yang bersih dan cepat diakses.
-2. **Khusus Kategori Photobooth: Klik Foto Membuka Link Asli & Mengunduh dari Web Asli:**
-   - **Alur Kerja Baru:** Saat pengunjung mengeklik kartu foto di tab **Photobooth**:
-     1. Secara otomatis membuka halaman tautan asli foto di website fotoshare (`https://fotoshare.co/i/[hash]`) pada tab peramban baru.
-     2. Secara otomatis memicu pengunduhan berkas foto asli berkualitas tinggi langsung dari server CDN web aslinya (`cdn-bz.fotoshare.co`) ke perangkat pengunjung tanpa kompresi dan tanpa bingkai foto panggung.
-   - Parsing foto fotoshare ditingkatkan untuk membaca objek `sessionImages` secara mendalam, menghasilkan 600+ foto lengkap dengan hash dan tautan web spesifik per-foto.
-   - Kartu foto Photobooth dilengkapi tanda visual `↗ Buka web asli & unduh` pada bagian overlay.
-3. **Penyajian Kategori Lainnya (Tampilan Kategori pada Website & Display Galeri):**
-   - **Tampilan pada Website (Kategori Bar):**
-     * Mengatasi kendala di mana kategori baru (seperti *Event Test*, *eded*) tidak muncul di tab bar website.
-     * Mengoreksi *data corruption* dari Google Spreadsheet yang sebelumnya menyimpan array objek sebagai `[object Object]` sehingga mereset kategori menjadi kosong saat dimuat ulang.
-     * Mengaktifkan `renderCategoryTabs()` seketika pada fungsi `onCategoryRowInput()`, sehingga saat admin mengetik nama kategori baru di modal pengaturan, tab kategorinya langsung muncul di bilah navigasi website secara real-time.
-   - **Tampilan pada Galeri (Display Galeri):**
-     * Untuk kategori yang ditautkan ke folder Google Drive (misal: `https://drive.google.com/drive/folders/...`): jika foto belum diindeks secara lokal, galeri secara cerdas menyematkan **Display Interaktif Google Drive** beresolusi tinggi lengkap dengan tombol aksi cepat `[📂 Buka Folder Google Drive ↗]`.
-     * Untuk kategori dengan tautan galeri web lain: menampilkan penyemat tampilan interaktif beserta tombol tautan resmi.
-     * Pengunjung dan admin dapat langsung melihat dan menjelajahi isi foto dari link yang telah dimasukkan tanpa hambatan layar kosong.
-4. **Prinsip Non-Destruktif (Strict Non-Destructive):**
-   - Seluruh fitur unduh foto berbingkai pada kategori "Semua Foto", multi-event selector, autentikasi username & password admin, dan background download queue tetap 100% terjaga dan berfungsi normal.
+### Rangkuman 8 Pembaruan Utama v3.3.0:
+1. **Modularisasi Berkas Aplikasi (Penyelesaian Berkas Berat / Terlalu Besar):**
+   - **Tindakan:** Berkas raksasa `index.html` (yang sebelumnya berukuran 209 KB dan berisi lebih dari 5.100 baris) dipecah secara rapi dan profesional menjadi berkas-berkas modular:
+     - [css/style.css](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/css/style.css) (~31 KB): Seluruh aturan gaya, palet warna, tipografi, dan media query responsif.
+     - [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) (~146 KB): Seluruh mesin galeri, Lightbox, antrean unduh di latar belakang, komposit bingkai, manajemen admin, dan utilitas sinkronisasi.
+     - [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) (turun drastis menjadi ~43 KB / 730 baris): Struktur HTML yang bersih, ringan, dan cepat dimuat.
+   - **Manfaat:** Peramban di smartphone maupun PC dapat melakukan *browser caching* mandiri pada berkas CSS dan JS, menghasilkan waktu muat (*page load*) yang sangat ringan dan responsif.
+2. **Kustomisasi Bebas Nama Kategori Galeri Utama ("Semua Foto"):**
+   - Pada panel Admin tab *🖼️ Foto & Kategori*, kini tersedia kolom khusus:
+     `🏷️ Nama Kategori Galeri Utama: [Semua Foto] [Reset]`
+   - Admin bebas mengganti nama galeri utama (misal: *"Semua Momen"*, *"Katalog Foto"*, *"All Photos"*). Tab pertama di galeri dan seluruh filter langsung berubah seketika secara real-time.
+3. **Khusus Kategori Photobooth (Proteksi Nama, Tampilkan/Sembunyikan & Anti-Hapus):**
+   - Kategori **Photobooth** kini memiliki kartu pengelolaan khusus (*Dedicated Vendor Card*):
+     - **Nama Kategori Bebas Diubah:** Admin dapat mengganti nama tampilan tab (misal: *"Photobooth"*, *"Photo Booth VIP"*, dll.).
+     - **Tampilkan / Sembunyikan:** Dilengkapi sakelar/checkbox `[✓] Tampilkan di Galeri`. Jika dicentang, tab muncul di website; jika dimatikan, tab tersembunyi tanpa menghapus konfigurasinya.
+     - **Tautan Sistem Terkunci:** Tautan resmi `https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs` dilindungi (`read-only`), dan tombol hapus dihilangkan agar vendor photobooth tidak terhapus secara tidak sengaja.
+4. **Khusus Kategori Photobooth (Lightbox Langsung & Unduh Kualitas Asli Tanpa Bingkai):**
+   - Saat kartu foto Photobooth diklik di galeri: **langsung terbuka di Lightbox layar penuh seperti biasa** (tidak diarahkan keluar atau membuka tab website fotoshare.co).
+   - Di dalam Lightbox, tombol unduh berubah menjadi:
+     `[⬇️ Unduh Foto Asli Photobooth]`
+   - Mengklik tombol unduh langsung mengunduh berkas foto asli berkualitas penuh dari CDN fotoshare **tanpa kompresi dan tanpa bingkai foto panggung**.
+5. **Tampilan Galeri Native Kartu Foto untuk Kategori Lainnya (Eliminasi Iframe):**
+   - Seluruh kategori (seperti *Event Test*, *eded*, atau subfolder Google Drive) kini disajikan menggunakan **kartu foto native (`.photo-card`)** yang sama persis dengan galeri utama:
+     - Thumbnail foto, nama foto, dan lencana kategori.
+     - Klik membuka Lightbox layar penuh dengan opsi unduh kualitas asli.
+     - Jika kategori masih kosong, sistem menyajikan kartu kosong berkelas disertai tombol cepat `[🔄 Sinkronkan Kategori Ini]` dan `[Buka Tautan Sumber ↗]`.
+     - Tidak ada lagi iframe yang kaku atau membingungkan.
+6. **Tombol & Tautan Sinkronisasi untuk Setiap Kategori:**
+   - Pada panel Admin, setiap baris kategori (termasuk Photobooth dan kategori kustom) dilengkapi tombol `[🔄]` untuk memicu pembaruan dan sinkronisasi instan khusus untuk kategori tersebut.
+   - Di bilah navigasi filter galeri utama, tersedia tombol `[🔄 Sinkron]` agar pengunjung maupun admin dapat menyegarkan foto kategori aktif kapan saja.
+7. **Sinkronisasi Lintas-Perangkat (PC & Smartphone Konsisten 100%):**
+   - Menyelaraskan [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/config.json) untuk menyertakan seluruh kategori aktif (`Photobooth`, `Event Test`, `eded`).
+   - Menyediakan fitur satu klik: `[📋 Salin Tautan Sinkron Semua Device]`, yang menghasilkan tautan sinkronisasi otomatis dengan parameter `?sync_cats=...`. Saat dibuka di smartphone atau browser lain, seluruh kategori langsung tersinkronisasi 100%.
+8. **Prinsip Non-Destruktif (Strict Non-Destructive):**
+   - Fitur unduh berbingkai untuk kategori "Semua Foto", background download queue, multi-event switcher, dan login admin username & password (`admin` / `123`) tetap 100% aktif dan berjalan optimal.

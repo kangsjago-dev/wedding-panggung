@@ -24,16 +24,22 @@
       "customCategories": [
         {
           "name": "Photobooth",
-          "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs"
+          "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+          "enabled": true
+        },
+        {
+          "name": "Event Test",
+          "url": "https://drive.google.com/drive/folders/1G2yIK",
+          "enabled": true
+        },
+        {
+          "name": "eded",
+          "url": "https://drive.google.com/drive/folders/1GGB7",
+          "enabled": true
         }
       ],
       "coverSettings": {
-        "enabled": false,
-        "style": "romantic-collage",
-        "heading": "The Wedding Celebration",
-        "subheading": "A Journey of Two Hearts Joined as One",
-        "quote": "Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda.",
-        "photos": []
+        "enabled": false
       }
     }
   ],
@@ -46,7 +52,18 @@
   "CUSTOM_CATEGORIES": [
     {
       "name": "Photobooth",
-      "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs"
+      "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+      "enabled": true
+    },
+    {
+      "name": "Event Test",
+      "url": "https://drive.google.com/drive/folders/1G2yIK",
+      "enabled": true
+    },
+    {
+      "name": "eded",
+      "url": "https://drive.google.com/drive/folders/1GGB7",
+      "enabled": true
     }
   ],
   "DRIVE_FOLDER_ID": "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxI5",
