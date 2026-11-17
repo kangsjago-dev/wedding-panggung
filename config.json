@@ -13,28 +13,23 @@
     {
       "id": "wilson-felicia",
       "name": "Wilson & Felicia",
-      "date": "14 November 2026",
-      "venue": "Upperhills Convention Centre, Makassar",
+      "date": "16 November 2026",
+      "venue": "UpperHills Convention Hall, Makassar",
       "subtitle": "The Wedding Gallery & Precious Memories",
       "welcomeMessage": "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
       "footerMessage": "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
       "allPhotosLabel": "Semua Foto",
-      "driveFolderId": "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxI5",
-      "frameImageUrl": "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing",
+      "driveFolderId": "https://drive.google.com/drive/folders/1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
+      "frameImageUrl": "https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk",
       "customCategories": [
         {
           "name": "Photobooth",
-          "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+          "url": "https://photos.google.com/share/AF1QipMagPm7xWB2YANajDr3hx-J4WKyhOgIQ41jUjqQnxv5LSy6392pyWC5hOfsQoz1mA?key=c1BLMDNyRGw4bEJyUWo5b1Y0eFlmTy14X1pESEdR",
           "enabled": true
         },
         {
-          "name": "Event Test",
-          "url": "https://drive.google.com/drive/folders/1G2yIK",
-          "enabled": true
-        },
-        {
-          "name": "eded",
-          "url": "https://drive.google.com/drive/folders/1GGB7",
+          "name": "Wedding",
+          "url": "https://drive.google.com/drive/folders/1GGB77clCMYBIg17J0ECr2eVbD02ZeInW",
           "enabled": true
         }
       ],
@@ -44,30 +39,25 @@
     }
   ],
   "EVENT_NAME": "Wilson & Felicia",
-  "EVENT_DATE": "14 November 2026",
-  "EVENT_VENUE": "Upperhills Convention Centre, Makassar",
+  "EVENT_DATE": "16 November 2026",
+  "EVENT_VENUE": "UpperHills Convention Hall, Makassar",
   "SUBTITLE": "The Wedding Gallery & Precious Memories",
   "WELCOME_MESSAGE": "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
   "FOOTER_MESSAGE": "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
   "CUSTOM_CATEGORIES": [
     {
       "name": "Photobooth",
-      "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+      "url": "https://photos.google.com/share/AF1QipMagPm7xWB2YANajDr3hx-J4WKyhOgIQ41jUjqQnxv5LSy6392pyWC5hOfsQoz1mA?key=c1BLMDNyRGw4bEJyUWo5b1Y0eFlmTy14X1pESEdR",
       "enabled": true
     },
     {
-      "name": "Event Test",
-      "url": "https://drive.google.com/drive/folders/1G2yIK",
-      "enabled": true
-    },
-    {
-      "name": "eded",
-      "url": "https://drive.google.com/drive/folders/1GGB7",
+      "name": "Wedding",
+      "url": "https://drive.google.com/drive/folders/1GGB77clCMYBIg17J0ECr2eVbD02ZeInW",
       "enabled": true
     }
   ],
-  "DRIVE_FOLDER_ID": "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxI5",
-  "FRAME_IMAGE_URL": "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing",
+  "DRIVE_FOLDER_ID": "https://drive.google.com/drive/folders/1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
+  "FRAME_IMAGE_URL": "https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk",
   "SPREADSHEET_ID": "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20",
   "GAS_API_URL": "https://script.google.com/macros/s/AKfycbzGgpibRzZboG9vNrTyxzko5mGkW6LfabNYfBxm2v6c-gO9O_iKLqMocxCZ5GVdiM1l/exec",
   "DEFAULT_ADMIN_PIN": "123456",

@@ -721,11 +721,14 @@ function getGalleryData(targetEventId) {
 }
 
 /**
- * Mengambil foto dari folder Google Drive khusus kategori tertentu
+ * Mengambil foto dari folder Google Drive atau album Google Photos khusus kategori tertentu
  */
 function getCategoryDrivePhotos(folderTarget, catName) {
   try {
     var cleanId = String(folderTarget || "").trim();
+    if (cleanId.indexOf("photos.google.com") !== -1) {
+      return scanGooglePhotosAlbum(cleanId, catName);
+    }
     var match = cleanId.match(/folders\/([a-zA-Z0-9_\-]+)/);
     if (match && match[1]) cleanId = match[1];
 
@@ -750,6 +753,52 @@ function getCategoryDrivePhotos(folderTarget, catName) {
     } else {
       return { success: false, message: scanResult.message || "Gagal memindai folder", photos: [] };
     }
+  } catch (err) {
+    return { success: false, error: err.toString(), photos: [] };
+  }
+}
+
+/**
+ * Memindai album bersama Google Photos
+ */
+function scanGooglePhotosAlbum(albumUrl, catName) {
+  try {
+    var response = UrlFetchApp.fetch(albumUrl, {
+      muteHttpExceptions: true,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      }
+    });
+    if (response.getResponseCode() !== 200) {
+      return { success: false, message: "Gagal memuat Google Photos album: " + response.getResponseCode(), photos: [] };
+    }
+    var html = response.getContentText();
+    var matches = html.match(/https:\/\/lh3\.googleusercontent\.com\/pw\/[a-zA-Z0-9_\-]+/g) || [];
+    var seen = {};
+    var photos = [];
+    var count = 0;
+    for (var i = 0; i < matches.length; i++) {
+      var base = matches[i];
+      if (!seen[base]) {
+        seen[base] = true;
+        count++;
+        photos.push({
+          id: "gp_" + count,
+          name: (catName || "Photobooth") + " " + count,
+          thumbnailUrl: base + "=w500-h500-c",
+          previewUrl: base + "=w1600-h1200",
+          highResUrl: base + "=w2400-h1800",
+          downloadUrl: base + "=d",
+          category: catName || "Photobooth"
+        });
+      }
+    }
+    return {
+      success: true,
+      category: catName || "Photobooth",
+      photos: photos,
+      totalPhotos: photos.length
+    };
   } catch (err) {
     return { success: false, error: err.toString(), photos: [] };
   }

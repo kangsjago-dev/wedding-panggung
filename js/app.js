@@ -102,11 +102,12 @@
       }
     }
 
-const GLOBAL_CONFIG = {
+    const GOOGLE_PHOTOS_INITIAL_CACHE = ["https://lh3.googleusercontent.com/pw/AP1GczPHZ3QY9eMPsK8b_7DtCq_9z0wS_QJshL8xKOXUVGTYGMIeN8gd1ym4s_pn_DsubWVtctp4frUYvaIMzznFjEjBBvXuf9ILeD9oM9ta3RZW1LgO64fB","https://lh3.googleusercontent.com/pw/AP1GczM2ftQDzzWi2J_4UTw5DNmCWYADu38Xl09dW9K5uMfFsOP6-yzZMn9Rzk3_lTUJyRi6RgX2OCM_mQLftQTvusmFrQ_Wih53S2sJ1XujKzrxn5b6_vMb","https://lh3.googleusercontent.com/pw/AP1GczNwnpnKY7WRkCY2srfkce_1Q2daHvjYfBxiF8gnszPTg8ybR2NvWsetSmP3bI_FU7s7x-fNu39MNjDwWWRBBpEUUnPjpw-JojoCwumccIp383zGZwMz","https://lh3.googleusercontent.com/pw/AP1GczMx0o71NbpIZLCzwtnhbXe8NNuo3BT43ud3pK4nIqePMCLzRMH1pD4cZ8sBy59Hy0w1S9_j4ISY99RDWbPY2NRaU4d7BTZNIso7GkzWYwBhMfc8LTGH","https://lh3.googleusercontent.com/pw/AP1GczP0O3ji5Szhcl5K5eyMWC8MET374SKiW2ymsxbSeZCtCzemRUfuU_EAKp7Xuv4ZhX_W1LBJbwlApScKKaAH2KYKeH6fGeplPv3X_SwbHbXEHv0xZ7ED","https://lh3.googleusercontent.com/pw/AP1GczMI4qPNMtsu6ag4vTsHi46y2D5qnLcwsOfNA9GOQ730ed2YqF_b2qxAcB6O32x0jUH6fjEYCTsDQeAk0_Lw3LM1zIWsIuAq3cqW_UPza7CNvh6ToFuS","https://lh3.googleusercontent.com/pw/AP1GczNNSAAghtERpfLvNtnR8iZ9HnGUy_oHIJsp04vVW_PbPDCRGKWkMP5QzK6eLpiS-iiRhw3x-VIDGmqeXPnZTnI0L02ZvpgT5yCWSH4C3RkAcxYKSpAJ","https://lh3.googleusercontent.com/pw/AP1GczNyDlvoWQ5vK8CBIbYezhfJhSFoT-rTMbf-Q3QhxnS1TeJIpoIAuyLNiVPIGmyUss_PV5kS-PWMEOXIzwk-3hRX5A_0v8nFn7ugoGYKJTlvjK2T2lhU","https://lh3.googleusercontent.com/pw/AP1GczMeCGP0e6xPqV_Ol45drEMJ_W05ZV4p3kWq5D5bhCa8ZMgK9-ObKagJT2bvT5EXG90ZlG99TkK76eJRB8c1pDUwPrFceRe8P3iILrQwxBnkUrdWgln4","https://lh3.googleusercontent.com/pw/AP1GczNPnmWhW6zQtCxJNmRa5DQEk1Hm8FiBXZsB9Glox-cV7Od98FX07e95aQpbDtBNd8u_ET7sKf4ORS9JZcoVGqdZ5GqvHUTjvja6N3yXjgjmgJ-9G5ze","https://lh3.googleusercontent.com/pw/AP1GczMvqTnx6bv_d0_tvregsed567rW4IqS5nwWOk8b8OqvOuGnH2m5QgILs4Z6mibkAW01MzLZL_zlAzzgC0xbZhK3Eb2HHUG5iclO4ePGVEMN9NmFuN8W","https://lh3.googleusercontent.com/pw/AP1GczMSJvbIqeavdnO9BWneL_DwLocwcHXdSJu0671V1XejbiJF4Wg26U8iI1WPDw3PSRD3FyjxwAj9i387FVzF2cHnOmXpdxWZ2jM9bmwRWGEmIrNffFPF","https://lh3.googleusercontent.com/pw/AP1GczPvgbO9k0OaKTunepKtsSdC8Iw-HSt5ZppXq1cY7a63C15xfXg-AfcOwhMjs7KLoEIICLJEzxDMDpk-7uxOWmFoF9RL6ZrQ_n3aN-SDcbpycT0U0YYD","https://lh3.googleusercontent.com/pw/AP1GczNaRX0WzkDs7d8Nw9PghiXNPZAMg3m2KGAgzTKFBJaolBbgkj16Jix1JyfnIXUDZzhGFYtZBaQRv7WQvI6HmVexY9IKsSS5dSKDIMIXSYRzHpLdTCZe","https://lh3.googleusercontent.com/pw/AP1GczOFhMCz5b9g6veYOXKLbc6-H4xeUdkIB6P98_x8sHac75TJzmrTY728VYT8iyOXU1meO_Pbl4AF4_mUjAg3sbslRsotsduUsaK29c_l-ElJGT58HrnZ","https://lh3.googleusercontent.com/pw/AP1GczPfBqcgrwOppJRz1I9hw0bX-6QIqwmeuz8bcrEp85wJcGZi2p_XniIEjYXzP-ji4e1Mgba_lsBwAYYGRqLILlUfGHZhhhhOQJdxcUWFEVoWS2QdNPcm","https://lh3.googleusercontent.com/pw/AP1GczO2lnRS6p7q9MW29EyY_xVOmgWRMfwGcSPRra3Y10Kpej8D8ealBRwvaD-VcDUwYAGOEa5w3YvuzlZb2d6ZrAXqygcpjFDWGIntQ914TzuLr72woYHK","https://lh3.googleusercontent.com/pw/AP1GczOfK-_h5CQBbe6cQ-Er6ryZ5ur_jKlkHQeHzQlrnMUmb10hxOFpsUVuSNTPh8U5PsUHwL7zRF0mruU95r_RE0Ly6BXOPRi2Qliquc54FYcIBp_-RPa8","https://lh3.googleusercontent.com/pw/AP1GczNtm3BFpROVQsNm6ISQUdpaPIxGETlqH1jmRn6IOLYy2H4ZNA4zw5vOS6OewWAHhkfOum4SsOqduOgbjkMMLW5etlzDOXaeMFMe2JtWuYuGhegiDD-S","https://lh3.googleusercontent.com/pw/AP1GczPFGQNB3G2gnV8zfjRL578MwnO1KdRR9W67l0sUGEHp2NSNzGCDzra5bGHBdFGc3XLV-sd1BnFIr4dp6inlwD1qgAvENTdI1WD68eNQqGhj97ZrwGdj","https://lh3.googleusercontent.com/pw/AP1GczOH-fdvA1LmIq0yuRH0IB1oKQHFH-n-kk_Fx9SGa_m5v14qvx3VbQNaumYPqM069QLZYM31vwPR0bcegEzPYK9Q48yhl1EjRF9FNpuxIXk1xs_PMKZ6","https://lh3.googleusercontent.com/pw/AP1GczMj0QKsZWCni3OJwCqEhCQLFmdJf1CqNnfCr83ULsu9CQaRIE-VUBJqJx3ZXyUnvmB9ybSqHVUTQymJPyjqSo_LFXRTUSeEYjJZfroU_pDeR6HMg9PU","https://lh3.googleusercontent.com/pw/AP1GczNz4PgwE_fziIETA0rje3REolY3VHltdYGBqkTDzidroADrdw1DhQovtSauwrq_jjLy9fESt_Pb320D_zKSN-f3uDE5k7Mtxzeq-TR5A_qMBtwWbrLn","https://lh3.googleusercontent.com/pw/AP1GczMXBDcNtGYZkXLyS7PsaY_HWqkw8o5ISkOgjWBmuX3LYHbkl_fi59fZU1lcqtcwKYyB-3JytrZ4qIHx7vik_1DFOdiDaGB502VD67WiqdwnknPvCMWs","https://lh3.googleusercontent.com/pw/AP1GczN_LjIbS2iYQMwNgifH8UMjguNBxnsAKsJH8iiOk5PQaplgOs7WKaY5S7m-fIzgmsVNHK2gX77I1KAbYAOJAH6iWVxm0tX5501X-gyrLxER_K4VA7mk","https://lh3.googleusercontent.com/pw/AP1GczPLg3So6x7FCud3NjQ4-q51ERUi5py31wX1Eveg5X4vzEJ8J7dgZZrFKJsp0emlwnJ7Qalx27rz37XjVa_d2LeSV0QQUKHsIaJPnNHbiOGpTYtuBBT8","https://lh3.googleusercontent.com/pw/AP1GczNawo2rKnhAw6ndHRlXrvmyuxH57iEVoX123KK6q_0lTy0fvwAVxnFwKroxGdQwNP0OwBN7w-BwKm9npe71lFQVqmG5NZJPiDTkGeRdEuKyj80W5mEc","https://lh3.googleusercontent.com/pw/AP1GczPpXd4u9uBVgYP8MOX_2skKr89VX-tCX13ezRB1jaSFXmCI39COGGzJiwJWu04ZmQ8NE7KOhofZ0VsfR4kfSKabWMvu9eqlmwzXzCPnY5IaBfgaZnNn","https://lh3.googleusercontent.com/pw/AP1GczPVP_b46VMZdb3oU1bA02tiXhPa2GuZQr9DbgIWyRyQ0jFQafSlM7vML9NNA_eeFYX9z9bfNMLTnxBNHPraZisienEBZERfOwYCMRGDzXmfkO5V9qPQ","https://lh3.googleusercontent.com/pw/AP1GczPVC49VP9vEeIyWX60gIJnRF0ev8-OCq7LyiNt-ugDAeoXfj8b05cqOt3ZmjUrvy53tMlQ1TdSo-ASoiffj1-14ojZBCD4WDjLzA46I7griH3K60Hvr","https://lh3.googleusercontent.com/pw/AP1GczMhdPqMMWwajD7ATdg5GvsiWqf4DbeNUXOT6qo9lNEXxtnhyLlTumOVBEi6ro_lanGxwr-udLu-MoqVhDjsHyNkItSgSVWyWh9013XHeutyLMcvigRQ","https://lh3.googleusercontent.com/pw/AP1GczMrLQWbaZ_1G4oKJPKg6lwdYtzcD4vV3CSVuC77s0roaX3vVjlD0yT0HeAQxxGHkfnvkP-S7AE3AF8awTk6b_QrolGlp_wCNK0kHRwmZQhnXE7W3pql","https://lh3.googleusercontent.com/pw/AP1GczMeUhrlIWDae6t-mKn-bOHNdQt_zbFNLadiosJ6QcYyH8LeCYagPCZEOrZoCXsk19DvFMeUUN3qKpYj4-xpfmnRsFoV5bKBGMhPDRvHRazwb136z5fk","https://lh3.googleusercontent.com/pw/AP1GczOFfm2b4x3tCdhJ6-hccjIeczkwUueZ-D8Z7A7yo0rBLvSNdkTR_a85D71BQ2iLjKunnIVVsQdMmwUse0VPK2px4ulXWW6Fz5v5_41Jd9M42vRjJ_jW","https://lh3.googleusercontent.com/pw/AP1GczPLm0PJsuM0tlWBW0EcpDBrAQvYf5RUXlO-Pf50_Scqfv03_9o_X2RKuN9KDGuAL_qNxQ87D4lwsMDtCeWHxK_WRziUDHplCHahUAxMxgNR9UHGxreM","https://lh3.googleusercontent.com/pw/AP1GczP2UTW0ElDfC9Y0VvNqC92IL3ikPhJBSdCSjBKpMREcD0e9n5N2zBknnvNEutpocBoh9shH0wGcrDD1KI5IDcYs6C8Wfj6H-2ypJqIXocy7dZyXXZMR","https://lh3.googleusercontent.com/pw/AP1GczO-WiIUVs1NIEOjqgdtX_qs_7L5QS1nLfLJThif9rno_Su-UYiATWqQ-K0mJphgpSL2kC5pemQTA17mkABLiuPKD3sFxfAxc705R5xszj3Pkju-D_YH","https://lh3.googleusercontent.com/pw/AP1GczMK_w2guig4XBCzsJcuSYcKoznK7mIAj6ax2EAt_v9xvbL12lxbyiu5EXZzdWaoSrpboGYM42U4R2MAJMQ4S5LcpwLqFfY2XFy4cj0IOElrKBROEXv8","https://lh3.googleusercontent.com/pw/AP1GczP3z64zWAvekEKAUFCTLoZdn8dDy1GaCHMWaVuPD1PpVdzXZRwunLxz_CtsKQcDCGcdq_UhwflT_uGmmni-dCF3oeJXNplFKQ8DIxyPY9XmeUir-j_c","https://lh3.googleusercontent.com/pw/AP1GczN6o8p77lw7yEfSCIlUcRHwaEoZwxSm4YMoTbc81Uu1JWEQDYPLgNpW8FcdyDUIxduK8rc8yu8B9owpd4mrE9PKJmOMgYS5zZFgX24p2jeR_9neIUwM","https://lh3.googleusercontent.com/pw/AP1GczPRMcOej2KJZIY_6oh3p1ixRiZaOBOtwak07ebx3jM7pkVS84djm6IFjsC3lDSniO1CbbvOmFuRwHtCTNtc2syfcXy4LcqHfMLC4M6HWXkXz0f9K6cT","https://lh3.googleusercontent.com/pw/AP1GczOUZ0YIwLmH2Xj1JQNrEYPkovlHjzxhNJwJPFgb4hyHI4dOeYzYXYn9_BF1vO7HJh6_rbO1u4I5kvb5SOEzxp2KkyxRJw8pwKeKMwNZ9dUctlvCKWX9","https://lh3.googleusercontent.com/pw/AP1GczNuSg1rTo_hDqrugasCkJ40ZUWQKEfdpaTY0anpvWKw2XX0o5B2SBYzGwUhe-10GIOsq_Q91O9czNvOms93xO88nu1ztI4g9st_SjdEJkyZTWCNBepY","https://lh3.googleusercontent.com/pw/AP1GczMfqSEou8KHN4QIbE2GtnX9uSpX5oCoPMs6ng1A-bYxUQKh1tX5nHA_TfUPEq0B58_M5I0YmB9QgLKLaSMvUSE2CuE_c6RHSQPGr6oGXq5b0ok-kVO3","https://lh3.googleusercontent.com/pw/AP1GczP3hzrvaZFlyxoy_rksVEdKAb9VVYqd6U1AnnsYuyKFOJX-h2WGRMHY_eEfLUGv4T-kd-M0LZi2z71N4v_gN9RblUKjA1t-84KmBNxsE7GzDqQMjKQB","https://lh3.googleusercontent.com/pw/AP1GczOmLXa9ADI2XP3qJsGDjFRhMoTrzkfh6Eq87BunEhy_fDYz3uY0PaZ8xdyeeP1z34MNku-VQAZi6ow4bm6K8-8R5D4xtCxfOLDSxxui9HtLWeONqnuT","https://lh3.googleusercontent.com/pw/AP1GczMveOaEvYKQs5FoIjGiI84LutnRJWeJdnMdwdX45G5_Rwj0xEDfxZqEc3hbe29B7soOH8yD7mUrZYkQGN1I7NBSaibDnsgsMv-OfwvKWHl-gfdOj3FP","https://lh3.googleusercontent.com/pw/AP1GczO2sIGU7ZbOg-fnHUH1PBSUfLxMKlHVEV4YAYxnY2Bx46tcprimV8VWoflprtpKhKYgCwL38T3zlY_dx42mlPFFbrCR42hDcIoWirqvZnJsn75nn2un","https://lh3.googleusercontent.com/pw/AP1GczMQRxhVtA23rWrvgHzu_jyNd4JgXevx16G8vasse37CyLQBJWE6a88s4KI2c5Dq95gdzNgLuVBz2F_GCrsIWQDAFPSponaxTvIAnkcmVeHf5kb4gYwu","https://lh3.googleusercontent.com/pw/AP1GczMVJ5k5bI0nLgvUYlZkYhWqVl5zE5J_uNdk9MzGSBB2SZzp7pgCBpqiC73bqHXGGYwT7RBpkk-RwrLczBfeZH1Qwy7EIOdvvX2as2VPPSKBvCo2heq4","https://lh3.googleusercontent.com/pw/AP1GczNzDzr1WEPLNszHDatoirUkVSajPIhcyR-r90TsTekuNYTDM2aaJ8hz2jjt2MDGFF-vXaWEm22jew3_9ohyWeiCiHBWU1cCBko6ihtH17SSZUg9X5W5","https://lh3.googleusercontent.com/pw/AP1GczPVXHza58yjRCV2EQS7LPGIV8ytmgLsscD_g9MlffmRjCHrqkafEqRVGXxt3YAkHvcDdj-gVbiRuoAfnllQQaXmVBY8cD-4NQkfjxgmF2IqjgtHWn5d","https://lh3.googleusercontent.com/pw/AP1GczNu76Q8Pg3hVpBTKDo89wr96m9FilFOhVPR4PLC9IqisIJhDlN_yE9YqGdgTkObQFzu_iaucWaWc-lzo_nqZXhCPf7Qp79N-RTjhv6an80hfjw7qqjp","https://lh3.googleusercontent.com/pw/AP1GczNSfV3CypeK-f81YHRoubSjNw2OSCrtSmo0UO3HjdEficpCb5cGw9-_dnbYqqz7Qtp6phGeGTUr75NJjF2VZ0Ymzb4zexa0u_2AfNfR6DfOPgbq64W9","https://lh3.googleusercontent.com/pw/AP1GczP5VM0lioq9JQ8_q2btQ71nMEF3_iJZMyy1in51FKWqSwZxd2XheDzS1jFFVeyi_kh4r36qfBooSrPXG7qlctgb96NlmcQJmxxNVXQAtOd9qpAbcT-S","https://lh3.googleusercontent.com/pw/AP1GczO6ob1ha0pQQWwGpqgGWvaIKJSbM7PV_IrtlCQFblJQph8vKBVnuysHyPxZ9Z_AudLtEzbxUEKAwaWUaTxTF98mAouFi4rkr9aaRObOwEYSrhFUPpLK","https://lh3.googleusercontent.com/pw/AP1GczMrFay0FQNDvE3l-CR5W2PXoJDWD2X7v_JHFhPc-ZatP-e6ehigefJ6WXsgkenrgvM0nFZvf-9Z-X5bWZqFdtV7KFArCHVVr4hOsdIm9z5sB0vBu-4e","https://lh3.googleusercontent.com/pw/AP1GczO6kKWPIkxa3DH0yOYjrxBblpwYMXjNXkMThPPPWzNM1Qq1MOifoNAOuT0zYg6u_kTiOhfXsMPMKImZvNsWzi_zJ0nh0Mi1mMOcoLw7sVfm0se_3gRG","https://lh3.googleusercontent.com/pw/AP1GczOZ8D40akSmza7b2TJf7ZWgM49wwQjjFU4DPeBcUtkGa-EfeppFWAvRF-r9Tv2gZzgZfymcCdcyzS7eIw4SPJxTGGOkA6vOK6RZRKEMTSsy5s5PQsY1","https://lh3.googleusercontent.com/pw/AP1GczO_S927gQOzOw09hTF8Bck23Pl_yT50doODJ_5dcQIrOw3xlv2bX71o-itZlm-9e3Z5eloGbvZq0M-MRPIcrF0GTQe5bPpjbOk_44eGo67E1z1msWs5","https://lh3.googleusercontent.com/pw/AP1GczN1xgTz148eZRwfzwIY0IsEtF88XtVSpLDJgRdiL0Q42gWGYjNCaytzyeuEu_dIWK6HxwCzmhy_QGTMELVL75smD2Yutlc4UjEX8DqZdwUFBTGkmWfl","https://lh3.googleusercontent.com/pw/AP1GczNdGqw4eGgGQa0X9h1MLNu_QcJyBPp4PKRKNoGgUOc1GPcq-E2BomZzFrWCpnlLLgf3svk61sl4LlIUcM4VRvSs6j1DmzB-oQi-A5kMfF1TccKrbV4B","https://lh3.googleusercontent.com/pw/AP1GczM98s8ETRP-gQnwh29CIOCTIlveHZPr8VM8bqaccOo5R3lSTGtJGp7WDU1kJQDaYd7o11Lw1oOThrm4hVMK5vA7GO6ephtF-z-X_wO8hEBSDz8RIoVz","https://lh3.googleusercontent.com/pw/AP1GczMfZwOKFxZRsYlNm37OfbTTRGP66roHQMHSF7fLn6QPJZ6mqKlo6iBsfR6ROFJagIr-9LYUh6s00Xy_ESUNb2fpuomnNdGgDpAduUm7WYIygPV6ogXG","https://lh3.googleusercontent.com/pw/AP1GczOIUn8Y3b4lvpAyRF0ZlW0SOB0ii5p737gwm8Dpt9VwCDVD-geyTA969uYWF9k3PjnmLbhIalAJkkD39WknVAtocmBYDm-L1GubQMjyrARvC2RPYiHk","https://lh3.googleusercontent.com/pw/AP1GczPt1tGBhCn28fGVaCaD6h2mlseo9PY8S6KLxc2fX29HdIRltz075m6meqV4eXzT55hrfKBMIHQIZxZCwG-Ky6KILtXvDFTWubGaq_bL17oazUscfIl0","https://lh3.googleusercontent.com/pw/AP1GczOBTRLDR219pBBf5F76AxYNKyOWHmU5X92WUBdAQ7iQ-qJYCHE44V_PHxZtroD7Oec__khji9C-5HI73uoWuIUdFdq7hKFF9VtpVH9ixkV9c0Vi3rrN","https://lh3.googleusercontent.com/pw/AP1GczNXGMkcd4ROrYjGwmcOb36hyimqQV9fRaZcHD0ackrUT2rxXeJwZxxFVsCzDjHhrsH6ekytgrQ6a5uEADoLwXXo_SfRkA9agO3Y54oTu0-lVIfwrFF8","https://lh3.googleusercontent.com/pw/AP1GczO_N9dM9sKHN_78qbHnEPKVMgzaeCOWRIsvTDPfry5mpkVugaUApbr17idxU1qFxfMVAjPQaMF5d8QAQOIQCHzgkC9ZcrUrAVlwcNI2SNV9EPTH_Gsx","https://lh3.googleusercontent.com/pw/AP1GczN7QrxZFfWKq7-_kSyXXdvLsI9ZT-rvnLxNNsrcPsAhdQDHLt-z_WOHFk4MqMfma969MECam19dB8voHMSTb05Up2UNp0Y7p2J9DojuP5llrfYbxq1W","https://lh3.googleusercontent.com/pw/AP1GczOs0bAnkyOJSANhApfzvXyt0Cf17U3bgQYes7W4XRfn0bWCWyHrUT8D-irQvh73VkRoDTleGJp8rkZfFfMZodT5MWcY69HQHEVgL_8PrFtExOOrBMaG","https://lh3.googleusercontent.com/pw/AP1GczPSWTHwoaTLJuIRnHmwDxjm21asVvIJQsTTFqgxmwuLx8a170MjNi5oSSJjUH4B_0R_Hb4jqE85LrGKOn699q0LNoB0dBF5qKaUm8oF-25oaXvg7mpk","https://lh3.googleusercontent.com/pw/AP1GczO1N316koFsiPPa4EuCZ0tvTaGhPottNDrYDcr8dLn15OrWZeDbslZ5z6Oj7CZMMrGh9LHgknjkw2zJo06uH86xrNWJz10gPYty8mKh9aOSjcZkSwrh","https://lh3.googleusercontent.com/pw/AP1GczOLqMtwIvUeGgs2vnUq4-2ObFEcWSmFwXcBbiTk_4dGSeLAGFK_38myYUiCf42sSVhoai6FclNHDwoXBEkdlxqVJjhm_rFXtF_Our77jVvCvkmjfOR5","https://lh3.googleusercontent.com/pw/AP1GczOTgUXLGWNGppSnWcQJ7v28AoEb7ehODRlVGxPVvuQE8xggPs838ekhLk6nT8KquMjwy2ySL_vJh5vtxG99y69cZGggLK3CGostQXfRbfrzfxKrVF4y","https://lh3.googleusercontent.com/pw/AP1GczNo-XtQZTBo0etOG1PQGhNWuxJmZkG9nCOGHwqxBAqrq2vyI66x4yzHeZhupkesYhoaTbO7BzFXOXbviKuSHfCJzwSLIuZIQosBRi67aWVJUHbEFykx","https://lh3.googleusercontent.com/pw/AP1GczM3XWv_073uACy3T_Klmr2jKF16xEoqn8fmN-wDTjnvwZdrdNK-k2bZWq0Q0lNVohH3bvirjnyr6M2YJPR6X_BoQ3YHhy2w5RM3PtEcrEbyMfM4zIp3","https://lh3.googleusercontent.com/pw/AP1GczM2Wd630T9lPMtLwkQFpzOmtOvlVf44HU8fw6lkl9oX9biidQSRNmw7K0LExMqBNNSw5n1XreffBxjjVSXBGrG0la2TVkcHhbmd0s8mBnA9qOGl4RTj","https://lh3.googleusercontent.com/pw/AP1GczNwrkqS2F3jbMyUr7vPYSG0Ja53DdFGxxYFmLtAdeQUu2RZQIeHltnSl8llgFN2RreaR7IteEDmU3nfrNiesZraiVDCEOCWhsQJjJqW9cTlWR-_LiAz","https://lh3.googleusercontent.com/pw/AP1GczMpKuIRpVmjIipWHOU87bN6lEcylcOtsnnW94QvRzbQKsWSkq66SbJ5n5oAMcOP-vCwZY3wRc15xuwHbQbzTFW48O9iYaAx4IT0WQ4wlvMOctAVmBHC","https://lh3.googleusercontent.com/pw/AP1GczPWYTCHwaBWLXBJ2ZOUrgACckVjES1TjfMtoAgKyO28pqCZnqmxLCjDqrXYsR1l8pfJ5AqFvdpN62yCO0NXFv3whTr6trhTretuzTdYBFQZPbT8jDvo","https://lh3.googleusercontent.com/pw/AP1GczNWUHxeBa4wpdOrF6luwb1E5fl0P3Ev2LAHIYAHVljLP3nEp-84av6jtejyC2ebtwU4C845BbVNWfAHizxyOW8BGL9OViTZj4VahftTO7jli1_vT6Qx","https://lh3.googleusercontent.com/pw/AP1GczMLUidGUSd795t1F5hauC7cq-M0kWDKQF5C1c2Jzqszjzh6SyA0E9MKKvf4koYv5LF0BgRR-iF5zpg8ZuiNRcGxsS6yREpae0STjRT0pWzrgg7mgANK","https://lh3.googleusercontent.com/pw/AP1GczMRr3xDKUnWgxZGpW4KpO_7iDrNlhy2jRp2syjNtSfwTq7sw1tqOSn64idEwy3flmWau7lBtINm_6MlknE8IVt2X1hZnStwQ-3Yn6auu7rVf3irnzvF","https://lh3.googleusercontent.com/pw/AP1GczM-4UfR_8b7NciNgijfbvGLEXHH0X7uZHDH5bmWJSmwuTegGPivBZYPlNkVn6vysv9MTLDzCnF8pNxK3wjaGSsR5RRX-inNuQivVFNSYsjWuHzY5LAS","https://lh3.googleusercontent.com/pw/AP1GczOQgeHGF9FAMoEbrQLkV5I-FMHaCtB0mmNU0uqTfRZ2julrlBl-EM2bdqsDu1s8gEKxap3503r8EJ7TRP3NYlyCv-8_wSrwT17cT5h1IXLNDY-0FsS4","https://lh3.googleusercontent.com/pw/AP1GczNMpUIOae9xHN03aPNWOnr3cj6MbLSC1nqTrQ9o7ZtOHqUttI5zilIOu07rih-rCvDfOtftvRpwhgCIIi9GvUsBnIBRnSbUhU7yemq1DnyJImnfMFGC","https://lh3.googleusercontent.com/pw/AP1GczOjWXPd4KRCf1iCEuIcDKj0l269v4tRSJ2qtxk4pzEHJ26GP0-PUDjKRkTDNLNbnbm9tfHewC_9CZJX6wy2-w-6Ocmgo9QY95nr80Cjigytx2xEc74Z","https://lh3.googleusercontent.com/pw/AP1GczO__xQHyLIlZ9hsRBOALRReukhhZNdQkGy0f8HSEzL5NHgqXfMSzAtneJ34YZchkk6Aefx0LDzxboXvl7WJ-HeldPkkLd092xv-v33NLxF7s4pH1Zt8","https://lh3.googleusercontent.com/pw/AP1GczMIz2t0i7Nwt7w7QWeHhfXlDYQeUcjEWwofmW8KYoeij1Mtvu230Au-I-KlHxFh1yGGJx_S5vJ9OgqOi1tcbS-QShsogEQDdDF5wVSAaPjRLa8ze2K1","https://lh3.googleusercontent.com/pw/AP1GczNZJXZNRqO7kXly4sSC-NkHfu2Eexte9OIDlhLv2ACbvLxAm-aVjC_1h0m3MLFsH_oF4KHjGVMjuT3aXA3dfoxGlFqw_c9s-ViiG_QQSJY_9jMY0q5D","https://lh3.googleusercontent.com/pw/AP1GczOqtLkUphUqrDFPwu6gL9tzwYfMvIutFLjeH5z9-xUO4WxAaV8rc003I2214c8cDt8XMjy8J8M6guO2v3YN74r4BYBzYdwBlkI2zsXx1GvO6m4SGQNO","https://lh3.googleusercontent.com/pw/AP1GczMD2Me0xYOMgVihSivrEm6Gf7ySx4tmiGLrCyWYOuffgol3LDwHmLGg6slHWW0FlPk0eTeZkQJJLdqrY3QfAWNVHI_V_ZnD9-G_W08s_AeBMmA7P_tw","https://lh3.googleusercontent.com/pw/AP1GczM78UNV6FFRMViwrMdhblEvMHCuzLCBAGZKWhaQZVrUpJgFn-5oNfTqGzkalMf3vDtYI0YmBUJUh4KC87ytZjIjIupjJ65fIXUYz3fmfGJBSMzzsBbD","https://lh3.googleusercontent.com/pw/AP1GczNFmhuAtxzdo2upxbxYnV1reYB_qs3onfc7b-SFMmODVC2KYvIa0zVsz1bhG7mZhe533vUA0bF6DwsZF6POtHadcUeHQUEEo3FE9Xcwct_GwBsXDXth","https://lh3.googleusercontent.com/pw/AP1GczPEIMzjvUMHhXjNxJIjmIzL1HSbuTfDKFc--zKH8lBfC-fH7vTwpELVWXclXZ2zqgxJ3BaoDY4A__bbSuJa9IfU8vea5xQuDavhYykSy5et5xKcoAxa","https://lh3.googleusercontent.com/pw/AP1GczOiJdMiFD5Eg_LmQDVi_9_SZ4wY0OaOgps6JTcXdtG8ygFojCBPYgcpsnuX22Wrh9y7-lDYDpahago3F4EWFqggSAOiX26utyQICBEpDMHMAvo0lYnk","https://lh3.googleusercontent.com/pw/AP1GczNuSiLsf2ROhbXPPzI--7Ax4sS88Mezt8b-BV3QopLW2pmVapowkIRoO2iuBTmWIwd8sf-O13DU9buZEUijcpR3hAgXiEChvNWOOjU1Z-DNC0FbkCah","https://lh3.googleusercontent.com/pw/AP1GczNjLHypxAeb7QDqeQH-sCIYfdThQ3H7zS44kvhKmq0jsCDPkYZKeXLwNDaVwU2Axv07qHzFj5q_MZkpw6POST8O2L8eOgzwZptvMYDI33bwjR7fnnRa","https://lh3.googleusercontent.com/pw/AP1GczN8-3O1H-AWKTRD2IoSnf_WL3WnY_3Wpjp13Bk2trstw3V-_eVrrEe_ITnn1c2n5UzIlJWRrNnzTPbRLgJhoReCYBg_qygLEwYqQ-7O8J2SZkyXIlRb","https://lh3.googleusercontent.com/pw/AP1GczM_6UKnUfDev1OOyazoDVAysTT2nS48PHg-t54Nk6eHogpjUXVuiXJi198qAH20tGJiroOen57KjC8l0jrpbAnKhAJmUO6NryqtZixPfPYRAxnGloCo","https://lh3.googleusercontent.com/pw/AP1GczP_Fil_J4G_mYbYCflUxhaDxa6abb83AbXaY4NFflqCsy8JMSFusNgs21iwcAGGuCcfXw2w4Mx4ZIsH-PF-lxT7F6XwtBPfMCSX6fuwzlyHsFfQ7aIq","https://lh3.googleusercontent.com/pw/AP1GczNHxmgjGo9DBw09Qro9qfhZ6wSscEOYGIxD8ZmE4Zvn98iuZckNapG_Fu97yv2Q36cIiuPetMw7nGbu7DjK2BTCFxjDP7k4tjZFw7bdSUbqb3YM3yAn","https://lh3.googleusercontent.com/pw/AP1GczPARUiqEiEeicAbVNzGcgmcSAD1ZWX_q-QTm-E_IbNrzTU9qeVoqdb5Ajb8wcDPIjPIobNWXUqVpAefCbhz1x3x49wbAq4AFvJPVWa4XVwF5aHgGqks","https://lh3.googleusercontent.com/pw/AP1GczPLMYISa_9qCrt3_DnnWCKQjjffLy3tf63q93pTIpz1mZ4iRP_PpSdzJv4w8DrtzdsNVO25B1dVj5Vzz5CIz8jmmPq7_-SLs9O1i1A0MDXsryVLHH_h","https://lh3.googleusercontent.com/pw/AP1GczNbIFISoXQPLHXtFscr4EokUWMJE1El8hFLqzKjEeplzpclO1AlxTJn4E4pNVubeQ-nPhHXfAgpGoGj3XcYZgajhYoKty6IIdesBbjOQh5idULtXSHI","https://lh3.googleusercontent.com/pw/AP1GczN1ewhehiAWWrGTaRK00sGAmtpaHOBbX1QLeyai9ASsDaZNcX-hVc0GneJbrYmjR3c1W6p1Ba0R1j5nMW7qVOinxsotlgYayMK0Yidx3ugYVX6Z6cvz","https://lh3.googleusercontent.com/pw/AP1GczNcTaq47UPl43i2vmAtluwCcniOrXU2NFHBfI8Yw_1VxoHdpSfLbAm1_rdJ0ZF7WPM-KgU4JsxaehrR6W-UzGr_p1RwXIRcboqsUqg1EY-EmeBo49ps","https://lh3.googleusercontent.com/pw/AP1GczOPtkSRresSPa3Mi6GcTouVu71mCaw9QI3Bksk8w7imHgR5qnfCFLI-Ijhc3SewZRqjxN9WusHJDfx03Kz7H0J3PZlUQG7QDAliaVfxfCspqLypG4Gt","https://lh3.googleusercontent.com/pw/AP1GczMJdGCrP73xAgzkNBCKIdXlkXsE_Bw031OO4vPKObygkxiwnQtocCUNKRcwxa6WIHsYXc8zbHhklvazfiLGa4dDdTE7OGjrwus6NUy5zARXeu3nz-MX","https://lh3.googleusercontent.com/pw/AP1GczNQpn1HG00AJXBQe6_X8DE0tGjimCrtze9Wk7r3c9rS57XY47M2d1h06dD_m3zguBE9AY8D3uuRFXk9pnsfiZCka0I1TxN9J7eiceZTdBLrbHgjdli8","https://lh3.googleusercontent.com/pw/AP1GczP_2e2rDOv9WHwSusGPDCVrKgOkaAbgRxc8pvq3-ze0kFTyefaY8shS_ghb9qtkuJ95aPoOWodkzxBv8Xq6PLxlYsimsWMUyi-wy4FLpkfLk8oHS6DQ","https://lh3.googleusercontent.com/pw/AP1GczP3s6wUvzsfA7FBLUdi_aJJ-e1n3BdhuXZkNqaFAPTBiD8Jpq-fJqeGWzusH0q1wqwygABxomUYG00Jm7toZBwgWvI5txbL4pAUvEX10FolOxiL_6TC","https://lh3.googleusercontent.com/pw/AP1GczNtM8WxH2o4zrABRvkTN24zd5ytPgLHpJB6a8hHy1P6ZiH9MPCYdbQa0IOD6mmsV1uZU2MqGbXQCJo0T5AmoXgT6UP9t8_ClgKBvp8pItxGyET_gYFS","https://lh3.googleusercontent.com/pw/AP1GczNs41Ptzq0ybs3oL-wYtQhZKmN9JayGmsFK51vSWuZ_uS3EBkgZzDzYWva3FRCz6i6c2CYHg-vuG8-CiC4YKPy-uMlG_Lmj8peZ5mhBKVhqPQZa26ob"];
+    const GLOBAL_CONFIG = {
       GAS_API_URL: "https://script.google.com/macros/s/AKfycbzGgpibRzZboG9vNrTyxzko5mGkW6LfabNYfBxm2v6c-gO9O_iKLqMocxCZ5GVdiM1l/exec",
       EVENT_NAME: "Wilson & Felicia",
-      EVENT_DATE: "14 November 2026",
-      EVENT_VENUE: "Upperhills Convention Centre, Makassar",
+      EVENT_DATE: "16 November 2026",
+      EVENT_VENUE: "UpperHills Convention Hall, Makassar",
       SUBTITLE: "The Wedding Gallery & Precious Memories",
       WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
       FOOTER_MESSAGE: "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
@@ -143,17 +144,12 @@ const GLOBAL_CONFIG = {
       CUSTOM_CATEGORIES: [
         {
                 "name": "Photobooth",
-                "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+                "url": "https://photos.google.com/share/AF1QipMagPm7xWB2YANajDr3hx-J4WKyhOgIQ41jUjqQnxv5LSy6392pyWC5hOfsQoz1mA?key=c1BLMDNyRGw4bEJyUWo5b1Y0eFlmTy14X1pESEdR",
                 "enabled": true
         },
         {
-                "name": "Event Test",
-                "url": "https://drive.google.com/drive/folders/1G2yIK",
-                "enabled": true
-        },
-        {
-                "name": "eded",
-                "url": "https://drive.google.com/drive/folders/1GGB7",
+                "name": "Wedding",
+                "url": "https://drive.google.com/drive/folders/1GGB77clCMYBIg17J0ECr2eVbD02ZeInW",
                 "enabled": true
         }
 ],
@@ -332,37 +328,66 @@ const GLOBAL_CONFIG = {
     });
 
     function syncFromSpreadsheetGViz(callback) {
-      if (state.gasApiUrl) { callback(); return; }
-      const sid = state.activeConfig.SPREADSHEET_ID || GLOBAL_CONFIG.SPREADSHEET_ID;
-      if (!sid) { callback(); return; }
-      fetch("https://docs.google.com/spreadsheets/d/" + sid + "/gviz/tq?tqx=out:json&sheet=Pengaturan")
+      const sid = state.activeConfig.SPREADSHEET_ID || GLOBAL_CONFIG.SPREADSHEET_ID || "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20";
+      if (!sid) { if (callback) callback(); return; }
+      fetch("https://docs.google.com/spreadsheets/d/" + sid + "/gviz/tq?tqx=out:json&sheet=Pengaturan&t=" + Date.now())
         .then(function(r) { return r.text(); })
         .then(function(t) {
           const raw = t.replace(/^\/\*.*?\*\/\s*google\.visualization\.Query\.setResponse\(/, '').replace(/\);?\s*$/, '');
           const parsed = JSON.parse(raw);
           if (parsed && parsed.table && parsed.table.rows) {
+            const sheetMap = {};
             parsed.table.rows.forEach(function(row) {
               const k = row.c && row.c[0] ? String(row.c[0].v || '').trim() : '';
               const v = row.c && row.c[1] ? String(row.c[1].v || '').trim() : '';
-              if (k === 'GAS_API_URL' && v && v.startsWith('http')) {
-                state.gasApiUrl = v;
-                localStorage.setItem("WEDDING_GAS_API_URL", v);
-                const apiUrlInput = document.getElementById("cfgGasApiUrl");
-                if (apiUrlInput) apiUrlInput.value = v;
-              }
+              if (k) sheetMap[k] = v;
             });
+
+            // Sinkronkan kategori dari Google Spreadsheet Database ke seluruh device
+            if (sheetMap.CUSTOM_CATEGORIES && !sheetMap.CUSTOM_CATEGORIES.includes("[object Object]")) {
+              try {
+                const parsedCats = JSON.parse(sheetMap.CUSTOM_CATEGORIES);
+                if (Array.isArray(parsedCats) && parsedCats.length > 0) {
+                  state.customCategories = parsedCats;
+                  state.activeConfig.CUSTOM_CATEGORIES = parsedCats;
+                  localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(parsedCats));
+                }
+              } catch(eCats) {}
+            }
+
+            if (sheetMap.EVENT_DATE) state.activeConfig.EVENT_DATE = sheetMap.EVENT_DATE;
+            if (sheetMap.EVENT_VENUE) state.activeConfig.EVENT_VENUE = sheetMap.EVENT_VENUE;
+            if (sheetMap.EVENT_NAME || sheetMap.COUPLE_NAME) {
+              state.activeConfig.EVENT_NAME = sheetMap.EVENT_NAME || sheetMap.COUPLE_NAME;
+              state.activeConfig.COUPLE_NAME = state.activeConfig.EVENT_NAME;
+            }
+            if (sheetMap.DRIVE_FOLDER_ID) state.activeConfig.DRIVE_FOLDER_ID = sheetMap.DRIVE_FOLDER_ID;
+            if (sheetMap.FRAME_IMAGE_URL) state.activeConfig.FRAME_IMAGE_URL = sheetMap.FRAME_IMAGE_URL;
+            if (sheetMap.GAS_API_URL && sheetMap.GAS_API_URL.startsWith('http')) {
+              state.gasApiUrl = sheetMap.GAS_API_URL;
+            }
+            if (sheetMap.ALL_PHOTOS_LABEL) state.allPhotosLabel = sheetMap.ALL_PHOTOS_LABEL;
+
+            populateConfigToUI(state.activeConfig);
+            renderCategoryTabs();
           }
         })
-        .catch(function() {})
-        .finally(callback);
+        .catch(function(err) {
+          console.warn("GViz sync error:", err);
+        })
+        .finally(function() {
+          if (callback) callback();
+        });
     }
 
     function startLiveAutoRefresh() {
       if (state.autoRefreshTimer) clearInterval(state.autoRefreshTimer);
       state.autoRefreshTimer = setInterval(function() {
-        if (!state.isAutoRefreshing) {
-          fetchGalleryData(false, true);
-        }
+        syncFromSpreadsheetGViz(function() {
+          if (!state.isAutoRefreshing) {
+            fetchGalleryData(false, true);
+          }
+        });
       }, state.autoRefreshIntervalMs);
     }
 
@@ -899,7 +924,11 @@ const GLOBAL_CONFIG = {
       if (state.categoryPhotosMap[cat]) return;
 
       const driveFolderId = extractDriveFolderId(targetUrl);
-      if (targetUrl && targetUrl.includes("fotoshare.co")) {
+      if (targetUrl && targetUrl.includes("photos.google.com")) {
+        fetchGooglePhotos(cat, targetUrl, function(photos) {
+          updateCategoryPillCount(cat, photos.length);
+        });
+      } else if (targetUrl && targetUrl.includes("fotoshare.co")) {
         fetchFotosharePhotos(cat, targetUrl, function(photos) {
           updateCategoryPillCount(cat, photos.length);
         });
@@ -908,6 +937,73 @@ const GLOBAL_CONFIG = {
           updateCategoryPillCount(cat, photos.length);
         });
       }
+    }
+
+        function fetchGooglePhotos(cat, url, callback) {
+      if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
+      if (state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0) {
+        if (callback) callback(state.categoryPhotosMap[cat]);
+        return;
+      }
+
+      function buildGooglePhotoList(rawList) {
+        return rawList.map(function(item, idx) {
+          const base = typeof item === 'string' ? item : (item.baseUrl || item.url || item.thumbnailUrl);
+          const cleanBase = base ? base.replace(/=[^/]*$/, '') : '';
+          return {
+            id: (item.id || ("gp_" + (idx + 1))),
+            name: (cat || "Photobooth") + " " + (idx + 1),
+            thumbnailUrl: cleanBase ? (cleanBase + "=w500-h500-c") : base,
+            previewUrl: cleanBase ? (cleanBase + "=w1600-h1200") : base,
+            highResUrl: cleanBase ? (cleanBase + "=w2400-h1800") : base,
+            downloadUrl: cleanBase ? (cleanBase + "=d") : base,
+            category: cat || "Photobooth"
+          };
+        });
+      }
+
+      // 1. Coba lewat API endpoint /api/google-photos (Vercel)
+      fetch("/api/google-photos?url=" + encodeURIComponent(url) + "&category=" + encodeURIComponent(cat))
+        .then(function(res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.json();
+        })
+        .then(function(data) {
+          if (data && data.success && Array.isArray(data.photos) && data.photos.length > 0) {
+            state.categoryPhotosMap[cat] = data.photos;
+            if (callback) callback(data.photos);
+            return;
+          }
+          throw new Error("No photos from API");
+        })
+        .catch(function() {
+          // 2. Coba lewat GAS Backend
+          callBackend("getCategoryPhotos", { url: url, category: cat }, function(res) {
+            if (res && res.success && Array.isArray(res.photos) && res.photos.length > 0) {
+              state.categoryPhotosMap[cat] = res.photos;
+              if (callback) callback(res.photos);
+              return;
+            }
+            // 3. Fallback ke GOOGLE_PHOTOS_INITIAL_CACHE
+            if (typeof GOOGLE_PHOTOS_INITIAL_CACHE !== 'undefined' && Array.isArray(GOOGLE_PHOTOS_INITIAL_CACHE) && GOOGLE_PHOTOS_INITIAL_CACHE.length > 0) {
+              const list = buildGooglePhotoList(GOOGLE_PHOTOS_INITIAL_CACHE);
+              state.categoryPhotosMap[cat] = list;
+              if (callback) callback(list);
+            } else {
+              state.categoryPhotosMap[cat] = [];
+              if (callback) callback([]);
+            }
+          }, function() {
+            if (typeof GOOGLE_PHOTOS_INITIAL_CACHE !== 'undefined' && Array.isArray(GOOGLE_PHOTOS_INITIAL_CACHE) && GOOGLE_PHOTOS_INITIAL_CACHE.length > 0) {
+              const list = buildGooglePhotoList(GOOGLE_PHOTOS_INITIAL_CACHE);
+              state.categoryPhotosMap[cat] = list;
+              if (callback) callback(list);
+            } else {
+              state.categoryPhotosMap[cat] = [];
+              if (callback) callback([]);
+            }
+          });
+        });
     }
 
     function fetchFotosharePhotos(cat, url, callback) {
@@ -1037,18 +1133,13 @@ const GLOBAL_CONFIG = {
           state.categoryPhotosMap[cat] = res.photos;
           if (callback) callback(res.photos);
         } else {
-          // Terapkan view display & download berbingkai sama seperti kategori utama (semua foto)
+          // Sesuaikan foto kategori sendiri, jangan pinjam dari kategori lain
           let matched = state.allPhotos.filter(function(p) {
             if (p.category && p.category.toLowerCase() === cat.toLowerCase()) return true;
             if (p.name && p.name.toLowerCase().includes(cat.toLowerCase())) return true;
             if (driveFolderId && p.customFolderId === driveFolderId) return true;
             return false;
           });
-          if (matched.length === 0 && state.allPhotos.length > 0) {
-            matched = state.allPhotos.map(function(p) {
-              return Object.assign({}, p, { category: cat });
-            });
-          }
           state.categoryPhotosMap[cat] = matched;
           if (callback) callback(matched);
         }
@@ -1059,11 +1150,6 @@ const GLOBAL_CONFIG = {
           if (driveFolderId && p.customFolderId === driveFolderId) return true;
           return false;
         });
-        if (matched.length === 0 && state.allPhotos.length > 0) {
-          matched = state.allPhotos.map(function(p) {
-            return Object.assign({}, p, { category: cat });
-          });
-        }
         state.categoryPhotosMap[cat] = matched;
         if (callback) callback(matched);
       });
@@ -1111,7 +1197,28 @@ const GLOBAL_CONFIG = {
         return;
       }
 
-      // 2. Jika tautan eksternal fotoshare
+      // 2. Jika tautan Google Photos (album bersama)
+      if (targetUrl && targetUrl.includes("photos.google.com")) {
+        const grid = document.getElementById("photosGrid");
+        if (grid) {
+          grid.innerHTML = `
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          `;
+        }
+        fetchGooglePhotos(category, targetUrl, function(photos) {
+          updateCategoryPillCount(category, photos.length);
+          if (state.activeCategory === category) {
+            state.filteredPhotos = photos;
+            renderPhotoGrid(targetUrl, category);
+          }
+        });
+        return;
+      }
+
+      // 3. Jika tautan eksternal fotoshare
       if (targetUrl && targetUrl.includes("fotoshare.co")) {
         const grid = document.getElementById("photosGrid");
         if (grid) {
@@ -1132,7 +1239,7 @@ const GLOBAL_CONFIG = {
         return;
       }
 
-      // 3. Jika tautan folder Google Drive
+      // 4. Jika tautan folder Google Drive
       const driveFolderId = extractDriveFolderId(targetUrl);
       if (driveFolderId) {
         const grid = document.getElementById("photosGrid");
@@ -1154,20 +1261,13 @@ const GLOBAL_CONFIG = {
         return;
       }
 
-      // 4. Filter dari foto yang sudah ada di galeri lokal
+      // 5. Filter ketat: Sesuaikan target link dan kategori sendiri, JANGAN ambil foto dari kategori lain
       let matched = state.allPhotos.filter(function(p) {
         if (p.category && p.category.toLowerCase() === category.toLowerCase()) return true;
         if (p.name && p.name.toLowerCase().includes(category.toLowerCase())) return true;
         if (p.rawName && p.rawName.toLowerCase().includes(category.toLowerCase())) return true;
         return false;
       });
-
-      // Terapkan settingan view display dan unduh berbingkai sama seperti kategori utama jika belum ada foto terpisah
-      if (matched.length === 0 && state.allPhotos.length > 0) {
-        matched = state.allPhotos.map(function(p) {
-          return Object.assign({}, p, { category: category });
-        });
-      }
 
       state.filteredPhotos = matched;
       renderPhotoGrid(targetUrl, category);
@@ -1256,13 +1356,13 @@ const GLOBAL_CONFIG = {
         openAdminSettingsModal();
       } else {
         document.getElementById("loginAlertBox").style.display = "none";
+        const uInp = document.getElementById("adminUsernameInput");
+        if (uInp) uInp.value = "";
         const passInp = document.getElementById("adminPasswordInput");
         if (passInp) passInp.value = "";
         document.getElementById("adminLoginModal").classList.add("active");
         setTimeout(function() {
-          const uInp = document.getElementById("adminUsernameInput");
-          if (uInp && !uInp.value) uInp.focus();
-          else if (passInp) passInp.focus();
+          if (uInp) uInp.focus();
         }, 150);
       }
     }
@@ -2012,6 +2112,30 @@ const GLOBAL_CONFIG = {
     /* ==========================================================================
        SHARE & QR CODE MODAL FUNCTIONS
        ========================================================================== */
+        function formatDayDateIndonesian(val) {
+      if (!val) return "Senin, 16 November 2026";
+      const cleanStr = String(val).replace(/\s+\d{2}:\d{2}:\d{2}.*$/, '').replace(/GMT.*$/, '').trim();
+      const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+      const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+      const monthMap = { 'januari':0,'februari':1,'maret':2,'april':3,'mei':4,'juni':5,'juli':6,'agustus':7,'september':8,'oktober':9,'november':10,'desember':11 };
+      
+      const dMatch = cleanStr.match(/^(\d{1,2})\s+([a-zA-Z]+)\s+(\d{4})/);
+      if (dMatch) {
+        const dNum = parseInt(dMatch[1], 10);
+        const mIdx = monthMap[dMatch[2].toLowerCase()];
+        const yNum = parseInt(dMatch[3], 10);
+        if (mIdx !== undefined) {
+          const dt = new Date(yNum, mIdx, dNum);
+          return days[dt.getDay()] + ", " + String(dNum).padStart(2, "0") + " " + months[mIdx] + " " + yNum;
+        }
+      }
+      const dt2 = new Date(cleanStr);
+      if (!isNaN(dt2.getTime())) {
+        return days[dt2.getDay()] + ", " + String(dt2.getDate()).padStart(2, "0") + " " + months[dt2.getMonth()] + " " + dt2.getFullYear();
+      }
+      return cleanStr;
+    }
+
     function openShareModal() {
       const modal = document.getElementById("shareQrModal");
       if (!modal) return;
@@ -2023,7 +2147,8 @@ const GLOBAL_CONFIG = {
 
       const subEl = document.getElementById("shareEventSubtitle");
       if (subEl) {
-        subEl.innerText = (state.activeConfig.EVENT_DATE || "14 November 2026") + " • " + (state.activeConfig.EVENT_VENUE || "Makassar");
+        const formattedDate = formatDayDateIndonesian(state.activeConfig.EVENT_DATE || "16 November 2026");
+        subEl.innerText = formattedDate + (state.activeConfig.EVENT_VENUE ? (" • " + state.activeConfig.EVENT_VENUE) : "");
       }
 
       // Bentuk URL lengkap event aktif

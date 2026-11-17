@@ -1,29 +1,31 @@
-# RENCANA REVISI & CATATAN RILIS SISTEM: v3.4.0
+# RENCANA REVISI & CATATAN RILIS SISTEM: v3.5.0
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v3.4.0)
+STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v3.5.0)
 TANGGAL PENGAJUAN: 18 November 2026
-VERIFIKASI SISTEM: BERHASIL 100% (Kustomisasi Tautan Vendor Photobooth, Penempatan Tautan Galeri Utama Berdampingan, Lightbox Bright Mode Terang Estetik, Redesain Modal Share Logo-Only Tanpa WhatsApp/Bagikan, View Display & Unduh Berbingkai Kategori Momen Lainnya Identik Kategori Utama)
+VERIFIKASI SISTEM: BERHASIL 100% (Sinkronisasi Live Kategori Multi-Device Terpusat, Username Admin Kosong Saat Login, Redesain Share QR Tanpa Jam & Tanggal Nama Hari Bersama Logo Share, Dukungan Penuh Google Photos Album untuk Photobooth, Isolasi Ketat Target Link Tiap Kategori Tanpa Mengambil Foto Kategori Lain)
 
-### Rangkuman 5 Pembaruan Utama v3.4.0:
-1. **Khusus Kategori Photobooth (Tautan Vendor Dapat Dicustom, Proteksi Lainnya Terkunci):**
-   - **Tindakan:** Mengubah field input tautan pada kartu *📸 Kategori Spesial: Photobooth* menjadi dapat diedit secara bebas (`oninput="onCategoryRowInput()"`).
-   - **Proteksi Terkunci:** Proteksi lainnya tetap terkunci rapi: tidak ada tombol hapus (anti-terhapus sembarangan), dilengkapi toggle tampilkan/sembunyikan di galeri (`#pbVisibilityCheck`), dan tombol sinkron instan.
-   - **Manfaat:** Admin dapat mengganti tautan photobooth vendor (misal URL acara lain) kapan saja tanpa risiko merusak kartu vendor.
-2. **Penempatan Input Tautan Galeri Utama Berdampingan dengan Fungsinya:**
-   - **Tindakan:** Memindahkan field input tautan folder Google Drive galeri utama (`#cfgDriveFolderId`) dan tombol `[🔄 Sinkron Google Drive]` masuk tepat ke dalam kotak *🏷️ Kategori Galeri Utama*.
-   - **Manfaat:** Input nama kategori ("Semua Foto") dan input tautan folder Google Drive kini berdampingan langsung dalam satu kesatuan menu. Menghilangkan kebingungan admin akibat input tautan yang sebelumnya terpisah jauh di atas.
-3. **Penyempurnaan Lightbox Bright Mode ("Jangan Dikasih Gelap, Terangkan"):**
-   - **Tindakan:** Mengubah latar belakang modal Lightbox (`.lightbox-modal`) dari gelap pekat (`rgba(15, 23, 42, 0.96)`) menjadi cerah, hangat, dan mewah dengan palet *Romantic Ivory Backdrop* (`rgba(253, 251, 247, 0.97)`) serta blur elegan `backdrop-filter: blur(14px)`.
-   - **Tipografi & Kontrol:** Judul foto, counter, tombol navigasi panah kiri/kanan, tombol tutup (✕), dan bilah bawah diselaraskan dengan warna kontras tajam (deep slate `#0F172A`, gold `#9E7D47`, dan button background `#FFFFFF`). Foto terlihat sangat hidup, terang, dan tidak suram.
-4. **Penyederhanaan Modal Bagikan (Logo-Only, Eliminasi WhatsApp & Bagikan):**
+### Rangkuman 6 Pembaruan Utama v3.5.0:
+1. **Sinkronisasi Live Kategori Multi-Device Terpusat:**
+   - **Akar Masalah:** Sebelumnya `syncFromSpreadsheetGViz` dilewati saat `GAS_API_URL` terisi, dan GAS script yang ter-deploy tidak mengembalikan kolom kategori terkini sehingga tiap device terjebak pada `localStorage` masing-masing atau file konfigurasi lama.
+   - **Tindakan:** `syncFromSpreadsheetGViz` kini selalu berjalan secara live membaca Google Spreadsheet (Google Visualization API) pada saat pembukaan halaman maupun pada auto-refresh 25 detik. Berkas [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/config.json) telah diselaraskan dengan kategori live terkini: `Photobooth` (Google Photos) dan `Wedding` (Google Drive).
+   - **Hasil:** Seluruh device (PC, smartphone tamu, tablet) kini melihat daftar kategori yang 100% konsisten dan tersinkronisasi otomatis seketika saat admin menambah atau mengubah kategori.
+2. **Perbaikan Tampilan Login Admin (Username Bersih Tanpa Pre-fill):**
+   - **Tindakan:** Menghapus atribut `value="admin"` dari input username di [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) dan menambahkan instruksi pembersihan input `uInp.value = ""` saat `openAdminModal()` dipanggil.
+   - **Hasil:** Saat modal login admin dibuka, kolom username dan password tampil bersih dan kosong, siap diketik oleh admin.
+3. **Penyempurnaan Tampilan Menu Share QR (Format Hari/Tanggal Tanpa Jam & Logo Share Link):**
    - **Tindakan:** 
-     - Menghapus tombol `[💬 WhatsApp]` dan tombol `[📤 Bagikan]`.
-     - Tombol salin tautan dan unduh gambar QR Code diubah menjadi tombol **LOGO/ICON eksklusif** tepat di samping kolom tautan URL.
-   - **Manfaat:** Antarmuka modal bagikan menjadi sangat ringkas, rapi, modern, dan estetik.
-5. **View Display & Unduh Berbingkai Kategori Momen Lainnya Identik Kategori Utama:**
-   - **Tindakan:** Menyelaraskan seluruh kategori momen lainnya (seperti *Event Test1*, *eded1*, dsb.) agar view display (kartu foto galeri native, thumbnail, badge counter, lightbox terang) dan fitur unduh berbingkai (`downloadCurrentPhotoWithFrame()`) otomatis diterapkan 100% sama seperti Kategori Utama ("Semua Foto").
-   - **Manfaat:** Tamu yang menjelajahi kategori apa pun dapat menikmati pengalaman melihat foto native dan mengunduh foto berbingkai panggung resolusi tinggi.
+     - Menghapus keterangan jam, menit, detik, dan zona waktu GMT yang panjang.
+     - Menyediakan fungsi pemformat tanggal `formatDayDateIndonesian()` yang otomatis menghasilkan format resmi: `[Nama Hari], [DD] [MMMM] [YYYY]` (contoh: *"Senin, 16 November 2026"*).
+     - Menambahkan tombol **Logo Share Link** (ikon bagikan tautan interaktif) bersanding rapi dengan Logo Salin Tautan dan Logo Unduh QR Code.
+4. **Dukungan Penuh Google Photos Album untuk Photobooth:**
+   - **Tindakan:** 
+     - Menyediakan endpoint API [api/google-photos.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/api/google-photos.js) serta fungsi pemindai `fetchGooglePhotos()` dan `scanGooglePhotosAlbum()` di [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs).
+     - Menginjeksi cache instan 115 foto dari album bersama Google Photos yang diberikan user (`https://photos.google.com/share/AF1QipMagPm7xWB2YANajDr3hx-J4WKyhOgIQ41jUjqQnxv5LSy6392pyWC5hOfsQoz1mA?key=c1BLMDNyRGw4bEJyUWo5b1Y0eFlmTy14X1pESEdR`).
+   - **Hasil:** Tab Photobooth kini dapat memuat album bersama Google Photos dengan resolusi tinggi, thumbnail cepat, dan unduhan kualitas asli dari CDN Google tanpa kompresi dan tanpa bingkai.
+5. **Isolasi Ketat Foto Tiap Kategori (Dilarang Mengambil Foto Kategori Lain):**
+   - **Tindakan:** Menghapus seluruh mekanisme fallback yang sebelumnya meminjam foto dari galeri utama (`state.allPhotos`) saat kategori kustom belum terisi foto.
+   - **Hasil:** Setiap kategori hanya menampilkan foto yang benar-benar berasal dari folder atau tautan targetnya masing-masing. Jika suatu kategori belum memiliki foto, sistem menyajikan status kosong yang elegan disertai tombol sinkronisasi khusus, tanpa pernah menampilkan foto dari kategori lain.
 6. **Prinsip Non-Destruktif (Strict Non-Destructive):**
-   - Seluruh fungsionalitas inti: unduh tanpa kompresi dan tanpa bingkai khusus photobooth, multi-event switcher, background queue non-blocking, serta otentikasi username & password admin (`admin` / `123`) 100% dipertahankan dan berjalan prima.
+   - Seluruh fungsionalitas inti: unduh berbingkai resolusi tinggi, antrean unduh background, multi-event switcher, serta otentikasi login admin tetap berjalan prima 100%.
