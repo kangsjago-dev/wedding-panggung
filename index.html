@@ -320,27 +320,23 @@
           <img id="shareQrImg" src="" alt="QR Code Galeri" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;">
         </div>
 
-        <!-- URL Field with Copy -->
-        <div style="display: flex; gap: 8px; margin-bottom: 14px;">
-          <input type="text" id="shareUrlInput" class="admin-input" readonly style="font-size: 0.8rem; background: #FAF8F5; cursor: pointer;" onclick="copyShareUrl()">
-          <button type="button" class="btn btn-gold" onclick="copyShareUrl()" style="padding: 6px 14px; font-size: 0.82rem; white-space: nowrap;">
-            <span>📋 Salin</span>
+        <!-- URL Field with Logo Buttons (Salin & Unduh Gambar QR Code) -->
+        <div style="display: flex; gap: 8px; align-items: center; margin-top: 10px;">
+          <input type="text" id="shareUrlInput" class="admin-input" readonly style="flex: 1; font-size: 0.82rem; background: #FAF8F5; cursor: pointer; padding: 9px 12px;" onclick="copyShareUrl()" title="Klik untuk menyalin tautan">
+          <button type="button" class="ctrl-icon-btn" onclick="copyShareUrl()" title="Salin Tautan" aria-label="Salin Tautan" style="width: 42px; height: 42px; background: #FAF8F5; border: 1.5px solid var(--gold-primary); color: var(--gold-dark); border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+          <button type="button" class="ctrl-icon-btn" onclick="downloadQrCodeImage()" title="Unduh Gambar QR Code (PNG)" aria-label="Unduh QR Code" style="width: 42px; height: 42px; background: var(--gold-primary); border: 1.5px solid var(--gold-dark); color: #FFFFFF; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 4px 12px rgba(197, 168, 128, 0.4);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
           </button>
         </div>
-
-        <!-- Action Buttons -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-          <button type="button" class="btn btn-outline" style="justify-content: center; font-size: 0.8rem; padding: 8px;" onclick="shareViaWhatsApp()">
-            <span>💬 WhatsApp</span>
-          </button>
-          <button type="button" class="btn btn-outline" style="justify-content: center; font-size: 0.8rem; padding: 8px;" onclick="shareViaWebShare()">
-            <span>📤 Bagikan</span>
-          </button>
-        </div>
-
-        <button type="button" class="btn btn-gold" style="width: 100%; margin-top: 8px; justify-content: center; font-size: 0.82rem; padding: 8px;" onclick="downloadQrCodeImage()">
-          <span>⬇️ Unduh Gambar QR Code (PNG)</span>
-        </button>
       </div>
     </div>
   </div>
@@ -563,22 +559,6 @@
         <!-- Tab 2: Foto & Bingkai -->
         <div class="admin-tab-pane" id="tabPane-media">
           <div class="admin-field-group">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <label class="admin-label" for="cfgDriveFolderId" style="margin-bottom: 0;">Katalog Foto Google Drive</label>
-              <span id="driveFolderStatusBadge" style="font-size: 0.75rem; color: #10B981; font-weight: 600;"></span>
-            </div>
-            <input type="text" id="cfgDriveFolderId" class="admin-input" placeholder="Tautan / ID Folder Google Drive">
-            <button type="button" id="btnSyncDrivePhotos" class="btn btn-outline" style="width: 100%; margin-top: 8px; justify-content: center; padding: 9px; font-size: 0.84rem;" onclick="handleSyncDrivePhotosDirectly()">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="syncDriveBtnIcon">
-                <polyline points="23 4 23 10 17 10"></polyline>
-                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-              </svg>
-              <span id="syncDriveBtnText">🔄 Sinkronkan Foto Google Drive ke Galeri</span>
-            </button>
-            <div class="admin-help-text">Unggah foto ke Google Drive Anda. Pastikan setelan izin folder: <em>"Anyone with the link can view"</em>.</div>
-          </div>
-
-          <div class="admin-field-group" style="margin-top: 14px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
               <label class="admin-label" for="cfgFrameImageUrl" style="margin-bottom: 0;">Bingkai PNG Transparan Saat Download</label>
               <span id="frameStatusBadge" style="font-size: 0.75rem; font-weight: 600;"></span>

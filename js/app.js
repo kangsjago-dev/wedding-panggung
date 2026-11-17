@@ -1033,17 +1033,39 @@ const GLOBAL_CONFIG = {
       }
 
       callBackend("getCategoryPhotos", { folderId: driveFolderId, category: cat }, function(res) {
-        if (res && res.success && Array.isArray(res.photos)) {
+        if (res && res.success && Array.isArray(res.photos) && res.photos.length > 0) {
           state.categoryPhotosMap[cat] = res.photos;
           if (callback) callback(res.photos);
         } else {
-          state.categoryPhotosMap[cat] = [];
-          if (callback) callback([]);
+          // Terapkan view display & download berbingkai sama seperti kategori utama (semua foto)
+          let matched = state.allPhotos.filter(function(p) {
+            if (p.category && p.category.toLowerCase() === cat.toLowerCase()) return true;
+            if (p.name && p.name.toLowerCase().includes(cat.toLowerCase())) return true;
+            if (driveFolderId && p.customFolderId === driveFolderId) return true;
+            return false;
+          });
+          if (matched.length === 0 && state.allPhotos.length > 0) {
+            matched = state.allPhotos.map(function(p) {
+              return Object.assign({}, p, { category: cat });
+            });
+          }
+          state.categoryPhotosMap[cat] = matched;
+          if (callback) callback(matched);
         }
       }, function(err) {
-        console.error("Gagal mengambil foto folder Google Drive:", err);
-        state.categoryPhotosMap[cat] = [];
-        if (callback) callback([]);
+        let matched = state.allPhotos.filter(function(p) {
+          if (p.category && p.category.toLowerCase() === cat.toLowerCase()) return true;
+          if (p.name && p.name.toLowerCase().includes(cat.toLowerCase())) return true;
+          if (driveFolderId && p.customFolderId === driveFolderId) return true;
+          return false;
+        });
+        if (matched.length === 0 && state.allPhotos.length > 0) {
+          matched = state.allPhotos.map(function(p) {
+            return Object.assign({}, p, { category: cat });
+          });
+        }
+        state.categoryPhotosMap[cat] = matched;
+        if (callback) callback(matched);
       });
     }
 
@@ -1139,6 +1161,13 @@ const GLOBAL_CONFIG = {
         if (p.rawName && p.rawName.toLowerCase().includes(category.toLowerCase())) return true;
         return false;
       });
+
+      // Terapkan settingan view display dan unduh berbingkai sama seperti kategori utama jika belum ada foto terpisah
+      if (matched.length === 0 && state.allPhotos.length > 0) {
+        matched = state.allPhotos.map(function(p) {
+          return Object.assign({}, p, { category: category });
+        });
+      }
 
       state.filteredPhotos = matched;
       renderPhotoGrid(targetUrl, category);
@@ -1427,6 +1456,8 @@ const GLOBAL_CONFIG = {
       const cfgEventVenueEl = document.getElementById("cfgEventVenue");
       if (cfgEventVenueEl) cfgEventVenueEl.value = state.activeConfig.EVENT_VENUE || "";
 
+      renderAdminCategoriesManager();
+
       const cfgDriveFolderIdEl = document.getElementById("cfgDriveFolderId");
       if (cfgDriveFolderIdEl) cfgDriveFolderIdEl.value = state.activeConfig.DRIVE_FOLDER_ID || "";
 
@@ -1441,8 +1472,6 @@ const GLOBAL_CONFIG = {
 
       const cfgFooterEl = document.getElementById("cfgFooterMessage");
       if (cfgFooterEl) cfgFooterEl.value = state.activeConfig.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.";
-
-      renderAdminCategoriesManager();
 
       const floatBar = document.getElementById("adminActiveFloatingBar");
       if (floatBar) floatBar.style.display = "none";
@@ -1462,16 +1491,36 @@ const GLOBAL_CONFIG = {
         ];
       }
 
-      // 1. Setting Nama Kategori Galeri Utama ("Semua Foto")
+      // 1. Setting Kategori Galeri Utama ("Semua Foto") + Input Tautan Google Drive Berdampingan
+      const currentDriveFolder = state.activeConfig.DRIVE_FOLDER_ID || GLOBAL_CONFIG.DRIVE_FOLDER_ID || "";
       const mainLabelBox = document.createElement("div");
-      mainLabelBox.style.cssText = "background: #FAF8F5; border: 1px solid rgba(197, 168, 128, 0.4); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;";
+      mainLabelBox.style.cssText = "background: #FAF8F5; border: 1px solid rgba(197, 168, 128, 0.4); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px;";
       mainLabelBox.innerHTML = `
-        <label class="admin-label" style="font-size: 0.82rem; margin-bottom: 4px;" for="cfgMainGalleryLabel">🏷️ Nama Kategori Galeri Utama:</label>
-        <div style="display: flex; gap: 8px;">
-          <input type="text" id="cfgMainGalleryLabel" class="admin-input" placeholder="Semua Foto" value="${escapeHtml(state.allPhotosLabel || 'Semua Foto')}" oninput="handleAllPhotosLabelChange(this.value)" style="padding: 7px 10px; font-size: 0.84rem;">
-          <button type="button" class="btn btn-outline" style="font-size: 0.74rem; padding: 6px 12px; white-space: nowrap;" onclick="handleAllPhotosLabelChange('Semua Foto')">Reset</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+          <div style="font-size: 0.84rem; font-weight: 700; color: var(--gold-dark); display: flex; align-items: center; gap: 6px;">
+            <span>🏷️ Kategori Galeri Utama: ${escapeHtml(state.allPhotosLabel || 'Semua Foto')}</span>
+            <span id="driveFolderStatusBadge" style="font-size: 0.68rem; background: #FEF3C7; color: #92400E; padding: 1px 6px; border-radius: 9999px;">Katalog Utama</span>
+          </div>
+          <button type="button" class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="handleSyncDrivePhotosDirectly()" title="Sinkronkan Foto Google Drive ke Galeri">
+            <span id="syncDriveBtnText">🔄 Sinkron Google Drive</span>
+          </button>
         </div>
-        <div class="admin-help-text" style="font-size: 0.74rem; margin-top: 4px;">Nama kategori tab utama galeri bebas diganti (misal: "Semua Foto", "Semua Momen", "Katalog Foto", "All Photos"). Tampilan tab pertama dan seluruh filter langsung mengikutinya.</div>
+        <div style="display: grid; grid-template-columns: 1.1fr 1.6fr; gap: 8px; align-items: flex-end;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+              <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 0;" for="cfgMainGalleryLabel">Nama Kategori</label>
+              <button type="button" style="border: none; background: none; font-size: 0.68rem; color: var(--gold-dark); cursor: pointer; text-decoration: underline;" onclick="handleAllPhotosLabelChange('Semua Foto')">Reset</button>
+            </div>
+            <input type="text" id="cfgMainGalleryLabel" class="admin-input" placeholder="Semua Foto" value="${escapeHtml(state.allPhotosLabel || 'Semua Foto')}" oninput="handleAllPhotosLabelChange(this.value)" style="padding: 7px 10px; font-size: 0.82rem;">
+          </div>
+          <div>
+            <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 2px;" for="cfgDriveFolderId">Tautan Display Galeri (Katalog Foto Google Drive)</label>
+            <input type="text" id="cfgDriveFolderId" class="admin-input" placeholder="Tautan / ID Folder Google Drive" value="${escapeHtml(currentDriveFolder)}" oninput="state.activeConfig.DRIVE_FOLDER_ID = this.value.trim()" style="padding: 7px 10px; font-size: 0.82rem;">
+          </div>
+        </div>
+        <div class="admin-help-text" style="font-size: 0.7rem; margin-top: 5px;">
+          Nama tab utama dan tautan folder Google Drive galeri pusat. Pastikan izin folder Google Drive: <em>"Anyone with the link can view"</em>.
+        </div>
       `;
       container.appendChild(mainLabelBox);
 
@@ -1484,7 +1533,7 @@ const GLOBAL_CONFIG = {
         pbItem = { name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", enabled: true };
       }
 
-      // 2. Dedicated Row Khusus Photobooth (Hanya bisa ganti nama & tampilkan/sembunyikan)
+      // 2. Dedicated Row Khusus Photobooth (Link vendor bebas dicustom, nama bebas diubah, toggle tampilkan/sembunyikan, tanpa tombol hapus)
       const pbBox = document.createElement("div");
       pbBox.className = "photobooth-config-box";
       pbBox.style.cssText = "background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px;";
@@ -1492,39 +1541,42 @@ const GLOBAL_CONFIG = {
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
           <div style="font-size: 0.84rem; font-weight: 700; color: #166534; display: flex; align-items: center; gap: 6px;">
             <span>📸 Kategori Spesial: Photobooth</span>
-            <span style="font-size: 0.68rem; background: #DCFCE7; color: #15803D; padding: 1px 6px; border-radius: 9999px;">Tautan Vendor Terproteksi</span>
+            <span style="font-size: 0.68rem; background: #DCFCE7; color: #15803D; padding: 1px 6px; border-radius: 9999px;">Tautan Vendor Dapat Dicustom</span>
           </div>
           <div style="display: flex; align-items: center; gap: 10px;">
             <label style="font-size: 0.76rem; font-weight: 600; color: #166534; display: flex; align-items: center; gap: 5px; cursor: pointer;">
               <input type="checkbox" id="pbVisibilityCheck" ${pbItem.enabled !== false ? 'checked' : ''} onchange="onCategoryRowInput()">
               <span>Tampilkan di Galeri</span>
             </label>
-            <button type="button" class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="syncSingleCategory('${escapeHtml(pbItem.name || 'Photobooth')}')">
+            <button type="button" class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="syncSingleCategory(document.getElementById('pbNameInput')?.value || 'Photobooth')">
               <span>🔄 Sinkron</span>
             </button>
           </div>
         </div>
-        <div style="display: grid; grid-template-columns: 1.2fr 1.8fr; gap: 8px; align-items: center;">
+        <div style="display: grid; grid-template-columns: 1.1fr 1.6fr; gap: 8px; align-items: flex-end;">
           <div>
             <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 2px;">Nama Tampilan Tab</label>
             <input type="text" id="pbNameInput" class="admin-input cat-name-input" value="${escapeHtml(pbItem.name || 'Photobooth')}" oninput="onCategoryRowInput()" placeholder="Photobooth" style="padding: 7px 10px; font-size: 0.82rem;">
           </div>
           <div>
-            <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 2px;">Tautan Sistem (Terkunci)</label>
-            <input type="text" id="pbUrlInput" class="admin-input cat-url-input" value="${escapeHtml(pbItem.url || 'https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs')}" readonly disabled style="padding: 7px 10px; font-size: 0.82rem; background: #E2E8F0; color: #64748B; cursor: not-allowed;">
+            <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 2px;">Tautan Display / Vendor (Dapat Dicustom)</label>
+            <input type="text" id="pbUrlInput" class="admin-input cat-url-input" value="${escapeHtml(pbItem.url || 'https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs')}" oninput="onCategoryRowInput()" placeholder="https://fotoshare.co/e/..." style="padding: 7px 10px; font-size: 0.82rem;">
           </div>
         </div>
-        <div style="font-size: 0.7rem; color: #166534; margin-top: 4px; opacity: 0.85;">
-          *Khusus Photobooth, nama tab bebas diubah dan dapat ditampilkan atau disembunyikan. Foto dibuka langsung di galeri dan diunduh dari sumber aslinya kualitas penuh tanpa kompresi dan tanpa bingkai.
+        <div style="font-size: 0.7rem; color: #166534; margin-top: 5px; opacity: 0.85;">
+          *Khusus Photobooth: Nama tab dan tautan link vendor bebas dicustom. Pengaturan lainnya terkunci aman (tidak dapat dihapus sembarangan). Foto dibuka langsung di galeri dan diunduh kualitas asli tanpa kompresi dan tanpa bingkai.
         </div>
       `;
       container.appendChild(pbBox);
 
       // Section Header untuk Kategori Momen Lainnya
       const otherHeader = document.createElement("div");
-      otherHeader.style.cssText = "font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;";
+      otherHeader.style.cssText = "font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;";
       otherHeader.innerHTML = `
-        <span>📁 Kategori Momen Lainnya</span>
+        <div>
+          <span>📁 Kategori Momen Lainnya</span>
+          <span style="font-size: 0.68rem; font-weight: normal; color: #64748B; margin-left: 6px;">(View & unduh berbingkai sama seperti Kategori Utama)</span>
+        </div>
         <button type="button" class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="copyDeviceSyncLink()">
           <span>📋 Salin Tautan Sinkron Semua Device</span>
         </button>
