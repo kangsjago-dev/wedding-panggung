@@ -2197,6 +2197,20 @@ function saveAdminSettings(pin, updatedConfig) {
     try {
       if (dbSpreadsheet) {
         writeConfigToSheet(dbSpreadsheet, updatedConfig);
+
+        // Sinkronisasi ERP Master Table ke Sheet 'Daftar_Acara'
+        var rawEvs = updatedConfig.EVENTS || props.getProperty("EVENTS");
+        if (rawEvs) {
+          try {
+            var evList = typeof rawEvs === "string" ? JSON.parse(rawEvs) : rawEvs;
+            if (Array.isArray(evList) && evList.length > 0) {
+              syncEventsToSheet(dbSpreadsheet, evList);
+            }
+          } catch(eEvSync) {
+            Logger.log("Info syncEventsToSheet: " + eEvSync.toString());
+          }
+        }
+
         logActivityToSheet(dbSpreadsheet, "Pembaruan Pengaturan", "Admin (" + loginResult.user.name + ") memperbarui data acara via Web Admin", loginResult.user.name);
         SpreadsheetApp.flush();
       }

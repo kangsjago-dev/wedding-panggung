@@ -679,31 +679,40 @@ function isGooglePhotosUrl(url) {
               try {
                 const parsedEvs = JSON.parse(sheetMap.EVENTS);
                 if (Array.isArray(parsedEvs) && parsedEvs.length > 0) {
-                  state.events = parsedEvs;
-                  const urlEvId = getActiveEventIdFromUrl();
-                  const targetId = urlEvId || state.currentEventId || sheetMap.ACTIVE_EVENT_ID || parsedEvs[0].id;
-                  const matchedEv = parsedEvs.find(function(e) { return e && e.id === targetId; }) || parsedEvs[0];
-                  if (matchedEv) {
-                    state.currentEventId = matchedEv.id;
-                    state.activeConfig.ACTIVE_EVENT_ID = matchedEv.id;
-                    state.activeConfig.EVENT_NAME = matchedEv.name || "";
-                    state.activeConfig.COUPLE_NAME = matchedEv.name || "";
-                    state.activeConfig.EVENT_DATE = matchedEv.date || "";
-                    state.activeConfig.EVENT_VENUE = matchedEv.venue || "";
-                    state.activeConfig.DRIVE_FOLDER_ID = matchedEv.driveFolderId || "";
-                    state.activeConfig.PHOTOBOOTH_URL = matchedEv.photoboothUrl || "";
-                    state.activeConfig.FRAME_IMAGE_URL = matchedEv.frameImageUrl || "";
-                    const curOrigin = window.location.origin || (window.location.protocol + "//" + window.location.host);
-                    const curPath = window.location.pathname || "/";
-                    state.activeConfig.HOME_URL = matchedEv.homeUrl || (curOrigin + curPath + "?event=" + encodeURIComponent(matchedEv.id));
-
-                    if (Array.isArray(matchedEv.customCategories) && matchedEv.customCategories.length > 0) {
-                      state.activeConfig.CUSTOM_CATEGORIES = matchedEv.customCategories;
-                      state.customCategories = matchedEv.customCategories;
+                  const evMap = new Map();
+                  (state.events || []).forEach(function(e) { if (e && e.id) evMap.set(e.id, e); });
+                  parsedEvs.forEach(function(e) {
+                    if (e && e.id) {
+                      const prev = evMap.get(e.id) || {};
+                      evMap.set(e.id, Object.assign({}, prev, e));
                     }
-                  }
+                  });
+                  state.events = Array.from(evMap.values());
                 }
               } catch(eEvs) {}
+            }
+
+            const urlEvId = getActiveEventIdFromUrl();
+            const targetId = state.currentEventId || urlEvId || sheetMap.ACTIVE_EVENT_ID || (state.events && state.events[0] ? state.events[0].id : "");
+            const matchedEv = (state.events || []).find(function(e) { return e && e.id === targetId; }) || state.events[0];
+            if (matchedEv) {
+              state.currentEventId = matchedEv.id;
+              state.activeConfig.ACTIVE_EVENT_ID = matchedEv.id;
+              state.activeConfig.EVENT_NAME = matchedEv.name || "";
+              state.activeConfig.COUPLE_NAME = matchedEv.name || "";
+              state.activeConfig.EVENT_DATE = matchedEv.date || "";
+              state.activeConfig.EVENT_VENUE = matchedEv.venue || "";
+              state.activeConfig.DRIVE_FOLDER_ID = matchedEv.driveFolderId || "";
+              state.activeConfig.PHOTOBOOTH_URL = matchedEv.photoboothUrl || "";
+              state.activeConfig.FRAME_IMAGE_URL = matchedEv.frameImageUrl || "";
+              const curOrigin = window.location.origin || (window.location.protocol + "//" + window.location.host);
+              const curPath = window.location.pathname || "/";
+              state.activeConfig.HOME_URL = matchedEv.homeUrl || (curOrigin + curPath + "?event=" + encodeURIComponent(matchedEv.id));
+
+              if (Array.isArray(matchedEv.customCategories) && matchedEv.customCategories.length > 0) {
+                state.activeConfig.CUSTOM_CATEGORIES = matchedEv.customCategories;
+                state.customCategories = matchedEv.customCategories;
+              }
             }
 
             if (!state.currentEventId || !state.activeConfig.EVENT_NAME) {
@@ -993,30 +1002,58 @@ function isGooglePhotosUrl(url) {
       if (demoNotice) demoNotice.style.display = "none";
 
       if (response.events && Array.isArray(response.events)) {
-        state.events = response.events;
+        const evMap = new Map();
+        (state.events || []).forEach(function(e) { if (e && e.id) evMap.set(e.id, e); });
+        response.events.forEach(function(e) {
+          if (e && e.id) {
+            const prev = evMap.get(e.id) || {};
+            evMap.set(e.id, Object.assign({}, prev, e));
+          }
+        });
+        state.events = Array.from(evMap.values());
       }
-      if (response.activeEventId) {
+      if (response.activeEventId && !state.currentEventId) {
         state.currentEventId = response.activeEventId;
       }
 
       if (response.config) {
-        state.activeConfig = response.config;
-        if (response.config.ALL_PHOTOS_LABEL) {
-          state.allPhotosLabel = response.config.ALL_PHOTOS_LABEL;
+        // Multi-Event Guard: Lindungi identitas dan parameter event yang dipilih agar tidak tertimpa server config global
+        const activeEv = (state.events || []).find(function(e) { return e && e.id === state.currentEventId; });
+        if (activeEv) {
+          response.config.ACTIVE_EVENT_ID = activeEv.id;
+          response.config.EVENT_NAME = activeEv.name || response.config.EVENT_NAME;
+          response.config.COUPLE_NAME = activeEv.name || response.config.COUPLE_NAME;
+          response.config.EVENT_DATE = activeEv.date || response.config.EVENT_DATE;
+          response.config.EVENT_VENUE = activeEv.venue || response.config.EVENT_VENUE;
+          if (activeEv.subtitle) response.config.SUBTITLE = activeEv.subtitle;
+          if (activeEv.welcomeMessage) response.config.WELCOME_MESSAGE = activeEv.welcomeMessage;
+          if (activeEv.footerMessage) response.config.FOOTER_MESSAGE = activeEv.footerMessage;
+          if (activeEv.allPhotosLabel) response.config.ALL_PHOTOS_LABEL = activeEv.allPhotosLabel;
+          if (activeEv.driveFolderId) response.config.DRIVE_FOLDER_ID = activeEv.driveFolderId;
+          if (activeEv.photoboothUrl) response.config.PHOTOBOOTH_URL = activeEv.photoboothUrl;
+          if (activeEv.frameImageUrl) response.config.FRAME_IMAGE_URL = activeEv.frameImageUrl;
+          if (Array.isArray(activeEv.customCategories) && activeEv.customCategories.length > 0) {
+            response.config.CUSTOM_CATEGORIES = activeEv.customCategories;
+            state.customCategories = activeEv.customCategories;
+          }
         }
-        if (response.config.COVER_SETTINGS) {
+        state.activeConfig = Object.assign({}, state.activeConfig, response.config);
+        if (state.activeConfig.ALL_PHOTOS_LABEL) {
+          state.allPhotosLabel = state.activeConfig.ALL_PHOTOS_LABEL;
+        }
+        if (state.activeConfig.COVER_SETTINGS) {
           try {
-            state.coverSettings = typeof response.config.COVER_SETTINGS === "string" 
-              ? JSON.parse(response.config.COVER_SETTINGS) 
-              : response.config.COVER_SETTINGS;
+            state.coverSettings = typeof state.activeConfig.COVER_SETTINGS === "string" 
+              ? JSON.parse(state.activeConfig.COVER_SETTINGS) 
+              : state.activeConfig.COVER_SETTINGS;
           } catch (eCov) {}
         }
-        populateConfigToUI(response.config);
+        populateConfigToUI(state.activeConfig);
 
         // Simpan cache scoped per-event
         try {
           const cacheKey = state.currentEventId ? ("WEDDING_EVENT_CFG_" + state.currentEventId) : "WEDDING_ACTIVE_EVENT_CFG";
-          localStorage.setItem(cacheKey, JSON.stringify(response.config));
+          localStorage.setItem(cacheKey, JSON.stringify(state.activeConfig));
         } catch (eSc) {}
       }
 
@@ -2471,6 +2508,28 @@ function isGooglePhotosUrl(url) {
       if (addUserAlertBox) addUserAlertBox.style.display = "none";
 
       switchAdminTab("event");
+
+      // Sinkronkan activeConfig dengan event yang sedang dipilih sebelum memuat input form
+      const activeEv = (state.events || []).find(function(e) { return e && e.id === state.currentEventId; });
+      if (activeEv) {
+        state.activeConfig.ACTIVE_EVENT_ID = activeEv.id;
+        state.activeConfig.EVENT_NAME = activeEv.name || state.activeConfig.EVENT_NAME;
+        state.activeConfig.COUPLE_NAME = activeEv.name || state.activeConfig.COUPLE_NAME;
+        state.activeConfig.EVENT_DATE = activeEv.date || state.activeConfig.EVENT_DATE;
+        state.activeConfig.EVENT_VENUE = activeEv.venue || state.activeConfig.EVENT_VENUE;
+        if (activeEv.subtitle) state.activeConfig.SUBTITLE = activeEv.subtitle;
+        if (activeEv.welcomeMessage) state.activeConfig.WELCOME_MESSAGE = activeEv.welcomeMessage;
+        if (activeEv.footerMessage) state.activeConfig.FOOTER_MESSAGE = activeEv.footerMessage;
+        if (activeEv.allPhotosLabel) state.activeConfig.ALL_PHOTOS_LABEL = activeEv.allPhotosLabel;
+        if (activeEv.driveFolderId) state.activeConfig.DRIVE_FOLDER_ID = activeEv.driveFolderId;
+        if (activeEv.photoboothUrl) state.activeConfig.PHOTOBOOTH_URL = activeEv.photoboothUrl;
+        if (activeEv.frameImageUrl) state.activeConfig.FRAME_IMAGE_URL = activeEv.frameImageUrl;
+        if (Array.isArray(activeEv.customCategories) && activeEv.customCategories.length > 0) {
+          state.activeConfig.CUSTOM_CATEGORIES = activeEv.customCategories;
+          state.customCategories = activeEv.customCategories;
+        }
+      }
+
       renderAdminEventsManager();
 
       if (state.currentAdminUser) {
@@ -2482,31 +2541,8 @@ function isGooglePhotosUrl(url) {
       const cfgGasApiUrlEl = document.getElementById("cfgGasApiUrl");
       if (cfgGasApiUrlEl) cfgGasApiUrlEl.value = state.gasApiUrl || "";
 
-      const cfgCoupleNameEl = document.getElementById("cfgCoupleName");
-      if (cfgCoupleNameEl) cfgCoupleNameEl.value = state.activeConfig.EVENT_NAME || state.activeConfig.COUPLE_NAME || "";
-
-      const cfgDateEl = document.getElementById("cfgEventDate");
-      if (cfgDateEl) cfgDateEl.value = formatDateForInput(state.activeConfig.EVENT_DATE);
-
-      const cfgEventVenueEl = document.getElementById("cfgEventVenue");
-      if (cfgEventVenueEl) cfgEventVenueEl.value = state.activeConfig.EVENT_VENUE || "";
-
+      populateAdminInputsForActiveEvent(state.activeConfig);
       renderAdminCategoriesManager();
-
-      const cfgDriveFolderIdEl = document.getElementById("cfgDriveFolderId");
-      if (cfgDriveFolderIdEl) cfgDriveFolderIdEl.value = state.activeConfig.DRIVE_FOLDER_ID || "";
-
-      const cfgFrameImageUrlEl = document.getElementById("cfgFrameImageUrl");
-      if (cfgFrameImageUrlEl) cfgFrameImageUrlEl.value = state.activeConfig.FRAME_IMAGE_URL || "";
-
-      const cfgSubtitleEl = document.getElementById("cfgSubtitle");
-      if (cfgSubtitleEl) cfgSubtitleEl.value = state.activeConfig.SUBTITLE || "";
-
-      const cfgWelcomeMessageEl = document.getElementById("cfgWelcomeMessage");
-      if (cfgWelcomeMessageEl) cfgWelcomeMessageEl.value = state.activeConfig.WELCOME_MESSAGE || "";
-
-      const cfgFooterEl = document.getElementById("cfgFooterMessage");
-      if (cfgFooterEl) cfgFooterEl.value = state.activeConfig.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.";
 
       const floatBar = document.getElementById("adminActiveFloatingBar");
       if (floatBar) floatBar.style.display = "none";
@@ -3293,6 +3329,10 @@ function isGooglePhotosUrl(url) {
         select.appendChild(opt);
       });
 
+      if (state.currentEventId) {
+        select.value = state.currentEventId;
+      }
+
       const previewEl = document.getElementById("activeEventUrlPreview");
       if (previewEl) {
         previewEl.innerText = "?event=" + state.currentEventId;
@@ -3303,7 +3343,7 @@ function isGooglePhotosUrl(url) {
       if (!selectedId) return;
       state.currentEventId = selectedId;
       const select = document.getElementById("adminEventSelect");
-      if (select && select.value !== selectedId) {
+      if (select) {
         select.value = selectedId;
       }
 
@@ -3315,9 +3355,9 @@ function isGooglePhotosUrl(url) {
           COUPLE_NAME: ev.name || "",
           EVENT_DATE: ev.date || "",
           EVENT_VENUE: ev.venue || "",
-          SUBTITLE: ev.subtitle || "",
-          WELCOME_MESSAGE: ev.welcomeMessage || "",
-          FOOTER_MESSAGE: ev.footerMessage || "",
+          SUBTITLE: ev.subtitle || "The Wedding Gallery & Precious Memories",
+          WELCOME_MESSAGE: ev.welcomeMessage || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
+          FOOTER_MESSAGE: ev.footerMessage || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
           ALL_PHOTOS_LABEL: ev.allPhotosLabel || "Semua Foto",
           DRIVE_FOLDER_ID: ev.driveFolderId || "",
           PHOTOBOOTH_URL: ev.photoboothUrl || "",
