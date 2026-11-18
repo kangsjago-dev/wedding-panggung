@@ -1206,6 +1206,22 @@
       line-height: 1.4;
     }
 
+    /* Pinned & Locked Navigation Tabs Wrapper (Tidak Tertutup Saat Scroll) */
+    .admin-tabs-sticky-wrapper {
+      position: sticky;
+      top: 0;
+      z-index: 25;
+      background: #FFFFFF;
+      padding: 12px 24px 8px 24px;
+      border-bottom: 1px solid #F1F5F9;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .admin-tabs-sticky-wrapper .admin-tabs-nav {
+      margin-bottom: 0;
+    }
+
     .admin-tabs-nav {
       display: flex;
       flex-wrap: wrap;
@@ -1506,6 +1522,14 @@
     }
 
     @media (max-width: 640px) {
+      .admin-tabs-sticky-wrapper {
+        padding: 8px 12px 6px 12px;
+      }
+      .admin-tab-btn {
+        min-width: 70px;
+        padding: 7px 6px;
+        font-size: 0.72rem;
+      }
       .download-progress-widget {
         top: 72px;
         right: 14px;

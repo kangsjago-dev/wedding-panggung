@@ -424,8 +424,8 @@
         </div>
       </div>
 
-      <div class="admin-card-body">
-        <!-- Segmented Navigation Tabs (Minimalist & Responsif) -->
+      <!-- Locked Sticky Admin Navigation Tabs (Terkunci Tidak Tertutup Saat Scroll) -->
+      <div class="admin-tabs-sticky-wrapper">
         <div class="admin-tabs-nav">
           <button type="button" class="admin-tab-btn active" id="tabBtn-event" onclick="switchAdminTab('event')">
             <span>💍 Acara & Event</span>
@@ -440,6 +440,9 @@
             <span>☁️ Cloud & API</span>
           </button>
         </div>
+      </div>
+
+      <div class="admin-card-body">
 
         <!-- Tab 1: Acara & Pernikahan -->
         <div class="admin-tab-pane active" id="tabPane-event">
@@ -591,6 +594,25 @@
           </div>
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
             💡 <strong>Panduan Vercel Live Multi-Device:</strong> Masukkan URL Web App Google Apps Script di atas lalu klik <strong>Simpan Perubahan</strong> agar seluruh foto dari Google Drive & Google Spreadsheet langsung sinkron secara live di semua perangkat.
+          </div>
+
+          <div style="background: #FAF8F5; border: 1px solid rgba(197, 168, 128, 0.4); border-radius: 12px; padding: 14px; margin-top: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
+              <div style="font-weight: 700; color: var(--gold-dark); font-size: 0.86rem; display: flex; align-items: center; gap: 6px;">
+                <span>📊 Database Google Sheets (ERP Master Data)</span>
+              </div>
+              <a href="https://docs.google.com/spreadsheets/d/133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20/edit" target="_blank" class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px; text-decoration: none;">
+                <span>↗️ Buka Google Sheet</span>
+              </a>
+            </div>
+            <div style="font-size: 0.74rem; color: #475569; line-height: 1.5; margin-bottom: 8px;">
+              File ID: <code>133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20</code><br>
+              Tabel Master ERP: <strong>Daftar_Acara</strong> (10 kolom), <strong>Pengaturan</strong>, <strong>Pengguna_Admin</strong>, <strong>Daftar_Foto</strong>, <strong>Log_Aktivitas</strong>.
+            </div>
+            <button type="button" class="btn btn-outline" id="btnSyncDatabaseToSheet" onclick="handleTriggerDatabaseSetup()" style="font-size: 0.74rem; padding: 5px 12px; border-color: var(--gold-dark); color: var(--gold-dark); font-weight: 600;" title="Jalankan inisialisasi / sinkronisasi tabel ERP ke spreadsheet">
+              <span id="syncDbBtnText">⚡ Sinkronkan / Inisialisasi Database Google Sheets</span>
+            </button>
+            <div id="dbSyncStatusText" style="font-size: 0.72rem; margin-top: 6px; display: none;"></div>
           </div>
         </div>
 

@@ -2448,6 +2448,42 @@ function isGooglePhotosUrl(url) {
       if (activePane) activePane.classList.add("active");
     }
 
+    function handleTriggerDatabaseSetup() {
+      const btn = document.getElementById("btnSyncDatabaseToSheet");
+      const btnText = document.getElementById("syncDbBtnText");
+      const statusText = document.getElementById("dbSyncStatusText");
+
+      if (btn) btn.disabled = true;
+      if (btnText) btnText.innerText = "⏳ Menghubungi Google Apps Script...";
+      if (statusText) { statusText.style.display = "none"; }
+
+      callBackend("setupDatabase", { pin: getEffectiveAdminPin() }, function(res) {
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.innerText = "⚡ Sinkronkan / Inisialisasi Database Google Sheets";
+        if (statusText) {
+          statusText.style.display = "block";
+          if (res && res.success) {
+            statusText.style.color = "#166534";
+            statusText.innerText = "✓ Berhasil! " + (res.message || "Tabel database ERP Google Sheets telah dibuat & disinkronkan.");
+            showToast("✓ Database Google Sheets berhasil diinisialisasi!");
+          } else {
+            statusText.style.color = "#DC2626";
+            statusText.innerText = "⚠️ Respons Apps Script: " + (res.message || res.error || "Gagal. Pastikan file setup.gs sudah di-deploy pada Apps Script.");
+            showToast("⚠️ " + (res.message || res.error || "Gagal menghubungkan ke database"));
+          }
+        }
+      }, function(err) {
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.innerText = "⚡ Sinkronkan / Inisialisasi Database Google Sheets";
+        if (statusText) {
+          statusText.style.display = "block";
+          statusText.style.color = "#DC2626";
+          statusText.innerText = "⚠️ Gangguan koneksi ke backend: " + (err.message || err);
+        }
+        showToast("⚠️ Gangguan koneksi ke Apps Script.");
+      });
+    }
+
     function handleStandaloneChangePin() {
       const pinInput = document.getElementById("cfgNewPin");
       const alertBox = document.getElementById("changePinAlertBox");

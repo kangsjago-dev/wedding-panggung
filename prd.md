@@ -1,6 +1,6 @@
 # PRD - Wedding Photo Gallery & Live Slideshow Platform
 **Sistem**: Multi-Event Wedding Gallery with ERP Master Data Architecture  
-**Versi**: v4.0.0-PROD  
+**Versi**: v4.1.0-PROD  
 **Arsitektur Database**: Google Sheets ERP Master Table + Google Drive Live Photo Catalog  
 **Terakhir Diperbarui**: 19 November 2026
 
@@ -30,19 +30,16 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
 
 ---
 
-## 2. Fitur & Penanganan Masalah Terkini (v4.0.0)
+## 2. Fitur & Penanganan Masalah Terkini (v4.1.0)
 
-### 2.1 Isolasi Penuh Multi-Event (Fix "Pindah Event Revert ke 1 Tampilan")
-- **Root Cause Sebelumnya**: Pemanggilan `fetchGalleryData` atau polling `syncFromSpreadsheetGViz` menimpa konfigurasi lokal dengan konfigurasi global lama dari server, sehingga saat admin berpindah event, data teks dan form kembali ke tampilan event lama.
-- **Solusi Terapkan**:
-  1. Guard terisolasi di `handleGalleryResponse`: saat respons server tiba, atribut event aktif (`EVENT_NAME`, `COUPLE_NAME`, `EVENT_DATE`, `EVENT_VENUE`, `DRIVE_FOLDER_ID`, `PHOTOBOOTH_URL`, `CUSTOM_CATEGORIES`) diproteksi dan tidak ditimpa oleh konfigurasi tunggal server.
-  2. Resolusi prioritas event di `syncFromSpreadsheetGViz`: `state.currentEventId` memiliki prioritas tertinggi, disusul parameter URL `?event=...`, sehingga polling background tidak pernah me-reset event yang sedang diedit/dilihat.
-  3. Form Admin (`openAdminSettingsModal` & `handleSelectEventChange`) secara otomatis mengunci `<select>` dropdown ke ID event aktif dan memuat input field (`Nama Event`, `Tanggal`, `Venue`, `Tautan Event`, `Folder Drive`, dll.) secara seketika.
+### 2.1 Navigasi Tab Admin Terkunci (Pinned / Sticky)
+- Bilah navigasi tab (`💍 Acara & Event`, `🖼️ Foto & Kategori`, `👥 Akun Admin`, `☁️ Cloud & API`) diletakkan di dalam `.admin-tabs-sticky-wrapper` yang menempel di bagian atas modal dengan `position: sticky; top: 0; z-index: 25; background: #FFFFFF;`.
+- Saat pengguna men-scroll konten formulir ke bawah, bilah navigasi **tetap terkunci rapi di atas** dan tidak tertutup.
 
-### 2.2 Sinkronisasi Realtime Tanpa Hardcode (Anti-Fallback)
-- Seluruh data dibaca secara realtime dari Google Sheets via GViz API dan Google Apps Script.
-- Selama data belum termuat, sistem menampilkan efek skeleton loading modern tanpa pernah memunculkan teks/foto dummy hardcoded.
+### 2.2 Inisialisasi Database ERP Google Sheets
+- Berkas `setup.gs` menempatkan fungsi `setupTargetSpreadsheetDatabase()` pada posisi paling atas sehingga otomatis menjadi fungsi default saat file dibuka di Google Apps Script.
+- Eksekusi fungsi tersebut secara otomatis membuat dan menyusun ke-5 sheet database lengkap dengan styling header emas dan data aktual.
+- Disediakan tombol inisialisasi langsung pada antarmuka admin (Tab Cloud & API).
 
-### 2.3 Download Otomatis & Cepat Tanpa Konfirmasi
-- Download foto berbingkai dan original dieksekusi secara instan (`Blob` -> `a.download` -> `click()`).
-- Indikator status progres download foto jamak diproses teratur melalui worker antrean.
+### 2.3 Realtime Murni Tanpa Hardcode (Anti-Fallback)
+- Seluruh data dibaca secara dinamis dari database tanpa data mockup.

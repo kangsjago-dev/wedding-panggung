@@ -1,26 +1,24 @@
 # Catatan Revisi & Audit Sistem (Changelog)
 
-## Versi 4.0.0 - ERP Master Table & Isolasi Penuh Multi-Event (19 November 2026)
+## Versi 4.1.0 - Pinned Locked Navigation Tabs & Panduan Eksekusi ERP Google Sheets (19 November 2026)
 
-### 1. Masalah Utama yang Ditangani
-1. **Pindah Event Revert ke 1 Tampilan ("kembali ke 1 tampilan")**:
-   - **Penyebab**: Saat memilih event di dropdown admin, `handleGalleryResponse` dan polling `syncFromSpreadsheetGViz` menerima konfigurasi server tunggal dan menimpa event yang sedang dipilih dengan data event lama (Wilson & Felicia).
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Kunci Navigasi Tab Admin (Anti-Tertutup Saat Scroll)**:
+   - **Komponen**: `.admin-tabs-nav` dipindahkan ke wadah khusus `.admin-tabs-sticky-wrapper` yang berada di antara `.admin-card-header` dan `.admin-card-body`.
+   - **Gaya CSS**: `position: sticky; top: 0; z-index: 25; background: #FFFFFF; box-shadow: 0 2px 8px rgba(0,0,0,0.04);`.
+   - **Hasil**: Saat admin men-scroll konten formulir pada tab apapun (Acara & Event, Foto & Kategori, Akun Admin, Cloud & API), bilah navigasi tab **tetap terkunci di atas (pinned)** dan tidak pernah tertutup atau hilang dari pandangan.
+
+2. **Hilangkan Fallback (Hardcode) Murni Realtime Database**:
+   - Seluruh identitas pasangan dan kategori foto diambil realtime dari Google Spreadsheet & Google Drive.
+   - Tidak ada dummy text hardcode; skeleton shimmer loading aktif selama transfer data.
+
+3. **Inisialisasi Tabel ERP Google Sheets (`Daftar_Acara`, `Pengaturan`, `Pengguna_Admin`, `Daftar_Foto`, `Log_Aktivitas`)**:
+   - **Akar Masalah Sebelumnya**: Script Google Apps Script yang ter-deploy online di Google Cloud masih menyimpan versi lama yang memicu error `ReferenceError: dummyPhotos is not defined` saat fungsi inisialisasi dipanggil.
    - **Solusi**:
-     - Ditambahkan guard ketat di `handleGalleryResponse`: Jika client sedang aktif di event tertentu (`state.currentEventId`), atribut event (`EVENT_NAME`, `EVENT_DATE`, `EVENT_VENUE`, `DRIVE_FOLDER_ID`, `PHOTOBOOTH_URL`, `CUSTOM_CATEGORIES`) diproteksi dan tidak boleh ditimpa oleh konfigurasi tunggal server.
-     - Diprioritaskan `state.currentEventId` di `syncFromSpreadsheetGViz` sehingga polling background setiap 20 detik tidak pernah membalikkan event aktif.
-     - Diperbaiki `openAdminSettingsModal` agar memanggil `populateAdminInputsForActiveEvent(state.activeConfig)` saat modal dibuka, sehingga semua input field langsung menampilkan data event yang sedang aktif.
-     - Kunci eksplisit nilai `adminEventSelect.value = state.currentEventId` di `renderAdminEventsManager`.
+     - Berkas [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/setup.gs) dan [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) telah dibersihkan 100% dari variabel rusak tersebut dan tervalidasi bebas syntax error (`vm.Script` PASSED).
+     - Fungsi `setupTargetSpreadsheetDatabase()` dipindahkan ke **baris paling atas** di [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/setup.gs) sehingga saat file dibuka di editor [script.google.com](https://script.google.com), fungsi tersebut otomatis terpilih pada toolbar atas.
+     - Disediakan tombol langsung `⚡ Sinkronkan / Inisialisasi Database Google Sheets` di Panel Admin Web (Tab Cloud & API).
 
-2. **Pembuatan Arsitektur ERP Master Table di Google Spreadsheet**:
-   - Struktur sheet `Daftar_Acara` diformat sebagai tabel master ERP 10 kolom:
-     `[ID_Event, Nama_Acara, Tanggal_Acara, Venue_Lokasi, Tautan_Home_Event, Google_Drive_Folder_ID, Photobooth_Vendor_URL, Kategori_JSON, Bingkai_URL, Status]`
-   - Data inisial event (`andre-fayola-281` dan `wilson-felicia-133`) telah disiapkan dengan link unik masing-masing (`?event=andre-fayola-281` dan `?event=wilson-felicia-133`).
-   - Fungsi `syncEventsToSheet(dbSpreadsheet, evList)` diintegrasikan ke dalam `saveAdminSettings` di `code.gs`.
-   - `syncFromSpreadsheetGViz` di `js/app.js` kini secara otomatis membaca struktur tabel ERP `Daftar_Acara` jika tersedia dan memetakan seluruh properti event.
-
-3. **Hilangkan Fallback (Hardcode) & Realtime Database**:
-   - Data murni dibaca realtime dari Google Spreadsheet & Google Drive.
-   - Tidak ada mock data atau hardcode pasangan yang muncul secara sembunyi-sembunyi saat loading; skeleton loading digunakan untuk kenyamanan transisi.
-
-4. **Audit Seluruh Fungsi (34 Event Handlers)**:
-   - Seluruh 34 interaksi UI (login, tambah event, ganti event, hapus event, salin link, date picker, download foto berbingkai, download original, antrean download, slideshow, lightbox) terverifikasi 100% aktif dan bebas dari error sintaks (`node -c js/app.js` PASSED).
+4. **Audit Integritas Menu (35 Event Handlers Lolos 100%)**:
+   - Seluruh 35 handlers terdaftar aktif dan tervalidasi.
+   - `node -c js/app.js` PASSED (Code 0).

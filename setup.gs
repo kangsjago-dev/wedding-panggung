@@ -5,121 +5,27 @@
  * ================================================================================
  */
 
-/**
- * 1. Menguji koneksi Google Drive
- */
-function testDriveConnection() {
-  Logger.log("=== MEMULAI PENGUJIAN KONEKSI GOOGLE DRIVE ===");
-  var config = getEffectiveConfig();
-  var folderId = config.DRIVE_FOLDER_ID ? config.DRIVE_FOLDER_ID.trim() : "";
-
-  if (!folderId) {
-    Logger.log("⚠️ PERINGATAN: DRIVE_FOLDER_ID masih kosong.");
-    Logger.log("Aplikasi saat ini berjalan dalam Mode Demo dengan foto sampel.");
-    return;
-  }
-
-  try {
-    var folder = DriveApp.getFolderById(folderId);
-    Logger.log("✅ SUKSES: Folder utama ditemukan: " + folder.getName());
-
-    var subFolders = folder.getFolders();
-    var subCount = 0;
-    while (subFolders.hasNext()) {
-      var sub = subFolders.next();
-      subCount++;
-      Logger.log("  " + subCount + ". Subfolder: " + sub.getName());
-    }
-
-    var files = folder.getFiles();
-    var fileCount = 0;
-    var validImgCount = 0;
-    while (files.hasNext()) {
-      var f = files.next();
-      fileCount++;
-      if (f.getSize() >= 20480 && f.getMimeType().indexOf('image/') === 0) {
-        validImgCount++;
-      }
-    }
-    Logger.log("\nTotal berkas di folder utama: " + fileCount);
-    Logger.log("Foto valid (> 20KB): " + validImgCount);
-    Logger.log("Berkas corrupt/thumbnail diabaikan: " + (fileCount - validImgCount));
-    Logger.log("\n🎉 KONEKSI SIAP & BERSIH!");
-
-  } catch (e) {
-    Logger.log("❌ GAGAL: " + e.toString());
-  }
-}
 
 /**
- * 2. Menguji Tautan Bingkai Foto Kustom
+ * ================================================================================
+ * PANDUAN CEPAT MEMBUAT & MENGISI DATABASE SPREADSHEET (ERP MASTER DATA)
+ * ================================================================================
+ * 1. Buka Google Apps Script editor di https://script.google.com/
+ * 2. Buka project Web App galeri Anda
+ * 3. Buka file 'setup.gs' (atau buat file baru 'setup.gs' dan paste seluruh isi file ini).
+ * 4. Pastikan dropdown fungsi di toolbar atas memilih: 'setupTargetSpreadsheetDatabase'
+ * 5. Klik tombol '▶️ Run' (Jalankan).
+ * 6. Berikan izin akses (Review Permissions -> Lanjutkan) jika Google meminta konfirmasi.
+ * 
+ * HASIL LANGSUNG PADA GOOGLE SPREADSHEET (133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20):
+ * - Sheet 'Daftar_Acara' : Terformat sebagai ERP Master Table 10 kolom dengan data event lengkap.
+ * - Sheet 'Pengaturan'   : Berisi 26 parameter konfigurasi global sistem.
+ * - Sheet 'Pengguna_Admin': Terisi 3 akun admin (Super Admin, ilham, Wanta).
+ * - Sheet 'Daftar_Foto'  : Otomatis membaca & mencatat foto Google Drive Anda.
+ * - Sheet 'Log_Aktivitas': Mencatat audit trail inisialisasi awal.
+ * ================================================================================
  */
-function testFrameConnection() {
-  Logger.log("=== PENGUJIAN TAUTAN BINGKAI FOTO KUSTOM ===");
-  var config = getEffectiveConfig();
-  var frameUrl = config.FRAME_IMAGE_URL;
 
-  if (!frameUrl) {
-    Logger.log("ℹ️ Belum ada tautan bingkai yang diatur. Foto akan diunduh tanpa bingkai.");
-    return;
-  }
-
-  Logger.log("Tautan Bingkai Aktif: " + frameUrl);
-  try {
-    var response = UrlFetchApp.fetch(frameUrl, { muteHttpExceptions: true });
-    var code = response.getResponseCode();
-    var contentType = response.getHeaders()['Content-Type'] || '';
-    Logger.log("Status Kode HTTP: " + code);
-    Logger.log("Tipe Konten: " + contentType);
-
-    if (code === 200) {
-      Logger.log("✅ SUKSES: Tautan bingkai foto valid dan siap digabungkan saat tamu menekan tombol download!");
-    } else {
-      Logger.log("⚠️ Tautan merespon dengan kode: " + code + ". Pastikan izin file Google Drive disetel 'Anyone with the link can view'.");
-    }
-  } catch (e) {
-    Logger.log("❌ Gagal menjangkau file bingkai: " + e.toString());
-  }
-}
-
-/**
- * 3. Membuatkan Struktur Folder Pernikahan Siap Pakai di Google Drive
- */
-function createSampleFolderStructure() {
-  try {
-    var config = getEffectiveConfig();
-    var mainFolderName = "Galeri Foto Pernikahan - " + config.COUPLE_NAME;
-    var mainFolder = DriveApp.createFolder(mainFolderName);
-    mainFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    
-    var subNames = ["01. Prewedding", "02. Akad Nikah", "03. Resepsi", "04. Photobooth"];
-    for (var i = 0; i < subNames.length; i++) {
-      mainFolder.createFolder(subNames[i]);
-    }
-
-    Logger.log("✅ BERHASIL MEMBUAT FOLDER! ID: " + mainFolder.getId());
-    return mainFolder.getId();
-  } catch (e) {
-    Logger.log("❌ Gagal: " + e.toString());
-  }
-}
-
-/**
- * 4. Reset PIN Admin
- */
-function resetAdminPin(newPin) {
-  var pin = String(newPin || "123456").trim();
-  PropertiesService.getScriptProperties().setProperty("ADMIN_PIN", pin);
-  Logger.log("✅ SUKSES: PIN Admin direset ke: " + pin);
-}
-
-/**
- * 5. Bersihkan Pengaturan
- */
-function clearCustomSettings() {
-  PropertiesService.getScriptProperties().deleteAllProperties();
-  Logger.log("✅ SUKSES: Seluruh pengaturan kustom telah dibersihkan.");
-}
 
 /**
  * ================================================================================
@@ -433,6 +339,123 @@ function setupTargetSpreadsheetDatabase() {
     totalPhotos: photoRows.length
   };
 }
+
+/**
+ * 1. Menguji koneksi Google Drive
+ */
+function testDriveConnection() {
+  Logger.log("=== MEMULAI PENGUJIAN KONEKSI GOOGLE DRIVE ===");
+  var config = getEffectiveConfig();
+  var folderId = config.DRIVE_FOLDER_ID ? config.DRIVE_FOLDER_ID.trim() : "";
+
+  if (!folderId) {
+    Logger.log("⚠️ PERINGATAN: DRIVE_FOLDER_ID masih kosong.");
+    Logger.log("Aplikasi saat ini berjalan dalam Mode Demo dengan foto sampel.");
+    return;
+  }
+
+  try {
+    var folder = DriveApp.getFolderById(folderId);
+    Logger.log("✅ SUKSES: Folder utama ditemukan: " + folder.getName());
+
+    var subFolders = folder.getFolders();
+    var subCount = 0;
+    while (subFolders.hasNext()) {
+      var sub = subFolders.next();
+      subCount++;
+      Logger.log("  " + subCount + ". Subfolder: " + sub.getName());
+    }
+
+    var files = folder.getFiles();
+    var fileCount = 0;
+    var validImgCount = 0;
+    while (files.hasNext()) {
+      var f = files.next();
+      fileCount++;
+      if (f.getSize() >= 20480 && f.getMimeType().indexOf('image/') === 0) {
+        validImgCount++;
+      }
+    }
+    Logger.log("\nTotal berkas di folder utama: " + fileCount);
+    Logger.log("Foto valid (> 20KB): " + validImgCount);
+    Logger.log("Berkas corrupt/thumbnail diabaikan: " + (fileCount - validImgCount));
+    Logger.log("\n🎉 KONEKSI SIAP & BERSIH!");
+
+  } catch (e) {
+    Logger.log("❌ GAGAL: " + e.toString());
+  }
+}
+
+/**
+ * 2. Menguji Tautan Bingkai Foto Kustom
+ */
+function testFrameConnection() {
+  Logger.log("=== PENGUJIAN TAUTAN BINGKAI FOTO KUSTOM ===");
+  var config = getEffectiveConfig();
+  var frameUrl = config.FRAME_IMAGE_URL;
+
+  if (!frameUrl) {
+    Logger.log("ℹ️ Belum ada tautan bingkai yang diatur. Foto akan diunduh tanpa bingkai.");
+    return;
+  }
+
+  Logger.log("Tautan Bingkai Aktif: " + frameUrl);
+  try {
+    var response = UrlFetchApp.fetch(frameUrl, { muteHttpExceptions: true });
+    var code = response.getResponseCode();
+    var contentType = response.getHeaders()['Content-Type'] || '';
+    Logger.log("Status Kode HTTP: " + code);
+    Logger.log("Tipe Konten: " + contentType);
+
+    if (code === 200) {
+      Logger.log("✅ SUKSES: Tautan bingkai foto valid dan siap digabungkan saat tamu menekan tombol download!");
+    } else {
+      Logger.log("⚠️ Tautan merespon dengan kode: " + code + ". Pastikan izin file Google Drive disetel 'Anyone with the link can view'.");
+    }
+  } catch (e) {
+    Logger.log("❌ Gagal menjangkau file bingkai: " + e.toString());
+  }
+}
+
+/**
+ * 3. Membuatkan Struktur Folder Pernikahan Siap Pakai di Google Drive
+ */
+function createSampleFolderStructure() {
+  try {
+    var config = getEffectiveConfig();
+    var mainFolderName = "Galeri Foto Pernikahan - " + config.COUPLE_NAME;
+    var mainFolder = DriveApp.createFolder(mainFolderName);
+    mainFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    var subNames = ["01. Prewedding", "02. Akad Nikah", "03. Resepsi", "04. Photobooth"];
+    for (var i = 0; i < subNames.length; i++) {
+      mainFolder.createFolder(subNames[i]);
+    }
+
+    Logger.log("✅ BERHASIL MEMBUAT FOLDER! ID: " + mainFolder.getId());
+    return mainFolder.getId();
+  } catch (e) {
+    Logger.log("❌ Gagal: " + e.toString());
+  }
+}
+
+/**
+ * 4. Reset PIN Admin
+ */
+function resetAdminPin(newPin) {
+  var pin = String(newPin || "123456").trim();
+  PropertiesService.getScriptProperties().setProperty("ADMIN_PIN", pin);
+  Logger.log("✅ SUKSES: PIN Admin direset ke: " + pin);
+}
+
+/**
+ * 5. Bersihkan Pengaturan
+ */
+function clearCustomSettings() {
+  PropertiesService.getScriptProperties().deleteAllProperties();
+  Logger.log("✅ SUKSES: Seluruh pengaturan kustom telah dibersihkan.");
+}
+
 
 /**
  * 7. Alias: setupDemoSystemWithDummyFiles
