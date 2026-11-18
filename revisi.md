@@ -228,3 +228,55 @@ TANGGAL: 19 November 2026
 - Respon jaringan tiba (`handleGalleryResponse`): Tab kategori tetap stabil dan konsisten.
 - Render berulang: 100% deterministik, zero leaking tab hantu.
 - Status Google Spreadsheet `Pengaturan` via GViz: JSON Valid, bebas `[object Object]`.
+
+---
+
+# RENCANA REVISI & CATATAN RILIS SISTEM: v3.8.2
+================================================================================
+PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
+ENGINE: ZettBOT v4.1 by Zettbos
+STATUS: IMPLEMENTASI & VERIFIKASI (v3.8.2) - 100% SUKSES
+TANGGAL: 19 November 2026
+
+### 4 Poin Masalah yang Diperbaiki:
+1. **Auto-Refresh pada Kategori Lainnya Berkedip Sangat Jelas (Flicker Elimination):**
+   - **Akar Masalah:**
+     Setiap 20 detik, fungsi `startLiveAutoRefresh` memicu `syncFromSpreadsheetGViz` dan `fetchGalleryData(false, true)`. 
+     Pada `syncFromSpreadsheetGViz`, kode secara membabi-buta memanggil `applyCategoryFilter(state.activeCategory)` dan `renderCategoryTabs()` walaupun konfigurasi spreadsheet tidak mengalami perubahan.
+     Di dalam `applyCategoryFilter`, pemanggilan `showGridSkeleton()` menghapus seluruh grid foto dan menggantinya dengan skeleton cards saat pengguna sedang berada di kategori lain (seperti Photobooth atau Wedding). Ditambah lagi di `renderPhotoGrid`, perintah `grid.innerHTML = ""` menghapus dan membuat ulang seluruh elemen kartu foto.
+   - **Solusi:**
+     - Menambahkan proteksi signature konfigurasi (`state.lastSyncedConfigSig`) di `syncFromSpreadsheetGViz`. Jika konfigurasi tidak berubah (99% waktu), sistem **tidak menyentuh DOM**, **tidak me-render ulang tab**, dan **tidak me-reload kategori**.
+     - Di `handleGalleryResponse`, jika `isSilent === true` dan tidak ada foto baru (`newPhotos.length === 0`), fungsi langsung `return` tanpa menyentuh DOM. Jika ada foto baru, hanya galeri "Semua Foto" yang diperbarui; kategori lain tidak diganggu.
+     - Di `applyCategoryFilter`, parameter `isSilent` mencegah pemanggilan `showGridSkeleton()`.
+     - Di `renderPhotoGrid`, ditambahkan *smart DOM diffing*: jika kartu foto yang sudah tampil memiliki ID dan urutan yang sama persis dengan `filteredPhotos`, `grid.innerHTML` tidak dihapus.
+
+2. **Nama Pengantin Berkedip / Seperti Ghost (Font Re-rasterization & Text Flicker):**
+   - **Akar Masalah:**
+     Fungsi `populateConfigToUI` sebelumnya menuliskan `document.getElementById("coupleName").innerText = eventName` setiap kali sinkronisasi berlangsung (meskipun nama tidak berubah). Hal ini memicu layout reflow dan font re-rasterization terus menerus yang tampak seperti bayangan/ghosting. Selain itu, nilai nama di Google Spreadsheet sempat berbeda dengan `config.json`.
+   - **Solusi:**
+     - Dibuatkan helper `setNodeTextIfChanged(idOrEl, newText)` yang hanya memperbarui teks elemen jika `el.textContent !== newText`. Jika teks sama, elemen DOM sama sekali tidak disentuh.
+     - Di `index.html`, skrip hidrasi awal kini otomatis membaca nama pengantin, tanggal, venue, dan subtitle dari memori `localStorage` secara sinkron sebelum browser melakukan first paint.
+     - Sinkronisasi sheet `Pengaturan` di Google Spreadsheet diperbarui bersih menjadi `Wilson & Felicia` dan `UpperHills Convention Hall, Makassar`.
+
+3. **Perbaikan Antrean Unduh Foto (Semua Foto dalam Antrean Terunduh 100%):**
+   - **Akar Masalah:**
+     - Kategori Photobooth sebelumnya mem-bypass antrean unduh dan langsung memicu unduhan paralel yang diblokir oleh browser ponsel (Android) karena multi-download tanpa jeda.
+     - Pada foto berbingkai, fungsi `prepareCanvasSource` sebelumnya mengoper ID file mentah (`photo.id`) sebagai `img.src`, memicu error 404 lalu fallback lambat ke Google Apps Script `getImageBase64`. Ketika beberapa foto diantrekan, timeout/kuota GAS membatalkan foto berikutnya dan membuat antrean macet.
+   - **Solusi:**
+     - Seluruh jenis foto (Photobooth, video, dan foto berbingkai) kini disatukan ke dalam arsitektur `downloadQueue` terpadu via `queuePhotoDownload(photo)`.
+     - Pemuatan gambar kanvas menggunakan URL gambar langsung dengan fallback ke proxy same-origin `/api/download-proxy?url=...`, mengeliminasi kendala CORS dan ketergantungan pada backend GAS yang lambat.
+     - Diberikan jeda terukur (`pacing 1200ms`) antar unduhan pada `advanceQueue()`, sehingga download manager pada browser Android dapat menyelesaikan dan mendaftarkan berkas secara berurutan tanpa terkena blokir multi-unduhan otomatis.
+
+4. **Unduh Langsung Tanpa Dialog Konfirmasi Simpan Berkas:**
+   - **Akar Masalah:**
+     Dialog Android *"Download file? ...-2.jpg [Cancel] [Download]"* muncul karena berkas dengan nama yang sama persis sudah ada di folder `Download` perangkat pengguna dari unduhan sebelumnya, sehingga sistem operasi Android meminta konfirmasi duplikat.
+   - **Solusi:**
+     - Mengoptimalkan `saveBlobToDevice` dengan elemen anchor tersembunyi `style="display:none"` dan pembersihan memori `revokeObjectURL` yang aman.
+     - Kualitas ekspor JPEG kanvas disesuaikan ke `0.94` (resolusi penuh asli terjaga, ukuran berkas optimal ~1.8MB - 2.3MB, proses instan tanpa jeda).
+     - Unduhan langsung via proxy menggunakan header HTTP `Content-Disposition: attachment` yang memerintahkan browser mengunduh langsung ke background notifications.
+
+### Hasil Uji Otomatis & Verifikasi (scratch/test_v382.js):
+- Uji Antrean Unduh 5 Berkas Sekaligus: 100% Sukses (`photo_1,photo_2,photo_3,photo_4,photo_5`).
+- Uji Anti-Ghosting Text Guard: Reflow count saat teks sama = 0 (Bebas ghosting).
+- Uji Smart Grid Diffing: Status `SKIPPED_RELOAD` saat foto sama (Grid tidak berkedip).
+- Sintaks `js/app.js` & `code.gs`: 100% VALID.

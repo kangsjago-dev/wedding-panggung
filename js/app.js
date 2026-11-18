@@ -686,10 +686,36 @@ const GLOBAL_CONFIG = {
               state.gasApiUrl = sheetMap.GAS_API_URL;
             }
 
-            populateConfigToUI(state.activeConfig);
-            renderCategoryTabs();
-            if (state.activeCategory && state.activeCategory !== "Semua Foto") {
-              applyCategoryFilter(state.activeCategory);
+            // Hitung signature konfigurasi sheet untuk mencegah re-render & flicker jika data tidak berubah
+            const newSig = [
+              sheetMap.EVENT_NAME || sheetMap.COUPLE_NAME || '',
+              sheetMap.EVENT_DATE || '',
+              sheetMap.EVENT_VENUE || '',
+              sheetMap.SUBTITLE || '',
+              sheetMap.WELCOME_MESSAGE || '',
+              sheetMap.CUSTOM_CATEGORIES || '',
+              sheetMap.PHOTOBOOTH_URL || '',
+              sheetMap.DRIVE_FOLDER_ID || '',
+              sheetMap.ALL_PHOTOS_LABEL || ''
+            ].join('|');
+
+            const hasConfigChanged = (!state.lastSyncedConfigSig || state.lastSyncedConfigSig !== newSig);
+            state.lastSyncedConfigSig = newSig;
+
+            if (hasConfigChanged) {
+              populateConfigToUI(state.activeConfig);
+              renderCategoryTabs();
+              // Hanya re-filter jika kategori aktif saat ini tautannya berubah
+              if (state.activeCategory && state.activeCategory !== "Semua Foto") {
+                const currentCat = Array.isArray(state.customCategories) ? state.customCategories.find(function(c) {
+                  return String((c && c.name) || "").trim().toLowerCase() === state.activeCategory.toLowerCase();
+                }) : null;
+                const newCatUrl = currentCat ? (currentCat.url || '') : '';
+                const cachedUrl = state.categoryPhotosUrlMap ? state.categoryPhotosUrlMap[state.activeCategory] : null;
+                if (newCatUrl && cachedUrl && cachedUrl !== newCatUrl) {
+                  applyCategoryFilter(state.activeCategory, newCatUrl, true);
+                }
+              }
             }
           }
         })
@@ -945,10 +971,27 @@ const GLOBAL_CONFIG = {
             return c && c !== "Semua Foto" && c !== state.allPhotosLabel;
           });
           renderCategoryTabs();
-          applyCategoryFilter(state.activeCategory);
+          // Hanya re-render galeri jika pengguna sedang berada di kategori utama "Semua Foto"
+          if (!state.activeCategory || state.activeCategory === "Semua Foto" || state.activeCategory === state.allPhotosLabel) {
+            applyCategoryFilter("Semua Foto", null, true);
+          }
           showToast("📸 " + newPhotos.length + " foto baru otomatis ditambahkan ke galeri!");
           return;
         }
+
+        // Jika tidak ada foto baru saat background auto-refresh:
+        // Cukup perbarui daftar subfolder jika berubah, JANGAN re-render galeri agar 100% bebas kedipan!
+        const prevSubfolders = (state.driveSubfolders || []).join(',');
+        const newSubfolders = (response.categories || []).filter(function(c) {
+          return c && c !== "Semua Foto" && c !== state.allPhotosLabel;
+        }).join(',');
+        if (prevSubfolders !== newSubfolders) {
+          state.driveSubfolders = (response.categories || []).filter(function(c) {
+            return c && c !== "Semua Foto" && c !== state.allPhotosLabel;
+          });
+          renderCategoryTabs();
+        }
+        return;
       }
 
       state.allPhotos = incomingPhotos;
@@ -1042,26 +1085,39 @@ const GLOBAL_CONFIG = {
       const eventName = (rawName && rawName !== "Hans & Yurike") ? rawName : "Wilson & Felicia";
       const rawDate = cfg.EVENT_DATE || "14 November 2026";
       const displayDate = formatIndonesianDate(rawDate);
-      const eventVenue = cfg.EVENT_VENUE || "Upperhills Convention Centre, Makassar";
+      const eventVenue = cfg.EVENT_VENUE || "UpperHills Convention Hall, Makassar";
 
-      document.getElementById("coupleName").innerText = eventName;
-      document.getElementById("slideshowCouple").innerText = eventName;
-      document.querySelector(".footer-names").innerText = eventName;
-      document.title = eventName + " - Wedding Photo Gallery";
+      // Mutasi DOM hanya jika teks benar-benar berubah (Cegah font re-rasterization & efek ghost / flicker)
+      function setNodeTextIfChanged(idOrEl, newText) {
+        const el = typeof idOrEl === "string" ? document.getElementById(idOrEl) : idOrEl;
+        if (!el || newText === undefined || newText === null) return;
+        const str = String(newText);
+        if (el.textContent !== str) {
+          el.textContent = str;
+        }
+      }
 
-      document.getElementById("eventDate").innerText = displayDate;
-      document.getElementById("eventVenue").innerText = eventVenue;
-      document.getElementById("slideshowCategory").innerText = displayDate + " • " + eventVenue;
+      setNodeTextIfChanged("coupleName", eventName);
+      setNodeTextIfChanged("slideshowCouple", eventName);
+      const footerNamesEl = document.querySelector(".footer-names");
+      if (footerNamesEl) setNodeTextIfChanged(footerNamesEl, eventName);
+      const expectedTitle = eventName + " - Wedding Photo Gallery";
+      if (document.title !== expectedTitle) {
+        document.title = expectedTitle;
+      }
+
+      setNodeTextIfChanged("eventDate", displayDate);
+      setNodeTextIfChanged("eventVenue", eventVenue);
+      setNodeTextIfChanged("slideshowCategory", displayDate + " • " + eventVenue);
 
       if (cfg.SUBTITLE) {
-        document.getElementById("subtitle").innerText = cfg.SUBTITLE;
+        setNodeTextIfChanged("subtitle", cfg.SUBTITLE);
       }
       if (cfg.WELCOME_MESSAGE) {
-        document.getElementById("welcomeMessage").innerText = cfg.WELCOME_MESSAGE;
+        setNodeTextIfChanged("welcomeMessage", cfg.WELCOME_MESSAGE);
       }
       if (cfg.FOOTER_MESSAGE) {
-        const footerBlessingEl = document.getElementById("footerBlessing");
-        if (footerBlessingEl) footerBlessingEl.textContent = cfg.FOOTER_MESSAGE;
+        setNodeTextIfChanged("footerBlessing", cfg.FOOTER_MESSAGE);
       }
       // Input form admin & Kategori: HANYA perbarui jika modal admin SEDANG TIDAK DIBUKA (mencegah teks & kategori tertimpa saat admin mengetik/menambah)
       const adminModal = document.getElementById("adminSettingsModal");
@@ -1850,7 +1906,7 @@ const GLOBAL_CONFIG = {
       applyCategoryFilter(category, targetUrl);
     }
 
-    function applyCategoryFilter(category, targetUrl) {
+    function applyCategoryFilter(category, targetUrl, isSilent) {
       const mainLabel = state.allPhotosLabel || "Semua Foto";
       const isMain = (category === mainLabel || category === "Semua Foto");
 
@@ -1911,6 +1967,7 @@ const GLOBAL_CONFIG = {
       }
 
       function showGridSkeleton() {
+        if (isSilent) return; // Anti-Flicker: Jangan pernah timpa galeri aktif saat background silent auto-refresh
         const grid = document.getElementById("photosGrid");
         if (grid) {
           grid.innerHTML = `
@@ -2040,10 +2097,29 @@ const GLOBAL_CONFIG = {
 
     function renderPhotoGrid(targetUrl, categoryName) {
       const grid = document.getElementById("photosGrid");
-      grid.innerHTML = "";
+      if (!grid) return;
 
       const activeCat = categoryName || state.activeCategory;
       const isPhotobooth = (activeCat.toLowerCase().includes("photobooth") || (targetUrl && targetUrl.includes("fotoshare.co")));
+
+      // Optimasi Anti-Flicker: Jika foto yang ditampilkan di grid sudah sama persis, jangan hapus & buat ulang DOM!
+      if (Array.isArray(state.filteredPhotos) && state.filteredPhotos.length > 0) {
+        const existingCards = grid.querySelectorAll(".photo-card");
+        if (existingCards.length === state.filteredPhotos.length) {
+          let isSame = true;
+          for (let i = 0; i < existingCards.length; i++) {
+            if (existingCards[i].getAttribute("data-photo-id") !== String(state.filteredPhotos[i].id)) {
+              isSame = false;
+              break;
+            }
+          }
+          if (isSame) {
+            return;
+          }
+        }
+      }
+
+      grid.innerHTML = "";
 
       // Jika foto kosong untuk kategori ini
       if (!state.filteredPhotos || state.filteredPhotos.length === 0) {
@@ -3842,12 +3918,9 @@ const GLOBAL_CONFIG = {
       }
     }
 
-    function downloadCurrentPhotoWithFrame() {
-      const photo = state.filteredPhotos[state.currentLightboxIndex];
-      if (!photo) return;
-
-      // JAMINAN MUTLAK: Kategori khusus Photobooth SELALU diunduh ukuran aslinya tanpa kompresi dan tanpa bingkai!
-      const isPhotobooth = Boolean(
+    function isPhotoPhotobooth(photo) {
+      if (!photo) return false;
+      return Boolean(
         photo.isVideo ||
         photo.isKing ||
         photo.isPhotobooth ||
@@ -3856,13 +3929,11 @@ const GLOBAL_CONFIG = {
         (photo.downloadUrl && (photo.downloadUrl.includes("kingphotobooth.co") || photo.downloadUrl.includes("fotoshare.co") || photo.downloadUrl.includes("photos.google.com"))) ||
         (photo.previewUrl && (photo.previewUrl.includes("kingphotobooth.co") || photo.previewUrl.includes("fotoshare.co") || photo.previewUrl.includes("photos.google.com")))
       );
+    }
 
-      if (isPhotobooth) {
-        downloadPhotoboothOriginal(photo);
-        return;
-      }
+    function queuePhotoDownload(photo) {
+      if (!photo) return;
 
-      // Cek apakah foto ini sudah ada dalam antrean atau sedang diproses
       const isAlreadyQueued = downloadQueue.items.some(function(item) {
         return (item.id && photo.id && item.id === photo.id) || (item.name && photo.name && item.name === photo.name);
       });
@@ -3884,7 +3955,6 @@ const GLOBAL_CONFIG = {
         return;
       }
 
-      // Berikan umpan balik instan pada tombol unduh tanpa memblokir tombol berikutnya
       if (btnLabel) {
         const prevText = btnLabel.innerText;
         btnLabel.innerText = "✓ Masuk Antrean Unduh";
@@ -3895,9 +3965,7 @@ const GLOBAL_CONFIG = {
         }, 1500);
       }
 
-      // Masukkan ke antrean unduh latar belakang (non-blocking, bebas swipe foto lain)
       downloadQueue.items.push(photo);
-
       const remaining = downloadQueue.items.length + (downloadQueue.isProcessing ? 1 : 0);
 
       if (downloadQueue.isProcessing) {
@@ -3905,69 +3973,123 @@ const GLOBAL_CONFIG = {
         if (badgeEl) badgeEl.innerText = remaining + " Antrean";
         showToast("✓ Foto ditambahkan ke antrean (" + remaining + " foto antre)");
       } else {
-        updateDownloadWidget(15, "Menyiapkan Kenangan Berbingkai...", (photo.name || "Foto") + " • Masuk antrean", false);
+        updateDownloadWidget(15, "Menyiapkan Unduhan...", (photo.name || "Foto") + " • Masuk antrean", false);
         processNextDownloadQueue();
       }
+    }
+
+    function downloadCurrentPhotoWithFrame() {
+      const photo = state.filteredPhotos[state.currentLightboxIndex];
+      if (photo) queuePhotoDownload(photo);
     }
 
     function processNextDownloadQueue() {
       if (downloadQueue.items.length === 0) {
         downloadQueue.isProcessing = false;
         downloadQueue.currentPhoto = null;
+        updateDownloadWidget(100, "✓ Semua Unduhan Selesai!", "Seluruh antrean berhasil diunduh", true);
+        showToast("✓ Semua foto dalam antrean berhasil diunduh!");
         return;
       }
 
       downloadQueue.isProcessing = true;
       const photo = downloadQueue.items.shift();
       downloadQueue.currentPhoto = photo;
+
+      const remaining = downloadQueue.items.length + 1;
+      const queueSuffix = remaining > 1 ? (" (Sisa antrean: " + remaining + ")") : "";
+
+      function advanceQueue() {
+        const hasMore = downloadQueue.items.length > 0;
+        if (hasMore) {
+          updateDownloadWidget(100, "✓ Foto Tersimpan! Melanjutkan antrean...", (photo.name || "Foto") + queueSuffix, false);
+          showToast("✓ Foto tersimpan! Memproses antrean berikutnya (" + downloadQueue.items.length + " tersisa)...");
+          // Pacing 1200ms agar browser Android tidak memblokir unduhan consecutive
+          setTimeout(processNextDownloadQueue, 1200);
+        } else {
+          downloadQueue.isProcessing = false;
+          downloadQueue.currentPhoto = null;
+          updateDownloadWidget(100, "✓ Berhasil Disimpan!", photo.name || "Foto", true);
+          showToast("✓ Foto berhasil tersimpan ke perangkat!");
+        }
+      }
+
+      const isPhotobooth = isPhotoPhotobooth(photo);
       const rawFrameConfig = state.activeConfig.FRAME_IMAGE_URL ? state.activeConfig.FRAME_IMAGE_URL.trim() : "";
       const frameUrl = normalizeDriveImageUrl(rawFrameConfig);
 
-      if (!frameUrl) {
-        processDirectDownloadTask(photo);
+      if (isPhotobooth || !frameUrl) {
+        updateDownloadWidget(35, "Mengunduh Berkas Asli...", (photo.name || "Foto") + " • Kualitas Asli" + queueSuffix, false);
+        executeDirectPhotoDownload(photo, advanceQueue);
         return;
       }
 
-      const remaining = downloadQueue.items.length + 1;
-      const queueSuffix = remaining > 1 ? (" (Antrean: " + remaining + ")") : "";
       updateDownloadWidget(30, "Memuat Foto & Bingkai Kualitas Penuh...", (photo.name || "Foto") + " • Resolusi Asli" + queueSuffix, false);
+      executeFramedPhotoDownload(photo, frameUrl, advanceQueue);
+    }
 
-      function prepareCanvasSource(urlOrId, callback, errCallback) {
-        if (!urlOrId) { errCallback(); return; }
-        if (urlOrId.startsWith("data:")) {
-          const img = new Image();
-          img.onload = function() { callback(img); };
-          img.onerror = errCallback;
-          img.src = urlOrId;
-          return;
-        }
+    function loadSafeCanvasImage(urlOrId, callback, errCallback) {
+      if (!urlOrId) { errCallback(); return; }
+      if (urlOrId.startsWith("data:")) {
+        const img = new Image();
+        img.onload = function() { callback(img); };
+        img.onerror = errCallback;
+        img.src = urlOrId;
+        return;
+      }
 
+      const isHttp = urlOrId.startsWith("http");
+      if (isHttp) {
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.onload = function() { callback(img); };
         img.onerror = function() {
+          // Muat via proxy Vercel untuk mengabaikan CORS taint pada canvas
+          const proxyImg = new Image();
+          proxyImg.crossOrigin = "anonymous";
+          proxyImg.onload = function() { callback(proxyImg); };
+          proxyImg.onerror = function() {
+            errCallback();
+          };
+          proxyImg.src = "/api/download-proxy?url=" + encodeURIComponent(urlOrId);
+        };
+        img.src = urlOrId;
+        return;
+      }
+
+      // Jika input adalah ID Google Drive murni
+      const directDriveUrl = "https://drive.google.com/thumbnail?id=" + urlOrId + "&sz=w2500";
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = function() { callback(img); };
+      img.onerror = function() {
+        const proxyImg = new Image();
+        proxyImg.crossOrigin = "anonymous";
+        proxyImg.onload = function() { callback(proxyImg); };
+        proxyImg.onerror = function() {
           callBackend("getImageBase64", { fileId: urlOrId }, function(res) {
             if (res && res.success && res.dataUrl) {
-              const b64Img = new Image();
-              b64Img.onload = function() { callback(b64Img); };
-              b64Img.onerror = errCallback;
-              b64Img.src = res.dataUrl;
+              const b64 = new Image();
+              b64.onload = function() { callback(b64); };
+              b64.onerror = errCallback;
+              b64.src = res.dataUrl;
             } else {
               errCallback();
             }
           }, errCallback);
         };
-        img.src = urlOrId;
-      }
+        proxyImg.src = "/api/download-proxy?url=" + encodeURIComponent(directDriveUrl);
+      };
+      img.src = directDriveUrl;
+    }
 
-      // Prioritaskan downloadUrl (berkas kamera asli tanpa kompresi pratinjau)
-      const photoSrc = photo.downloadUrl || photo.highResUrl || photo.thumbnailUrl;
-      const photoIdOrSrc = photo.id || photoSrc;
-
-      prepareCanvasSource(photoIdOrSrc, function(photoImg) {
+    function executeFramedPhotoDownload(photo, frameUrl, onDone) {
+      const photoSrc = photo.downloadUrl || photo.highResUrl || photo.thumbnailUrl || (photo.id ? ("https://drive.google.com/thumbnail?id=" + photo.id + "&sz=w2500") : "");
+      
+      loadSafeCanvasImage(photoSrc, function(photoImg) {
         updateDownloadWidget(55, "Menggabungkan Foto Beresolusi Penuh...", (photo.name || "Foto") + " • Menjaga Ukuran Asli", false);
 
-        prepareCanvasSource(frameUrl, function(frameImg) {
+        loadSafeCanvasImage(frameUrl, function(frameImg) {
           try {
             const fw = frameImg.naturalWidth || 2400;
             const fh = frameImg.naturalHeight || 1600;
@@ -4012,11 +4134,9 @@ const GLOBAL_CONFIG = {
               cutoutH = fh;
             }
 
-            // DIMENSI ASLI FOTO (pw, ph)
             const pw = photoImg.naturalWidth || photoImg.width || 1920;
             const ph = photoImg.naturalHeight || photoImg.height || 1080;
 
-            // FAKTOR SKALA DINAMIS: Pastikan kanvas SELALU mengikuti resolusi penuh asli foto (tanpa downscale/penurunan ukuran file)
             const scale = Math.max(1, pw / cutoutW, ph / cutoutH);
             const targetW = Math.round(fw * scale);
             const targetH = Math.round(fh * scale);
@@ -4028,7 +4148,6 @@ const GLOBAL_CONFIG = {
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = "high";
 
-            // Skalakan batas cutout jendela transparan
             const scaledCutoutX = Math.round(cutoutX * scale);
             const scaledCutoutY = Math.round(cutoutY * scale);
             const scaledCutoutW = Math.round(cutoutW * scale);
@@ -4059,11 +4178,9 @@ const GLOBAL_CONFIG = {
               drawX = scaledCutoutX + (scaledCutoutW - drawW) / 2;
             }
 
-            // 1. Gambar latar belakang putih
             ctx.fillStyle = "#FFFFFF";
             ctx.fillRect(0, 0, targetW, targetH);
 
-            // 2. Gambar foto asli dengan resolusi penuh 100% tanpa kompresi/downscaling (mendukung auto-rotate)
             const rot = getPhotoRotation(photo.id, photo.category);
             if (rot % 360 !== 0) {
               ctx.save();
@@ -4082,155 +4199,109 @@ const GLOBAL_CONFIG = {
               ctx.drawImage(photoImg, drawX, drawY, drawW, drawH);
             }
 
-            // 3. Gambar bingkai PNG di atasnya dengan resolusi ultra-tinggi yang tajam
             ctx.drawImage(frameImg, 0, 0, targetW, targetH);
 
             updateDownloadWidget(85, "Menyimpan ke Memori Perangkat...", (photo.name || "Foto") + " • Kualitas Asli", false);
 
-            // 4. Ekspor ke Blob kualitas ultra-tinggi 0.98 agar ukuran berkas setara asli (~1.9MB - 2.8MB)
             canvas.toBlob(function(blob) {
               if (blob) {
-                const cleanName = (photo.rawName || photo.name || "wedding-photo").replace(/\.[^/.]+$/, "");
-                saveBlobToDevice(blob, cleanName + "-berbingkai.jpg");
-                const hasMore = downloadQueue.items.length > 0;
-                if (hasMore) {
-                  updateDownloadWidget(100, "✓ Foto Tersimpan! Melanjutkan antrean...", (cleanName + "-berbingkai.jpg"), false);
-                  showToast("✓ Foto tersimpan! Memproses antrean berikutnya (" + downloadQueue.items.length + " tersisa)...");
-                  setTimeout(processNextDownloadQueue, 500);
-                } else {
-                  downloadQueue.isProcessing = false;
-                  downloadQueue.currentPhoto = null;
-                  updateDownloadWidget(100, "✓ Berhasil Disimpan!", cleanName + "-berbingkai.jpg", true);
-                  showToast("✓ Foto berbingkai berhasil tersimpan ke perangkat!");
-                }
+                const cleanName = (photo.rawName || photo.name || "wedding-photo").replace(/\.[^/.]+$/, "").replace(/[\/\\]/g, "_");
+                const fileName = cleanName + "-berbingkai.jpg";
+                saveBlobToDevice(blob, fileName);
+                if (onDone) onDone();
               } else {
-                processDirectDownloadTask(photo);
+                executeDirectPhotoDownload(photo, onDone);
               }
-            }, "image/jpeg", 0.98);
+            }, "image/jpeg", 0.94);
 
           } catch (eCanvas) {
             console.warn("Canvas compositing error, fallback to direct download:", eCanvas);
-            processDirectDownloadTask(photo);
+            executeDirectPhotoDownload(photo, onDone);
           }
         }, function() {
-          processDirectDownloadTask(photo);
+          executeDirectPhotoDownload(photo, onDone);
         });
       }, function() {
-        processDirectDownloadTask(photo);
+        executeDirectPhotoDownload(photo, onDone);
       });
     }
 
-    function processDirectDownloadTask(photo) {
-      const cleanName = (photo.rawName || photo.name || "wedding-photo").replace(/\.[^/.]+$/, "");
-      const fileName = cleanName + ".jpg";
-      const directUrl = photo.downloadUrl || photo.highResUrl || photo.thumbnailUrl;
+    function executeDirectPhotoDownload(photo, onDone) {
+      const isVideo = Boolean(photo.isVideo);
+      let rawUrl = photo.downloadUrl || photo.videoUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || photo.img;
+      if (!rawUrl && photo.id) {
+        rawUrl = "https://drive.google.com/uc?export=download&id=" + photo.id;
+      }
+      if (!rawUrl) {
+        if (onDone) onDone();
+        return;
+      }
+      if (rawUrl.includes("fotoshare.co")) {
+        rawUrl = rawUrl.replace(/\?.*$/, "");
+      }
 
-      updateDownloadWidget(60, "Mengunduh Foto Asli Langsung...", fileName, false);
+      const ext = isVideo ? ".mp4" : ".jpg";
+      const cleanName = (photo.rawName || photo.name || (isVideo ? "video-photobooth" : "foto-asli")).replace(/\.[^/.]+$/, "").replace(/[\/\\]/g, "_");
+      const fileName = cleanName + ext;
 
-      fetch(directUrl)
+      const proxyUrl = "/api/download-proxy?url=" + encodeURIComponent(rawUrl) + "&filename=" + encodeURIComponent(fileName);
+
+      fetch(proxyUrl)
         .then(function(res) {
-          if (!res.ok) throw new Error("HTTP error " + res.status);
+          if (!res.ok) throw new Error("Proxy error " + res.status);
           return res.blob();
         })
         .then(function(blob) {
           saveBlobToDevice(blob, fileName);
-          const hasMore = downloadQueue.items.length > 0;
-          if (hasMore) {
-            updateDownloadWidget(100, "✓ Foto Tersimpan! Melanjutkan antrean...", fileName, false);
-            showToast("✓ Foto tersimpan! Memproses antrean berikutnya (" + downloadQueue.items.length + " tersisa)...");
-            setTimeout(processNextDownloadQueue, 500);
-          } else {
-            downloadQueue.isProcessing = false;
-            downloadQueue.currentPhoto = null;
-            updateDownloadWidget(100, "✓ Berhasil Disimpan!", fileName, true);
-            showToast("✓ Foto asli berhasil tersimpan ke perangkat!");
-          }
+          if (onDone) onDone();
         })
         .catch(function() {
-          if (photo.id && (state.gasApiUrl || (typeof google !== 'undefined' && google.script))) {
-            callBackend("getImageBase64", { fileId: photo.id }, function(res) {
-              if (res && res.success && res.dataUrl) {
-                const parts = res.dataUrl.split(",");
-                const byteCharacters = atob(parts[1]);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                  byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], { type: res.contentType || "image/jpeg" });
-                saveBlobToDevice(blob, fileName);
-                const hasMore = downloadQueue.items.length > 0;
-                if (hasMore) {
-                  updateDownloadWidget(100, "✓ Foto Tersimpan! Melanjutkan antrean...", fileName, false);
-                  showToast("✓ Foto tersimpan! Memproses antrean berikutnya (" + downloadQueue.items.length + " tersisa)...");
-                  setTimeout(processNextDownloadQueue, 500);
-                } else {
-                  downloadQueue.isProcessing = false;
-                  downloadQueue.currentPhoto = null;
-                  updateDownloadWidget(100, "✓ Berhasil Disimpan!", fileName, true);
-                  showToast("✓ Foto asli berhasil tersimpan ke perangkat!");
-                }
-              } else {
-                fallbackSaveLink(directUrl, fileName);
-              }
-            }, function() {
-              fallbackSaveLink(directUrl, fileName);
+          fetch(rawUrl)
+            .then(function(res) {
+              if (!res.ok) throw new Error("Direct fetch error " + res.status);
+              return res.blob();
+            })
+            .then(function(blob) {
+              saveBlobToDevice(blob, fileName);
+              if (onDone) onDone();
+            })
+            .catch(function() {
+              triggerDirectLinkDownload(proxyUrl, fileName);
+              if (onDone) setTimeout(onDone, 800);
             });
-          } else {
-            fallbackSaveLink(directUrl, fileName);
-          }
         });
     }
 
     function triggerDirectDownload(photo) {
-      if (!photo) return;
-      const isAlreadyQueued = downloadQueue.items.some(function(item) {
-        return (item.id && photo.id && item.id === photo.id) || (item.name && photo.name && item.name === photo.name);
-      });
-      if (isAlreadyQueued) {
-        showToast("Foto ini sudah ada dalam antrean unduh.");
-        return;
-      }
-      downloadQueue.items.push(photo);
-      const remaining = downloadQueue.items.length + (downloadQueue.isProcessing ? 1 : 0);
-      if (downloadQueue.isProcessing) {
-        const badgeEl = document.getElementById("dpwBadge");
-        if (badgeEl) badgeEl.innerText = remaining + " Antrean";
-        showToast("✓ Foto ditambahkan ke antrean (" + remaining + " foto antre)");
-      } else {
-        updateDownloadWidget(20, "Mengunduh Foto Asli...", photo.name || "Foto", false);
-        processNextDownloadQueue();
-      }
+      if (photo) queuePhotoDownload(photo);
     }
 
     function saveBlobToDevice(blob, fileName) {
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
+      a.style.display = "none";
       a.href = blobUrl;
       a.download = fileName;
       document.body.appendChild(a);
       a.click();
-      a.remove();
-      setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 10000);
+      setTimeout(function() {
+        a.remove();
+        URL.revokeObjectURL(blobUrl);
+      }, 25000);
     }
 
-    function fallbackSaveLink(url, fileName) {
-      resetDownloadButton();
+    function triggerDirectLinkDownload(url, fileName) {
       const a = document.createElement("a");
+      a.style.display = "none";
       a.href = url;
       a.download = fileName;
       document.body.appendChild(a);
       a.click();
-      a.remove();
-      showToast("Menyimpan foto...");
-      const hasMore = downloadQueue.items.length > 0;
-      if (hasMore) {
-        setTimeout(processNextDownloadQueue, 500);
-      } else {
-        downloadQueue.isProcessing = false;
-        downloadQueue.currentPhoto = null;
-        updateDownloadWidget(100, "✓ Berhasil Disimpan!", fileName, true);
-      }
+      setTimeout(function() { a.remove(); }, 15000);
+    }
+
+    function fallbackSaveLink(url, fileName) {
+      triggerDirectLinkDownload(url, fileName);
     }
 
     function resetDownloadButton() {
@@ -4610,7 +4681,7 @@ const GLOBAL_CONFIG = {
         if (btnLabel) btnLabel.innerText = "⬇️ Unduh Video Asli Photobooth";
         if (btn) {
           btn.onclick = function() {
-            downloadPhotoboothOriginal(photo);
+            queuePhotoDownload(photo);
           };
         }
       } else {
@@ -4642,7 +4713,7 @@ const GLOBAL_CONFIG = {
           if (btnLabel) btnLabel.innerText = "⬇️ Unduh Foto Asli (Ukuran Penuh)";
           if (btn) {
             btn.onclick = function() {
-              downloadPhotoboothOriginal(photo);
+              queuePhotoDownload(photo);
             };
           }
         } else {
@@ -4650,7 +4721,7 @@ const GLOBAL_CONFIG = {
           if (btnLabel) btnLabel.innerText = "✨ Simpan Kenangan Berbingkai";
           if (btn) {
             btn.onclick = function() {
-              downloadCurrentPhotoWithFrame();
+              queuePhotoDownload(photo);
             };
           }
         }
@@ -4659,74 +4730,11 @@ const GLOBAL_CONFIG = {
 
     function handleCurrentLightboxDownload() {
       const photo = state.filteredPhotos[state.currentLightboxIndex];
-      if (!photo) return;
-
-      const isPhotobooth = Boolean(
-        photo.isVideo ||
-        photo.isKing ||
-        photo.isPhotobooth ||
-        (photo.category && photo.category.toLowerCase().includes("photobooth")) ||
-        (state.activeCategory && state.activeCategory.toLowerCase().includes("photobooth")) ||
-        (photo.downloadUrl && (photo.downloadUrl.includes("kingphotobooth.co") || photo.downloadUrl.includes("fotoshare.co") || photo.downloadUrl.includes("photos.google.com"))) ||
-        (photo.previewUrl && (photo.previewUrl.includes("kingphotobooth.co") || photo.previewUrl.includes("fotoshare.co") || photo.previewUrl.includes("photos.google.com")))
-      );
-
-      if (isPhotobooth) {
-        downloadPhotoboothOriginal(photo);
-      } else {
-        downloadCurrentPhotoWithFrame();
-      }
+      if (photo) queuePhotoDownload(photo);
     }
 
     function downloadPhotoboothOriginal(photo) {
-      if (!photo) return;
-      const isVideo = Boolean(photo.isVideo);
-      let rawUrl = photo.downloadUrl || photo.videoUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || photo.img;
-      if (!rawUrl) return;
-
-      // Bersihkan seluruh query parameter pemotong resolusi (seperti ?width=450 pada fotoshare agar mengunduh 1.5MB asli)
-      if (rawUrl.includes("fotoshare.co")) {
-        rawUrl = rawUrl.replace(/\?.*$/, "");
-      }
-
-      const ext = isVideo ? ".mp4" : ".jpg";
-      const cleanName = (photo.name || (isVideo ? "Video_Photobooth" : "Photobooth")).replace(/[\/\\]/g, "_");
-      const fileName = cleanName.endsWith(ext) ? cleanName : (cleanName + ext);
-
-      showToast(isVideo ? "🎬 Mengunduh video asli kualitas penuh..." : "📸 Mengunduh foto asli kualitas penuh...");
-
-      const proxyUrl = "/api/download-proxy?url=" + encodeURIComponent(rawUrl) + "&filename=" + encodeURIComponent(fileName);
-
-      // 1. Ambil file asli via server proxy (mengabaikan CORS & tanpa kompresi)
-      fetch(proxyUrl)
-        .then(function(res) {
-          if (!res.ok) throw new Error("Proxy HTTP " + res.status);
-          return res.blob();
-        })
-        .then(function(blob) {
-          triggerSilentBlobDownload(blob, fileName, isVideo);
-        })
-        .catch(function() {
-          // 2. Coba fetch langsung jika domain asal mendukung CORS
-          fetch(rawUrl)
-            .then(function(res) {
-              if (!res.ok) throw new Error("Direct HTTP " + res.status);
-              return res.blob();
-            })
-            .then(function(blob) {
-              triggerSilentBlobDownload(blob, fileName, isVideo);
-            })
-            .catch(function() {
-              // 3. Fallback hening ke invisible hidden iframe (TIDAK PERNAH BUKA WINDOW / TAB BARU)
-              triggerSilentIframeDownload(proxyUrl, isVideo);
-              setTimeout(function() {
-                const testFrame = document.getElementById("silentDownloadFrame");
-                if (testFrame && !testFrame.src.includes(encodeURIComponent(rawUrl))) {
-                  triggerSilentIframeDownload(rawUrl, isVideo);
-                }
-              }, 400);
-            });
-        });
+      if (photo) queuePhotoDownload(photo);
     }
 
     function startSlideshowFromCurrent() {

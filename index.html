@@ -113,6 +113,10 @@
             var c = JSON.parse(saved);
             var n = c.EVENT_NAME || c.COUPLE_NAME;
             if (n && n !== "Hans & Yurike") document.getElementById("coupleName").textContent = n;
+            if (c.SUBTITLE) document.getElementById("subtitle").textContent = c.SUBTITLE;
+            if (c.EVENT_DATE) document.getElementById("eventDate").textContent = c.EVENT_DATE;
+            if (c.EVENT_VENUE) document.getElementById("eventVenue").textContent = c.EVENT_VENUE;
+            if (c.WELCOME_MESSAGE) document.getElementById("welcomeMessage").textContent = c.WELCOME_MESSAGE;
           }
         } catch(e) {}
       })();
