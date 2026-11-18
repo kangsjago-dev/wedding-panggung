@@ -332,11 +332,11 @@
           <img id="shareQrImg" src="" alt="QR Code Galeri" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;">
         </div>
 
-        <!-- URL Field with Logo Buttons (Bagikan, Salin, & Unduh QR Code) -->
-        <div style="display: flex; gap: 8px; align-items: center; margin-top: 12px;">
-          <input type="text" id="shareUrlInput" class="admin-input" readonly style="flex: 1; font-size: 0.82rem; background: #FAF8F5; cursor: pointer; padding: 9px 12px;" onclick="copyShareUrl()" title="Klik untuk menyalin tautan">
-          <button type="button" class="ctrl-icon-btn" onclick="shareViaWebShare()" title="Bagikan Tautan (Share Link)" aria-label="Bagikan Tautan" style="width: 42px; height: 42px; background: #FAF8F5; border: 1.5px solid var(--gold-primary); color: var(--gold-dark); border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Logo Buttons (Bagikan, Salin, & Unduh QR Code) - Hanya Icon Saja -->
+        <input type="hidden" id="shareUrlInput" value="">
+        <div style="display: flex; gap: 14px; align-items: center; justify-content: center; margin-top: 16px;">
+          <button type="button" class="ctrl-icon-btn" onclick="shareViaWebShare()" title="Bagikan Tautan (Share Link)" aria-label="Bagikan Tautan" style="width: 48px; height: 48px; background: #FAF8F5; border: 1.5px solid var(--gold-primary); color: var(--gold-dark); border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="18" cy="5" r="3"></circle>
               <circle cx="6" cy="12" r="3"></circle>
               <circle cx="18" cy="19" r="3"></circle>
@@ -344,14 +344,14 @@
               <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
             </svg>
           </button>
-          <button type="button" class="ctrl-icon-btn" onclick="copyShareUrl()" title="Salin Tautan (Copy Link)" aria-label="Salin Tautan" style="width: 42px; height: 42px; background: #FAF8F5; border: 1.5px solid var(--gold-primary); color: var(--gold-dark); border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <button type="button" class="ctrl-icon-btn" onclick="copyShareUrl()" title="Salin Tautan (Copy Link)" aria-label="Salin Tautan" style="width: 48px; height: 48px; background: #FAF8F5; border: 1.5px solid var(--gold-primary); color: var(--gold-dark); border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
             </svg>
           </button>
-          <button type="button" class="ctrl-icon-btn" onclick="downloadQrCodeImage()" title="Unduh Gambar QR Code (PNG)" aria-label="Unduh QR Code" style="width: 42px; height: 42px; background: var(--gold-primary); border: 1.5px solid var(--gold-dark); color: #FFFFFF; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 4px 12px rgba(197, 168, 128, 0.4);">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <button type="button" class="ctrl-icon-btn" onclick="downloadQrCodeImage()" title="Unduh Gambar QR Code (PNG)" aria-label="Unduh QR Code" style="width: 48px; height: 48px; background: var(--gold-primary); border: 1.5px solid var(--gold-dark); color: #FFFFFF; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 4px 14px rgba(197, 168, 128, 0.45);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
