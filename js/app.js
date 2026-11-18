@@ -171,7 +171,7 @@ function isGooglePhotosUrl(url) {
             PHOTOBOOTH_URL: currentPbUrl,
             DRIVE_FOLDER_ID: state.activeConfig.DRIVE_FOLDER_ID || "",
             ALL_PHOTOS_LABEL: state.allPhotosLabel || "Semua Foto",
-            EVENTS: state.events,
+            EVENTS: JSON.stringify(state.events),
             ACTIVE_EVENT_ID: state.currentEventId
           }
         });
@@ -323,13 +323,13 @@ function isGooglePhotosUrl(url) {
       WELCOME_MESSAGE: "",
       FOOTER_MESSAGE: "",
       ALL_PHOTOS_LABEL: "Semua Foto",
-      ACTIVE_EVENT_ID: "wilson-felicia",
+      ACTIVE_EVENT_ID: "andre-fayola-281",
       EVENTS: [
         {
-          id: "wilson-felicia",
-          name: "Wilson & Felicia",
-          date: "14 November 2026",
-          venue: "Upperhills Convention Centre, Makassar",
+          id: "andre-fayola-281",
+          name: "Andre & Fayola",
+          date: "22 November 2026",
+          venue: "UPPERHILLS CONVENTION HALLS",
           subtitle: "The Wedding Gallery & Precious Memories",
           welcomeMessage: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
           footerMessage: "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
@@ -396,7 +396,7 @@ function isGooglePhotosUrl(url) {
       filteredPhotos: [],
       categories: ["Semua Foto"],
       allPhotosLabel: "Semua Foto",
-      currentEventId: "wilson-felicia",
+      currentEventId: "andre-fayola-281",
       events: [],
       coverSettings: {
         enabled: false,
@@ -498,15 +498,10 @@ function isGooglePhotosUrl(url) {
       try {
         const cacheKey = state.currentEventId ? ("WEDDING_EVENT_CFG_" + state.currentEventId) : "WEDDING_ACTIVE_EVENT_CFG";
         let savedCfgStr = localStorage.getItem(cacheKey);
-        if (!savedCfgStr && !urlEventId) {
-          savedCfgStr = localStorage.getItem("WEDDING_SAVED_CONFIG");
-        }
         if (savedCfgStr) {
           const savedCfg = JSON.parse(savedCfgStr);
           state.activeConfig = Object.assign({}, GLOBAL_CONFIG, savedCfg);
           populateConfigToUI(state.activeConfig);
-        } else {
-          populateConfigToUI(GLOBAL_CONFIG);
         }
       } catch (e) {}
 
@@ -660,11 +655,45 @@ function isGooglePhotosUrl(url) {
                 state.adminPin = sheetMap.ADMIN_PIN;
               }
             }
-            if (sheetMap.EVENT_DATE) state.activeConfig.EVENT_DATE = sheetMap.EVENT_DATE;
-            if (sheetMap.EVENT_VENUE) state.activeConfig.EVENT_VENUE = sheetMap.EVENT_VENUE;
-            if (sheetMap.EVENT_NAME || sheetMap.COUPLE_NAME) {
-              state.activeConfig.EVENT_NAME = sheetMap.EVENT_NAME || sheetMap.COUPLE_NAME;
-              state.activeConfig.COUPLE_NAME = state.activeConfig.EVENT_NAME;
+            // Resolusi Multi-Event dari Sheet Pengaturan & Daftar_Acara
+            if (sheetMap.EVENTS && !sheetMap.EVENTS.includes("[object Object]")) {
+              try {
+                const parsedEvs = JSON.parse(sheetMap.EVENTS);
+                if (Array.isArray(parsedEvs) && parsedEvs.length > 0) {
+                  state.events = parsedEvs;
+                  const urlEvId = getActiveEventIdFromUrl();
+                  const targetId = urlEvId || state.currentEventId || sheetMap.ACTIVE_EVENT_ID || parsedEvs[0].id;
+                  const matchedEv = parsedEvs.find(function(e) { return e && e.id === targetId; }) || parsedEvs[0];
+                  if (matchedEv) {
+                    state.currentEventId = matchedEv.id;
+                    state.activeConfig.ACTIVE_EVENT_ID = matchedEv.id;
+                    state.activeConfig.EVENT_NAME = matchedEv.name || "";
+                    state.activeConfig.COUPLE_NAME = matchedEv.name || "";
+                    state.activeConfig.EVENT_DATE = matchedEv.date || "";
+                    state.activeConfig.EVENT_VENUE = matchedEv.venue || "";
+                    state.activeConfig.DRIVE_FOLDER_ID = matchedEv.driveFolderId || "";
+                    state.activeConfig.PHOTOBOOTH_URL = matchedEv.photoboothUrl || "";
+                    state.activeConfig.FRAME_IMAGE_URL = matchedEv.frameImageUrl || "";
+                    const curOrigin = window.location.origin || (window.location.protocol + "//" + window.location.host);
+                    const curPath = window.location.pathname || "/";
+                    state.activeConfig.HOME_URL = matchedEv.homeUrl || (curOrigin + curPath + "?event=" + encodeURIComponent(matchedEv.id));
+
+                    if (Array.isArray(matchedEv.customCategories) && matchedEv.customCategories.length > 0) {
+                      state.activeConfig.CUSTOM_CATEGORIES = matchedEv.customCategories;
+                      state.customCategories = matchedEv.customCategories;
+                    }
+                  }
+                }
+              } catch(eEvs) {}
+            }
+
+            if (!state.currentEventId || !state.activeConfig.EVENT_NAME) {
+              if (sheetMap.EVENT_DATE) state.activeConfig.EVENT_DATE = sheetMap.EVENT_DATE;
+              if (sheetMap.EVENT_VENUE) state.activeConfig.EVENT_VENUE = sheetMap.EVENT_VENUE;
+              if (sheetMap.EVENT_NAME || sheetMap.COUPLE_NAME) {
+                state.activeConfig.EVENT_NAME = sheetMap.EVENT_NAME || sheetMap.COUPLE_NAME;
+                state.activeConfig.COUPLE_NAME = state.activeConfig.EVENT_NAME;
+              }
             }
             if (!isEditingLocally && !isModalOpen) {
               if (sheetMap.DRIVE_FOLDER_ID) state.activeConfig.DRIVE_FOLDER_ID = sheetMap.DRIVE_FOLDER_ID;
@@ -2747,7 +2776,7 @@ function isGooglePhotosUrl(url) {
               PHOTOBOOTH_URL: (pbCat && pbCat.url) ? String(pbCat.url).trim() : (state.activeConfig.PHOTOBOOTH_URL || ""),
               DRIVE_FOLDER_ID: driveFolderVal,
               ALL_PHOTOS_LABEL: allPhotosLabelVal,
-              EVENTS: state.events,
+              EVENTS: JSON.stringify(state.events),
               ACTIVE_EVENT_ID: state.currentEventId
             }
           }, function(res) {
@@ -2926,7 +2955,7 @@ function isGooglePhotosUrl(url) {
       container.style.removeProperty("display");
       container.style.display = "block";
 
-      const heading = cov.heading || ("The Wedding of " + (state.activeConfig.EVENT_NAME || "Wilson & Felicia"));
+      const heading = cov.heading || ("The Wedding of " + (state.activeConfig.EVENT_NAME || ""));
       const subheading = cov.subheading || (state.activeConfig.SUBTITLE || "A Journey of Two Hearts Joined as One");
       const quote = cov.quote || "Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda.";
       const style = cov.style || "romantic-collage";
@@ -3061,7 +3090,7 @@ function isGooglePhotosUrl(url) {
        SHARE & QR CODE MODAL FUNCTIONS
        ========================================================================== */
         function formatDayDateIndonesian(val) {
-      if (!val) return "Senin, 16 November 2026";
+      if (!val) return "";
       const cleanStr = String(val).replace(/\s+\d{2}:\d{2}:\d{2}.*$/, '').replace(/GMT.*$/, '').trim();
       const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
       const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -3090,11 +3119,11 @@ function isGooglePhotosUrl(url) {
 
       const titleEl = document.getElementById("shareEventTitle");
       if (titleEl) {
-        titleEl.innerText = state.activeConfig.EVENT_NAME || "Wilson & Felicia";
+        titleEl.innerText = state.activeConfig.EVENT_NAME || "";
       }
 
-      const formattedDate = formatDayDateIndonesian(state.activeConfig.EVENT_DATE || "16 November 2026");
-      const venue = (state.activeConfig.EVENT_VENUE || "UpperHills Convention Hall, Makassar").trim();
+      const formattedDate = formatDayDateIndonesian(state.activeConfig.EVENT_DATE || "");
+      const venue = (state.activeConfig.EVENT_VENUE || "").trim();
 
       const dateEl = document.getElementById("shareEventDate");
       if (dateEl) {
@@ -3220,10 +3249,10 @@ function isGooglePhotosUrl(url) {
       if (!Array.isArray(state.events) || state.events.length === 0) {
         state.events = [
           {
-            id: state.currentEventId || "wilson-felicia",
-            name: state.activeConfig.EVENT_NAME || "Wilson & Felicia",
-            date: state.activeConfig.EVENT_DATE || "14 November 2026",
-            venue: state.activeConfig.EVENT_VENUE || "Makassar"
+            id: state.currentEventId || "event-utama",
+            name: state.activeConfig.EVENT_NAME || "Acara",
+            date: state.activeConfig.EVENT_DATE || "",
+            venue: state.activeConfig.EVENT_VENUE || ""
           }
         ];
       }
@@ -3381,11 +3410,16 @@ function isGooglePhotosUrl(url) {
         });
       }
 
+      const curOrigin = window.location.origin || (window.location.protocol + "//" + window.location.host);
+      const curPath = window.location.pathname || "/";
+      const homeUrl = curOrigin + curPath + "?event=" + encodeURIComponent(newId);
+
       const newEventObj = {
         id: newId,
         name: name,
         date: formattedDate,
         venue: venue || "",
+        homeUrl: homeUrl,
         subtitle: "The Wedding Gallery & Precious Memories",
         welcomeMessage: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
         footerMessage: "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
@@ -3393,7 +3427,8 @@ function isGooglePhotosUrl(url) {
         driveFolderId: driveFolder,
         photoboothUrl: pbUrl,
         frameImageUrl: "",
-        customCategories: initialCats
+        customCategories: initialCats,
+        status: "Aktif"
       };
 
       if (!Array.isArray(state.events)) state.events = [];
@@ -3408,8 +3443,15 @@ function isGooglePhotosUrl(url) {
         callBackend("saveAdminSettings", {
           pin: getEffectiveAdminPin(),
           config: {
-            EVENTS: state.events,
-            ACTIVE_EVENT_ID: newId
+            EVENTS: JSON.stringify(state.events),
+            ACTIVE_EVENT_ID: newId,
+            EVENT_NAME: name,
+            COUPLE_NAME: name,
+            EVENT_DATE: formattedDate,
+            EVENT_VENUE: venue || "",
+            DRIVE_FOLDER_ID: driveFolder,
+            PHOTOBOOTH_URL: pbUrl,
+            CUSTOM_CATEGORIES: JSON.stringify(initialCats)
           }
         }, function() {
           showToast("✓ Event baru '" + name + "' berhasil dibuat dan disimpan ke database!");
@@ -3679,8 +3721,8 @@ function isGooglePhotosUrl(url) {
       }
 
       // Format tanggal ke format bahasa Indonesia untuk display dan penyimpanan
-      const formattedDate = eventDateInput ? formatIndonesianDate(eventDateInput) : (state.activeConfig.EVENT_DATE || "14 November 2026");
-      const finalEventName = eventNameInput || state.activeConfig.EVENT_NAME || "Wilson & Felicia";
+      const formattedDate = eventDateInput ? formatIndonesianDate(eventDateInput) : (state.activeConfig.EVENT_DATE || "");
+      const finalEventName = eventNameInput || state.activeConfig.EVENT_NAME || "";
 
       const allPhotosLabelInput = (document.getElementById("cfgMainGalleryLabel")?.value || document.getElementById("cfgAllPhotosLabel")?.value || state.allPhotosLabel || "").trim() || "Semua Foto";
       const coverEnabledInput = document.getElementById("cfgCoverEnabled") ? document.getElementById("cfgCoverEnabled").checked : true;
@@ -3737,7 +3779,7 @@ function isGooglePhotosUrl(url) {
         EVENT_NAME: finalEventName,
         COUPLE_NAME: finalEventName,
         EVENT_DATE: formattedDate,
-        EVENT_VENUE: eventVenueInput || state.activeConfig.EVENT_VENUE || "Upperhills Convention Centre, Makassar",
+        EVENT_VENUE: eventVenueInput || state.activeConfig.EVENT_VENUE || "",
         SUBTITLE: subtitleInput || state.activeConfig.SUBTITLE || "The Wedding Gallery & Precious Memories",
         WELCOME_MESSAGE: welcomeInput || state.activeConfig.WELCOME_MESSAGE || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
         FOOTER_MESSAGE: footerInput || state.activeConfig.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
@@ -3745,7 +3787,7 @@ function isGooglePhotosUrl(url) {
         CUSTOM_CATEGORIES: JSON.stringify(customCategoriesList),
         PHOTOBOOTH_URL: pbUrlVal,
         COVER_SETTINGS: coverSettingsPayload,
-        EVENTS: state.events,
+        EVENTS: JSON.stringify(state.events),
         DRIVE_FOLDER_ID: driveFolderInput,
         FRAME_IMAGE_URL: frameUrlInput,
         GAS_API_URL: newApiUrl,
@@ -5005,9 +5047,10 @@ function isGooglePhotosUrl(url) {
       const photo = state.filteredPhotos[index];
       if (!photo) return;
 
-      const eventDate = state.activeConfig.EVENT_DATE || "14 November 2026";
-      const eventVenue = state.activeConfig.EVENT_VENUE || "Upperhills Convention Centre, Makassar";
-      document.getElementById("slideshowCategory").innerText = eventDate + " • " + eventVenue + " • " + photo.category;
+      const eventDate = state.activeConfig.EVENT_DATE || "";
+      const eventVenue = state.activeConfig.EVENT_VENUE || "";
+      const infoParts = [eventDate, eventVenue, photo.category].filter(Boolean);
+      document.getElementById("slideshowCategory").innerText = infoParts.join(" • ");
 
       const imgA = document.getElementById("slideshowImgA");
       const imgB = document.getElementById("slideshowImgB");

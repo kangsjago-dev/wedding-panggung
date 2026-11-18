@@ -11,7 +11,7 @@
   <script>
     (function() {
       try {
-        var s = localStorage.getItem("WEDDING_ACTIVE_EVENT_CFG") || localStorage.getItem("WEDDING_SAVED_CONFIG");
+        var s = localStorage.getItem("WEDDING_ACTIVE_EVENT_CFG");
         if (s) {
           var c = JSON.parse(s);
           var name = c.EVENT_NAME || c.COUPLE_NAME || "";
@@ -95,7 +95,7 @@
           var params = new URLSearchParams(window.location.search);
           var targetEventId = params.get("event") || params.get("e") || "";
           var cacheKey = targetEventId ? ("WEDDING_EVENT_CFG_" + targetEventId) : "WEDDING_ACTIVE_EVENT_CFG";
-          var saved = localStorage.getItem(cacheKey) || localStorage.getItem("WEDDING_SAVED_CONFIG");
+          var saved = localStorage.getItem(cacheKey);
           if (saved) {
             var c = JSON.parse(saved);
             var n = c.EVENT_NAME || c.COUPLE_NAME;
@@ -303,7 +303,7 @@
       <div class="admin-card-body share-modal-body">
         <div class="share-meta-header">
           <div class="share-event-title" id="shareEventTitle"></div>
-          <div class="share-event-date" id="shareEventDate">Senin, 16 November 2026</div>
+          <div class="share-event-date" id="shareEventDate"></div>
           <div class="share-event-venue" id="shareEventVenue"></div>
         </div>
 
@@ -469,7 +469,7 @@
 
           <div class="admin-field-group">
             <label class="admin-label" for="cfgCoupleName">Nama Event / Pasangan Pengantin</label>
-            <input type="text" id="cfgCoupleName" class="admin-input" placeholder="Contoh: Wilson & Felicia">
+            <input type="text" id="cfgCoupleName" class="admin-input" placeholder="Contoh: Nama Pasangan / Acara">
           </div>
 
           <div class="admin-field-group">
@@ -479,7 +479,7 @@
 
           <div class="admin-field-group">
             <label class="admin-label" for="cfgEventVenue">Venue (Lokasi Acara)</label>
-            <input type="text" id="cfgEventVenue" class="admin-input" placeholder="Contoh: Upperhills Convention Centre, Makassar">
+            <input type="text" id="cfgEventVenue" class="admin-input" placeholder="Contoh: Lokasi Gedung / Hotel">
           </div>
 
           <div class="admin-field-group">

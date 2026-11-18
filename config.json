@@ -1,5 +1,5 @@
 {
-  "ACTIVE_EVENT_ID": "wilson-felicia",
+  "ACTIVE_EVENT_ID": "andre-fayola-281",
   "ALL_PHOTOS_LABEL": "Semua Foto",
   "ADMIN_ACCOUNTS": [
     {
@@ -29,20 +29,18 @@
   ],
   "EVENTS": [
     {
-      "id": "wilson-felicia",
-      "name": "Wilson & Felicia",
-      "date": "17 November 2026",
-      "venue": "UpperHills Convention Hall, Makassar",
-      "subtitle": "The Wedding Gallery & Precious Memories",
-      "welcomeMessage": "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
-      "footerMessage": "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
-      "allPhotosLabel": "Semua Foto",
+      "id": "andre-fayola-281",
+      "name": "Andre & Fayola",
+      "date": "22 November 2026",
+      "venue": "UPPERHILLS CONVENTION HALLS",
+      "homeUrl": "https://gallery.runway.my.id/?event=andre-fayola-281",
       "driveFolderId": "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
-      "frameImageUrl": "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing",
+      "photoboothUrl": "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
+      "frameImageUrl": "",
       "customCategories": [
         {
           "name": "Photobooth",
-          "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+          "url": "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
           "enabled": true,
           "isPhotobooth": true
         },
@@ -52,21 +50,19 @@
           "enabled": true
         }
       ],
-      "coverSettings": {
-        "enabled": false
-      }
+      "status": "Aktif"
     }
   ],
-  "EVENT_NAME": "Wilson & Felicia",
-  "EVENT_DATE": "17 November 2026",
-  "EVENT_VENUE": "UpperHills Convention Hall, Makassar",
+  "EVENT_NAME": "Andre & Fayola",
+  "EVENT_DATE": "22 November 2026",
+  "EVENT_VENUE": "UPPERHILLS CONVENTION HALLS",
   "SUBTITLE": "The Wedding Gallery & Precious Memories",
   "WELCOME_MESSAGE": "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
   "FOOTER_MESSAGE": "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
   "CUSTOM_CATEGORIES": [
     {
       "name": "Photobooth",
-      "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+      "url": "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
       "enabled": true,
       "isPhotobooth": true
     },
@@ -79,7 +75,7 @@
   "DRIVE_FOLDER_ID": "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
   "DRIVE_FOLDER_URL": "https://drive.google.com/drive/folders/1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
   "FRAME_IMAGE_URL": "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing",
-  "PHOTOBOOTH_URL": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+  "PHOTOBOOTH_URL": "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
   "WEDDING_FOLDER_URL": "https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI",
   "SPREADSHEET_ID": "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20",
   "SPREADSHEET_URL": "https://docs.google.com/spreadsheets/d/133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20/edit",
@@ -92,5 +88,6 @@
   "NEW_BADGE_MINUTES": 10,
   "coverSettings": {
     "enabled": false
-  }
+  },
+  "COUPLE_NAME": "Andre & Fayola"
 }

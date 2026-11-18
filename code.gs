@@ -11,13 +11,13 @@
 // ================================================================================
 const WEDDING_CONFIG = {
   // Nama Event Acara
-  EVENT_NAME: "Wilson & Felicia",
+  EVENT_NAME: "Andre & Fayola",
 
   // Tanggal Acara
-  EVENT_DATE: "14 November 2026",
+  EVENT_DATE: "22 November 2026",
 
   // Venue / Lokasi Acara
-  EVENT_VENUE: "Upperhills Convention Centre, Makassar",
+  EVENT_VENUE: "UPPERHILLS CONVENTION HALLS",
 
   // Subjudul Galeri
   SUBTITLE: "The Wedding Gallery & Precious Memories",
@@ -36,8 +36,8 @@ const WEDDING_CONFIG = {
   PHOTOBOOTH_URL: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
 
   // Multi-Event Registry
-  ACTIVE_EVENT_ID: "wilson-felicia",
-  EVENTS: '[{"id":"wilson-felicia","name":"Wilson & Felicia","date":"16 November 2026","venue":"UpperHills Convention Hall, Makassar","subtitle":"The Wedding Gallery & Precious Memories","welcomeMessage":"Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.","footerMessage":"Diabadikan dengan cinta\\nTerima kasih atas doa restunya.","allPhotosLabel":"Semua Foto","driveFolderId":"1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5","frameImageUrl":"https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk","customCategories":[{"name":"Photobooth","url":"https://photos.app.goo.gl/QkqewYw4dWfocxfK8","enabled":true},{"name":"Wedding","url":"https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI","enabled":true}],"coverSettings":{"enabled":false,"style":"romantic-collage","heading":"The Wedding Celebration","subheading":"A Journey of Two Hearts Joined as One","quote":"Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda.","photos":[]}}]',
+  ACTIVE_EVENT_ID: "andre-fayola-281",
+  EVENTS: '[{"id":"andre-fayola-281","name":"Andre & Fayola","date":"22 November 2026","venue":"UPPERHILLS CONVENTION HALLS","subtitle":"The Wedding Gallery & Precious Memories","welcomeMessage":"Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.","footerMessage":"Diabadikan dengan cinta\\nTerima kasih atas doa restunya.","allPhotosLabel":"Semua Foto","driveFolderId":"1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5","frameImageUrl":"https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk","customCategories":[{"name":"Photobooth","url":"https://photos.app.goo.gl/QkqewYw4dWfocxfK8","enabled":true},{"name":"Wedding","url":"https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI","enabled":true}],"coverSettings":{"enabled":false,"style":"romantic-collage","heading":"The Wedding Celebration","subheading":"A Journey of Two Hearts Joined as One","quote":"Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda.","photos":[]}}]',
 
   // Akun Admin (Username & Password)
   ADMIN_ACCOUNTS: '[{"id":"usr_superadmin","username":"admin","password":"123","name":"Super Admin","role":"Super Admin"}]',
@@ -310,15 +310,15 @@ function setupTargetSpreadsheetDatabase() {
   sheetSettings.setFrozenRows(1);
 
   var defaultParams = [
-    ["EVENT_NAME", "Wilson & Felicia", "Nama Event / Pasangan Pengantin"],
-    ["COUPLE_NAME", "Wilson & Felicia", "Nama Pasangan Pengantin"],
-    ["EVENT_DATE", "16 November 2026", "Tanggal Pelaksanaan Acara"],
-    ["EVENT_VENUE", "UpperHills Convention Hall, Makassar", "Venue / Lokasi Gedung Acara"],
+    ["EVENT_NAME", "Andre & Fayola", "Nama Event / Pasangan Pengantin"],
+    ["COUPLE_NAME", "Andre & Fayola", "Nama Pasangan Pengantin"],
+    ["EVENT_DATE", "22 November 2026", "Tanggal Pelaksanaan Acara"],
+    ["EVENT_VENUE", "UPPERHILLS CONVENTION HALLS", "Venue / Lokasi Gedung Acara"],
     ["SUBTITLE", "The Wedding Gallery & Precious Memories", "Subjudul Galeri Foto"],
     ["WELCOME_MESSAGE", "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.", "Pesan Sambutan Hangat untuk Tamu"],
     ["FOOTER_MESSAGE", "Diabadikan dengan cinta\nTerima kasih atas doa restunya.", "Pesan Penutup Footer Galeri"],
     ["ALL_PHOTOS_LABEL", "Semua Foto", "Label Tab Galeri Utama"],
-    ["ACTIVE_EVENT_ID", "wilson-felicia", "ID Event Aktif"],
+    ["ACTIVE_EVENT_ID", "andre-fayola-281", "ID Event Aktif"],
     ["ADMIN_USERNAME", "admin", "Nama Pengguna (Username) Akses Masuk Panel Admin Web"],
     ["ADMIN_PIN", "123456", "PIN Akses Masuk Panel Admin Web"],
     ["SLIDESHOW_INTERVAL_SEC", "4", "Durasi Perpindahan Foto Slideshow (detik)"],
@@ -333,7 +333,7 @@ function setupTargetSpreadsheetDatabase() {
     ["PHOTOBOOTH_URL", "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", "Tautan Vendor Kategori Spesial Photobooth"],
     ["WEDDING_FOLDER_URL", "https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI", "Tautan Folder Google Drive Kategori Wedding Panggung"],
     ["CUSTOM_CATEGORIES", '[{"name":"Photobooth","url":"https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs","enabled":true},{"name":"Wedding","url":"https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI","enabled":true}]', "Daftar Kategori Kustom & Tautan Tampilan"],
-    ["EVENTS", '[{"id":"wilson-felicia","name":"Wilson & Felicia","date":"16 November 2026","venue":"UpperHills Convention Hall, Makassar","subtitle":"The Wedding Gallery & Precious Memories","welcomeMessage":"Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.","footerMessage":"Diabadikan dengan cinta\\nTerima kasih atas doa restunya.","allPhotosLabel":"Semua Foto","driveFolderId":"1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5","frameImageUrl":"https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk","customCategories":[{"name":"Photobooth","url":"https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs","enabled":true},{"name":"Wedding","url":"https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI","enabled":true}],"coverSettings":{"enabled":false}}]', "Registry Multi-Event Sistem"],
+    ["EVENTS", '[{"id":"andre-fayola-281","name":"Andre & Fayola","date":"22 November 2026","venue":"UPPERHILLS CONVENTION HALLS","subtitle":"The Wedding Gallery & Precious Memories","welcomeMessage":"Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.","footerMessage":"Diabadikan dengan cinta\\nTerima kasih atas doa restunya.","allPhotosLabel":"Semua Foto","driveFolderId":"1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5","frameImageUrl":"https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk","customCategories":[{"name":"Photobooth","url":"https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs","enabled":true},{"name":"Wedding","url":"https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI","enabled":true}],"coverSettings":{"enabled":false}}]', "Registry Multi-Event Sistem"],
     ["COVER_SETTINGS", '{"enabled":false}', "Pengaturan Cover Halaman Depan"],
     ["ADMIN_ACCOUNTS_INFO", "usr_superadmin (admin), usr_mwid2vkz_759 (ilham), usr_mwii1zmz_598 (Wanta)", "Daftar ID & Username Admin Terdaftar"]
   ];
@@ -545,6 +545,144 @@ function writeConfigToSheet(ss, configDict) {
 /**
  * 5. Mencatat Log Aktivitas ke Sheet Log_Aktivitas
  */
+
+/**
+ * 4b. Membaca Daftar Acara (Multi-Event) dari Sheet 'Daftar_Acara'
+ */
+function readEventsFromSheet(ss) {
+  if (!ss) return [];
+  try {
+    var sheet = ss.getSheetByName('Daftar_Acara');
+    if (!sheet) return [];
+    var data = sheet.getDataRange().getValues();
+    if (!data || data.length <= 1) return [];
+
+    var header = data[0].map(function(h) { return String(h || '').trim(); });
+    var idCol = header.indexOf('ID_Event');
+    var nameCol = header.indexOf('Nama_Acara');
+    if (idCol === -1 && nameCol === -1) {
+      return [];
+    }
+
+    var dateCol = header.indexOf('Tanggal_Acara');
+    var venueCol = header.indexOf('Venue_Lokasi');
+    var urlCol = header.indexOf('Tautan_Home_Event');
+    var driveCol = header.indexOf('Google_Drive_Folder_ID');
+    var pbCol = header.indexOf('Photobooth_Vendor_URL');
+    var catCol = header.indexOf('Kategori_JSON');
+    var frameCol = header.indexOf('Bingkai_URL');
+    var statusCol = header.indexOf('Status');
+
+    var events = [];
+    for (var r = 1; r < data.length; r++) {
+      var row = data[r];
+      var evId = idCol >= 0 ? String(row[idCol] || '').trim() : String(row[0] || '').trim();
+      if (!evId) continue;
+
+      var cats = [];
+      if (catCol >= 0 && row[catCol]) {
+        try {
+          cats = typeof row[catCol] === 'string' ? JSON.parse(row[catCol]) : row[catCol];
+        } catch(e) { cats = []; }
+      }
+
+      var homeUrl = urlCol >= 0 ? String(row[urlCol] || '').trim() : '';
+      if (!homeUrl) homeUrl = 'https://gallery.runway.my.id/?event=' + encodeURIComponent(evId);
+
+      events.push({
+        id: evId,
+        name: nameCol >= 0 ? String(row[nameCol] || '').trim() : evId,
+        date: dateCol >= 0 ? String(row[dateCol] || '').trim() : '',
+        venue: venueCol >= 0 ? String(row[venueCol] || '').trim() : '',
+        homeUrl: homeUrl,
+        driveFolderId: driveCol >= 0 ? String(row[driveCol] || '').trim() : '',
+        photoboothUrl: pbCol >= 0 ? String(row[pbCol] || '').trim() : '',
+        customCategories: Array.isArray(cats) ? cats : [],
+        frameImageUrl: frameCol >= 0 ? String(row[frameCol] || '').trim() : '',
+        status: statusCol >= 0 ? String(row[statusCol] || 'Aktif').trim() : 'Aktif',
+        subtitle: 'The Wedding Gallery & Precious Memories',
+        welcomeMessage: 'Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.',
+        footerMessage: 'Diabadikan dengan cinta\nTerima kasih atas doa restunya.',
+        allPhotosLabel: 'Semua Foto'
+      });
+    }
+    return events;
+  } catch (e) {
+    Logger.log('Gagal membaca Daftar_Acara: ' + e.toString());
+    return [];
+  }
+}
+
+/**
+ * 4c. Menyimpan / Sinkronisasi Daftar Acara ke Sheet 'Daftar_Acara'
+ */
+function syncEventsToSheet(ss, eventsList) {
+  if (!ss || !Array.isArray(eventsList) || eventsList.length === 0) return;
+  try {
+    var sheet = ss.getSheetByName('Daftar_Acara');
+    if (!sheet) {
+      sheet = ss.insertSheet('Daftar_Acara', 1);
+    }
+
+    var headers = [
+      ['ID_Event', 'Nama_Acara', 'Tanggal_Acara', 'Venue_Lokasi', 'Tautan_Home_Event', 'Google_Drive_Folder_ID', 'Photobooth_Vendor_URL', 'Kategori_JSON', 'Bingkai_URL', 'Status']
+    ];
+
+    sheet.clear();
+    sheet.getRange(1, 1, 1, headers[0].length).setValues(headers)
+      .setBackground('#C5A880')
+      .setFontColor('#FFFFFF')
+      .setFontWeight('bold')
+      .setHorizontalAlignment('center');
+    sheet.setFrozenRows(1);
+
+    var rows = [];
+    for (var i = 0; i < eventsList.length; i++) {
+      var ev = eventsList[i];
+      if (!ev || !ev.id) continue;
+      var homeLink = ev.homeUrl || ('https://gallery.runway.my.id/?event=' + encodeURIComponent(ev.id));
+      var catStr = '';
+      if (ev.customCategories) {
+        catStr = typeof ev.customCategories === 'string' ? ev.customCategories : JSON.stringify(ev.customCategories);
+      }
+      rows.push([
+        ev.id,
+        ev.name || '',
+        ev.date || '',
+        ev.venue || '',
+        homeLink,
+        ev.driveFolderId || '',
+        ev.photoboothUrl || '',
+        catStr,
+        ev.frameImageUrl || '',
+        ev.status || 'Aktif'
+      ]);
+    }
+
+    if (rows.length > 0) {
+      sheet.getRange(2, 1, rows.length, headers[0].length).setValues(rows);
+    }
+
+    sheet.setColumnWidth(1, 180);
+    sheet.setColumnWidth(2, 220);
+    sheet.setColumnWidth(3, 160);
+    sheet.setColumnWidth(4, 250);
+    sheet.setColumnWidth(5, 320);
+    sheet.setColumnWidth(6, 260);
+    sheet.setColumnWidth(7, 300);
+    sheet.setColumnWidth(8, 300);
+    sheet.setColumnWidth(9, 260);
+    sheet.setColumnWidth(10, 100);
+
+    SpreadsheetApp.flush();
+  } catch (e) {
+    Logger.log('Gagal sinkronisasi Daftar_Acara: ' + e.toString());
+  }
+}
+
+/**
+ * 5. Mencatat Log Aktivitas ke Sheet Log_Aktivitas
+ */
 function logActivityToSheet(ss, action, detail, user) {
   if (!ss) return;
   try {
@@ -626,8 +764,12 @@ function getEffectiveConfig() {
     PHOTOBOOTH_URL: sheetConfig.PHOTOBOOTH_URL || props.PHOTOBOOTH_URL || WEDDING_CONFIG.PHOTOBOOTH_URL || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
 
     // Multi-Event & Custom Cover
-    ACTIVE_EVENT_ID: sheetConfig.ACTIVE_EVENT_ID || props.ACTIVE_EVENT_ID || WEDDING_CONFIG.ACTIVE_EVENT_ID || "wilson-felicia",
-    EVENTS: (sheetConfig.EVENTS && sheetConfig.EVENTS !== "[object Object]") ? sheetConfig.EVENTS : (props.EVENTS || WEDDING_CONFIG.EVENTS),
+    ACTIVE_EVENT_ID: sheetConfig.ACTIVE_EVENT_ID || props.ACTIVE_EVENT_ID || WEDDING_CONFIG.ACTIVE_EVENT_ID || "andre-fayola-281",
+    EVENTS: (function() {
+      var evs = readEventsFromSheet(ss);
+      if (evs && evs.length > 0) return JSON.stringify(evs);
+      return (sheetConfig.EVENTS && sheetConfig.EVENTS !== "[object Object]") ? sheetConfig.EVENTS : (props.EVENTS || WEDDING_CONFIG.EVENTS);
+    })(),
     COVER_SETTINGS: (sheetConfig.COVER_SETTINGS && sheetConfig.COVER_SETTINGS !== "[object Object]") ? sheetConfig.COVER_SETTINGS : (props.COVER_SETTINGS || ""),
     ADMIN_ACCOUNTS: (sheetConfig.ADMIN_ACCOUNTS && sheetConfig.ADMIN_ACCOUNTS !== "[object Object]") ? sheetConfig.ADMIN_ACCOUNTS : (props.ADMIN_ACCOUNTS || WEDDING_CONFIG.ADMIN_ACCOUNTS),
 
@@ -756,19 +898,25 @@ function getGalleryData(targetEventId) {
   try {
     var config = getEffectiveConfig();
 
+    var ss = getDatabaseSpreadsheet();
     var eventsList = [];
-    try {
-      eventsList = typeof config.EVENTS === "string" ? JSON.parse(config.EVENTS) : (config.EVENTS || []);
-    } catch (eEv) {
-      eventsList = [];
+    if (ss) {
+      eventsList = readEventsFromSheet(ss);
+    }
+    if (!Array.isArray(eventsList) || eventsList.length === 0) {
+      try {
+        eventsList = typeof config.EVENTS === "string" ? JSON.parse(config.EVENTS) : (config.EVENTS || []);
+      } catch (eEv) {
+        eventsList = [];
+      }
     }
     if (!Array.isArray(eventsList) || eventsList.length === 0) {
       eventsList = [
         {
-          id: "wilson-felicia",
-          name: config.EVENT_NAME || "Wilson & Felicia",
-          date: config.EVENT_DATE || "14 November 2026",
-          venue: config.EVENT_VENUE || "Upperhills Convention Centre, Makassar",
+          id: "andre-fayola-281",
+          name: config.EVENT_NAME || "Andre & Fayola",
+          date: config.EVENT_DATE || "22 November 2026",
+          venue: config.EVENT_VENUE || "UPPERHILLS CONVENTION HALLS",
           subtitle: config.SUBTITLE || "The Wedding Gallery & Precious Memories",
           welcomeMessage: config.WELCOME_MESSAGE || "",
           footerMessage: config.FOOTER_MESSAGE || "",
@@ -781,7 +929,7 @@ function getGalleryData(targetEventId) {
       ];
     }
 
-    var selectedEventId = targetEventId || config.ACTIVE_EVENT_ID || (eventsList[0] && eventsList[0].id) || "wilson-felicia";
+    var selectedEventId = targetEventId || config.ACTIVE_EVENT_ID || (eventsList[0] && eventsList[0].id) || "andre-fayola-281";
     var currentEvent = null;
     for (var evIdx = 0; evIdx < eventsList.length; evIdx++) {
       if (eventsList[evIdx].id === selectedEventId) {
@@ -1453,7 +1601,7 @@ function getEvents() {
     }
     return {
       success: true,
-      activeEventId: config.ACTIVE_EVENT_ID || "wilson-felicia",
+      activeEventId: config.ACTIVE_EVENT_ID || "andre-fayola-281",
       events: eventsList
     };
   } catch (err) {
@@ -1887,7 +2035,7 @@ function saveAdminSettings(pin, updatedConfig) {
         var existingEventsStr = props.getProperty("EVENTS") || WEDDING_CONFIG.EVENTS;
         var existingEvents = JSON.parse(existingEventsStr);
         if (Array.isArray(existingEvents)) {
-          var activeEvId = updatedConfig.ACTIVE_EVENT_ID || props.getProperty("ACTIVE_EVENT_ID") || "wilson-felicia";
+          var activeEvId = updatedConfig.ACTIVE_EVENT_ID || props.getProperty("ACTIVE_EVENT_ID") || "andre-fayola-281";
           for (var evI = 0; evI < existingEvents.length; evI++) {
             if (existingEvents[evI].id === activeEvId || existingEvents.length === 1) {
               existingEvents[evI].customCategories = parsedCats;

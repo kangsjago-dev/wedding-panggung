@@ -176,15 +176,15 @@ function setupTargetSpreadsheetDatabase() {
 
   // Parameter Konfigurasi Master
   var defaultParams = [
-    ["EVENT_NAME", "Wilson & Felicia", "Nama Event / Pasangan Pengantin"],
-    ["COUPLE_NAME", "Wilson & Felicia", "Nama Pasangan Pengantin"],
-    ["EVENT_DATE", "16 November 2026", "Tanggal Pelaksanaan Acara"],
-    ["EVENT_VENUE", "UpperHills Convention Hall, Makassar", "Venue / Lokasi Gedung Acara"],
+    ["EVENT_NAME", "Andre & Fayola", "Nama Event / Pasangan Pengantin"],
+    ["COUPLE_NAME", "Andre & Fayola", "Nama Pasangan Pengantin"],
+    ["EVENT_DATE", "22 November 2026", "Tanggal Pelaksanaan Acara"],
+    ["EVENT_VENUE", "UPPERHILLS CONVENTION HALLS", "Venue / Lokasi Gedung Acara"],
     ["SUBTITLE", "The Wedding Gallery & Precious Memories", "Subjudul Galeri Foto"],
     ["WELCOME_MESSAGE", "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.", "Pesan Sambutan Hangat untuk Tamu"],
     ["FOOTER_MESSAGE", "Diabadikan dengan cinta\nTerima kasih atas doa restunya.", "Pesan Penutup Footer Galeri"],
     ["ALL_PHOTOS_LABEL", "Semua Foto", "Label Tab Galeri Utama"],
-    ["ACTIVE_EVENT_ID", "wilson-felicia", "ID Event Aktif"],
+    ["ACTIVE_EVENT_ID", "andre-fayola-281", "ID Event Aktif"],
     ["ADMIN_USERNAME", "admin", "Nama Pengguna (Username) Akses Masuk Panel Admin Web"],
     ["ADMIN_PIN", "123456", "PIN Akses Masuk Panel Admin Web"],
     ["SLIDESHOW_INTERVAL_SEC", "4", "Durasi Perpindahan Foto Slideshow (detik)"],
@@ -199,7 +199,7 @@ function setupTargetSpreadsheetDatabase() {
     ["PHOTOBOOTH_URL", "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", "Tautan Vendor Kategori Spesial Photobooth"],
     ["WEDDING_FOLDER_URL", "https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI", "Tautan Folder Google Drive Kategori Wedding Panggung"],
     ["CUSTOM_CATEGORIES", '[{"name":"Photobooth","url":"https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs","enabled":true},{"name":"Wedding","url":"https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI","enabled":true}]', "Daftar Kategori Kustom & Tautan Tampilan"],
-    ["EVENTS", '[{"id":"wilson-felicia","name":"Wilson & Felicia","date":"16 November 2026","venue":"UpperHills Convention Hall, Makassar","subtitle":"The Wedding Gallery & Precious Memories","welcomeMessage":"Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.","footerMessage":"Diabadikan dengan cinta\\nTerima kasih atas doa restunya.","allPhotosLabel":"Semua Foto","driveFolderId":"1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5","frameImageUrl":"https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk","customCategories":[{"name":"Photobooth","url":"https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs","enabled":true},{"name":"Wedding","url":"https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI","enabled":true}],"coverSettings":{"enabled":false}}]', "Registry Multi-Event Sistem"],
+    ["EVENTS", '[{"id":"andre-fayola-281","name":"Andre & Fayola","date":"22 November 2026","venue":"UPPERHILLS CONVENTION HALLS","subtitle":"The Wedding Gallery & Precious Memories","welcomeMessage":"Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.","footerMessage":"Diabadikan dengan cinta\\nTerima kasih atas doa restunya.","allPhotosLabel":"Semua Foto","driveFolderId":"1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5","frameImageUrl":"https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk","customCategories":[{"name":"Photobooth","url":"https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs","enabled":true},{"name":"Wedding","url":"https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI","enabled":true}],"coverSettings":{"enabled":false}}]', "Registry Multi-Event Sistem"],
     ["COVER_SETTINGS", '{"enabled":false}', "Pengaturan Cover Halaman Depan"],
     ["ADMIN_ACCOUNTS_INFO", "usr_superadmin (admin), usr_mwid2vkz_759 (ilham), usr_mwii1zmz_598 (Wanta)", "Daftar ID & Username Admin Terdaftar"]
   ];
@@ -246,7 +246,49 @@ function setupTargetSpreadsheetDatabase() {
   Logger.log("✅ Sheet 'Pengguna_Admin' berhasil disiapkan dengan 3 admin terdaftar.");
 
   // --------------------------------------------------------------------------
-  // C. SHEET 3: Daftar_Foto (Postingan Foto Aktual dari Google Drive Database)
+  
+    // B2. SHEET: Daftar_Acara (Registry Multi-Event Sistem)
+    var sheetEvents = ss.getSheetByName("Daftar_Acara");
+    if (!sheetEvents) {
+      sheetEvents = ss.insertSheet("Daftar_Acara", 1);
+    }
+    var eventHeaders = [["ID_Event", "Nama_Acara", "Tanggal_Acara", "Venue_Lokasi", "Tautan_Home_Event", "Google_Drive_Folder_ID", "Photobooth_Vendor_URL", "Kategori_JSON", "Bingkai_URL", "Status"]];
+    sheetEvents.clear();
+    sheetEvents.getRange(1, 1, 1, 10).setValues(eventHeaders)
+      .setBackground("#C5A880")
+      .setFontColor("#FFFFFF")
+      .setFontWeight("bold")
+      .setHorizontalAlignment("center");
+    sheetEvents.setFrozenRows(1);
+
+    var initialEvents = [
+      [
+        "andre-fayola-281",
+        "Andre & Fayola",
+        "22 November 2026",
+        "UPPERHILLS CONVENTION HALLS",
+        "https://gallery.runway.my.id/?event=andre-fayola-281",
+        "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
+        "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
+        '[{"name":"Photobooth","url":"https://photos.app.goo.gl/QkqewYw4dWfocxfK8","enabled":true,"isPhotobooth":true},{"name":"Wedding","url":"https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI","enabled":true}]',
+        "",
+        "Aktif"
+      ]
+    ];
+    sheetEvents.getRange(2, 1, initialEvents.length, 10).setValues(initialEvents);
+    sheetEvents.setColumnWidth(1, 180);
+    sheetEvents.setColumnWidth(2, 220);
+    sheetEvents.setColumnWidth(3, 160);
+    sheetEvents.setColumnWidth(4, 250);
+    sheetEvents.setColumnWidth(5, 320);
+    sheetEvents.setColumnWidth(6, 260);
+    sheetEvents.setColumnWidth(7, 300);
+    sheetEvents.setColumnWidth(8, 300);
+    sheetEvents.setColumnWidth(9, 260);
+    sheetEvents.setColumnWidth(10, 100);
+    Logger.log("✅ Sheet 'Daftar_Acara' berhasil disiapkan dengan format kolom multi-event.");
+
+    // C. SHEET 3: Daftar_Foto (Postingan Foto Aktual dari Google Drive Database)
   // --------------------------------------------------------------------------
   var sheetPhotos = ss.getSheetByName("Daftar_Foto");
   if (!sheetPhotos) {
