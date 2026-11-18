@@ -356,6 +356,25 @@ function isGooglePhotosUrl(url) {
             quote: "Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda.",
             photos: []
           }
+        },
+        {
+          id: "wilson-felicia-133",
+          name: "Wilson & Felicia",
+          date: "16 November 2026",
+          venue: "UpperHills Convention Hall, Makassar",
+          homeUrl: "https://gallery.runway.my.id/?event=wilson-felicia-133",
+          driveFolderId: "https://drive.google.com/drive/folders/1GGB77clCMYBIg17J0ECr2eVbD02ZeInW",
+          photoboothUrl: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
+          frameImageUrl: "",
+          customCategories: [
+            {
+              name: "Photobooth",
+              url: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
+              enabled: true,
+              isPhotobooth: true
+            }
+          ],
+          status: "Aktif"
         }
       ],
       ADMIN_ACCOUNTS: [
@@ -424,7 +443,7 @@ function isGooglePhotosUrl(url) {
       intervalMs: 4000,
       
       isAdminLoggedIn: false,
-      adminPin: "123",
+      adminPin: "",
       currentAdminUser: { username: "admin", name: "Super Admin", role: "Super Admin" },
       activeConfig: Object.assign({}, GLOBAL_CONFIG),
       gasApiUrl: "",
@@ -803,12 +822,15 @@ function isGooglePhotosUrl(url) {
 
     function getEffectiveAdminPin() {
       let pin = state.adminPin;
-      if (!pin) {
+      if (!pin || pin === "123") {
         try {
           pin = sessionStorage.getItem("WEDDING_ADMIN_PIN") || localStorage.getItem("WEDDING_ADMIN_PIN") || "";
         } catch(e) {}
       }
-      return pin || "111111";
+      if (!pin || pin === "123") {
+        pin = state.activeConfig.ADMIN_PIN || "111111";
+      }
+      return pin;
     }
 
     function callBackend(action, payload, onSuccess, onError) {
@@ -920,7 +942,12 @@ function isGooglePhotosUrl(url) {
         return res.json();
       })
       .then(function(data) {
-        onSuccess(data);
+        if (data && data.success === false) {
+          console.warn("Backend API error:", data.message || data);
+          if (onError) onError(data);
+          return;
+        }
+        if (onSuccess) onSuccess(data);
       })
       .catch(function(err) {
         console.error("Gagal menghubungi Google Apps Script API:", err);
@@ -2444,6 +2471,7 @@ function isGooglePhotosUrl(url) {
       if (addUserAlertBox) addUserAlertBox.style.display = "none";
 
       switchAdminTab("event");
+      renderAdminEventsManager();
 
       if (state.currentAdminUser) {
         const greetingNameEl = document.getElementById("adminGreetingName");
@@ -3272,8 +3300,12 @@ function isGooglePhotosUrl(url) {
     }
 
     function handleSelectEventChange(selectedId) {
-      if (!selectedId || selectedId === state.currentEventId) return;
+      if (!selectedId) return;
       state.currentEventId = selectedId;
+      const select = document.getElementById("adminEventSelect");
+      if (select && select.value !== selectedId) {
+        select.value = selectedId;
+      }
 
       const ev = (state.events || []).find(function(e) { return e && e.id === selectedId; });
       if (ev) {
@@ -3433,6 +3465,13 @@ function isGooglePhotosUrl(url) {
 
       if (!Array.isArray(state.events)) state.events = [];
       state.events.push(newEventObj);
+      state.currentEventId = newId;
+
+      try {
+        localStorage.setItem("WEDDING_EVENTS_REGISTRY", JSON.stringify(state.events));
+        localStorage.setItem("WEDDING_EVENT_CFG_" + newId, JSON.stringify(newEventObj));
+        localStorage.setItem("WEDDING_ACTIVE_EVENT_CFG", JSON.stringify(newEventObj));
+      } catch(e) {}
 
       closeNewEventModal();
       renderAdminEventsManager();
