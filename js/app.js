@@ -13,6 +13,15 @@
         const cacheKey = state.currentEventId ? ("WEDDING_EVENT_CFG_" + state.currentEventId) : "WEDDING_ACTIVE_EVENT_CFG";
         localStorage.setItem(cacheKey, JSON.stringify(state.activeConfig));
       } catch (e) {}
+      // Prefetch & update badge foto untuk setiap kategori yang disinkronkan
+      customCategoriesList.forEach(function(cat) {
+        const catName = String((cat && cat.name) || cat || "").trim();
+        const catUrl = String((cat && cat.url) || "").trim();
+        if (catName && catUrl) {
+          prefetchCategoryPhotos(catName, catUrl);
+        }
+      });
+
       renderCategoryTabs();
       applyCategoryFilter(state.activeCategory);
     }
@@ -40,16 +49,38 @@
         return;
       }
 
-      if (categoryName.toLowerCase().includes("photobooth") || (targetUrl && targetUrl.includes("fotoshare.co"))) {
-        fetchFotosharePhotos(categoryName, targetUrl || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", function(photos) {
-          updateCategoryPillCount(categoryName, photos.length);
-          if (state.activeCategory === categoryName) {
-            state.filteredPhotos = photos;
-            renderPhotoGrid(targetUrl, categoryName);
-          }
-          showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
-        });
-        return;
+      if (categoryName.toLowerCase().includes("photobooth") || (targetUrl && (targetUrl.includes("fotoshare.co") || targetUrl.includes("kingphotobooth.co") || targetUrl.includes("kingphoto") || targetUrl.includes("photos.google.com")))) {
+        if (targetUrl && (targetUrl.includes("kingphotobooth.co") || targetUrl.includes("kingphoto"))) {
+          fetchKingPhotoboothPhotos(categoryName, targetUrl, function(photos) {
+            updateCategoryPillCount(categoryName, photos.length);
+            if (state.activeCategory === categoryName) {
+              state.filteredPhotos = photos;
+              renderPhotoGrid(targetUrl, categoryName);
+            }
+            showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " media)!");
+          });
+          return;
+        } else if (targetUrl && targetUrl.includes("photos.google.com")) {
+          fetchGooglePhotos(categoryName, targetUrl, function(photos) {
+            updateCategoryPillCount(categoryName, photos.length);
+            if (state.activeCategory === categoryName) {
+              state.filteredPhotos = photos;
+              renderPhotoGrid(targetUrl, categoryName);
+            }
+            showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
+          });
+          return;
+        } else {
+          fetchFotosharePhotos(categoryName, targetUrl || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", function(photos) {
+            updateCategoryPillCount(categoryName, photos.length);
+            if (state.activeCategory === categoryName) {
+              state.filteredPhotos = photos;
+              renderPhotoGrid(targetUrl, categoryName);
+            }
+            showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
+          });
+          return;
+        }
       }
 
       const driveFolderId = extractDriveFolderId(targetUrl);
@@ -103,6 +134,7 @@
     }
 
     const GOOGLE_PHOTOS_INITIAL_CACHE = ["https://lh3.googleusercontent.com/pw/AP1GczPHZ3QY9eMPsK8b_7DtCq_9z0wS_QJshL8xKOXUVGTYGMIeN8gd1ym4s_pn_DsubWVtctp4frUYvaIMzznFjEjBBvXuf9ILeD9oM9ta3RZW1LgO64fB","https://lh3.googleusercontent.com/pw/AP1GczM2ftQDzzWi2J_4UTw5DNmCWYADu38Xl09dW9K5uMfFsOP6-yzZMn9Rzk3_lTUJyRi6RgX2OCM_mQLftQTvusmFrQ_Wih53S2sJ1XujKzrxn5b6_vMb","https://lh3.googleusercontent.com/pw/AP1GczNwnpnKY7WRkCY2srfkce_1Q2daHvjYfBxiF8gnszPTg8ybR2NvWsetSmP3bI_FU7s7x-fNu39MNjDwWWRBBpEUUnPjpw-JojoCwumccIp383zGZwMz","https://lh3.googleusercontent.com/pw/AP1GczMx0o71NbpIZLCzwtnhbXe8NNuo3BT43ud3pK4nIqePMCLzRMH1pD4cZ8sBy59Hy0w1S9_j4ISY99RDWbPY2NRaU4d7BTZNIso7GkzWYwBhMfc8LTGH","https://lh3.googleusercontent.com/pw/AP1GczP0O3ji5Szhcl5K5eyMWC8MET374SKiW2ymsxbSeZCtCzemRUfuU_EAKp7Xuv4ZhX_W1LBJbwlApScKKaAH2KYKeH6fGeplPv3X_SwbHbXEHv0xZ7ED","https://lh3.googleusercontent.com/pw/AP1GczMI4qPNMtsu6ag4vTsHi46y2D5qnLcwsOfNA9GOQ730ed2YqF_b2qxAcB6O32x0jUH6fjEYCTsDQeAk0_Lw3LM1zIWsIuAq3cqW_UPza7CNvh6ToFuS","https://lh3.googleusercontent.com/pw/AP1GczNNSAAghtERpfLvNtnR8iZ9HnGUy_oHIJsp04vVW_PbPDCRGKWkMP5QzK6eLpiS-iiRhw3x-VIDGmqeXPnZTnI0L02ZvpgT5yCWSH4C3RkAcxYKSpAJ","https://lh3.googleusercontent.com/pw/AP1GczNyDlvoWQ5vK8CBIbYezhfJhSFoT-rTMbf-Q3QhxnS1TeJIpoIAuyLNiVPIGmyUss_PV5kS-PWMEOXIzwk-3hRX5A_0v8nFn7ugoGYKJTlvjK2T2lhU","https://lh3.googleusercontent.com/pw/AP1GczMeCGP0e6xPqV_Ol45drEMJ_W05ZV4p3kWq5D5bhCa8ZMgK9-ObKagJT2bvT5EXG90ZlG99TkK76eJRB8c1pDUwPrFceRe8P3iILrQwxBnkUrdWgln4","https://lh3.googleusercontent.com/pw/AP1GczNPnmWhW6zQtCxJNmRa5DQEk1Hm8FiBXZsB9Glox-cV7Od98FX07e95aQpbDtBNd8u_ET7sKf4ORS9JZcoVGqdZ5GqvHUTjvja6N3yXjgjmgJ-9G5ze","https://lh3.googleusercontent.com/pw/AP1GczMvqTnx6bv_d0_tvregsed567rW4IqS5nwWOk8b8OqvOuGnH2m5QgILs4Z6mibkAW01MzLZL_zlAzzgC0xbZhK3Eb2HHUG5iclO4ePGVEMN9NmFuN8W","https://lh3.googleusercontent.com/pw/AP1GczMSJvbIqeavdnO9BWneL_DwLocwcHXdSJu0671V1XejbiJF4Wg26U8iI1WPDw3PSRD3FyjxwAj9i387FVzF2cHnOmXpdxWZ2jM9bmwRWGEmIrNffFPF","https://lh3.googleusercontent.com/pw/AP1GczPvgbO9k0OaKTunepKtsSdC8Iw-HSt5ZppXq1cY7a63C15xfXg-AfcOwhMjs7KLoEIICLJEzxDMDpk-7uxOWmFoF9RL6ZrQ_n3aN-SDcbpycT0U0YYD","https://lh3.googleusercontent.com/pw/AP1GczNaRX0WzkDs7d8Nw9PghiXNPZAMg3m2KGAgzTKFBJaolBbgkj16Jix1JyfnIXUDZzhGFYtZBaQRv7WQvI6HmVexY9IKsSS5dSKDIMIXSYRzHpLdTCZe","https://lh3.googleusercontent.com/pw/AP1GczOFhMCz5b9g6veYOXKLbc6-H4xeUdkIB6P98_x8sHac75TJzmrTY728VYT8iyOXU1meO_Pbl4AF4_mUjAg3sbslRsotsduUsaK29c_l-ElJGT58HrnZ","https://lh3.googleusercontent.com/pw/AP1GczPfBqcgrwOppJRz1I9hw0bX-6QIqwmeuz8bcrEp85wJcGZi2p_XniIEjYXzP-ji4e1Mgba_lsBwAYYGRqLILlUfGHZhhhhOQJdxcUWFEVoWS2QdNPcm","https://lh3.googleusercontent.com/pw/AP1GczO2lnRS6p7q9MW29EyY_xVOmgWRMfwGcSPRra3Y10Kpej8D8ealBRwvaD-VcDUwYAGOEa5w3YvuzlZb2d6ZrAXqygcpjFDWGIntQ914TzuLr72woYHK","https://lh3.googleusercontent.com/pw/AP1GczOfK-_h5CQBbe6cQ-Er6ryZ5ur_jKlkHQeHzQlrnMUmb10hxOFpsUVuSNTPh8U5PsUHwL7zRF0mruU95r_RE0Ly6BXOPRi2Qliquc54FYcIBp_-RPa8","https://lh3.googleusercontent.com/pw/AP1GczNtm3BFpROVQsNm6ISQUdpaPIxGETlqH1jmRn6IOLYy2H4ZNA4zw5vOS6OewWAHhkfOum4SsOqduOgbjkMMLW5etlzDOXaeMFMe2JtWuYuGhegiDD-S","https://lh3.googleusercontent.com/pw/AP1GczPFGQNB3G2gnV8zfjRL578MwnO1KdRR9W67l0sUGEHp2NSNzGCDzra5bGHBdFGc3XLV-sd1BnFIr4dp6inlwD1qgAvENTdI1WD68eNQqGhj97ZrwGdj","https://lh3.googleusercontent.com/pw/AP1GczOH-fdvA1LmIq0yuRH0IB1oKQHFH-n-kk_Fx9SGa_m5v14qvx3VbQNaumYPqM069QLZYM31vwPR0bcegEzPYK9Q48yhl1EjRF9FNpuxIXk1xs_PMKZ6","https://lh3.googleusercontent.com/pw/AP1GczMj0QKsZWCni3OJwCqEhCQLFmdJf1CqNnfCr83ULsu9CQaRIE-VUBJqJx3ZXyUnvmB9ybSqHVUTQymJPyjqSo_LFXRTUSeEYjJZfroU_pDeR6HMg9PU","https://lh3.googleusercontent.com/pw/AP1GczNz4PgwE_fziIETA0rje3REolY3VHltdYGBqkTDzidroADrdw1DhQovtSauwrq_jjLy9fESt_Pb320D_zKSN-f3uDE5k7Mtxzeq-TR5A_qMBtwWbrLn","https://lh3.googleusercontent.com/pw/AP1GczMXBDcNtGYZkXLyS7PsaY_HWqkw8o5ISkOgjWBmuX3LYHbkl_fi59fZU1lcqtcwKYyB-3JytrZ4qIHx7vik_1DFOdiDaGB502VD67WiqdwnknPvCMWs","https://lh3.googleusercontent.com/pw/AP1GczN_LjIbS2iYQMwNgifH8UMjguNBxnsAKsJH8iiOk5PQaplgOs7WKaY5S7m-fIzgmsVNHK2gX77I1KAbYAOJAH6iWVxm0tX5501X-gyrLxER_K4VA7mk","https://lh3.googleusercontent.com/pw/AP1GczPLg3So6x7FCud3NjQ4-q51ERUi5py31wX1Eveg5X4vzEJ8J7dgZZrFKJsp0emlwnJ7Qalx27rz37XjVa_d2LeSV0QQUKHsIaJPnNHbiOGpTYtuBBT8","https://lh3.googleusercontent.com/pw/AP1GczNawo2rKnhAw6ndHRlXrvmyuxH57iEVoX123KK6q_0lTy0fvwAVxnFwKroxGdQwNP0OwBN7w-BwKm9npe71lFQVqmG5NZJPiDTkGeRdEuKyj80W5mEc","https://lh3.googleusercontent.com/pw/AP1GczPpXd4u9uBVgYP8MOX_2skKr89VX-tCX13ezRB1jaSFXmCI39COGGzJiwJWu04ZmQ8NE7KOhofZ0VsfR4kfSKabWMvu9eqlmwzXzCPnY5IaBfgaZnNn","https://lh3.googleusercontent.com/pw/AP1GczPVP_b46VMZdb3oU1bA02tiXhPa2GuZQr9DbgIWyRyQ0jFQafSlM7vML9NNA_eeFYX9z9bfNMLTnxBNHPraZisienEBZERfOwYCMRGDzXmfkO5V9qPQ","https://lh3.googleusercontent.com/pw/AP1GczPVC49VP9vEeIyWX60gIJnRF0ev8-OCq7LyiNt-ugDAeoXfj8b05cqOt3ZmjUrvy53tMlQ1TdSo-ASoiffj1-14ojZBCD4WDjLzA46I7griH3K60Hvr","https://lh3.googleusercontent.com/pw/AP1GczMhdPqMMWwajD7ATdg5GvsiWqf4DbeNUXOT6qo9lNEXxtnhyLlTumOVBEi6ro_lanGxwr-udLu-MoqVhDjsHyNkItSgSVWyWh9013XHeutyLMcvigRQ","https://lh3.googleusercontent.com/pw/AP1GczMrLQWbaZ_1G4oKJPKg6lwdYtzcD4vV3CSVuC77s0roaX3vVjlD0yT0HeAQxxGHkfnvkP-S7AE3AF8awTk6b_QrolGlp_wCNK0kHRwmZQhnXE7W3pql","https://lh3.googleusercontent.com/pw/AP1GczMeUhrlIWDae6t-mKn-bOHNdQt_zbFNLadiosJ6QcYyH8LeCYagPCZEOrZoCXsk19DvFMeUUN3qKpYj4-xpfmnRsFoV5bKBGMhPDRvHRazwb136z5fk","https://lh3.googleusercontent.com/pw/AP1GczOFfm2b4x3tCdhJ6-hccjIeczkwUueZ-D8Z7A7yo0rBLvSNdkTR_a85D71BQ2iLjKunnIVVsQdMmwUse0VPK2px4ulXWW6Fz5v5_41Jd9M42vRjJ_jW","https://lh3.googleusercontent.com/pw/AP1GczPLm0PJsuM0tlWBW0EcpDBrAQvYf5RUXlO-Pf50_Scqfv03_9o_X2RKuN9KDGuAL_qNxQ87D4lwsMDtCeWHxK_WRziUDHplCHahUAxMxgNR9UHGxreM","https://lh3.googleusercontent.com/pw/AP1GczP2UTW0ElDfC9Y0VvNqC92IL3ikPhJBSdCSjBKpMREcD0e9n5N2zBknnvNEutpocBoh9shH0wGcrDD1KI5IDcYs6C8Wfj6H-2ypJqIXocy7dZyXXZMR","https://lh3.googleusercontent.com/pw/AP1GczO-WiIUVs1NIEOjqgdtX_qs_7L5QS1nLfLJThif9rno_Su-UYiATWqQ-K0mJphgpSL2kC5pemQTA17mkABLiuPKD3sFxfAxc705R5xszj3Pkju-D_YH","https://lh3.googleusercontent.com/pw/AP1GczMK_w2guig4XBCzsJcuSYcKoznK7mIAj6ax2EAt_v9xvbL12lxbyiu5EXZzdWaoSrpboGYM42U4R2MAJMQ4S5LcpwLqFfY2XFy4cj0IOElrKBROEXv8","https://lh3.googleusercontent.com/pw/AP1GczP3z64zWAvekEKAUFCTLoZdn8dDy1GaCHMWaVuPD1PpVdzXZRwunLxz_CtsKQcDCGcdq_UhwflT_uGmmni-dCF3oeJXNplFKQ8DIxyPY9XmeUir-j_c","https://lh3.googleusercontent.com/pw/AP1GczN6o8p77lw7yEfSCIlUcRHwaEoZwxSm4YMoTbc81Uu1JWEQDYPLgNpW8FcdyDUIxduK8rc8yu8B9owpd4mrE9PKJmOMgYS5zZFgX24p2jeR_9neIUwM","https://lh3.googleusercontent.com/pw/AP1GczPRMcOej2KJZIY_6oh3p1ixRiZaOBOtwak07ebx3jM7pkVS84djm6IFjsC3lDSniO1CbbvOmFuRwHtCTNtc2syfcXy4LcqHfMLC4M6HWXkXz0f9K6cT","https://lh3.googleusercontent.com/pw/AP1GczOUZ0YIwLmH2Xj1JQNrEYPkovlHjzxhNJwJPFgb4hyHI4dOeYzYXYn9_BF1vO7HJh6_rbO1u4I5kvb5SOEzxp2KkyxRJw8pwKeKMwNZ9dUctlvCKWX9","https://lh3.googleusercontent.com/pw/AP1GczNuSg1rTo_hDqrugasCkJ40ZUWQKEfdpaTY0anpvWKw2XX0o5B2SBYzGwUhe-10GIOsq_Q91O9czNvOms93xO88nu1ztI4g9st_SjdEJkyZTWCNBepY","https://lh3.googleusercontent.com/pw/AP1GczMfqSEou8KHN4QIbE2GtnX9uSpX5oCoPMs6ng1A-bYxUQKh1tX5nHA_TfUPEq0B58_M5I0YmB9QgLKLaSMvUSE2CuE_c6RHSQPGr6oGXq5b0ok-kVO3","https://lh3.googleusercontent.com/pw/AP1GczP3hzrvaZFlyxoy_rksVEdKAb9VVYqd6U1AnnsYuyKFOJX-h2WGRMHY_eEfLUGv4T-kd-M0LZi2z71N4v_gN9RblUKjA1t-84KmBNxsE7GzDqQMjKQB","https://lh3.googleusercontent.com/pw/AP1GczOmLXa9ADI2XP3qJsGDjFRhMoTrzkfh6Eq87BunEhy_fDYz3uY0PaZ8xdyeeP1z34MNku-VQAZi6ow4bm6K8-8R5D4xtCxfOLDSxxui9HtLWeONqnuT","https://lh3.googleusercontent.com/pw/AP1GczMveOaEvYKQs5FoIjGiI84LutnRJWeJdnMdwdX45G5_Rwj0xEDfxZqEc3hbe29B7soOH8yD7mUrZYkQGN1I7NBSaibDnsgsMv-OfwvKWHl-gfdOj3FP","https://lh3.googleusercontent.com/pw/AP1GczO2sIGU7ZbOg-fnHUH1PBSUfLxMKlHVEV4YAYxnY2Bx46tcprimV8VWoflprtpKhKYgCwL38T3zlY_dx42mlPFFbrCR42hDcIoWirqvZnJsn75nn2un","https://lh3.googleusercontent.com/pw/AP1GczMQRxhVtA23rWrvgHzu_jyNd4JgXevx16G8vasse37CyLQBJWE6a88s4KI2c5Dq95gdzNgLuVBz2F_GCrsIWQDAFPSponaxTvIAnkcmVeHf5kb4gYwu","https://lh3.googleusercontent.com/pw/AP1GczMVJ5k5bI0nLgvUYlZkYhWqVl5zE5J_uNdk9MzGSBB2SZzp7pgCBpqiC73bqHXGGYwT7RBpkk-RwrLczBfeZH1Qwy7EIOdvvX2as2VPPSKBvCo2heq4","https://lh3.googleusercontent.com/pw/AP1GczNzDzr1WEPLNszHDatoirUkVSajPIhcyR-r90TsTekuNYTDM2aaJ8hz2jjt2MDGFF-vXaWEm22jew3_9ohyWeiCiHBWU1cCBko6ihtH17SSZUg9X5W5","https://lh3.googleusercontent.com/pw/AP1GczPVXHza58yjRCV2EQS7LPGIV8ytmgLsscD_g9MlffmRjCHrqkafEqRVGXxt3YAkHvcDdj-gVbiRuoAfnllQQaXmVBY8cD-4NQkfjxgmF2IqjgtHWn5d","https://lh3.googleusercontent.com/pw/AP1GczNu76Q8Pg3hVpBTKDo89wr96m9FilFOhVPR4PLC9IqisIJhDlN_yE9YqGdgTkObQFzu_iaucWaWc-lzo_nqZXhCPf7Qp79N-RTjhv6an80hfjw7qqjp","https://lh3.googleusercontent.com/pw/AP1GczNSfV3CypeK-f81YHRoubSjNw2OSCrtSmo0UO3HjdEficpCb5cGw9-_dnbYqqz7Qtp6phGeGTUr75NJjF2VZ0Ymzb4zexa0u_2AfNfR6DfOPgbq64W9","https://lh3.googleusercontent.com/pw/AP1GczP5VM0lioq9JQ8_q2btQ71nMEF3_iJZMyy1in51FKWqSwZxd2XheDzS1jFFVeyi_kh4r36qfBooSrPXG7qlctgb96NlmcQJmxxNVXQAtOd9qpAbcT-S","https://lh3.googleusercontent.com/pw/AP1GczO6ob1ha0pQQWwGpqgGWvaIKJSbM7PV_IrtlCQFblJQph8vKBVnuysHyPxZ9Z_AudLtEzbxUEKAwaWUaTxTF98mAouFi4rkr9aaRObOwEYSrhFUPpLK","https://lh3.googleusercontent.com/pw/AP1GczMrFay0FQNDvE3l-CR5W2PXoJDWD2X7v_JHFhPc-ZatP-e6ehigefJ6WXsgkenrgvM0nFZvf-9Z-X5bWZqFdtV7KFArCHVVr4hOsdIm9z5sB0vBu-4e","https://lh3.googleusercontent.com/pw/AP1GczO6kKWPIkxa3DH0yOYjrxBblpwYMXjNXkMThPPPWzNM1Qq1MOifoNAOuT0zYg6u_kTiOhfXsMPMKImZvNsWzi_zJ0nh0Mi1mMOcoLw7sVfm0se_3gRG","https://lh3.googleusercontent.com/pw/AP1GczOZ8D40akSmza7b2TJf7ZWgM49wwQjjFU4DPeBcUtkGa-EfeppFWAvRF-r9Tv2gZzgZfymcCdcyzS7eIw4SPJxTGGOkA6vOK6RZRKEMTSsy5s5PQsY1","https://lh3.googleusercontent.com/pw/AP1GczO_S927gQOzOw09hTF8Bck23Pl_yT50doODJ_5dcQIrOw3xlv2bX71o-itZlm-9e3Z5eloGbvZq0M-MRPIcrF0GTQe5bPpjbOk_44eGo67E1z1msWs5","https://lh3.googleusercontent.com/pw/AP1GczN1xgTz148eZRwfzwIY0IsEtF88XtVSpLDJgRdiL0Q42gWGYjNCaytzyeuEu_dIWK6HxwCzmhy_QGTMELVL75smD2Yutlc4UjEX8DqZdwUFBTGkmWfl","https://lh3.googleusercontent.com/pw/AP1GczNdGqw4eGgGQa0X9h1MLNu_QcJyBPp4PKRKNoGgUOc1GPcq-E2BomZzFrWCpnlLLgf3svk61sl4LlIUcM4VRvSs6j1DmzB-oQi-A5kMfF1TccKrbV4B","https://lh3.googleusercontent.com/pw/AP1GczM98s8ETRP-gQnwh29CIOCTIlveHZPr8VM8bqaccOo5R3lSTGtJGp7WDU1kJQDaYd7o11Lw1oOThrm4hVMK5vA7GO6ephtF-z-X_wO8hEBSDz8RIoVz","https://lh3.googleusercontent.com/pw/AP1GczMfZwOKFxZRsYlNm37OfbTTRGP66roHQMHSF7fLn6QPJZ6mqKlo6iBsfR6ROFJagIr-9LYUh6s00Xy_ESUNb2fpuomnNdGgDpAduUm7WYIygPV6ogXG","https://lh3.googleusercontent.com/pw/AP1GczOIUn8Y3b4lvpAyRF0ZlW0SOB0ii5p737gwm8Dpt9VwCDVD-geyTA969uYWF9k3PjnmLbhIalAJkkD39WknVAtocmBYDm-L1GubQMjyrARvC2RPYiHk","https://lh3.googleusercontent.com/pw/AP1GczPt1tGBhCn28fGVaCaD6h2mlseo9PY8S6KLxc2fX29HdIRltz075m6meqV4eXzT55hrfKBMIHQIZxZCwG-Ky6KILtXvDFTWubGaq_bL17oazUscfIl0","https://lh3.googleusercontent.com/pw/AP1GczOBTRLDR219pBBf5F76AxYNKyOWHmU5X92WUBdAQ7iQ-qJYCHE44V_PHxZtroD7Oec__khji9C-5HI73uoWuIUdFdq7hKFF9VtpVH9ixkV9c0Vi3rrN","https://lh3.googleusercontent.com/pw/AP1GczNXGMkcd4ROrYjGwmcOb36hyimqQV9fRaZcHD0ackrUT2rxXeJwZxxFVsCzDjHhrsH6ekytgrQ6a5uEADoLwXXo_SfRkA9agO3Y54oTu0-lVIfwrFF8","https://lh3.googleusercontent.com/pw/AP1GczO_N9dM9sKHN_78qbHnEPKVMgzaeCOWRIsvTDPfry5mpkVugaUApbr17idxU1qFxfMVAjPQaMF5d8QAQOIQCHzgkC9ZcrUrAVlwcNI2SNV9EPTH_Gsx","https://lh3.googleusercontent.com/pw/AP1GczN7QrxZFfWKq7-_kSyXXdvLsI9ZT-rvnLxNNsrcPsAhdQDHLt-z_WOHFk4MqMfma969MECam19dB8voHMSTb05Up2UNp0Y7p2J9DojuP5llrfYbxq1W","https://lh3.googleusercontent.com/pw/AP1GczOs0bAnkyOJSANhApfzvXyt0Cf17U3bgQYes7W4XRfn0bWCWyHrUT8D-irQvh73VkRoDTleGJp8rkZfFfMZodT5MWcY69HQHEVgL_8PrFtExOOrBMaG","https://lh3.googleusercontent.com/pw/AP1GczPSWTHwoaTLJuIRnHmwDxjm21asVvIJQsTTFqgxmwuLx8a170MjNi5oSSJjUH4B_0R_Hb4jqE85LrGKOn699q0LNoB0dBF5qKaUm8oF-25oaXvg7mpk","https://lh3.googleusercontent.com/pw/AP1GczO1N316koFsiPPa4EuCZ0tvTaGhPottNDrYDcr8dLn15OrWZeDbslZ5z6Oj7CZMMrGh9LHgknjkw2zJo06uH86xrNWJz10gPYty8mKh9aOSjcZkSwrh","https://lh3.googleusercontent.com/pw/AP1GczOLqMtwIvUeGgs2vnUq4-2ObFEcWSmFwXcBbiTk_4dGSeLAGFK_38myYUiCf42sSVhoai6FclNHDwoXBEkdlxqVJjhm_rFXtF_Our77jVvCvkmjfOR5","https://lh3.googleusercontent.com/pw/AP1GczOTgUXLGWNGppSnWcQJ7v28AoEb7ehODRlVGxPVvuQE8xggPs838ekhLk6nT8KquMjwy2ySL_vJh5vtxG99y69cZGggLK3CGostQXfRbfrzfxKrVF4y","https://lh3.googleusercontent.com/pw/AP1GczNo-XtQZTBo0etOG1PQGhNWuxJmZkG9nCOGHwqxBAqrq2vyI66x4yzHeZhupkesYhoaTbO7BzFXOXbviKuSHfCJzwSLIuZIQosBRi67aWVJUHbEFykx","https://lh3.googleusercontent.com/pw/AP1GczM3XWv_073uACy3T_Klmr2jKF16xEoqn8fmN-wDTjnvwZdrdNK-k2bZWq0Q0lNVohH3bvirjnyr6M2YJPR6X_BoQ3YHhy2w5RM3PtEcrEbyMfM4zIp3","https://lh3.googleusercontent.com/pw/AP1GczM2Wd630T9lPMtLwkQFpzOmtOvlVf44HU8fw6lkl9oX9biidQSRNmw7K0LExMqBNNSw5n1XreffBxjjVSXBGrG0la2TVkcHhbmd0s8mBnA9qOGl4RTj","https://lh3.googleusercontent.com/pw/AP1GczNwrkqS2F3jbMyUr7vPYSG0Ja53DdFGxxYFmLtAdeQUu2RZQIeHltnSl8llgFN2RreaR7IteEDmU3nfrNiesZraiVDCEOCWhsQJjJqW9cTlWR-_LiAz","https://lh3.googleusercontent.com/pw/AP1GczMpKuIRpVmjIipWHOU87bN6lEcylcOtsnnW94QvRzbQKsWSkq66SbJ5n5oAMcOP-vCwZY3wRc15xuwHbQbzTFW48O9iYaAx4IT0WQ4wlvMOctAVmBHC","https://lh3.googleusercontent.com/pw/AP1GczPWYTCHwaBWLXBJ2ZOUrgACckVjES1TjfMtoAgKyO28pqCZnqmxLCjDqrXYsR1l8pfJ5AqFvdpN62yCO0NXFv3whTr6trhTretuzTdYBFQZPbT8jDvo","https://lh3.googleusercontent.com/pw/AP1GczNWUHxeBa4wpdOrF6luwb1E5fl0P3Ev2LAHIYAHVljLP3nEp-84av6jtejyC2ebtwU4C845BbVNWfAHizxyOW8BGL9OViTZj4VahftTO7jli1_vT6Qx","https://lh3.googleusercontent.com/pw/AP1GczMLUidGUSd795t1F5hauC7cq-M0kWDKQF5C1c2Jzqszjzh6SyA0E9MKKvf4koYv5LF0BgRR-iF5zpg8ZuiNRcGxsS6yREpae0STjRT0pWzrgg7mgANK","https://lh3.googleusercontent.com/pw/AP1GczMRr3xDKUnWgxZGpW4KpO_7iDrNlhy2jRp2syjNtSfwTq7sw1tqOSn64idEwy3flmWau7lBtINm_6MlknE8IVt2X1hZnStwQ-3Yn6auu7rVf3irnzvF","https://lh3.googleusercontent.com/pw/AP1GczM-4UfR_8b7NciNgijfbvGLEXHH0X7uZHDH5bmWJSmwuTegGPivBZYPlNkVn6vysv9MTLDzCnF8pNxK3wjaGSsR5RRX-inNuQivVFNSYsjWuHzY5LAS","https://lh3.googleusercontent.com/pw/AP1GczOQgeHGF9FAMoEbrQLkV5I-FMHaCtB0mmNU0uqTfRZ2julrlBl-EM2bdqsDu1s8gEKxap3503r8EJ7TRP3NYlyCv-8_wSrwT17cT5h1IXLNDY-0FsS4","https://lh3.googleusercontent.com/pw/AP1GczNMpUIOae9xHN03aPNWOnr3cj6MbLSC1nqTrQ9o7ZtOHqUttI5zilIOu07rih-rCvDfOtftvRpwhgCIIi9GvUsBnIBRnSbUhU7yemq1DnyJImnfMFGC","https://lh3.googleusercontent.com/pw/AP1GczOjWXPd4KRCf1iCEuIcDKj0l269v4tRSJ2qtxk4pzEHJ26GP0-PUDjKRkTDNLNbnbm9tfHewC_9CZJX6wy2-w-6Ocmgo9QY95nr80Cjigytx2xEc74Z","https://lh3.googleusercontent.com/pw/AP1GczO__xQHyLIlZ9hsRBOALRReukhhZNdQkGy0f8HSEzL5NHgqXfMSzAtneJ34YZchkk6Aefx0LDzxboXvl7WJ-HeldPkkLd092xv-v33NLxF7s4pH1Zt8","https://lh3.googleusercontent.com/pw/AP1GczMIz2t0i7Nwt7w7QWeHhfXlDYQeUcjEWwofmW8KYoeij1Mtvu230Au-I-KlHxFh1yGGJx_S5vJ9OgqOi1tcbS-QShsogEQDdDF5wVSAaPjRLa8ze2K1","https://lh3.googleusercontent.com/pw/AP1GczNZJXZNRqO7kXly4sSC-NkHfu2Eexte9OIDlhLv2ACbvLxAm-aVjC_1h0m3MLFsH_oF4KHjGVMjuT3aXA3dfoxGlFqw_c9s-ViiG_QQSJY_9jMY0q5D","https://lh3.googleusercontent.com/pw/AP1GczOqtLkUphUqrDFPwu6gL9tzwYfMvIutFLjeH5z9-xUO4WxAaV8rc003I2214c8cDt8XMjy8J8M6guO2v3YN74r4BYBzYdwBlkI2zsXx1GvO6m4SGQNO","https://lh3.googleusercontent.com/pw/AP1GczMD2Me0xYOMgVihSivrEm6Gf7ySx4tmiGLrCyWYOuffgol3LDwHmLGg6slHWW0FlPk0eTeZkQJJLdqrY3QfAWNVHI_V_ZnD9-G_W08s_AeBMmA7P_tw","https://lh3.googleusercontent.com/pw/AP1GczM78UNV6FFRMViwrMdhblEvMHCuzLCBAGZKWhaQZVrUpJgFn-5oNfTqGzkalMf3vDtYI0YmBUJUh4KC87ytZjIjIupjJ65fIXUYz3fmfGJBSMzzsBbD","https://lh3.googleusercontent.com/pw/AP1GczNFmhuAtxzdo2upxbxYnV1reYB_qs3onfc7b-SFMmODVC2KYvIa0zVsz1bhG7mZhe533vUA0bF6DwsZF6POtHadcUeHQUEEo3FE9Xcwct_GwBsXDXth","https://lh3.googleusercontent.com/pw/AP1GczPEIMzjvUMHhXjNxJIjmIzL1HSbuTfDKFc--zKH8lBfC-fH7vTwpELVWXclXZ2zqgxJ3BaoDY4A__bbSuJa9IfU8vea5xQuDavhYykSy5et5xKcoAxa","https://lh3.googleusercontent.com/pw/AP1GczOiJdMiFD5Eg_LmQDVi_9_SZ4wY0OaOgps6JTcXdtG8ygFojCBPYgcpsnuX22Wrh9y7-lDYDpahago3F4EWFqggSAOiX26utyQICBEpDMHMAvo0lYnk","https://lh3.googleusercontent.com/pw/AP1GczNuSiLsf2ROhbXPPzI--7Ax4sS88Mezt8b-BV3QopLW2pmVapowkIRoO2iuBTmWIwd8sf-O13DU9buZEUijcpR3hAgXiEChvNWOOjU1Z-DNC0FbkCah","https://lh3.googleusercontent.com/pw/AP1GczNjLHypxAeb7QDqeQH-sCIYfdThQ3H7zS44kvhKmq0jsCDPkYZKeXLwNDaVwU2Axv07qHzFj5q_MZkpw6POST8O2L8eOgzwZptvMYDI33bwjR7fnnRa","https://lh3.googleusercontent.com/pw/AP1GczN8-3O1H-AWKTRD2IoSnf_WL3WnY_3Wpjp13Bk2trstw3V-_eVrrEe_ITnn1c2n5UzIlJWRrNnzTPbRLgJhoReCYBg_qygLEwYqQ-7O8J2SZkyXIlRb","https://lh3.googleusercontent.com/pw/AP1GczM_6UKnUfDev1OOyazoDVAysTT2nS48PHg-t54Nk6eHogpjUXVuiXJi198qAH20tGJiroOen57KjC8l0jrpbAnKhAJmUO6NryqtZixPfPYRAxnGloCo","https://lh3.googleusercontent.com/pw/AP1GczP_Fil_J4G_mYbYCflUxhaDxa6abb83AbXaY4NFflqCsy8JMSFusNgs21iwcAGGuCcfXw2w4Mx4ZIsH-PF-lxT7F6XwtBPfMCSX6fuwzlyHsFfQ7aIq","https://lh3.googleusercontent.com/pw/AP1GczNHxmgjGo9DBw09Qro9qfhZ6wSscEOYGIxD8ZmE4Zvn98iuZckNapG_Fu97yv2Q36cIiuPetMw7nGbu7DjK2BTCFxjDP7k4tjZFw7bdSUbqb3YM3yAn","https://lh3.googleusercontent.com/pw/AP1GczPARUiqEiEeicAbVNzGcgmcSAD1ZWX_q-QTm-E_IbNrzTU9qeVoqdb5Ajb8wcDPIjPIobNWXUqVpAefCbhz1x3x49wbAq4AFvJPVWa4XVwF5aHgGqks","https://lh3.googleusercontent.com/pw/AP1GczPLMYISa_9qCrt3_DnnWCKQjjffLy3tf63q93pTIpz1mZ4iRP_PpSdzJv4w8DrtzdsNVO25B1dVj5Vzz5CIz8jmmPq7_-SLs9O1i1A0MDXsryVLHH_h","https://lh3.googleusercontent.com/pw/AP1GczNbIFISoXQPLHXtFscr4EokUWMJE1El8hFLqzKjEeplzpclO1AlxTJn4E4pNVubeQ-nPhHXfAgpGoGj3XcYZgajhYoKty6IIdesBbjOQh5idULtXSHI","https://lh3.googleusercontent.com/pw/AP1GczN1ewhehiAWWrGTaRK00sGAmtpaHOBbX1QLeyai9ASsDaZNcX-hVc0GneJbrYmjR3c1W6p1Ba0R1j5nMW7qVOinxsotlgYayMK0Yidx3ugYVX6Z6cvz","https://lh3.googleusercontent.com/pw/AP1GczNcTaq47UPl43i2vmAtluwCcniOrXU2NFHBfI8Yw_1VxoHdpSfLbAm1_rdJ0ZF7WPM-KgU4JsxaehrR6W-UzGr_p1RwXIRcboqsUqg1EY-EmeBo49ps","https://lh3.googleusercontent.com/pw/AP1GczOPtkSRresSPa3Mi6GcTouVu71mCaw9QI3Bksk8w7imHgR5qnfCFLI-Ijhc3SewZRqjxN9WusHJDfx03Kz7H0J3PZlUQG7QDAliaVfxfCspqLypG4Gt","https://lh3.googleusercontent.com/pw/AP1GczMJdGCrP73xAgzkNBCKIdXlkXsE_Bw031OO4vPKObygkxiwnQtocCUNKRcwxa6WIHsYXc8zbHhklvazfiLGa4dDdTE7OGjrwus6NUy5zARXeu3nz-MX","https://lh3.googleusercontent.com/pw/AP1GczNQpn1HG00AJXBQe6_X8DE0tGjimCrtze9Wk7r3c9rS57XY47M2d1h06dD_m3zguBE9AY8D3uuRFXk9pnsfiZCka0I1TxN9J7eiceZTdBLrbHgjdli8","https://lh3.googleusercontent.com/pw/AP1GczP_2e2rDOv9WHwSusGPDCVrKgOkaAbgRxc8pvq3-ze0kFTyefaY8shS_ghb9qtkuJ95aPoOWodkzxBv8Xq6PLxlYsimsWMUyi-wy4FLpkfLk8oHS6DQ","https://lh3.googleusercontent.com/pw/AP1GczP3s6wUvzsfA7FBLUdi_aJJ-e1n3BdhuXZkNqaFAPTBiD8Jpq-fJqeGWzusH0q1wqwygABxomUYG00Jm7toZBwgWvI5txbL4pAUvEX10FolOxiL_6TC","https://lh3.googleusercontent.com/pw/AP1GczNtM8WxH2o4zrABRvkTN24zd5ytPgLHpJB6a8hHy1P6ZiH9MPCYdbQa0IOD6mmsV1uZU2MqGbXQCJo0T5AmoXgT6UP9t8_ClgKBvp8pItxGyET_gYFS","https://lh3.googleusercontent.com/pw/AP1GczNs41Ptzq0ybs3oL-wYtQhZKmN9JayGmsFK51vSWuZ_uS3EBkgZzDzYWva3FRCz6i6c2CYHg-vuG8-CiC4YKPy-uMlG_Lmj8peZ5mhBKVhqPQZa26ob"];
+    const KING_PHOTOBOOTH_INITIAL_CACHE = [{"id":12696,"share_token":"12a27631","thumb":"/storage/thumbs/78/bb398735c01a58a281d8903d.jpg","is_video":true},{"id":12695,"share_token":"7eb638b5","thumb":"/storage/thumbs/78/cb02ef5429c7228e382cad42.jpg","is_video":false},{"id":12694,"share_token":"7cf9ba98","thumb":"/storage/thumbs/78/8f1aba45f919adb99c81dfb0.jpg","is_video":true},{"id":12693,"share_token":"0ad4e352","thumb":"/storage/thumbs/78/c051abd0c32edd80787bc207.jpg","is_video":false},{"id":12692,"share_token":"d4f05ff0","thumb":"/storage/thumbs/78/fd93d559347375eb20be8918.jpg","is_video":true},{"id":12691,"share_token":"e88218ac","thumb":"/storage/thumbs/78/62fe0cc2939769c8dfc4a270.jpg","is_video":false},{"id":12690,"share_token":"f5a23a76","thumb":"/storage/thumbs/78/e4e67f00a8dcea98431e3d90.jpg","is_video":true},{"id":12689,"share_token":"255e3361","thumb":"/storage/thumbs/78/41a06d1c44612d41f9e4b39f.jpg","is_video":false},{"id":12688,"share_token":"fff19549","thumb":"/storage/thumbs/78/406aa303f3baabf691212cf7.jpg","is_video":true},{"id":12687,"share_token":"cc2d9781","thumb":"/storage/thumbs/78/bb4ea665ec43cb737e7b52ad.jpg","is_video":false},{"id":12686,"share_token":"7ca3e640","thumb":"/storage/thumbs/78/823b80230acff33e04b98b24.jpg","is_video":true},{"id":12685,"share_token":"be7553b8","thumb":"/storage/thumbs/78/32af5fe97ade8756e419e953.jpg","is_video":false},{"id":12684,"share_token":"e6f81819","thumb":"/storage/thumbs/78/5be06f774b9b660bc91c4288.jpg","is_video":true},{"id":12683,"share_token":"91531c08","thumb":"/storage/thumbs/78/7079984e0efabc026e23b5f6.jpg","is_video":false},{"id":12682,"share_token":"7b204f03","thumb":"/storage/thumbs/78/d74af98ee26063979a67f8f2.jpg","is_video":true},{"id":12681,"share_token":"aced8ce4","thumb":"/storage/thumbs/78/2086e7f98f1a26d0741f3178.jpg","is_video":false},{"id":12680,"share_token":"9b22369e","thumb":"/storage/thumbs/78/d01abc9392677fb41bf7a5c5.jpg","is_video":true},{"id":12679,"share_token":"ecbdb63b","thumb":"/storage/thumbs/78/98a6262e4f92153c9ecf4dbd.jpg","is_video":false},{"id":12678,"share_token":"9ee441fe","thumb":"/storage/thumbs/78/ec4430132f86d98463bb931a.jpg","is_video":true},{"id":12677,"share_token":"debccc42","thumb":"/storage/thumbs/78/079e540ae84efce0dbe531fb.jpg","is_video":false},{"id":12676,"share_token":"19e2ce18","thumb":"/storage/thumbs/78/7d81b411c9eedf255b3f83f5.jpg","is_video":true},{"id":12675,"share_token":"6e052412","thumb":"/storage/thumbs/78/7d36042d9b599e00a65186b8.jpg","is_video":false},{"id":12674,"share_token":"4d5ed71f","thumb":"/storage/thumbs/78/bb4eac6ff55fd075f1cf629e.jpg","is_video":true},{"id":12673,"share_token":"84b4c32b","thumb":"/storage/thumbs/78/607e59ef6c71dbf799481835.jpg","is_video":false},{"id":12672,"share_token":"069affe6","thumb":"/storage/thumbs/78/9f64bd119b3bf0610e2744a9.jpg","is_video":true},{"id":12671,"share_token":"12ab8488","thumb":"/storage/thumbs/78/bc80778674d9f477bc8e4c81.jpg","is_video":false},{"id":12670,"share_token":"91c68538","thumb":"/storage/thumbs/78/9d147c6b71880d59782200fd.jpg","is_video":true},{"id":12669,"share_token":"2bee509f","thumb":"/storage/thumbs/78/215bee56f8123aec619df162.jpg","is_video":false},{"id":12668,"share_token":"1fc13563","thumb":"/storage/thumbs/78/6f7b530f2f3fac1b82c14e00.jpg","is_video":true},{"id":12667,"share_token":"7aa61ccf","thumb":"/storage/thumbs/78/f392eccf75cb490d951897ed.jpg","is_video":false},{"id":12666,"share_token":"325570ab","thumb":"/storage/thumbs/78/0d20cfb40ae8eb9ec6a9356f.jpg","is_video":true},{"id":12665,"share_token":"3d22b665","thumb":"/storage/thumbs/78/f25e9fdfef1874d973099b82.jpg","is_video":false},{"id":12664,"share_token":"821dd017","thumb":"/storage/thumbs/78/93d1b8f981cbff878d9ea99c.jpg","is_video":true},{"id":12663,"share_token":"470afdd5","thumb":"/storage/thumbs/78/dc2a8e22addf8cce321dae32.jpg","is_video":false},{"id":12662,"share_token":"2537716f","thumb":"/storage/thumbs/78/66b5f4219c9d4de54d2820cf.jpg","is_video":true},{"id":12661,"share_token":"78753f59","thumb":"/storage/thumbs/78/81ff4f36b6cb548e4de20860.jpg","is_video":false},{"id":12660,"share_token":"5e0fb203","thumb":"/storage/thumbs/78/2e6a2d1b25e6297dbfe77dc1.jpg","is_video":true},{"id":12659,"share_token":"de0e4ab5","thumb":"/storage/thumbs/78/19848bef1809a9f7a480b228.jpg","is_video":false},{"id":12658,"share_token":"93f7711f","thumb":"/storage/thumbs/78/926bffa10ff10ba5ed459677.jpg","is_video":true},{"id":12657,"share_token":"f73d76f5","thumb":"/storage/thumbs/78/b9c0a3d8e44f558ed660d29f.jpg","is_video":false},{"id":12656,"share_token":"1e648fc4","thumb":"/storage/thumbs/78/883ca5b85f61dc8fd040bb0c.jpg","is_video":true},{"id":12655,"share_token":"8e64ffdc","thumb":"/storage/thumbs/78/0df283ffc07bdf839d8ec809.jpg","is_video":false},{"id":12654,"share_token":"a90f7d4f","thumb":"/storage/thumbs/78/5fa702ccc82e3d7dc71c326d.jpg","is_video":true},{"id":12653,"share_token":"d9168833","thumb":"/storage/thumbs/78/80f070c9daefc8055cbe51f0.jpg","is_video":false},{"id":12652,"share_token":"7bd090eb","thumb":"/storage/thumbs/78/87716e830a142c8577e5c43c.jpg","is_video":true},{"id":12651,"share_token":"b61f523b","thumb":"/storage/thumbs/78/7df95aea4e616727d40d3213.jpg","is_video":false},{"id":12650,"share_token":"69f95040","thumb":"/storage/thumbs/78/6b0769ed8539d20fdee0452a.jpg","is_video":true},{"id":12649,"share_token":"4390a52c","thumb":"/storage/thumbs/78/00bfab97b62093234b83e320.jpg","is_video":false},{"id":12648,"share_token":"13606292","thumb":"/storage/thumbs/78/fca424b3d27528d6af2baa99.jpg","is_video":true},{"id":12647,"share_token":"7be83ae9","thumb":"/storage/thumbs/78/f99390d16741cbd0cb88ec46.jpg","is_video":false},{"id":12646,"share_token":"b1631170","thumb":"/storage/thumbs/78/84eeca918d5b9e938983285c.jpg","is_video":true},{"id":12645,"share_token":"6a72db24","thumb":"/storage/thumbs/78/ecfc94210b6fe7581af2cc64.jpg","is_video":false},{"id":12644,"share_token":"a81f870a","thumb":"/storage/thumbs/78/a6e596cc1e3a128cd3d5e25a.jpg","is_video":true},{"id":12643,"share_token":"54106953","thumb":"/storage/thumbs/78/6b7df4e07d06d0abad0a5166.jpg","is_video":false},{"id":12642,"share_token":"999db08f","thumb":"/storage/thumbs/78/6c3df8c8e3d6f809368e931c.jpg","is_video":true},{"id":12641,"share_token":"0b0123af","thumb":"/storage/thumbs/78/c86d78d8a12d0db953e2d6f0.jpg","is_video":false},{"id":12640,"share_token":"fbc76c91","thumb":"/storage/thumbs/78/dd54befbb0fc9027a99b047d.jpg","is_video":true},{"id":12639,"share_token":"4444b35f","thumb":"/storage/thumbs/78/f9a901c031bc93962bc5b3d0.jpg","is_video":false},{"id":12638,"share_token":"b611c070","thumb":"/storage/thumbs/78/df710654eb937b4bd51b1e6c.jpg","is_video":true},{"id":12637,"share_token":"f14f66c9","thumb":"/storage/thumbs/78/53b46695c89bb292d2e4b5cd.jpg","is_video":false},{"id":12636,"share_token":"104862da","thumb":"/storage/thumbs/78/6d6acc6f1dd005e97d1bdd02.jpg","is_video":true},{"id":12635,"share_token":"b0435d25","thumb":"/storage/thumbs/78/76af742d637127c62b164638.jpg","is_video":false},{"id":12634,"share_token":"dd37b19b","thumb":"/storage/thumbs/78/b9123db480926369ef40da3b.jpg","is_video":true},{"id":12633,"share_token":"e958df63","thumb":"/storage/thumbs/78/193e5279c130b11a75636a13.jpg","is_video":false},{"id":12632,"share_token":"29e3128a","thumb":"/storage/thumbs/78/1c1d6875eee47a869cde348c.jpg","is_video":true},{"id":12631,"share_token":"72ba35c9","thumb":"/storage/thumbs/78/b657e9df36ff3d8ad14f6cbf.jpg","is_video":false},{"id":12630,"share_token":"85acf994","thumb":"/storage/thumbs/78/fbf70d250d9841d1b8e0fb06.jpg","is_video":true},{"id":12629,"share_token":"18cd5526","thumb":"/storage/thumbs/78/ecb8b07d91ccd882baa95639.jpg","is_video":false},{"id":12628,"share_token":"d0391f12","thumb":"/storage/thumbs/78/383726afd07ee9d70e77c009.jpg","is_video":true},{"id":12627,"share_token":"1200dfb6","thumb":"/storage/thumbs/78/b738580d4949e0ff0b936461.jpg","is_video":false},{"id":12626,"share_token":"2faa97c9","thumb":"/storage/thumbs/78/735df9dd1a7cec41e5980cb4.jpg","is_video":true},{"id":12625,"share_token":"13f81346","thumb":"/storage/thumbs/78/9411ad5c7908468b0c03b4fd.jpg","is_video":false},{"id":12624,"share_token":"e9bd3e68","thumb":"/storage/thumbs/78/fe1af50f9471887859464f2b.jpg","is_video":true},{"id":12623,"share_token":"28ebca8c","thumb":"/storage/thumbs/78/7d8d1463ee154f410d9483ba.jpg","is_video":false},{"id":12622,"share_token":"d6718775","thumb":"/storage/thumbs/78/4726b24610880a1837b3c631.jpg","is_video":true},{"id":12621,"share_token":"c1eb9d11","thumb":"/storage/thumbs/78/036126e908feee2b8afb12d2.jpg","is_video":false},{"id":12620,"share_token":"59ce9efc","thumb":"/storage/thumbs/78/c40044016c877f8ebdeba776.jpg","is_video":true},{"id":12619,"share_token":"a79c5791","thumb":"/storage/thumbs/78/38b0752536e1d9038be52c1b.jpg","is_video":false},{"id":12618,"share_token":"69402f20","thumb":"/storage/thumbs/78/2d9e87f6ff03519c9e036301.jpg","is_video":true},{"id":12617,"share_token":"ca6473d6","thumb":"/storage/thumbs/78/a8a1a324c25b407eeb3e8e85.jpg","is_video":false},{"id":12616,"share_token":"eda6d5fe","thumb":"/storage/thumbs/78/bea9f2cf8711f570b2398649.jpg","is_video":true},{"id":12615,"share_token":"d25d4f52","thumb":"/storage/thumbs/78/850bc34065f94d80b33b55a6.jpg","is_video":false},{"id":12614,"share_token":"2b046d32","thumb":"/storage/thumbs/78/22df7530be5e830d13705260.jpg","is_video":true},{"id":12613,"share_token":"f8d8a936","thumb":"/storage/thumbs/78/01fec918eb652bd4901cb4f0.jpg","is_video":false},{"id":12612,"share_token":"d4cd51c2","thumb":"/storage/thumbs/78/082932e0f9c4d22d468d70ed.jpg","is_video":true},{"id":12611,"share_token":"34377cd6","thumb":"/storage/thumbs/78/b015a93cee384d3b1ea3cb15.jpg","is_video":false},{"id":12610,"share_token":"b717079b","thumb":"/storage/thumbs/78/25497bf06d3153638633d1cf.jpg","is_video":true},{"id":12609,"share_token":"9375b4ab","thumb":"/storage/thumbs/78/62ca2d1157daf9ea75dd8287.jpg","is_video":false},{"id":12608,"share_token":"05011c3c","thumb":"/storage/thumbs/78/1370473664c84b39ffbff03c.jpg","is_video":true},{"id":12607,"share_token":"02c3855e","thumb":"/storage/thumbs/78/37f6f285ac1bc8c90913e4aa.jpg","is_video":false},{"id":12606,"share_token":"f69ef284","thumb":"/storage/thumbs/78/bbaf7c4450e49334f97e4236.jpg","is_video":true},{"id":12605,"share_token":"fa9e7c40","thumb":"/storage/thumbs/78/da9d57115aa273f89cb49cd6.jpg","is_video":false},{"id":12604,"share_token":"46a14b25","thumb":"/storage/thumbs/78/8c721071598fdfa38850833e.jpg","is_video":true},{"id":12603,"share_token":"d1e20647","thumb":"/storage/thumbs/78/8aa555b1915ac00a7ed22c73.jpg","is_video":false},{"id":12602,"share_token":"de33e8cc","thumb":"/storage/thumbs/78/08a6c0918625fa92822da7d9.jpg","is_video":true},{"id":12601,"share_token":"8c8a81df","thumb":"/storage/thumbs/78/bfd15c1a528eb6303ee4c095.jpg","is_video":false},{"id":12600,"share_token":"57b17952","thumb":"/storage/thumbs/78/e31fb82652749ed44eb1925a.jpg","is_video":true},{"id":12599,"share_token":"c23daff4","thumb":"/storage/thumbs/78/f2590bd825fd1cb0ece5f657.jpg","is_video":false},{"id":12598,"share_token":"c9f21c6f","thumb":"/storage/thumbs/78/82e3575b6cb52b520e6552a8.jpg","is_video":true},{"id":12597,"share_token":"3dd0876a","thumb":"/storage/thumbs/78/142d7f7297a6658a8ca3ad26.jpg","is_video":false},{"id":12596,"share_token":"ef5513d0","thumb":"/storage/thumbs/78/27dd4925cec7e05000b5bd56.jpg","is_video":true},{"id":12595,"share_token":"378b71e1","thumb":"/storage/thumbs/78/a48368e0dc3146a1e39e6d4a.jpg","is_video":false},{"id":12594,"share_token":"956ba99a","thumb":"/storage/thumbs/78/84278c358850f22a8a4115f7.jpg","is_video":true},{"id":12593,"share_token":"6461a992","thumb":"/storage/thumbs/78/eb067c311d2d3855a4823226.jpg","is_video":false},{"id":12592,"share_token":"64126767","thumb":"/storage/thumbs/78/89a77075948d179d38ddda6e.jpg","is_video":true},{"id":12591,"share_token":"96645fe3","thumb":"/storage/thumbs/78/0f268d20e396b6bc41a6ca48.jpg","is_video":false},{"id":12590,"share_token":"d7beb077","thumb":"/storage/thumbs/78/4ad4ef4fa88a5bb7dec08964.jpg","is_video":true},{"id":12589,"share_token":"7cf3e880","thumb":"/storage/thumbs/78/54be8376ab4abc3d4d150044.jpg","is_video":false},{"id":12588,"share_token":"3913e970","thumb":"/storage/thumbs/78/3440787b0ed930f40103962a.jpg","is_video":true},{"id":12587,"share_token":"13524715","thumb":"/storage/thumbs/78/154e2620fd0d89fd96d82ac3.jpg","is_video":false},{"id":12586,"share_token":"9210ccb0","thumb":"/storage/thumbs/78/ece7b7a537f922f45cbd606e.jpg","is_video":true},{"id":12585,"share_token":"9d0402d4","thumb":"/storage/thumbs/78/28e0177cdba0f83ccc74cd92.jpg","is_video":false},{"id":12584,"share_token":"216fd771","thumb":"/storage/thumbs/78/328d2cefe0411c8c13e6730c.jpg","is_video":true},{"id":12583,"share_token":"689a2596","thumb":"/storage/thumbs/78/9aec7f141da05bc7393c8da0.jpg","is_video":false},{"id":12582,"share_token":"9e6dc322","thumb":"/storage/thumbs/78/0b8357b71db7ed0d280b3f1d.jpg","is_video":true},{"id":12581,"share_token":"dc014d04","thumb":"/storage/thumbs/78/8447f06178f4e8f6e3c5f5f8.jpg","is_video":false},{"id":12580,"share_token":"daeeaa9f","thumb":"/storage/thumbs/78/9ee5eb8c78beb4c1298df222.jpg","is_video":true},{"id":12579,"share_token":"da070186","thumb":"/storage/thumbs/78/c7cdda90ae0cf2562d9a60bc.jpg","is_video":false},{"id":12578,"share_token":"c9bccd0d","thumb":"/storage/thumbs/78/2a20ecfa1f9bb7b4de92c692.jpg","is_video":true},{"id":12577,"share_token":"8fb45e05","thumb":"/storage/thumbs/78/6c7c43821695b6d1a7018312.jpg","is_video":false},{"id":12576,"share_token":"0a753c9a","thumb":"/storage/thumbs/78/dc318fd99820b43943455f66.jpg","is_video":true},{"id":12575,"share_token":"708b1f03","thumb":"/storage/thumbs/78/70a13a93909f277f4757134e.jpg","is_video":false},{"id":12574,"share_token":"e7357805","thumb":"/storage/thumbs/78/5da19fc3d57d302f8fbdb231.jpg","is_video":true},{"id":12573,"share_token":"c2b4802c","thumb":"/storage/thumbs/78/a2fbb38afff20a07885824ce.jpg","is_video":false},{"id":12572,"share_token":"87f69939","thumb":"/storage/thumbs/78/84b9cb3935d01b5473e7994c.jpg","is_video":true},{"id":12571,"share_token":"8301846e","thumb":"/storage/thumbs/78/a9d5103a829bb5739e3cb881.jpg","is_video":false},{"id":12570,"share_token":"7649ad78","thumb":"/storage/thumbs/78/f85319f1be7496d8a50d7c22.jpg","is_video":true},{"id":12569,"share_token":"b35028dc","thumb":"/storage/thumbs/78/6b8e1e1b7b4122f9588d1a40.jpg","is_video":false},{"id":12568,"share_token":"d2cdd8d3","thumb":"/storage/thumbs/78/2639f1e6e98899c3b1dc1e4d.jpg","is_video":true},{"id":12567,"share_token":"9fa6e033","thumb":"/storage/thumbs/78/f19451b9f0863f95234f9a29.jpg","is_video":false},{"id":12566,"share_token":"4466f015","thumb":"/storage/thumbs/78/28b9e3f6cfc14236ef612797.jpg","is_video":true},{"id":12565,"share_token":"ee27b5fc","thumb":"/storage/thumbs/78/ee1fbc82e162ac92be39a08a.jpg","is_video":false},{"id":12564,"share_token":"efd77ea7","thumb":"/storage/thumbs/78/0785b0f10a3eb8ebee7d4e87.jpg","is_video":true},{"id":12563,"share_token":"691c66b9","thumb":"/storage/thumbs/78/ad48e6f565364188c2ef8e43.jpg","is_video":false},{"id":12562,"share_token":"b005a48a","thumb":"/storage/thumbs/78/0e20e74f8bfec25a5702a3ad.jpg","is_video":true},{"id":12561,"share_token":"80302791","thumb":"/storage/thumbs/78/7ffcc33f57a2b7f998a32a30.jpg","is_video":false},{"id":12560,"share_token":"46864aa5","thumb":"/storage/thumbs/78/c5a1949e99ad2c28e0e730d0.jpg","is_video":true},{"id":12559,"share_token":"f0e81ca3","thumb":"/storage/thumbs/78/a91f2fbc97697488d4ae9afa.jpg","is_video":false},{"id":12558,"share_token":"442e736a","thumb":"/storage/thumbs/78/ca38fe367b26006227e37179.jpg","is_video":true},{"id":12557,"share_token":"521e1c68","thumb":"/storage/thumbs/78/12a55b546d41b77a0c8f20be.jpg","is_video":false},{"id":12556,"share_token":"2cdd997a","thumb":"/storage/thumbs/78/e7753bfaa07dff96d0b0ccda.jpg","is_video":true},{"id":12555,"share_token":"06bac3f2","thumb":"/storage/thumbs/78/24a5ad0a8a96103d69d8020c.jpg","is_video":false},{"id":12554,"share_token":"724ace07","thumb":"/storage/thumbs/78/97bc6317f60ed4dbe428a895.jpg","is_video":true},{"id":12553,"share_token":"7e2a1e48","thumb":"/storage/thumbs/78/1482cb99337c5f077a121acd.jpg","is_video":false},{"id":12552,"share_token":"430e2f33","thumb":"/storage/thumbs/78/581569a721696b1164df8323.jpg","is_video":true},{"id":12551,"share_token":"41512e6c","thumb":"/storage/thumbs/78/7f940322e4de6c9e860577bf.jpg","is_video":false},{"id":12550,"share_token":"8bc3d85f","thumb":"/storage/thumbs/78/1f8d46b236c64d70a96a6da7.jpg","is_video":true},{"id":12549,"share_token":"8f8149e9","thumb":"/storage/thumbs/78/e9ba87b3f18dbb11f93aa3fd.jpg","is_video":false},{"id":12548,"share_token":"d017a97f","thumb":"/storage/thumbs/78/2669737fb590561c8080642c.jpg","is_video":true},{"id":12547,"share_token":"add0875f","thumb":"/storage/thumbs/78/95e1c730de52cf4a740e1a56.jpg","is_video":false},{"id":12546,"share_token":"f3d2ae71","thumb":"/storage/thumbs/78/61e69784cd7ba510dc68ea2f.jpg","is_video":true},{"id":12545,"share_token":"3ef30429","thumb":"/storage/thumbs/78/12d5221450abead3c479585e.jpg","is_video":false},{"id":12544,"share_token":"c8ed6a59","thumb":"/storage/thumbs/78/0e5d0a3ed7eab01e4d14abcc.jpg","is_video":true},{"id":12543,"share_token":"dc5e09a0","thumb":"/storage/thumbs/78/80679530bcc6d50da1d8072f.jpg","is_video":false},{"id":12542,"share_token":"fc7cd450","thumb":"/storage/thumbs/78/5b2aa8350b765a7d3b017487.jpg","is_video":true},{"id":12541,"share_token":"e0c6b9a6","thumb":"/storage/thumbs/78/8c778c9c66a7234d6e5843be.jpg","is_video":false},{"id":12540,"share_token":"34d7a753","thumb":"/storage/thumbs/78/86d5fe6827bf378ade260ec7.jpg","is_video":true},{"id":12539,"share_token":"056756cf","thumb":"/storage/thumbs/78/6ebdb0e1fa6f81c1251f3dca.jpg","is_video":false},{"id":12538,"share_token":"3c0c96ce","thumb":"/storage/thumbs/78/feba12bb438cdad1fce8733c.jpg","is_video":true},{"id":12537,"share_token":"40c0f0e2","thumb":"/storage/thumbs/78/9fa6075976b808d3fd3290a4.jpg","is_video":false},{"id":12536,"share_token":"f367eb59","thumb":"/storage/thumbs/78/f6d59fa5d7464d1811882154.jpg","is_video":true},{"id":12535,"share_token":"748f4ac1","thumb":"/storage/thumbs/78/66df9dc01f36834bae03ab65.jpg","is_video":false},{"id":12534,"share_token":"0850f78e","thumb":"/storage/thumbs/78/582ffe7ee939086af6d1da06.jpg","is_video":true},{"id":12533,"share_token":"f9331364","thumb":"/storage/thumbs/78/3f63960a49c35b7407c4e70d.jpg","is_video":false},{"id":12532,"share_token":"a05b8e8e","thumb":"/storage/thumbs/78/efaad283c0557009177d57b3.jpg","is_video":true},{"id":12531,"share_token":"3d32e670","thumb":"/storage/thumbs/78/33affc1af0c79fc7bd2be83a.jpg","is_video":false},{"id":12530,"share_token":"1b6ddeae","thumb":"/storage/thumbs/78/28158e513303aa22e5efecbb.jpg","is_video":true},{"id":12529,"share_token":"15a31865","thumb":"/storage/thumbs/78/0b96b3d014f169930f58a92b.jpg","is_video":false},{"id":12528,"share_token":"b4e6f5f0","thumb":"/storage/thumbs/78/90cffcc2c2d0c7062286a270.jpg","is_video":true},{"id":12527,"share_token":"d4972633","thumb":"/storage/thumbs/78/063b2bed7d7a2d14acb3b350.jpg","is_video":false},{"id":12526,"share_token":"b6fb7f61","thumb":"/storage/thumbs/78/d500eb87ccad440a026ed1ab.jpg","is_video":true},{"id":12525,"share_token":"5ec4c365","thumb":"/storage/thumbs/78/b32583d4bc161965ed4b46e3.jpg","is_video":false},{"id":12524,"share_token":"b722343b","thumb":"/storage/thumbs/78/06690d453000bfa08c3f0c28.jpg","is_video":true},{"id":12523,"share_token":"651e5a8b","thumb":"/storage/thumbs/78/e05ae6229d3be20d97e321d7.jpg","is_video":false},{"id":12522,"share_token":"513d5a60","thumb":"/storage/thumbs/78/5a14922844459681d68436e9.jpg","is_video":true},{"id":12521,"share_token":"471f132d","thumb":"/storage/thumbs/78/21843de924b6a199a19a531f.jpg","is_video":false},{"id":12520,"share_token":"ac65f257","thumb":"/storage/thumbs/78/1eaa5dc1eb4ce879ea274cae.jpg","is_video":true},{"id":12519,"share_token":"5bfe2405","thumb":"/storage/thumbs/78/4bb055b5f9c46cf4751859d7.jpg","is_video":false},{"id":12518,"share_token":"983fddb5","thumb":"/storage/thumbs/78/74bc2da356ca5baa6747262c.jpg","is_video":true},{"id":12517,"share_token":"f2b02a20","thumb":"/storage/thumbs/78/b6d0fa0ed9812fbea7003a4e.jpg","is_video":false},{"id":12516,"share_token":"102209bb","thumb":"/storage/thumbs/78/45ae5fcd17c45ef201fe0555.jpg","is_video":true},{"id":12515,"share_token":"98f819fc","thumb":"/storage/thumbs/78/2226392cd37334dfc4f545f6.jpg","is_video":false},{"id":12514,"share_token":"2ea02f45","thumb":"/storage/thumbs/78/ff4e9f9806b4c38cea9c71e5.jpg","is_video":true},{"id":12513,"share_token":"804ec3bb","thumb":"/storage/thumbs/78/29101d193585670cf53130f3.jpg","is_video":false},{"id":12512,"share_token":"1a409343","thumb":"/storage/thumbs/78/3ed29c11ff822d3b27fddb77.jpg","is_video":true},{"id":12511,"share_token":"f1277e7f","thumb":"/storage/thumbs/78/d21b3a24c691e5b9ceefdc16.jpg","is_video":false},{"id":12510,"share_token":"1f346904","thumb":"/storage/thumbs/78/a349868ee7fb80db370e9021.jpg","is_video":true},{"id":12509,"share_token":"c5b6df23","thumb":"/storage/thumbs/78/bb7f21e9552753dbed848e2b.jpg","is_video":false},{"id":12508,"share_token":"eaa48f17","thumb":"/storage/thumbs/78/48ddb20bd2602981d42ea913.jpg","is_video":true},{"id":12507,"share_token":"21955a5f","thumb":"/storage/thumbs/78/03cd6d244af3b75df195b549.jpg","is_video":false},{"id":12506,"share_token":"2cce2fc9","thumb":"/storage/thumbs/78/60311b48ac81b02d3208785a.jpg","is_video":true},{"id":12505,"share_token":"5bc55ec3","thumb":"/storage/thumbs/78/070dd59abec39d5b56788d28.jpg","is_video":false},{"id":12504,"share_token":"54ad61af","thumb":"/storage/thumbs/78/e6b721486ba8f354a768c798.jpg","is_video":true},{"id":12503,"share_token":"3ce4043c","thumb":"/storage/thumbs/78/3b50a866f14d82bc30d64e30.jpg","is_video":false},{"id":12502,"share_token":"f4b90228","thumb":"/storage/thumbs/78/e9907e15ae34435a4b9c1c07.jpg","is_video":true},{"id":12501,"share_token":"8d8d0b74","thumb":"/storage/thumbs/78/c31f7c6bdc75703e30400d91.jpg","is_video":false},{"id":12500,"share_token":"2d76babc","thumb":"/storage/thumbs/78/cb87c50232f2bc46704b2913.jpg","is_video":true},{"id":12499,"share_token":"f224b855","thumb":"/storage/thumbs/78/8cf3b6df74842fcd87d09478.jpg","is_video":false},{"id":12498,"share_token":"87f2f68f","thumb":"/storage/thumbs/78/2ea6f7ee38fc94d825cec2c9.jpg","is_video":true},{"id":12497,"share_token":"8c210a9a","thumb":"/storage/thumbs/78/55753db87ba120767aaab485.jpg","is_video":false},{"id":12496,"share_token":"2ba88529","thumb":"/storage/thumbs/78/28bab706761ca4ad392de201.jpg","is_video":true},{"id":12495,"share_token":"e39375f7","thumb":"/storage/thumbs/78/4d91a67e52ae3fca850ce1ac.jpg","is_video":false},{"id":12494,"share_token":"c4bf6a53","thumb":"/storage/thumbs/78/17e85a1e2d446c8466070276.jpg","is_video":true},{"id":12493,"share_token":"9d60b2bb","thumb":"/storage/thumbs/78/2a2d1b40aaf37fa590b2f5fb.jpg","is_video":false},{"id":12492,"share_token":"bd072e8f","thumb":"/storage/thumbs/78/4bfc11128b294573c289a92d.jpg","is_video":true},{"id":12491,"share_token":"3478ee4f","thumb":"/storage/thumbs/78/39db7e3ec287c902e35ae076.jpg","is_video":false},{"id":12490,"share_token":"620062ae","thumb":"/storage/thumbs/78/5a45e573190cda24d9a31bda.jpg","is_video":true},{"id":12489,"share_token":"91dd1d1d","thumb":"/storage/thumbs/78/794b6daa8f1b19e4715fdcf9.jpg","is_video":false},{"id":12488,"share_token":"104d16d3","thumb":"/storage/thumbs/78/afaa07f8c19f18bc54bccb6f.jpg","is_video":true},{"id":12487,"share_token":"56403bd7","thumb":"/storage/thumbs/78/bb2fe8b6eedab42d77792967.jpg","is_video":false},{"id":12486,"share_token":"8e5c0540","thumb":"/storage/thumbs/78/4917c7917d7d8476d5e352fa.jpg","is_video":true},{"id":12485,"share_token":"38f484cc","thumb":"/storage/thumbs/78/dae46aae6667293708d2468f.jpg","is_video":false},{"id":12484,"share_token":"0d67e0fd","thumb":"/storage/thumbs/78/d433816f94b61704a9773699.jpg","is_video":true},{"id":12483,"share_token":"7d7e4617","thumb":"/storage/thumbs/78/3d294e0539b051c7161c2d17.jpg","is_video":false},{"id":12482,"share_token":"adef45b2","thumb":"/storage/thumbs/78/2992896b2110359f409e390f.jpg","is_video":true},{"id":12481,"share_token":"8145f87c","thumb":"/storage/thumbs/78/c5f65f7c1e3840c3ddef7e19.jpg","is_video":false},{"id":12480,"share_token":"44e32809","thumb":"/storage/thumbs/78/3052764f5a5ca07f23d3af62.jpg","is_video":true},{"id":12479,"share_token":"5a9b9959","thumb":"/storage/thumbs/78/d458e37754f257bbdaa7e616.jpg","is_video":false},{"id":12478,"share_token":"ccc0a460","thumb":"/storage/thumbs/78/24e829fd021b76abe33b08f6.jpg","is_video":true},{"id":12477,"share_token":"022976c0","thumb":"/storage/thumbs/78/54d34209267914bb55d1ba8b.jpg","is_video":false},{"id":12476,"share_token":"be3d2235","thumb":"/storage/thumbs/78/4d264bd70493ce86d9be04b6.jpg","is_video":true},{"id":12475,"share_token":"95a0b783","thumb":"/storage/thumbs/78/0da73a9dab97c7cce6888e3a.jpg","is_video":false},{"id":12474,"share_token":"4a228a01","thumb":"/storage/thumbs/78/7c11f248d044297ca4c5e37f.jpg","is_video":true},{"id":12473,"share_token":"1586f49e","thumb":"/storage/thumbs/78/e1d92bf05dc033b3572a3498.jpg","is_video":false},{"id":12472,"share_token":"b9885ef1","thumb":"/storage/thumbs/78/f88d052295164ef7c55dd45a.jpg","is_video":true},{"id":12471,"share_token":"8abe545a","thumb":"/storage/thumbs/78/c40ecb1da8610b4cd3877714.jpg","is_video":false},{"id":12470,"share_token":"ec6e50d3","thumb":"/storage/thumbs/78/3b762eb7678f9423afdfd39a.jpg","is_video":true},{"id":12469,"share_token":"160b4703","thumb":"/storage/thumbs/78/9bc7a876dddffc155b9f5e81.jpg","is_video":false},{"id":12468,"share_token":"1ecde8e4","thumb":"/storage/thumbs/78/0bd7599346a515befc95a467.jpg","is_video":true},{"id":12467,"share_token":"d8eebe76","thumb":"/storage/thumbs/78/f8a1646f18f69056ce2eeccf.jpg","is_video":false},{"id":12466,"share_token":"0376cf73","thumb":"/storage/thumbs/78/0de55c0093520e26da2fb12e.jpg","is_video":true},{"id":12465,"share_token":"6cba3615","thumb":"/storage/thumbs/78/12d31e4d08c62a31194681e7.jpg","is_video":false},{"id":12464,"share_token":"3564ff54","thumb":"/storage/thumbs/78/63cffacbd80fb470b0de3c3c.jpg","is_video":true},{"id":12463,"share_token":"59f15338","thumb":"/storage/thumbs/78/01ae2eeaba26192d4d3cff96.jpg","is_video":false},{"id":12462,"share_token":"b0602da8","thumb":"/storage/thumbs/78/9a6978c2c2403d3d5262f5b4.jpg","is_video":true},{"id":12461,"share_token":"972c4be3","thumb":"/storage/thumbs/78/825e5bc5c5f8c0ed643f7d06.jpg","is_video":false},{"id":12460,"share_token":"f8841250","thumb":"/storage/thumbs/78/8cd3d1c48f1f17b570613092.jpg","is_video":true},{"id":12459,"share_token":"332de2a6","thumb":"/storage/thumbs/78/fdd02534be64eccfa710dc8b.jpg","is_video":false},{"id":12458,"share_token":"3b7bec87","thumb":"/storage/thumbs/78/6abda22c47df1a3c38758215.jpg","is_video":true},{"id":12457,"share_token":"c485e8b9","thumb":"/storage/thumbs/78/132bc694ce544ae7ab749853.jpg","is_video":false},{"id":12456,"share_token":"2daf8d7d","thumb":"/storage/thumbs/78/fc8a8f558b6b0670a7b3dd61.jpg","is_video":true},{"id":12455,"share_token":"b8de9e11","thumb":"/storage/thumbs/78/5706d25af57b4949db245c3d.jpg","is_video":false},{"id":12454,"share_token":"9570f0e6","thumb":"/storage/thumbs/78/8e273ab898de77732953ab99.jpg","is_video":true},{"id":12453,"share_token":"3b3d6eba","thumb":"/storage/thumbs/78/b0211a28b7ca3dc89760e6d9.jpg","is_video":false},{"id":12452,"share_token":"e12b5243","thumb":"/storage/thumbs/78/f62f2ff80e137167d9186b18.jpg","is_video":true},{"id":12451,"share_token":"4256bff6","thumb":"/storage/thumbs/78/0992dbf3b0ce6b6335b69bed.jpg","is_video":false},{"id":12450,"share_token":"e4645724","thumb":"/storage/thumbs/78/63660ad4d9ab0943fe5942cc.jpg","is_video":true},{"id":12449,"share_token":"c10a1b97","thumb":"/storage/thumbs/78/9d94c302b92c5082d7b84c77.jpg","is_video":false},{"id":12448,"share_token":"0c720f6f","thumb":"/storage/thumbs/78/9582d31401690e65f6834cd7.jpg","is_video":true},{"id":12447,"share_token":"41e4fe27","thumb":"/storage/thumbs/78/db1e02d54a7ef87ae124aa91.jpg","is_video":false},{"id":12446,"share_token":"4ba26a0c","thumb":"/storage/thumbs/78/e2540bf80c1e68c60bbe10aa.jpg","is_video":true},{"id":12445,"share_token":"06c54115","thumb":"/storage/thumbs/78/01cf0bb4e222692738ebd57f.jpg","is_video":false},{"id":12444,"share_token":"93cbc4dc","thumb":"/storage/thumbs/78/5dd08dcd5040e56cfb514cf6.jpg","is_video":true},{"id":12443,"share_token":"99435fcb","thumb":"/storage/thumbs/78/082b55c18a2665c153448a72.jpg","is_video":false},{"id":12442,"share_token":"d1fd8fc4","thumb":"/storage/thumbs/78/2a829d529d8f0247ae041ed8.jpg","is_video":true},{"id":12441,"share_token":"407b4cc7","thumb":"/storage/thumbs/78/20e5e89454e131fc3b185840.jpg","is_video":false},{"id":12440,"share_token":"568ab0a3","thumb":"/storage/thumbs/78/c630cf5c15efe779cd3d6a34.jpg","is_video":true},{"id":12439,"share_token":"a4c1b62c","thumb":"/storage/thumbs/78/d6d03b8dc64db743e56c84fe.jpg","is_video":false},{"id":12438,"share_token":"81179b78","thumb":"/storage/thumbs/78/1dcd71b38d75ec205677a2ec.jpg","is_video":true},{"id":12437,"share_token":"13371be4","thumb":"/storage/thumbs/78/1300eee067b38b4467ab7110.jpg","is_video":false},{"id":12436,"share_token":"930ee014","thumb":"/storage/thumbs/78/799a012f8f23dc87b68d5ffb.jpg","is_video":true},{"id":12435,"share_token":"c7928205","thumb":"/storage/thumbs/78/4ce78b6220ca32ddda924454.jpg","is_video":false},{"id":12434,"share_token":"72eeec0d","thumb":"/storage/thumbs/78/e40ce5e0e8548f9d95a50a9e.jpg","is_video":true},{"id":12433,"share_token":"53a202f8","thumb":"/storage/thumbs/78/ad07556100a47c16a157341c.jpg","is_video":false},{"id":12432,"share_token":"88d0d78d","thumb":"/storage/thumbs/78/f66dbd6945ed320593265e3d.jpg","is_video":true},{"id":12431,"share_token":"337b1faa","thumb":"/storage/thumbs/78/2310afa5e8de3e3fb741d508.jpg","is_video":false},{"id":12430,"share_token":"c5830c84","thumb":"/storage/thumbs/78/d9d68f7764358feac38b2504.jpg","is_video":true},{"id":12429,"share_token":"a7b96b57","thumb":"/storage/thumbs/78/e32cd1f071c31741c034526e.jpg","is_video":false},{"id":12428,"share_token":"1560598c","thumb":"/storage/thumbs/78/4f1c08ca2613ae3cde5f3337.jpg","is_video":true},{"id":12427,"share_token":"5a659063","thumb":"/storage/thumbs/78/a533638f0deb226e2b8644a7.jpg","is_video":false},{"id":12426,"share_token":"12a443cf","thumb":"/storage/thumbs/78/d4213e730ade9e26ab183a6e.jpg","is_video":true},{"id":12425,"share_token":"4ef32962","thumb":"/storage/thumbs/78/7cb49d5064d018ae9ee294db.jpg","is_video":false},{"id":12424,"share_token":"71891b7a","thumb":"/storage/thumbs/78/1382bd6fd5721057006711ab.jpg","is_video":true},{"id":12423,"share_token":"0ce93d97","thumb":"/storage/thumbs/78/0e1a7d584565a2703dad9a7b.jpg","is_video":false}];
     const GLOBAL_CONFIG = {
       GAS_API_URL: "https://script.google.com/macros/s/AKfycbzGgpibRzZboG9vNrTyxzko5mGkW6LfabNYfBxm2v6c-gO9O_iKLqMocxCZ5GVdiM1l/exec",
       EVENT_NAME: "Wilson & Felicia",
@@ -238,7 +270,9 @@
     }
 
     let touchStartX = 0;
+    let touchStartY = 0;
     let touchEndX = 0;
+    let touchEndY = 0;
 
     document.addEventListener("DOMContentLoaded", function() {
       setupTouchSwipe();
@@ -355,6 +389,14 @@
               } catch(eCats) {}
             }
 
+            if (sheetMap.ADMIN_USERNAME) {
+              state.activeConfig.ADMIN_USERNAME = sheetMap.ADMIN_USERNAME;
+              state.adminUsername = sheetMap.ADMIN_USERNAME;
+            }
+            if (sheetMap.ADMIN_PIN) {
+              state.activeConfig.ADMIN_PIN = sheetMap.ADMIN_PIN;
+              state.adminPin = sheetMap.ADMIN_PIN;
+            }
             if (sheetMap.EVENT_DATE) state.activeConfig.EVENT_DATE = sheetMap.EVENT_DATE;
             if (sheetMap.EVENT_VENUE) state.activeConfig.EVENT_VENUE = sheetMap.EVENT_VENUE;
             if (sheetMap.EVENT_NAME || sheetMap.COUPLE_NAME) {
@@ -928,6 +970,10 @@
         fetchGooglePhotos(cat, targetUrl, function(photos) {
           updateCategoryPillCount(cat, photos.length);
         });
+      } else if (targetUrl && (targetUrl.includes("kingphotobooth.co") || targetUrl.includes("kingphoto"))) {
+        fetchKingPhotoboothPhotos(cat, targetUrl, function(photos) {
+          updateCategoryPillCount(cat, photos.length);
+        });
       } else if (targetUrl && targetUrl.includes("fotoshare.co")) {
         fetchFotosharePhotos(cat, targetUrl, function(photos) {
           updateCategoryPillCount(cat, photos.length);
@@ -1006,6 +1052,94 @@
         });
     }
 
+    
+    function buildKingPhotoList(rawList, cat, targetUrl) {
+      const origin = (targetUrl && targetUrl.startsWith("http")) 
+        ? new URL(targetUrl).origin 
+        : "https://x1.kingphotobooth.co";
+
+      return (rawList || []).map(function(it, idx) {
+        const isVideo = Boolean(it.is_video);
+        const thumbUrl = it.thumb ? (origin + it.thumb) : "";
+        let photoUrl = "";
+        let videoUrl = "";
+        let downloadUrl = "";
+
+        if (it.thumb) {
+          if (isVideo) {
+            videoUrl = origin + it.thumb.replace("/storage/thumbs/", "/storage/photos/").replace(/\.jpg$/i, ".mp4");
+            photoUrl = videoUrl;
+            downloadUrl = origin + "/dl/" + it.id + ".mp4";
+          } else {
+            photoUrl = origin + it.thumb.replace("/storage/thumbs/", "/storage/photos/");
+            downloadUrl = origin + "/dl/" + it.id + ".jpg";
+          }
+        }
+
+        return {
+          id: "king_" + it.id,
+          name: isVideo ? ("Video Photobooth #" + (rawList.length - idx)) : ("Photobooth #" + (rawList.length - idx)),
+          category: cat || "Photobooth",
+          thumbnailUrl: thumbUrl,
+          previewUrl: photoUrl,
+          highResUrl: photoUrl,
+          downloadUrl: downloadUrl,
+          videoUrl: videoUrl,
+          isVideo: isVideo,
+          isKing: true,
+          shareToken: it.share_token,
+          originalWebUrl: origin + "/i/" + (it.share_token || it.id)
+        };
+      });
+    }
+
+    function fetchKingPhotoboothPhotos(cat, url, callback) {
+      if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
+      if (state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0) {
+        if (callback) callback(state.categoryPhotosMap[cat]);
+        return;
+      }
+
+      function fallbackKing() {
+        if (typeof KING_PHOTOBOOTH_INITIAL_CACHE !== 'undefined' && Array.isArray(KING_PHOTOBOOTH_INITIAL_CACHE) && KING_PHOTOBOOTH_INITIAL_CACHE.length > 0) {
+          const list = buildKingPhotoList(KING_PHOTOBOOTH_INITIAL_CACHE, cat, url);
+          state.categoryPhotosMap[cat] = list;
+          if (callback) callback(list);
+        } else {
+          state.categoryPhotosMap[cat] = [];
+          if (callback) callback([]);
+        }
+      }
+
+      // 1. Coba lewat API endpoint /api/kingphotobooth (Vercel)
+      fetch("/api/kingphotobooth?url=" + encodeURIComponent(url) + "&category=" + encodeURIComponent(cat))
+        .then(function(res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.json();
+        })
+        .then(function(data) {
+          if (data && data.success && Array.isArray(data.photos) && data.photos.length > 0) {
+            state.categoryPhotosMap[cat] = data.photos;
+            if (callback) callback(data.photos);
+            return;
+          }
+          throw new Error("No photos from Kingphotobooth API");
+        })
+        .catch(function() {
+          // 2. Coba lewat GAS backend getCategoryPhotos
+          callBackend("getCategoryPhotos", { url: url, category: cat }, function(res) {
+            if (res && res.success && Array.isArray(res.photos) && res.photos.length > 0) {
+              state.categoryPhotosMap[cat] = res.photos;
+              if (callback) callback(res.photos);
+              return;
+            }
+            fallbackKing();
+          }, function() {
+            fallbackKing();
+          });
+        });
+    }
+  
     function fetchFotosharePhotos(cat, url, callback) {
       if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
       if (state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0) {
@@ -1218,6 +1352,27 @@
         return;
       }
 
+      // 3b. Jika tautan eksternal kingphotobooth
+      if (targetUrl && (targetUrl.includes("kingphotobooth.co") || targetUrl.includes("kingphoto"))) {
+        const grid = document.getElementById("photosGrid");
+        if (grid) {
+          grid.innerHTML = `
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          `;
+        }
+        fetchKingPhotoboothPhotos(category, targetUrl, function(photos) {
+          updateCategoryPillCount(category, photos.length);
+          if (state.activeCategory === category) {
+            state.filteredPhotos = photos;
+            renderPhotoGrid(targetUrl, category);
+          }
+        });
+        return;
+      }
+
       // 3. Jika tautan eksternal fotoshare
       if (targetUrl && targetUrl.includes("fotoshare.co")) {
         const grid = document.getElementById("photosGrid");
@@ -1324,8 +1479,16 @@
           ? `<span class="photo-badge" style="background: rgba(180, 83, 9, 0.85);">${escapeHtml(photo.category || activeCat)}</span>`
           : `<span class="photo-badge">${escapeHtml(photo.category || activeCat)}</span>`;
 
+        const videoBadgeHtml = photo.isVideo ? `
+          <div class="video-card-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <span>Video</span>
+          </div>
+        ` : '';
+
         card.innerHTML = `
           ${newBadgeHtml}
+          ${videoBadgeHtml}
           <img class="photo-img" 
                src="${photo.thumbnailUrl}" 
                alt="${escapeHtml(photo.name)}" 
@@ -2148,7 +2311,12 @@
       const subEl = document.getElementById("shareEventSubtitle");
       if (subEl) {
         const formattedDate = formatDayDateIndonesian(state.activeConfig.EVENT_DATE || "16 November 2026");
-        subEl.innerText = formattedDate + (state.activeConfig.EVENT_VENUE ? (" • " + state.activeConfig.EVENT_VENUE) : "");
+        const venue = (state.activeConfig.EVENT_VENUE || "").trim();
+        if (venue) {
+          subEl.innerHTML = '<div style="font-weight: 600; color: var(--gold-dark);">' + escapeHtml(formattedDate) + '</div><div style="font-size: 0.78rem; opacity: 0.88; margin-top: 4px; color: var(--text-main);">' + escapeHtml(venue) + '</div>';
+        } else {
+          subEl.innerText = formattedDate;
+        }
       }
 
       // Bentuk URL lengkap event aktif
@@ -2695,6 +2863,7 @@
         DRIVE_FOLDER_ID: driveFolderInput,
         FRAME_IMAGE_URL: frameUrlInput,
         GAS_API_URL: newApiUrl,
+        ADMIN_USERNAME: (state.currentAdminUser ? state.currentAdminUser.username : state.adminUsername) || "admin",
         NEW_PIN: newPinInput
       };
 
@@ -3270,8 +3439,193 @@
     }
 
     /* ==========================================================================
-       LIGHTBOX LOGIC
+       LIGHTBOX LOGIC: SHARP RESOLUTION & INTERACTIVE ZOOM ENGINE
        ========================================================================== */
+    function getSharpPreviewUrl(photo) {
+      if (!photo) return "";
+      // 1. Jika video kingphotobooth
+      if (photo.isVideo && photo.videoUrl) return photo.videoUrl;
+      // 2. Jika foto kingphotobooth
+      if (photo.isKing && photo.previewUrl) return photo.previewUrl;
+
+      // 3. Jika Google Drive file ID: gunakan lh3 w3200 resolusi penuh tanpa kompresi buram
+      const raw = photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || photo.id || "";
+      const match = String(raw).match(/\/d\/([a-zA-Z0-9_\-]+)/) || 
+                    String(raw).match(/id=([a-zA-Z0-9_\-]+)/) || 
+                    (photo.id && /^[a-zA-Z0-9_\-]{20,}$/.test(photo.id) ? [null, photo.id] : null);
+      if (match && match[1]) {
+        return "https://lh3.googleusercontent.com/d/" + match[1] + "=w3200";
+      }
+
+      // 4. Jika Google Photos: gunakan w3200 resolusi tajam
+      if (photo.previewUrl && photo.previewUrl.includes("googleusercontent.com/pw/")) {
+        const base = photo.previewUrl.replace(/=[^/]*$/, "");
+        return base + "=w3200";
+      }
+
+      return photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || "";
+    }
+
+    const lightboxZoom = {
+      scale: 1,
+      minScale: 1,
+      maxScale: 4,
+      panX: 0,
+      panY: 0,
+      isDragging: false,
+      startX: 0,
+      startY: 0,
+      lastTapTime: 0,
+      eventsInitialized: false
+    };
+
+    function resetLightboxZoom() {
+      lightboxZoom.scale = 1;
+      lightboxZoom.panX = 0;
+      lightboxZoom.panY = 0;
+      lightboxZoom.isDragging = false;
+      applyLightboxZoom();
+    }
+
+    function zoomLightbox(delta) {
+      const newScale = Math.min(lightboxZoom.maxScale, Math.max(lightboxZoom.minScale, lightboxZoom.scale + delta));
+      lightboxZoom.scale = Math.round(newScale * 10) / 10;
+      if (lightboxZoom.scale <= 1) {
+        lightboxZoom.scale = 1;
+        lightboxZoom.panX = 0;
+        lightboxZoom.panY = 0;
+      }
+      applyLightboxZoom();
+    }
+
+    function applyLightboxZoom() {
+      const img = document.getElementById("lightboxImg");
+      const wrapper = document.getElementById("lightboxImgWrapper");
+      const textEl = document.getElementById("lightboxZoomLevelText");
+
+      if (textEl) {
+        textEl.innerText = Math.round(lightboxZoom.scale * 100) + "%";
+      }
+
+      if (wrapper) {
+        if (lightboxZoom.scale > 1.05) {
+          wrapper.classList.add("is-zoomed");
+          if (lightboxZoom.isDragging) wrapper.classList.add("is-dragging");
+          else wrapper.classList.remove("is-dragging");
+        } else {
+          wrapper.classList.remove("is-zoomed", "is-dragging");
+        }
+      }
+
+      if (img) {
+        if (lightboxZoom.scale <= 1) {
+          img.style.transform = "none";
+        } else {
+          img.style.transform = "translate(" + lightboxZoom.panX + "px, " + lightboxZoom.panY + "px) scale(" + lightboxZoom.scale + ")";
+        }
+      }
+    }
+
+    function initLightboxZoomEvents() {
+      if (lightboxZoom.eventsInitialized) return;
+      const wrapper = document.getElementById("lightboxImgWrapper");
+      if (!wrapper) return;
+      lightboxZoom.eventsInitialized = true;
+
+      // Mouse Wheel Zoom
+      wrapper.addEventListener("wheel", function(e) {
+        const vid = document.getElementById("lightboxVideo");
+        if (vid && vid.style.display !== "none") return;
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 0.35 : -0.35;
+        zoomLightbox(delta);
+      }, { passive: false });
+
+      // Double Click Zoom
+      wrapper.addEventListener("dblclick", function(e) {
+        const vid = document.getElementById("lightboxVideo");
+        if (vid && vid.style.display !== "none") return;
+        e.preventDefault();
+        if (lightboxZoom.scale > 1.05) {
+          resetLightboxZoom();
+        } else {
+          lightboxZoom.scale = 2.5;
+          lightboxZoom.panX = 0;
+          lightboxZoom.panY = 0;
+          applyLightboxZoom();
+        }
+      });
+
+      // Mouse Drag Pan
+      wrapper.addEventListener("mousedown", function(e) {
+        if (lightboxZoom.scale <= 1.05) return;
+        e.preventDefault();
+        lightboxZoom.isDragging = true;
+        lightboxZoom.startX = e.clientX - lightboxZoom.panX;
+        lightboxZoom.startY = e.clientY - lightboxZoom.panY;
+        applyLightboxZoom();
+      });
+
+      window.addEventListener("mousemove", function(e) {
+        if (!lightboxZoom.isDragging) return;
+        lightboxZoom.panX = e.clientX - lightboxZoom.startX;
+        lightboxZoom.panY = e.clientY - lightboxZoom.startY;
+        applyLightboxZoom();
+      });
+
+      window.addEventListener("mouseup", function() {
+        if (lightboxZoom.isDragging) {
+          lightboxZoom.isDragging = false;
+          applyLightboxZoom();
+        }
+      });
+
+      // Touch Double Tap & Pan
+      wrapper.addEventListener("touchstart", function(e) {
+        const vid = document.getElementById("lightboxVideo");
+        if (vid && vid.style.display !== "none") return;
+        const now = Date.now();
+        if (e.touches.length === 1) {
+          if (now - lightboxZoom.lastTapTime < 320) {
+            e.preventDefault();
+            if (lightboxZoom.scale > 1.05) {
+              resetLightboxZoom();
+            } else {
+              lightboxZoom.scale = 2.5;
+              lightboxZoom.panX = 0;
+              lightboxZoom.panY = 0;
+              applyLightboxZoom();
+            }
+            lightboxZoom.lastTapTime = 0;
+            return;
+          }
+          lightboxZoom.lastTapTime = now;
+
+          if (lightboxZoom.scale > 1.05) {
+            lightboxZoom.isDragging = true;
+            lightboxZoom.startX = e.touches[0].clientX - lightboxZoom.panX;
+            lightboxZoom.startY = e.touches[0].clientY - lightboxZoom.panY;
+          }
+        }
+      }, { passive: false });
+
+      wrapper.addEventListener("touchmove", function(e) {
+        if (lightboxZoom.isDragging && e.touches.length === 1 && lightboxZoom.scale > 1.05) {
+          e.preventDefault();
+          lightboxZoom.panX = e.touches[0].clientX - lightboxZoom.startX;
+          lightboxZoom.panY = e.touches[0].clientY - lightboxZoom.startY;
+          applyLightboxZoom();
+        }
+      }, { passive: false });
+
+      wrapper.addEventListener("touchend", function() {
+        if (lightboxZoom.isDragging) {
+          lightboxZoom.isDragging = false;
+          applyLightboxZoom();
+        }
+      });
+    }
+
     function openLightbox(index) {
       if (!state.filteredPhotos[index]) return;
       state.currentLightboxIndex = index;
@@ -3280,6 +3634,8 @@
       modal.classList.add("active");
       document.body.style.overflow = "hidden";
 
+      initLightboxZoomEvents();
+      resetLightboxZoom();
       resetDownloadButton();
       updateLightboxContent();
     }
@@ -3288,6 +3644,14 @@
       const modal = document.getElementById("lightbox");
       modal.classList.remove("active");
       document.body.style.overflow = "";
+
+      const vid = document.getElementById("lightboxVideo");
+      if (vid) {
+        vid.pause();
+        vid.src = "";
+        vid.style.display = "none";
+      }
+      resetLightboxZoom();
       resetDownloadButton();
     }
 
@@ -3299,6 +3663,7 @@
         newIndex = 0;
       }
       state.currentLightboxIndex = newIndex;
+      resetLightboxZoom();
       updateLightboxContent();
     }
 
@@ -3310,44 +3675,75 @@
         `FOTO ${state.currentLightboxIndex + 1} DARI ${state.filteredPhotos.length}`;
       document.getElementById("lightboxTitle").innerText = photo.name;
       
+      const sharpUrl = getSharpPreviewUrl(photo);
       const img = document.getElementById("lightboxImg");
-      img.src = photo.highResUrl || photo.previewUrl || photo.thumbnailUrl;
-      resetDownloadButton();
-
-      // Khusus kategori Photobooth: Unduh foto dari sumber asli tanpa kompresi dan tanpa bingkai!
-      const isPhotobooth = photo && (
-        (photo.category && photo.category.toLowerCase().includes("photobooth")) ||
-        (state.activeCategory && state.activeCategory.toLowerCase().includes("photobooth"))
-      );
-
-      const btn = document.getElementById("btnDownloadFramed");
+      const video = document.getElementById("lightboxVideo");
+      const zoomToolbar = document.getElementById("lightboxZoomToolbar");
+      const btn = document.getElementById("lightboxDownloadBtn");
       const btnLabel = document.getElementById("downloadBtnLabel");
 
-      if (isPhotobooth) {
-        if (btnLabel) btnLabel.innerText = "⬇️ Unduh Foto Asli Photobooth";
+      resetLightboxZoom();
+      resetDownloadButton();
+
+      if (photo.isVideo) {
+        if (img) img.style.display = "none";
+        if (zoomToolbar) zoomToolbar.style.display = "none";
+        if (video) {
+          video.style.display = "block";
+          video.src = photo.videoUrl || photo.previewUrl || sharpUrl;
+          video.play().catch(function(){});
+        }
+        if (btnLabel) btnLabel.innerText = "⬇️ Unduh Video Asli Photobooth";
         if (btn) {
           btn.onclick = function() {
             downloadPhotoboothOriginal(photo);
           };
         }
       } else {
-        if (btnLabel) btnLabel.innerText = "✨ Simpan Kenangan Berbingkai";
-        if (btn) {
-          btn.onclick = function() {
-            downloadCurrentPhotoWithFrame();
-          };
+        if (video) {
+          video.pause();
+          video.style.display = "none";
+          video.src = "";
+        }
+        if (img) {
+          img.style.display = "block";
+          img.src = sharpUrl;
+        }
+        if (zoomToolbar) zoomToolbar.style.display = "inline-flex";
+
+        const isPhotobooth = photo && (
+          (photo.category && photo.category.toLowerCase().includes("photobooth")) ||
+          (state.activeCategory && state.activeCategory.toLowerCase().includes("photobooth"))
+        );
+
+        if (isPhotobooth) {
+          if (btnLabel) btnLabel.innerText = "⬇️ Unduh Foto Asli Photobooth";
+          if (btn) {
+            btn.onclick = function() {
+              downloadPhotoboothOriginal(photo);
+            };
+          }
+        } else {
+          // Semua kategori momen lainnya mengikuti settingan kategori utama (berbingkai)
+          if (btnLabel) btnLabel.innerText = "✨ Simpan Kenangan Berbingkai";
+          if (btn) {
+            btn.onclick = function() {
+              downloadCurrentPhotoWithFrame();
+            };
+          }
         }
       }
     }
 
     function downloadPhotoboothOriginal(photo) {
       if (!photo) return;
-      const downloadUrl = photo.downloadUrl || photo.img || photo.previewUrl || photo.thumbnailUrl;
-      const fileName = (photo.name || "Photobooth") + ".jpg";
+      const isVideo = Boolean(photo.isVideo);
+      const downloadUrl = photo.downloadUrl || photo.videoUrl || photo.img || photo.previewUrl || photo.thumbnailUrl;
+      const ext = isVideo ? ".mp4" : ".jpg";
+      const fileName = (photo.name || (isVideo ? "Video_Photobooth" : "Photobooth")).replace(/[\/\\]/g, "_") + ext;
 
-      showToast("📸 Mengunduh foto asli Photobooth kualitas penuh...");
+      showToast(isVideo ? "🎬 Mengunduh video asli Photobooth..." : "📸 Mengunduh foto asli Photobooth kualitas penuh...");
 
-      // Mengunduh langsung file resolusi asli dari CDN tanpa kompresi dan tanpa bingkai
       fetch(downloadUrl)
         .then(function(res) {
           if (!res.ok) throw new Error("HTTP " + res.status);
@@ -3361,10 +3757,13 @@
           document.body.appendChild(a);
           a.click();
           a.remove();
-          setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 3000);
-          showToast("✓ Foto asli Photobooth berhasil disimpan ke perangkat!");
+          setTimeout(function() {
+            URL.revokeObjectURL(blobUrl);
+          }, 10000);
+          showToast(isVideo ? "✓ Video asli Photobooth berhasil diunduh!" : "✓ Foto asli Photobooth berhasil disimpan ke perangkat!");
         })
         .catch(function(err) {
+          console.warn("Gagal mengunduh blob Photobooth, beralih ke tautan langsung:", err);
           const a = document.createElement("a");
           a.href = downloadUrl;
           a.target = "_blank";
@@ -3538,20 +3937,44 @@
 
     function setupTouchSwipe() {
       const lightboxBody = document.getElementById("lightboxBody");
+      if (!lightboxBody) return;
+
       lightboxBody.addEventListener("touchstart", function(e) {
-        touchStartX = e.changedTouches[0].screenX;
+        if (e.changedTouches && e.changedTouches.length > 0) {
+          touchStartX = e.changedTouches[0].clientX || e.changedTouches[0].screenX;
+          touchStartY = e.changedTouches[0].clientY || e.changedTouches[0].screenY;
+        }
       }, { passive: true });
 
       lightboxBody.addEventListener("touchend", function(e) {
-        touchEndX = e.changedTouches[0].screenX;
-        handleSwipeGesture();
+        if (e.changedTouches && e.changedTouches.length > 0) {
+          touchEndX = e.changedTouches[0].clientX || e.changedTouches[0].screenX;
+          touchEndY = e.changedTouches[0].clientY || e.changedTouches[0].screenY;
+          handleSwipeGesture();
+        }
       }, { passive: true });
     }
 
     function handleSwipeGesture() {
-      const diff = touchEndX - touchStartX;
-      if (Math.abs(diff) > 45) {
-        if (diff < 0) {
+      // Jika sedang zoom aktif (> 1), jangan pindah foto via swipe agar user bebas panning
+      if (typeof lightboxZoom !== 'undefined' && lightboxZoom.scale > 1.05) {
+        return;
+      }
+
+      const diffX = touchEndX - touchStartX;
+      const diffY = touchEndY - touchStartY;
+      const absX = Math.abs(diffX);
+      const absY = Math.abs(diffY);
+
+      // Proteksi Ketat Swipe Up / Down:
+      // Jika gerakan dominan vertikal (swipe up/down) atau ada pergerakan vertikal signifikan, JANGAN PINDAH FOTO!
+      if (absY >= absX || absY > 50) {
+        return;
+      }
+
+      // Hanya pindahkan foto jika murni swipe horizontal yang jelas (minimal 65px dan rasio absX > 2 * absY)
+      if (absX >= 65 && absX > 2 * absY) {
+        if (diffX < 0) {
           navigateLightbox(1);
         } else {
           navigateLightbox(-1);

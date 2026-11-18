@@ -183,6 +183,7 @@ function setupTargetSpreadsheetDatabase() {
     ["WELCOME_MESSAGE", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.WELCOME_MESSAGE) ? WEDDING_CONFIG.WELCOME_MESSAGE : "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.", "Pesan Sambutan Hangat untuk Tamu"],
     ["DRIVE_FOLDER_ID", "", "ID / Tautan Folder Google Drive (Opsional / Tidak Wajib)"],
     ["FRAME_IMAGE_URL", "", "Tautan / ID File Bingkai PNG Transparan Saat Download"],
+    ["ADMIN_USERNAME", "admin", "Nama Pengguna (Username) Akses Masuk Panel Admin Web"],
     ["ADMIN_PIN", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.DEFAULT_ADMIN_PIN) ? WEDDING_CONFIG.DEFAULT_ADMIN_PIN : "123456", "PIN Akses Masuk Panel Admin Web"],
     ["SLIDESHOW_INTERVAL_SEC", "4", "Durasi Perpindahan Foto Slideshow (detik)"],
     ["AUTO_REFRESH_INTERVAL_SEC", "25", "Interval Live Auto-Sync Foto (detik)"],

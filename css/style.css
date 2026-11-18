@@ -294,8 +294,9 @@
       line-height: 1.6;
     }
 
-    /* Layout 1: Romantic Collage */
-    .cover-collage-layout {
+    /* Layout 1: Romantic Collage Responsive */
+    @media (max-width: 768px) {
+      .cover-collage-layout {
         grid-template-columns: 1fr;
         gap: 12px;
       }
@@ -687,13 +688,72 @@
       overflow: hidden;
     }
 
+    /* Lightbox Zoom Controls & Toolbar */
+    .lightbox-zoom-toolbar {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1.5px solid rgba(197, 168, 128, 0.4);
+      padding: 3px 6px;
+      border-radius: 9999px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .lightbox-zoom-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: #334155;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .lightbox-zoom-btn:hover {
+      background: #F1F5F9;
+      color: var(--gold-dark);
+      transform: scale(1.08);
+    }
+
+    .lightbox-zoom-btn.reset {
+      width: auto;
+      min-width: 44px;
+      padding: 0 8px;
+      border-radius: 9999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--gold-dark);
+    }
+
+    .lightbox-zoom-btn.reset:hover {
+      background: rgba(197, 168, 128, 0.15);
+    }
+
     .lightbox-img-wrapper {
+      position: relative;
       max-width: 90vw;
       max-height: 75vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.25s ease;
+      overflow: hidden;
+      cursor: zoom-in;
+      touch-action: none;
+    }
+
+    .lightbox-img-wrapper.is-zoomed {
+      cursor: grab;
+    }
+
+    .lightbox-img-wrapper.is-dragging {
+      cursor: grabbing;
     }
 
     .lightbox-img {
@@ -703,6 +763,40 @@
       border-radius: 8px;
       box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.06);
       user-select: none;
+      -webkit-user-drag: none;
+      transition: transform 0.15s ease-out;
+      transform-origin: center center;
+      image-rendering: -webkit-optimize-contrast;
+    }
+
+    .lightbox-video {
+      max-width: 90vw;
+      max-height: 75vh;
+      border-radius: 12px;
+      box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.08);
+      outline: none;
+      background: #000;
+    }
+
+    .video-card-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      color: #FFFFFF;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.2);
+      z-index: 4;
+      pointer-events: none;
     }
 
     .lightbox-nav-btn {
@@ -890,8 +984,8 @@
 
     .admin-card {
       background: #FFFFFF;
-      width: 94%;
-      max-width: 600px;
+      width: 95%;
+      max-width: 680px;
       box-sizing: border-box;
       border-radius: 20px;
       box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
@@ -976,26 +1070,27 @@
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      background: #F1F5F9;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
       padding: 6px;
-      border-radius: 12px;
+      border-radius: 14px;
       margin-bottom: 20px;
     }
 
     .admin-tab-btn {
-      flex: 1 1 calc(33.333% - 6px);
-      min-width: 105px;
+      flex: 1 1 auto;
+      min-width: 100px;
       white-space: nowrap;
-      padding: 8px 10px;
-      border-radius: 9px;
-      font-size: 0.8rem;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: 0.82rem;
       font-weight: 600;
       color: #64748B;
       background: transparent;
-      border: none;
+      border: 1px solid transparent;
       cursor: pointer;
       transition: all 0.2s ease;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
@@ -1003,13 +1098,14 @@
 
     .admin-tab-btn:hover {
       color: var(--text-main);
-      background: rgba(255, 255, 255, 0.5);
+      background: rgba(255, 255, 255, 0.7);
     }
 
     .admin-tab-btn.active {
       background: #FFFFFF;
       color: var(--gold-dark);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      border-color: rgba(197, 168, 128, 0.35);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
     }
 
     .admin-tab-pane {

@@ -1,31 +1,42 @@
-# RENCANA REVISI & CATATAN RILIS SISTEM: v3.5.0
+# RENCANA REVISI & CATATAN RILIS SISTEM: v3.6.0
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v3.5.0)
+STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v3.6.0)
 TANGGAL PENGAJUAN: 18 November 2026
-VERIFIKASI SISTEM: BERHASIL 100% (Sinkronisasi Live Kategori Multi-Device Terpusat, Username Admin Kosong Saat Login, Redesain Share QR Tanpa Jam & Tanggal Nama Hari Bersama Logo Share, Dukungan Penuh Google Photos Album untuk Photobooth, Isolasi Ketat Target Link Tiap Kategori Tanpa Mengambil Foto Kategori Lain)
+VERIFIKASI SISTEM: BERHASIL 100% (Resolusi Tajam & Lightbox Zoom Interaktif Semua Kategori, Proteksi Swipe Up/Down Photobooth, Pemisah Baris Tanggal & Venue Share QR, Redesain Modern Tata Letak Menu Admin, Penambahan Parameter ADMIN_USERNAME di Google Spreadsheet, Warisan Konfigurasi Galeri Utama untuk Kategori Momen Lainnya, Sinkronisasi Folder Kategori Google Drive, Dukungan Vendor Spesial Kingphotobooth dengan Pemutar Video MP4 & Unduh Video Asli)
 
-### Rangkuman 6 Pembaruan Utama v3.5.0:
-1. **Sinkronisasi Live Kategori Multi-Device Terpusat:**
-   - **Akar Masalah:** Sebelumnya `syncFromSpreadsheetGViz` dilewati saat `GAS_API_URL` terisi, dan GAS script yang ter-deploy tidak mengembalikan kolom kategori terkini sehingga tiap device terjebak pada `localStorage` masing-masing atau file konfigurasi lama.
-   - **Tindakan:** `syncFromSpreadsheetGViz` kini selalu berjalan secara live membaca Google Spreadsheet (Google Visualization API) pada saat pembukaan halaman maupun pada auto-refresh 25 detik. Berkas [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/config.json) telah diselaraskan dengan kategori live terkini: `Photobooth` (Google Photos) dan `Wedding` (Google Drive).
-   - **Hasil:** Seluruh device (PC, smartphone tamu, tablet) kini melihat daftar kategori yang 100% konsisten dan tersinkronisasi otomatis seketika saat admin menambah atau mengubah kategori.
-2. **Perbaikan Tampilan Login Admin (Username Bersih Tanpa Pre-fill):**
-   - **Tindakan:** Menghapus atribut `value="admin"` dari input username di [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) dan menambahkan instruksi pembersihan input `uInp.value = ""` saat `openAdminModal()` dipanggil.
-   - **Hasil:** Saat modal login admin dibuka, kolom username dan password tampil bersih dan kosong, siap diketik oleh admin.
-3. **Penyempurnaan Tampilan Menu Share QR (Format Hari/Tanggal Tanpa Jam & Logo Share Link):**
+### Rangkuman 8 Pembaruan Utama v3.6.0:
+1. **Resolusi Tajam Penuh & Fitur Zoom Interaktif di Lightbox (Semua Kategori):**
+   - **Tampilan Tajam & Terang:** Menggantikan thumbnail terkompresi Google Drive dengan endpoint resolusi penuh Google `https://lh3.googleusercontent.com/d/{id}=w3200` (dan `=w3200` untuk Google Photos). Foto pratinjau kini tampil terang, tajam, dan jernih tanpa artefak blur atau kompresi kabur.
+   - **Fitur Zoom Interaktif:**
+     - Ditambahkan toolbar zoom elegan di topbar lightbox: Tombol Perkecil `[-]`, Reset Ukuran `[1:1 / 100%]`, dan Perbesar `[+]`.
+     - Mendukung **Double-Click / Double-Tap** pada foto untuk beralih instan antara ukuran normal (100%) dan zoom detail (250%).
+     - Mendukung **Mouse Wheel Zoom** (100% hingga 400%).
+     - Mendukung **Drag to Pan / Touch Pan**: Saat foto di-zoom, pengguna dapat menggeser/menyeret foto ke segala arah dengan kursor grab/grabbing yang mulus.
+2. **Proteksi Swipe Up/Down pada Menu Khusus Photobooth & Lightbox:**
+   - **Akar Masalah:** Sebelumnya listener sentuh hanya merekam `screenX` tanpa mengecek pergerakan sumbu vertikal `screenY`, sehingga usapan vertikal (swipe up/down) memicu perpindahan foto.
+   - **Tindakan:** `setupTouchSwipe` kini merekam koordinat `touchStartX, touchStartY` dan `touchEndX, touchEndY`. Perpindahan foto hanya diizinkan jika murni gerakan horizontal (`Math.abs(diffX) >= 65` dan `absX > 2 * absY`). Jika terdeteksi pergerakan vertikal (`absY >= absX` atau `absY > 50`) atau saat foto sedang di-zoom, navigasi foto otomatis diabaikan.
+3. **Pemisah Baris Tanggal & Venue pada Menu Bagikan QR (Enter 1x):**
+   - **Tindakan:** Pada modal Bagikan & QR Code, teks tanggal dan venue kini dipisahkan dengan enter (dua baris terpisah): Baris 1 menampilkan Hari & Tanggal (contoh: *"Senin, 16 November 2026"*), dan Baris 2 menampilkan Venue/Lokasi (contoh: *"UpperHills Convention Hall, Makassar"*).
+4. **Pembaruan Tampilan & Tata Letak Menu Admin (Modern, Rapi & Mudah Digunakan):**
+   - **Tindakan:** Memperluas lebar card modal admin menjadi 680px yang lebih leluasa, mendesain ulang navigasi tab dengan tab-pill modern, border halus, spacing konsisten, kontras teks yang nyaman di mata, dan pengelompokan card pengaturan yang intuitif.
+5. **Penambahan Parameter ADMIN_USERNAME pada Google Spreadsheet:**
    - **Tindakan:** 
-     - Menghapus keterangan jam, menit, detik, dan zona waktu GMT yang panjang.
-     - Menyediakan fungsi pemformat tanggal `formatDayDateIndonesian()` yang otomatis menghasilkan format resmi: `[Nama Hari], [DD] [MMMM] [YYYY]` (contoh: *"Senin, 16 November 2026"*).
-     - Menambahkan tombol **Logo Share Link** (ikon bagikan tautan interaktif) bersanding rapi dengan Logo Salin Tautan dan Logo Unduh QR Code.
-4. **Dukungan Penuh Google Photos Album untuk Photobooth:**
-   - **Tindakan:** 
-     - Menyediakan endpoint API [api/google-photos.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/api/google-photos.js) serta fungsi pemindai `fetchGooglePhotos()` dan `scanGooglePhotosAlbum()` di [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs).
-     - Menginjeksi cache instan 115 foto dari album bersama Google Photos yang diberikan user (`https://photos.google.com/share/AF1QipMagPm7xWB2YANajDr3hx-J4WKyhOgIQ41jUjqQnxv5LSy6392pyWC5hOfsQoz1mA?key=c1BLMDNyRGw4bEJyUWo5b1Y0eFlmTy14X1pESEdR`).
-   - **Hasil:** Tab Photobooth kini dapat memuat album bersama Google Photos dengan resolusi tinggi, thumbnail cepat, dan unduhan kualitas asli dari CDN Google tanpa kompresi dan tanpa bingkai.
-5. **Isolasi Ketat Foto Tiap Kategori (Dilarang Mengambil Foto Kategori Lain):**
-   - **Tindakan:** Menghapus seluruh mekanisme fallback yang sebelumnya meminjam foto dari galeri utama (`state.allPhotos`) saat kategori kustom belum terisi foto.
-   - **Hasil:** Setiap kategori hanya menampilkan foto yang benar-benar berasal dari folder atau tautan targetnya masing-masing. Jika suatu kategori belum memiliki foto, sistem menyajikan status kosong yang elegan disertai tombol sinkronisasi khusus, tanpa pernah menampilkan foto dari kategori lain.
-6. **Prinsip Non-Destruktif (Strict Non-Destructive):**
-   - Seluruh fungsionalitas inti: unduh berbingkai resolusi tinggi, antrean unduh background, multi-event switcher, serta otentikasi login admin tetap berjalan prima 100%.
+     - Di [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/setup.gs): Menambahkan baris konfigurasi `ADMIN_USERNAME: "admin"` ke dalam sheet master `Pengaturan`.
+     - Di [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs): Menambahkan `DEFAULT_ADMIN_USERNAME: "admin"`, pembacaan parameter di `readConfigFromSheet()`, serta penulisan ke sheet di `writeConfigToSheet()`.
+     - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js): Sinkronisasi live via GViz otomatis menyerap `ADMIN_USERNAME` dari spreadsheet dan mengirimkannya saat admin menyimpan pengaturan.
+6. **Kategori Momen Lainnya Mengikuti Pengaturan Kategori Galeri Utama:**
+   - **Tindakan:** Seluruh kategori momen kustom (seperti `Wedding`, `Akad`, `Resepsi`) secara otomatis mewarisi mode tampilan galeri utama, format kartu foto, serta unduh kenangan berbingkai (`downloadWithFrame`) dari template bingkai galeri utama.
+7. **Kategori Momen Lainnya Siap Link & Fitur Sinkronisasi Langsung:**
+   - **Tindakan:** Kategori `Wedding` dengan tautan Google Drive `https://drive.google.com/drive/folders/1GGB77clCMYBIg17J0ECr2eVbD02ZeInW` telah terhubung. Tombol sinkronisasi per-kategori (`syncSingleCategory`) dan sinkronisasi menyeluruh (`syncCategoriesAndDisplayLinks`) langsung memindai item folder dan memperbarui badge counter seketika.
+8. **Dukungan Spesial Vendor Kingphotobooth (Pratinjau Foto & Video MP4 + Unduh Asli):**
+   - **Tindakan:**
+     - Membuat endpoint backend [api/kingphotobooth.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/api/kingphotobooth.js) dan fungsi pemindai `scanKingPhotoboothEvent()` di [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) yang mengekstrak 274 item dari `https://x1.kingphotobooth.co/e/23d0e80056ae8f2fbb5d116f`.
+     - Mengidentifikasi status media secara cerdas: 137 item foto dan 137 item video (`is_video: true`).
+     - Menyematkan lencana `▶ Video` pada kartu galeri untuk item bertipe video.
+     - Di Lightbox: Menampilkan pemutar video responsif `<video>` dengan kontrol putar, putar otomatis (*autoplay*), dan tombol unduh khusus: `⬇️ Unduh Video Asli Photobooth` (mengunduh berkas video asli `.mp4` kualitas penuh dari server vendor).
+     - Menyiapkan cache instan 274 item di `KING_PHOTOBOOTH_INITIAL_CACHE` pada [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) untuk menjamin pemuatan kilat tanpa jeda.
+
+### Status Verifikasi Otomatis:
+- Berkas pengujian: `scratch/test_v360.js` -> **26 dari 26 pengujian berhasil lulus 100%**.

@@ -43,6 +43,7 @@ const WEDDING_CONFIG = {
 
   // Konfigurasi Teknis (Dapat dikelola admin via web & spreadsheet)
   DRIVE_FOLDER_ID: "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxl5",
+  DEFAULT_ADMIN_USERNAME: "admin",
   DEFAULT_ADMIN_PIN: "123456",
   SLIDESHOW_INTERVAL_SEC: 4,
   AUTO_REFRESH_INTERVAL_SEC: 20,
@@ -172,6 +173,7 @@ function setupDatabaseSpreadsheet(customNameOrId) {
       ["WELCOME_MESSAGE", WEDDING_CONFIG.WELCOME_MESSAGE, "Pesan Sambutan Hangat untuk Tamu"],
       ["DRIVE_FOLDER_ID", WEDDING_CONFIG.DRIVE_FOLDER_ID || "", "ID / Tautan Folder Google Drive Foto"],
       ["FRAME_IMAGE_URL", WEDDING_CONFIG.FRAME_IMAGE_URL || "", "Tautan / ID File Bingkai PNG Transparan"],
+      ["ADMIN_USERNAME", WEDDING_CONFIG.DEFAULT_ADMIN_USERNAME || "admin", "Nama Pengguna (Username) Akses Masuk Panel Admin Web"],
       ["ADMIN_PIN", WEDDING_CONFIG.DEFAULT_ADMIN_PIN, "PIN Akses Masuk Panel Admin Web"],
       ["SLIDESHOW_INTERVAL_SEC", String(WEDDING_CONFIG.SLIDESHOW_INTERVAL_SEC), "Durasi Perpindahan Foto Slideshow (detik)"],
       ["NEW_BADGE_MINUTES", "10", "Durasi Lencana '✨ Baru' Aktif (menit)"],
@@ -416,6 +418,7 @@ function getEffectiveConfig() {
 
     // Konfigurasi Teknis: Dapat dikelola Admin via Web & Sheets
     DRIVE_FOLDER_ID: sheetConfig.DRIVE_FOLDER_ID || props.DRIVE_FOLDER_ID || WEDDING_CONFIG.DRIVE_FOLDER_ID,
+    ADMIN_USERNAME: sheetConfig.ADMIN_USERNAME || props.ADMIN_USERNAME || WEDDING_CONFIG.DEFAULT_ADMIN_USERNAME || "admin",
     ADMIN_PIN: sheetConfig.ADMIN_PIN || props.ADMIN_PIN || WEDDING_CONFIG.DEFAULT_ADMIN_PIN,
     SLIDESHOW_INTERVAL_SEC: parseInt(sheetConfig.SLIDESHOW_INTERVAL_SEC || props.SLIDESHOW_INTERVAL_SEC, 10) || WEDDING_CONFIG.SLIDESHOW_INTERVAL_SEC,
     AUTO_REFRESH_INTERVAL_SEC: parseInt(sheetConfig.AUTO_REFRESH_INTERVAL_SEC || props.AUTO_REFRESH_INTERVAL_SEC, 10) || WEDDING_CONFIG.AUTO_REFRESH_INTERVAL_SEC,
@@ -729,6 +732,9 @@ function getCategoryDrivePhotos(folderTarget, catName) {
     if (cleanId.indexOf("photos.google.com") !== -1) {
       return scanGooglePhotosAlbum(cleanId, catName);
     }
+    if (cleanId.indexOf("kingphotobooth.co") !== -1 || cleanId.indexOf("kingphoto") !== -1) {
+      return scanKingPhotoboothEvent(cleanId, catName);
+    }
     var match = cleanId.match(/folders\/([a-zA-Z0-9_\-]+)/);
     if (match && match[1]) cleanId = match[1];
 
@@ -793,6 +799,75 @@ function scanGooglePhotosAlbum(albumUrl, catName) {
         });
       }
     }
+    return {
+      success: true,
+      category: catName || "Photobooth",
+      photos: photos,
+      totalPhotos: photos.length
+    };
+  } catch (err) {
+    return { success: false, error: err.toString(), photos: [] };
+  }
+}
+
+/**
+ * Memindai event Kingphotobooth (mendukung foto & video preview MP4)
+ */
+function scanKingPhotoboothEvent(eventUrl, catName) {
+  try {
+    var response = UrlFetchApp.fetch(eventUrl, {
+      muteHttpExceptions: true,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      }
+    });
+    if (response.getResponseCode() !== 200) {
+      return { success: false, message: "HTTP " + response.getResponseCode(), photos: [] };
+    }
+    var html = response.getContentText();
+    var match = html.match(/const\s+ITEMS\s*=\s*(\[[\s\S]*?\]);/);
+    if (!match) {
+      return { success: false, message: "ITEMS tidak ditemukan pada halaman vendor", photos: [] };
+    }
+    var rawItems = JSON.parse(match[1]);
+    var origin = "https://x1.kingphotobooth.co";
+    var urlMatch = eventUrl.match(/^(https?:\/\/[^\/]+)/);
+    if (urlMatch) origin = urlMatch[1];
+
+    var photos = rawItems.map(function(it, idx) {
+      var isVideo = Boolean(it.is_video);
+      var thumbUrl = it.thumb ? (origin + it.thumb) : "";
+      var photoUrl = "";
+      var videoUrl = "";
+      var downloadUrl = "";
+
+      if (it.thumb) {
+        if (isVideo) {
+          videoUrl = origin + it.thumb.replace("/storage/thumbs/", "/storage/photos/").replace(/\.jpg$/i, ".mp4");
+          photoUrl = videoUrl;
+          downloadUrl = origin + "/dl/" + it.id + ".mp4";
+        } else {
+          photoUrl = origin + it.thumb.replace("/storage/thumbs/", "/storage/photos/");
+          downloadUrl = origin + "/dl/" + it.id + ".jpg";
+        }
+      }
+
+      return {
+        id: "king_" + it.id,
+        name: isVideo ? ("Video Photobooth #" + (rawItems.length - idx)) : ("Photobooth #" + (rawItems.length - idx)),
+        category: catName || "Photobooth",
+        thumbnailUrl: thumbUrl,
+        previewUrl: photoUrl,
+        highResUrl: photoUrl,
+        downloadUrl: downloadUrl,
+        videoUrl: videoUrl,
+        isVideo: isVideo,
+        isKing: true,
+        shareToken: it.share_token,
+        originalWebUrl: origin + "/i/" + (it.share_token || it.id)
+      };
+    });
+
     return {
       success: true,
       category: catName || "Photobooth",
