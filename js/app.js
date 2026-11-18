@@ -49,42 +49,40 @@
         return;
       }
 
-      if (categoryName.toLowerCase().includes("photobooth") || (targetUrl && (targetUrl.includes("fotoshare.co") || targetUrl.includes("kingphotobooth.co") || targetUrl.includes("kingphoto") || targetUrl.includes("photos.google.com")))) {
-        if (targetUrl && (targetUrl.includes("kingphotobooth.co") || targetUrl.includes("kingphoto"))) {
-          fetchKingPhotoboothPhotos(categoryName, targetUrl, function(photos) {
-            updateCategoryPillCount(categoryName, photos.length);
-            if (state.activeCategory === categoryName) {
-              state.filteredPhotos = photos;
-              renderPhotoGrid(targetUrl, categoryName);
-            }
-            showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " media)!");
-          });
-          return;
-        } else if (targetUrl && targetUrl.includes("photos.google.com")) {
-          fetchGooglePhotos(categoryName, targetUrl, function(photos) {
-            updateCategoryPillCount(categoryName, photos.length);
-            if (state.activeCategory === categoryName) {
-              state.filteredPhotos = photos;
-              renderPhotoGrid(targetUrl, categoryName);
-            }
-            showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
-          });
-          return;
-        } else {
-          fetchFotosharePhotos(categoryName, targetUrl || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", function(photos) {
-            updateCategoryPillCount(categoryName, photos.length);
-            if (state.activeCategory === categoryName) {
-              state.filteredPhotos = photos;
-              renderPhotoGrid(targetUrl, categoryName);
-            }
-            showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
-          });
-          return;
-        }
-      }
-
       const driveFolderId = extractDriveFolderId(targetUrl);
-      if (driveFolderId) {
+
+      // Fleksibilitas Tautan Kategori (Mendukung Google Photos, Kingphotobooth, Fotoshare, Google Drive, dsb)
+      if (targetUrl && targetUrl.includes("photos.google.com")) {
+        fetchGooglePhotos(categoryName, targetUrl, function(photos) {
+          updateCategoryPillCount(categoryName, photos.length);
+          if (state.activeCategory === categoryName) {
+            state.filteredPhotos = photos;
+            renderPhotoGrid(targetUrl, categoryName);
+          }
+          showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
+        });
+        return;
+      } else if (targetUrl && (targetUrl.includes("kingphotobooth.co") || targetUrl.includes("kingphoto"))) {
+        fetchKingPhotoboothPhotos(categoryName, targetUrl, function(photos) {
+          updateCategoryPillCount(categoryName, photos.length);
+          if (state.activeCategory === categoryName) {
+            state.filteredPhotos = photos;
+            renderPhotoGrid(targetUrl, categoryName);
+          }
+          showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " media)!");
+        });
+        return;
+      } else if (targetUrl && targetUrl.includes("fotoshare.co")) {
+        fetchFotosharePhotos(categoryName, targetUrl, function(photos) {
+          updateCategoryPillCount(categoryName, photos.length);
+          if (state.activeCategory === categoryName) {
+            state.filteredPhotos = photos;
+            renderPhotoGrid(targetUrl, categoryName);
+          }
+          showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
+        });
+        return;
+      } else if (driveFolderId) {
         fetchDriveCategoryPhotos(categoryName, driveFolderId, function(photos) {
           updateCategoryPillCount(categoryName, photos.length);
           if (state.activeCategory === categoryName) {
@@ -92,6 +90,16 @@
             renderPhotoGrid(targetUrl, categoryName);
           }
           showToast("✓ Kategori " + categoryName + " berhasil disinkronkan!");
+        });
+        return;
+      } else if (categoryName.toLowerCase().includes("photobooth")) {
+        fetchFotosharePhotos(categoryName, targetUrl || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", function(photos) {
+          updateCategoryPillCount(categoryName, photos.length);
+          if (state.activeCategory === categoryName) {
+            state.filteredPhotos = photos;
+            renderPhotoGrid(targetUrl, categoryName);
+          }
+          showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
         });
         return;
       }
@@ -163,7 +171,16 @@ const GLOBAL_CONFIG = {
           driveFolderId: "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxI5",
           frameImageUrl: "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing",
           customCategories: [
-            { name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs" }
+            {
+              name: "Photobooth",
+              url: "https://photos.google.com/share/AF1QipMagPm7xWB2YANajDr3hx-J4WKyhOgIQ41jUjqQnxv5LSy6392pyWC5hOfsQoz1mA?key=c1BLMDNyRGw4bEJyUWo5b1Y0eFlmTy14X1pESEdR",
+              enabled: true
+            },
+            {
+              name: "Wedding",
+              url: "https://drive.google.com/drive/folders/1GGB77clCMYBIg17J0ECr2eVbD02ZeInW",
+              enabled: true
+            }
           ],
           coverSettings: {
             enabled: false,
@@ -360,7 +377,13 @@ const GLOBAL_CONFIG = {
                 remoteCfg.ALL_PHOTOS_LABEL = matchedEv.allPhotosLabel || "Semua Foto";
                 remoteCfg.DRIVE_FOLDER_ID = matchedEv.driveFolderId;
                 remoteCfg.FRAME_IMAGE_URL = matchedEv.frameImageUrl;
-                remoteCfg.CUSTOM_CATEGORIES = matchedEv.customCategories || [];
+
+                // Sinkronisasi kategori: Jangan timpa jika remoteCfg.CUSTOM_CATEGORIES sudah memuat kategori aktif
+                if (Array.isArray(remoteCfg.CUSTOM_CATEGORIES) && remoteCfg.CUSTOM_CATEGORIES.length > 0) {
+                  matchedEv.customCategories = remoteCfg.CUSTOM_CATEGORIES;
+                } else if (Array.isArray(matchedEv.customCategories) && matchedEv.customCategories.length > 0) {
+                  remoteCfg.CUSTOM_CATEGORIES = matchedEv.customCategories;
+                }
                 remoteCfg.COVER_SETTINGS = matchedEv.coverSettings;
               }
             }
@@ -1034,6 +1057,10 @@ const GLOBAL_CONFIG = {
         fetchDriveCategoryPhotos(cat, driveFolderId, function(photos) {
           updateCategoryPillCount(cat, photos.length);
         });
+      } else if (cat && cat.toLowerCase().includes("photobooth")) {
+        fetchFotosharePhotos(cat, targetUrl || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", function(photos) {
+          updateCategoryPillCount(cat, photos.length);
+        });
       }
     }
 
@@ -1527,6 +1554,18 @@ const GLOBAL_CONFIG = {
         return;
       }
 
+      // 4b. Jika kategori Photobooth (fallback default tautan vendor)
+      if (category.toLowerCase().includes("photobooth")) {
+        fetchFotosharePhotos(category, targetUrl || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", function(photos) {
+          updateCategoryPillCount(category, photos.length);
+          if (state.activeCategory === category) {
+            state.filteredPhotos = photos;
+            renderPhotoGrid(targetUrl, category);
+          }
+        });
+        return;
+      }
+
       // 5. Filter ketat: Sesuaikan target link dan kategori sendiri, JANGAN ambil foto dari kategori lain
       let matched = state.allPhotos.filter(function(p) {
         if (p.category && p.category.toLowerCase() === category.toLowerCase()) return true;
@@ -1675,10 +1714,14 @@ const GLOBAL_CONFIG = {
       if (!inp) return;
       if (inp.type === "password") {
         inp.type = "text";
-        btn.innerText = "🙈";
+        btn.innerHTML = `<svg class="pass-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+        btn.setAttribute("title", "Sembunyikan Password");
+        btn.setAttribute("aria-label", "Sembunyikan Password");
       } else {
         inp.type = "password";
-        btn.innerText = "👁️";
+        btn.innerHTML = `<svg class="pass-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+        btn.setAttribute("title", "Lihat Password");
+        btn.setAttribute("aria-label", "Lihat Password");
       }
     }
 
@@ -2084,6 +2127,14 @@ const GLOBAL_CONFIG = {
       state.customCategories = customCategoriesList;
       state.activeConfig.CUSTOM_CATEGORIES = customCategoriesList;
 
+      // Update properti customCategories pada objek event aktif di state.events
+      if (Array.isArray(state.events)) {
+        const curEv = state.events.find(function(e) { return e.id === state.currentEventId; }) || state.events[0];
+        if (curEv) {
+          curEv.customCategories = customCategoriesList;
+        }
+      }
+
       try {
         const cacheKey = state.currentEventId ? ("WEDDING_EVENT_CFG_" + state.currentEventId) : "WEDDING_ACTIVE_EVENT_CFG";
         localStorage.setItem(cacheKey, JSON.stringify(state.activeConfig));
@@ -2103,7 +2154,11 @@ const GLOBAL_CONFIG = {
       if (state.gasApiUrl) {
         callBackend("saveAdminSettings", {
           pin: state.adminPin,
-          config: { CUSTOM_CATEGORIES: customCategoriesList }
+          config: {
+            CUSTOM_CATEGORIES: customCategoriesList,
+            EVENTS: state.events,
+            ACTIVE_EVENT_ID: state.currentEventId
+          }
         }, function(res) {
           if (syncBtn) {
             syncBtn.disabled = false;
@@ -2447,10 +2502,21 @@ const GLOBAL_CONFIG = {
         titleEl.innerText = state.activeConfig.EVENT_NAME || "Wilson & Felicia";
       }
 
+      const formattedDate = formatDayDateIndonesian(state.activeConfig.EVENT_DATE || "16 November 2026");
+      const venue = (state.activeConfig.EVENT_VENUE || "UpperHills Convention Hall, Makassar").trim();
+
+      const dateEl = document.getElementById("shareEventDate");
+      if (dateEl) {
+        dateEl.innerText = formattedDate;
+      }
+
+      const venueEl = document.getElementById("shareEventVenue");
+      if (venueEl) {
+        venueEl.innerText = venue;
+      }
+
       const subEl = document.getElementById("shareEventSubtitle");
       if (subEl) {
-        const formattedDate = formatDayDateIndonesian(state.activeConfig.EVENT_DATE || "16 November 2026");
-        const venue = (state.activeConfig.EVENT_VENUE || "").trim();
         if (venue) {
           subEl.innerHTML = '<div style="font-weight: 600; color: var(--gold-dark);">' + escapeHtml(formattedDate) + '</div><div style="font-size: 0.78rem; opacity: 0.88; margin-top: 4px; color: var(--text-main);">' + escapeHtml(venue) + '</div>';
         } else {
@@ -3822,6 +3888,40 @@ const GLOBAL_CONFIG = {
       });
     }
 
+    function setupLightboxBackdropClick() {
+      const modal = document.getElementById("lightbox");
+      const body = document.getElementById("lightboxBody");
+      const wrapper = document.getElementById("lightboxImgWrapper");
+      if (!modal || modal.dataset.backdropBound === "true") return;
+      modal.dataset.backdropBound = "true";
+
+      const handleBackdrop = function(e) {
+        // Jangan tutup jika klik berasal dari foto, video, tombol navigasi, topbar, atau bottombar
+        if (e.target.closest("#lightboxImg") || e.target.closest("#lightboxVideo") || e.target.closest(".lightbox-nav-btn") || e.target.closest(".lightbox-topbar") || e.target.closest(".lightbox-bottombar")) {
+          return;
+        }
+        // Jangan tutup jika sedang melakukan pan geser saat zoom
+        if (lightboxZoom && lightboxZoom.scale > 1.05 && lightboxZoom.isDragging) {
+          return;
+        }
+        closeLightbox();
+      };
+
+      if (body) body.addEventListener("click", handleBackdrop);
+      if (wrapper) {
+        wrapper.addEventListener("click", function(e) {
+          if (e.target === wrapper) {
+            handleBackdrop(e);
+          }
+        });
+      }
+      modal.addEventListener("click", function(e) {
+        if (e.target === modal) {
+          handleBackdrop(e);
+        }
+      });
+    }
+
     function openLightbox(index) {
       if (!state.filteredPhotos[index]) return;
       state.currentLightboxIndex = index;
@@ -3830,6 +3930,7 @@ const GLOBAL_CONFIG = {
       modal.classList.add("active");
       document.body.style.overflow = "hidden";
 
+      setupLightboxBackdropClick();
       initLightboxZoomEvents();
       resetLightboxZoom();
       resetDownloadButton();

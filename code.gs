@@ -594,7 +594,19 @@ function getGalleryData(targetEventId) {
       safeConfig.ALL_PHOTOS_LABEL = currentEvent.allPhotosLabel || safeConfig.ALL_PHOTOS_LABEL || "Semua Foto";
       safeConfig.DRIVE_FOLDER_ID = currentEvent.driveFolderId || safeConfig.DRIVE_FOLDER_ID;
       safeConfig.FRAME_IMAGE_URL = currentEvent.frameImageUrl || safeConfig.FRAME_IMAGE_URL;
-      safeConfig.CUSTOM_CATEGORIES = currentEvent.customCategories || safeConfig.CUSTOM_CATEGORIES;
+
+      // SINKRONISASI KATEGORI 2-ARAH: Prioritaskan konfigurasi kategori terbaru agar tidak ter-reset oleh cache objek event lama
+      var effectiveCats = config.CUSTOM_CATEGORIES;
+      if (typeof effectiveCats === "string") {
+        try { effectiveCats = JSON.parse(effectiveCats); } catch(e) {}
+      }
+      if (Array.isArray(effectiveCats) && effectiveCats.length > 0) {
+        currentEvent.customCategories = effectiveCats;
+        safeConfig.CUSTOM_CATEGORIES = effectiveCats;
+      } else if (Array.isArray(currentEvent.customCategories) && currentEvent.customCategories.length > 0) {
+        safeConfig.CUSTOM_CATEGORIES = currentEvent.customCategories;
+      }
+
       safeConfig.COVER_SETTINGS = currentEvent.coverSettings || safeConfig.COVER_SETTINGS;
     }
     safeConfig.EVENTS = eventsList;
@@ -1499,6 +1511,28 @@ function saveAdminSettings(pin, updatedConfig) {
         ? updatedConfig.CUSTOM_CATEGORIES 
         : JSON.stringify(updatedConfig.CUSTOM_CATEGORIES);
       props.setProperty("CUSTOM_CATEGORIES", catVal);
+
+      // Sinkronkan juga ke properti event aktif di dalam EVENTS agar tidak kembali ter-reset di device lain
+      try {
+        var parsedCats = (typeof updatedConfig.CUSTOM_CATEGORIES === "string")
+          ? JSON.parse(updatedConfig.CUSTOM_CATEGORIES)
+          : updatedConfig.CUSTOM_CATEGORIES;
+        var existingEventsStr = props.getProperty("EVENTS") || WEDDING_CONFIG.EVENTS;
+        var existingEvents = JSON.parse(existingEventsStr);
+        if (Array.isArray(existingEvents)) {
+          var activeEvId = updatedConfig.ACTIVE_EVENT_ID || props.getProperty("ACTIVE_EVENT_ID") || "wilson-felicia";
+          for (var evI = 0; evI < existingEvents.length; evI++) {
+            if (existingEvents[evI].id === activeEvId || existingEvents.length === 1) {
+              existingEvents[evI].customCategories = parsedCats;
+            }
+          }
+          var updatedEventsStr = JSON.stringify(existingEvents);
+          props.setProperty("EVENTS", updatedEventsStr);
+          updatedConfig.EVENTS = existingEvents;
+        }
+      } catch (eEvSync) {
+        Logger.log("Info sinkronisasi EVENTS: " + eEvSync.toString());
+      }
     }
 
     if (updatedConfig.ALL_PHOTOS_LABEL !== undefined) {

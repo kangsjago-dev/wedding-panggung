@@ -294,9 +294,9 @@
   <!-- Modal: Bagikan & QR Code Galeri -->
   <div id="shareQrModal" class="admin-modal-overlay">
     <div class="admin-card share-qr-card">
-      <div class="admin-card-header">
-        <h3 style="display: flex; align-items: center; gap: 8px;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
+      <div class="admin-card-header share-modal-header">
+        <h3 class="share-modal-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
             <rect x="3" y="3" width="7" height="7"></rect>
             <rect x="14" y="3" width="7" height="7"></rect>
             <rect x="14" y="14" width="7" height="7"></rect>
@@ -304,28 +304,31 @@
           </svg>
           <span>Bagikan & QR Code Galeri</span>
         </h3>
-        <button class="ctrl-icon-btn" onclick="closeShareModal()" style="width: 32px; height: 32px;" title="Tutup">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button class="ctrl-icon-btn share-close-btn" onclick="closeShareModal()" title="Tutup">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
       </div>
 
-      <div class="admin-card-body" style="text-align: center; padding: 20px 16px;">
-        <div style="font-size: 1.25rem; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 700; color: var(--text-main);" id="shareEventTitle">Wilson & Felicia</div>
-        <div style="font-size: 0.8rem; color: var(--gold-dark); margin-bottom: 16px;" id="shareEventSubtitle">Pindai QR Code untuk melihat & mengunduh foto pernikahan</div>
+      <div class="admin-card-body share-modal-body">
+        <div class="share-meta-header">
+          <div class="share-event-title" id="shareEventTitle">Wilson & Felicia</div>
+          <div class="share-event-date" id="shareEventDate">Senin, 16 November 2026</div>
+          <div class="share-event-venue" id="shareEventVenue">UpperHills Convention Hall, Makassar</div>
+        </div>
 
         <!-- QR Code Box -->
-        <div class="qr-code-display-box" style="margin: 0 auto 16px; width: 220px; height: 220px; padding: 10px; background: #fff; border-radius: 16px; border: 2px solid rgba(197, 168, 128, 0.45); box-shadow: 0 8px 24px rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: center;">
-          <img id="shareQrImg" src="" alt="QR Code Galeri" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;">
+        <div class="qr-code-display-box">
+          <img id="shareQrImg" src="" alt="QR Code Galeri">
         </div>
 
         <!-- Logo Buttons (Bagikan, Salin, & Unduh QR Code) - Hanya Icon Saja -->
         <input type="hidden" id="shareUrlInput" value="">
-        <div style="display: flex; gap: 14px; align-items: center; justify-content: center; margin-top: 16px;">
-          <button type="button" class="ctrl-icon-btn" onclick="shareViaWebShare()" title="Bagikan Tautan (Share Link)" aria-label="Bagikan Tautan" style="width: 48px; height: 48px; background: #FAF8F5; border: 1.5px solid var(--gold-primary); color: var(--gold-dark); border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="share-actions-row">
+          <button type="button" class="ctrl-icon-btn share-action-btn" onclick="shareViaWebShare()" title="Bagikan Tautan (Share Link)" aria-label="Bagikan Tautan">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="18" cy="5" r="3"></circle>
               <circle cx="6" cy="12" r="3"></circle>
               <circle cx="18" cy="19" r="3"></circle>
@@ -333,14 +336,14 @@
               <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
             </svg>
           </button>
-          <button type="button" class="ctrl-icon-btn" onclick="copyShareUrl()" title="Salin Tautan (Copy Link)" aria-label="Salin Tautan" style="width: 48px; height: 48px; background: #FAF8F5; border: 1.5px solid var(--gold-primary); color: var(--gold-dark); border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <button type="button" class="ctrl-icon-btn share-action-btn" onclick="copyShareUrl()" title="Salin Tautan (Copy Link)" aria-label="Salin Tautan">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
             </svg>
           </button>
-          <button type="button" class="ctrl-icon-btn" onclick="downloadQrCodeImage()" title="Unduh Gambar QR Code (PNG)" aria-label="Unduh QR Code" style="width: 48px; height: 48px; background: var(--gold-primary); border: 1.5px solid var(--gold-dark); color: #FFFFFF; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; box-shadow: 0 4px 14px rgba(197, 168, 128, 0.45);">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <button type="button" class="ctrl-icon-btn share-action-btn share-download-btn" onclick="downloadQrCodeImage()" title="Unduh Gambar QR Code (PNG)" aria-label="Unduh QR Code">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -381,8 +384,11 @@
             <label class="admin-label" for="adminPasswordInput">Kata Sandi (Password)</label>
             <div style="position: relative;">
               <input type="password" id="adminPasswordInput" class="admin-input" placeholder="Masukkan password" required autocomplete="current-password" style="padding-right: 42px;">
-              <button type="button" id="toggleAdminPassVisibility" onclick="togglePasswordVisibility('adminPasswordInput', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.05rem; color: #64748B; padding: 4px;" title="Lihat/Sembunyikan Password">
-                👁️
+              <button type="button" id="toggleAdminPassVisibility" onclick="togglePasswordVisibility('adminPasswordInput', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #64748B; padding: 4px; display: flex; align-items: center; justify-content: center;" title="Lihat/Sembunyikan Password" aria-label="Lihat Password">
+                <svg class="pass-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
               </button>
             </div>
           </div>
@@ -417,8 +423,9 @@
           </div>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
-          <button type="button" class="btn btn-outline" onclick="closeAdminSettingsModal()" style="font-size: 0.78rem; padding: 5px 12px; border-color: #CBD5E1; color: #334155; white-space: nowrap;" title="Lihat dan uji coba galeri tanpa keluar dari mode admin">
-            👁️ Lihat / Test Galeri
+          <button type="button" class="btn btn-outline" onclick="closeAdminSettingsModal()" style="font-size: 0.78rem; padding: 5px 12px; border-color: #CBD5E1; color: #334155; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;" title="Lihat dan uji coba galeri tanpa keluar dari mode admin">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <span>Lihat / Test Galeri</span>
           </button>
           <button class="ctrl-icon-btn" onclick="closeAdminSettingsModal()" style="width: 32px; height: 32px;" title="Tutup Pengaturan">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
