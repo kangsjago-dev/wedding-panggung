@@ -1,9 +1,14 @@
 export default async function handler(req, res) {
-  const fileUrl = req.query.url;
+  let fileUrl = req.query.url;
   const fileName = req.query.filename || "unduh_photobooth";
 
   if (!fileUrl) {
     return res.status(400).json({ success: false, message: "Parameter url wajib diisi" });
+  }
+
+  // Jika domain Fotoshare, bersihkan parameter resize agar selalu mengunduh master kamera 1.5MB asli bukan thumbnail 84KB
+  if (fileUrl.includes("fotoshare.co")) {
+    fileUrl = fileUrl.replace(/\?.*$/, "");
   }
 
   try {

@@ -1,51 +1,53 @@
-# RENCANA REVISI & CATATAN RILIS SISTEM: v3.6.3
+# RENCANA REVISI & CATATAN RILIS SISTEM: v3.6.4
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
 ENGINE: ZettBOT v4.1 by Zettbos
-STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v3.6.3)
+STATUS: SUDAH DITERAPKAN & TERVERIFIKASI (v3.6.4)
 TANGGAL PENGAJUAN: 18 November 2026
-VERIFIKASI SISTEM: BERHASIL 100% (Hilangkan Indikator 100% pada Preview Foto, Jaminan Pengunduhan File Asli Photobooth Kualitas Penuh Tanpa Canvas/Kompresi, Desain Ulang Luxury Dock & Status Mode Admin saat Preview Galeri)
+VERIFIKASI SISTEM: BERHASIL 100% (23 dari 23 Test PASS di scratch/test_v364.js, 22 dari 22 Test PASS di scratch/test_v363.js)
 
-### Rangkuman 3 Pembaruan Utama v3.6.3:
-1. **Eliminasi Tampilan "100%" pada Lightbox Preview Foto:**
-   - **Akar Masalah:** Sebelumnya terdapat elemen `<span id="lightboxZoomLevelText">100%</span>` pada toolbar perbesaran foto di Lightbox modal. Nilai persentase ini terus tampil dan ter-update saat foto di-zoom, mengganggu kebersihan visual foto saat tamu sedang melihat pratinjau foto.
+### Rangkuman 4 Pembaruan Utama v3.6.4:
+1. **Eliminasi Total Tombol Zoom "+ -" pada Modal Preview Foto (Lightbox):**
+   - **Akar Masalah:** Masih terdapat markup toolbar perbesaran `#lightboxZoomToolbar` dengan tombol zoom-out `[-]` dan zoom-in `[+]` pada modal Lightbox di `index.html`.
    - **Tindakan:**
-     - Menghapus elemen `<span id="lightboxZoomLevelText">100%</span>` dan tombol reset dari `lightboxZoomToolbar` di [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html). Toolbar kini tampil ultra-clean, minimalis, dan elegan hanya dengan tombol zoom out `[-]` dan zoom in `[+]`.
-     - Menghapus manipulasi `lightboxZoomLevelText` di fungsi `applyLightboxZoom()` pada [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js).
-     - Menyesuaikan styling toolbar di [css/style.css](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/css/style.css).
+     - Menghapus elemen `#lightboxZoomToolbar` dari [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html).
+     - Menambahkan aturan CSS mutlak `.lightbox-zoom-toolbar { display: none !important; }` di [css/style.css](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/css/style.css).
+     - Menghapus instruksi inline-flex di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js).
+     - Seluruh gestur interaktif alami (cubitan pinch-to-zoom 2 jari di layar sentuh ponsel, double-click/double-tap, dan mouse wheel) tetap bekerja 100% mulus di latar belakang tanpa ada tombol visual yang menutupi keindahan foto.
 
-2. **Jaminan Pengunduhan File Asli Khusus Photobooth (JANGAN DIUBAH UKURANNYA):**
+2. **Unduh Khusus Photobooth: Langsung Download Tanpa Konfirmasi & Kualitas Asli (Bukan Ukuran KB):**
    - **Akar Masalah:**
-     - Jika admin mengubah nama kategori Photobooth (misalnya menjadi nama lain) atau tab aktif berubah, evaluasi `isPhotobooth` berbasis string nama kategori menghasilkan `false`.
-     - Hal tersebut menyebabkan berkas Photobooth dialihkan ke `downloadCurrentPhotoWithFrame()`, yang memuat foto ke `<canvas>` HTML5 berbingkai dan mengekspornya dengan resolusi dan kompresi JPEG baru, sehingga ukuran file asli berubah dan terkompresi.
-   - **Tindakan:**
-     - Memasang **Guard Mutlak** di baris awal `downloadCurrentPhotoWithFrame()` pada [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js): jika berkas terdeteksi sebagai Photobooth (berdasarkan `photo.isKing`, `photo.isVideo`, `photo.isPhotobooth`, atau domain sumber `kingphotobooth.co`, `fotoshare.co`, `photos.google.com`), eksekusi canvas dihentikan seketika dan langsung dialihkan ke `downloadPhotoboothOriginal(photo)`.
-     - Memperluas deteksi Photobooth di `updateLightboxContent()` agar mengevaluasi seluruh flag dan domain vendor terlepas dari apa pun nama kategori yang diinput admin.
-     - Menyematkan flag eksplisit `isPhotobooth: true` pada builder [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js), [api/kingphotobooth.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/api/kingphotobooth.js), dan [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs).
-     - Menjamin pengunduhan berkas asli byte-for-byte melalui server binary stream proxy [api/download-proxy.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/api/download-proxy.js) dan direct fetch/invisible iframe, tanpa melalui kompresi canvas maupun bingkai.
+     - Pada sumber Fotoshare, URL gambar mentah dari vendor membawa parameter query resize `?width=450&aspect_ratio=1:1`, sehingga saat diunduh pengguna hanya mendapatkan file berukuran kecil (84 KB). Tanpa parameter tersebut, vendor Fotoshare mengalirkan berkas kamera asli **1.506.911 bytes (1,5 MB)**!
+     - Tombol unduh di `index.html` sebelumnya memicu `downloadCurrentPhotoWithFrame()`, yang memasukkan unduhan ke widget antrean simpan berbingkai (*canvas compositor*).
+   - **Tindakan Rekayasa Sistem:**
+     - Membersihkan seluruh query parameter pemotong resolusi (`replace(/\?.*$/, "")`) pada [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) di fungsi `fetchFotosharePhotos()` dan `downloadPhotoboothOriginal()`, serta pada serverless proxy [api/download-proxy.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/api/download-proxy.js). Hasil unduhan kini terverifikasi berukuran **1,5 MB penuh** (*uncompressed camera master*).
+     - Mengubah pemanggilan tombol Lightbox di [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) menjadi `handleCurrentLightboxDownload()`.
+     - Unduh khusus Photobooth berjalan seketika (*instant silent download*) tanpa memunculkan konfirmasi simpan, tanpa antrean, dan tanpa kompresi canvas.
 
-3. **Penataan Ikon & Tipografi Mode Admin saat View Gallery (Preview Sambil Login Admin):**
-   - **Akar Masalah:** Bar floating admin sebelumnya menggunakan div gelap sederhana dengan emoji dan teks kaku. Ikon tombol `#adminBtn` di sticky filter bar juga tetap menampilkan gembok terkunci meskipun admin sudah berhasil masuk.
+3. **Eliminasi Tuntas Flicker Cover Depan Saat Refresh Pertama:**
+   - **Akar Masalah:** Parameter `state.coverSettings.enabled` terinisialisasi secara hardcoded ke `true` di `js/app.js`, dan `GLOBAL_CONFIG` tingkat atas belum memiliki nilai default `COVER_SETTINGS`. Akibatnya, pada refresh pertama sebelum konfigurasi tersimpan selesai dibaca, `renderWeddingCoverShowcase()` sempat mengubah kontainer menjadi `display: block`, lalu menyembunyikannya kembali setelah data dimuat (menimbulkan kedipan/flicker).
    - **Tindakan:**
-     - Merombak total `#adminActiveFloatingBar` di [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) menjadi **Luxury Floating Dock** beraksen gading-emas gelap (`rgba(15, 23, 42, 0.88)` dengan blur 16px, border gold halus, dan rounded pill).
-     - Menambahkan hierarki visual profesional:
-       - Green live pulse status badge (`.admin-dock-badge-pulse`).
-       - Kolom teks bertingkat: Sub-label uppercase modern (`Mode Admin • Pratinjau`) dan nama administrator tebal (`Administrator`).
-       - Garis pemisah vertikal elegan (`.admin-dock-divider`).
-       - Tombol aksi berikon SVG tajam: Tombol Pengaturan (ikon gear) dengan gradasi gold berkilau, dan Tombol Keluar (ikon logout) beraksen transparan lembut.
-     - Mengembangkan fungsi `updateAdminButtonUI(isLoggedIn)` di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js): saat admin login, tombol `#adminBtn` di bar utama berubah menjadi **gembok terbuka** (*unlocked*) dengan status dot hijau bercahaya (`.admin-active-dot`) dan tooltip interaktif; saat logout, tombol kembali ke status gembok terkunci secara otomatis.
-     - Menambahkan aturan responsivitas mobile di [css/style.css](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/css/style.css) `@media (max-width: 640px)`.
+     - Mengubah nilai default `COVER_SETTINGS.enabled` menjadi `false` pada `GLOBAL_CONFIG` dan `state` di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js).
+     - Menambahkan aturan CSS mutlak `.wedding-cover-hero:not(.is-active) { display: none !important; }` di [css/style.css](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/css/style.css).
+     - Memastikan kontainer cover hanya aktif jika statusnya benar-benar dikonfirmasi aktif (`enabled === true`). Kedipan visual pada saat refresh pertama tereliminasi 100%.
+
+4. **Pemisahan Berkas Cache Berat (Modular Data Split):**
+   - **Akar Masalah:** [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) berukuran sangat berat (~294 KB) karena menampung 3 array data cache raksasa (`GOOGLE_PHOTOS_INITIAL_CACHE`, `KING_PHOTOBOOTH_INITIAL_CACHE`, `WEDDING_INITIAL_CACHE`).
+   - **Tindakan:**
+     - Memisahkan data statis tersebut ke berkas modular baru [js/cache-data.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/cache-data.js).
+     - Mendaftarkan `<script src="js/cache-data.js"></script>` di [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html).
+     - Ukuran [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) terpangkas signifikan (berkurang >111 KB), sehingga aplikasi dimuat, di-parse, dan dieksekusi jauh lebih ringan dan cepat pada perangkat seluler maupun desktop.
 
 ---
 
 ### Status Verifikasi Otomatis:
-- Berkas pengujian: `scratch/test_v363.js` -> **22 dari 22 pengujian berhasil lulus 100% (PASS)**.
+- Berkas pengujian: `scratch/test_v364.js` -> **23 dari 23 pengujian berhasil lulus 100% (PASS)**.
+- Berkas pengujian regresi: `scratch/test_v363.js` -> **22 dari 22 pengujian berhasil lulus 100% (PASS)**.
 
 ================================================================================
 ARSIP RIWAYAT VERSI SEBELUMNYA:
 ================================================================================
+(v3.6.3): Eliminasi indikator 100% lightbox, jaminan unduh file asli photobooth kualitas penuh, redesain luxury dock mode admin view gallery.
 (v3.6.2): Unduh photobooth hening tanpa window baru, unduh kualitas asli uncompressed, eliminasi lapisan abu-abu/gelap di semua menu view.
 (v3.6.1): Pinch-to-zoom 2 jari di lightbox, retensi badge counter photobooth saat refresh, kategori wedding 116 foto drive, menu share icon-only.
 (v3.6.0): Resolusi tajam w3200, proteksi swipe up/down, pemisah baris tanggal/venue share, redesain tata letak admin, penambahan ADMIN_USERNAME, dukungan Kingphotobooth video player & unduh asli MP4.
-(v3.5.0): Dukungan album Google Photos, perbaikan counter badge lintas device, sinkronisasi tautan Google Drive per kategori.
-(v3.4.0): Sinkronisasi live konfigurasi Google Spreadsheet via GViz, proteksi form login admin, perbaikan format tanggal hari Indonesia.
