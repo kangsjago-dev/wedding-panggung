@@ -210,9 +210,6 @@
         <button type="button" class="lightbox-zoom-btn" id="lightboxZoomOutBtn" onclick="zoomLightbox(-0.4)" title="Perkecil Zoom (-)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
         </button>
-        <button type="button" class="lightbox-zoom-btn reset" id="lightboxZoomResetBtn" onclick="resetLightboxZoom()" title="Reset Zoom (1:1 / 100%)">
-          <span id="lightboxZoomLevelText">100%</span>
-        </button>
         <button type="button" class="lightbox-zoom-btn" id="lightboxZoomInBtn" onclick="zoomLightbox(0.4)" title="Perbesar Zoom (+)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
         </button>
@@ -698,18 +695,33 @@
     </div>
   </div>
 
-  <!-- Floating Bar Mode Admin Aktif (Memungkinkan Admin Uji Coba Menu & Galeri Tanpa Logout) -->
-  <div id="adminActiveFloatingBar" style="display: none; position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 8500; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); color: #fff; padding: 8px 18px; border-radius: 9999px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); border: 1px solid rgba(197, 168, 128, 0.5); align-items: center; gap: 14px; font-size: 0.84rem;">
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <span style="width: 9px; height: 9px; border-radius: 50%; background: #10B981; box-shadow: 0 0 10px #10B981;"></span>
-      <span>Mode Admin: <strong id="floatingBarAdminName" style="color: var(--gold-primary);">Admin</strong></span>
+  <!-- Floating Bar Mode Admin Aktif (Modern Luxury Dock saat View Gallery) -->
+  <div id="adminActiveFloatingBar" class="admin-floating-dock">
+    <div class="admin-dock-identity">
+      <div class="admin-dock-badge-pulse" title="Sesi Admin Aktif & Terverifikasi">
+        <span class="dot"></span>
+      </div>
+      <div class="admin-dock-text-col">
+        <span class="admin-dock-sub">Mode Admin • Pratinjau</span>
+        <span class="admin-dock-name" id="floatingBarAdminName">Administrator</span>
+      </div>
     </div>
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <button type="button" class="btn btn-gold" style="padding: 5px 14px; font-size: 0.78rem;" onclick="openAdminSettingsModal()">
-        ⚙️ Buka Pengaturan
+    <div class="admin-dock-divider"></div>
+    <div class="admin-dock-actions">
+      <button type="button" class="admin-float-btn settings" onclick="openAdminSettingsModal()" title="Buka Panel Pengaturan Admin">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span>Pengaturan</span>
       </button>
-      <button type="button" class="btn btn-outline" style="padding: 5px 12px; font-size: 0.78rem; color: #FCA5A5; border-color: #7F1D1D; background: rgba(239, 68, 68, 0.15);" onclick="handleAdminLogout()">
-        Keluar
+      <button type="button" class="admin-float-btn logout" onclick="handleAdminLogout()" title="Keluar dari Akun Admin">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span>Keluar</span>
       </button>
     </div>
   </div>

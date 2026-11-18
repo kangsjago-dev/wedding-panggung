@@ -1441,3 +1441,191 @@
         box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(197, 168, 128, 0.35);
       }
     }
+
+    /* ==========================================================================
+       ADMIN ACTIVE FLOATING DOCK (LUXURY FLOATING BAR SAAT VIEW GALLERY PREVIEW)
+       ========================================================================== */
+    .admin-floating-dock {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 990;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(197, 168, 128, 0.45);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      padding: 8px 14px 8px 16px;
+      border-radius: 9999px;
+      gap: 14px;
+      color: #FFFFFF;
+      animation: adminDockSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transition: all 0.25s ease;
+    }
+
+    @keyframes adminDockSlideUp {
+      from {
+        opacity: 0;
+        transform: translate(-50%, 20px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+      }
+    }
+
+    .admin-dock-identity {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .admin-dock-badge-pulse {
+      position: relative;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
+    }
+
+    .admin-dock-badge-pulse .dot {
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.4);
+      animation: adminPulseRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes adminPulseRing {
+      0% {
+        transform: scale(0.8);
+        opacity: 0.8;
+      }
+      50% {
+        transform: scale(1.6);
+        opacity: 0;
+      }
+      100% {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+    }
+
+    .admin-dock-text-col {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.25;
+    }
+
+    .admin-dock-sub {
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      color: #94A3B8;
+      text-transform: uppercase;
+    }
+
+    .admin-dock-name {
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: #F8FAFC;
+      letter-spacing: 0.2px;
+    }
+
+    .admin-dock-divider {
+      width: 1px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .admin-dock-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .admin-float-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .admin-float-btn.settings {
+      background: linear-gradient(135deg, var(--gold-primary) 0%, #D4AF37 100%);
+      color: #1E293B;
+      box-shadow: 0 2px 8px rgba(197, 168, 128, 0.35);
+    }
+
+    .admin-float-btn.settings:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(197, 168, 128, 0.5);
+      background: linear-gradient(135deg, #DFBE88 0%, #E0B84C 100%);
+    }
+
+    .admin-float-btn.logout {
+      background: rgba(255, 255, 255, 0.1);
+      color: #CBD5E1;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .admin-float-btn.logout:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #FCA5A5;
+      border-color: rgba(239, 68, 68, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Status Admin Aktif pada Sticky Header Button */
+    .ctrl-icon-btn.admin-active {
+      position: relative;
+      border-color: var(--gold-primary);
+      background: rgba(197, 168, 128, 0.15);
+      color: var(--gold-dark);
+    }
+
+    .ctrl-icon-btn.admin-active .admin-active-dot {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 6px #10B981;
+    }
+
+    @media (max-width: 640px) {
+      .admin-floating-dock {
+        bottom: 16px;
+        width: calc(100vw - 32px);
+        max-width: 380px;
+        padding: 8px 12px;
+        gap: 10px;
+        justify-content: space-between;
+      }
+      .admin-dock-name {
+        font-size: 0.78rem;
+        max-width: 90px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .admin-float-btn {
+        padding: 6px 10px;
+        font-size: 0.74rem;
+      }
+    }

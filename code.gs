@@ -863,6 +863,7 @@ function scanKingPhotoboothEvent(eventUrl, catName) {
         videoUrl: videoUrl,
         isVideo: isVideo,
         isKing: true,
+        isPhotobooth: true,
         shareToken: it.share_token,
         originalWebUrl: origin + "/i/" + (it.share_token || it.id)
       };

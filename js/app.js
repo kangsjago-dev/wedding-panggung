@@ -1036,6 +1036,7 @@
         return rawList.map(function(item, idx) {
           const base = typeof item === 'string' ? item : (item.baseUrl || item.url || item.thumbnailUrl);
           const cleanBase = base ? base.replace(/=[^/]*$/, '') : '';
+          const isPbCat = Boolean((cat && cat.toLowerCase().includes("photobooth")) || (state.activeCategory && state.activeCategory.toLowerCase().includes("photobooth")));
           return {
             id: (item.id || ("gp_" + (idx + 1))),
             name: (cat || "Photobooth") + " " + (idx + 1),
@@ -1043,7 +1044,8 @@
             previewUrl: cleanBase ? (cleanBase + "=w1600-h1200") : base,
             highResUrl: cleanBase ? (cleanBase + "=w2400-h1800") : base,
             downloadUrl: cleanBase ? (cleanBase + "=d") : base,
-            category: cat || "Photobooth"
+            category: cat || "Photobooth",
+            isPhotobooth: isPbCat
           };
         });
       }
@@ -1127,6 +1129,7 @@
           videoUrl: videoUrl,
           isVideo: isVideo,
           isKing: true,
+          isPhotobooth: true,
           shareToken: it.share_token,
           originalWebUrl: origin + "/i/" + (it.share_token || it.id)
         };
@@ -1214,6 +1217,7 @@
                     downloadUrl: it.img,
                     originalWebUrl: fullWebUrl,
                     img: it.img,
+                    isPhotobooth: true,
                     timestamp: it.date_added ? new Date(it.date_added).getTime() : Date.now()
                   });
                 }
@@ -1238,6 +1242,7 @@
                   downloadUrl: u,
                   originalWebUrl: url || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
                   img: u,
+                  isPhotobooth: true,
                   timestamp: Date.now()
                 });
               }
@@ -1604,6 +1609,31 @@
       renderCategoryTabs();
     }
 
+    function updateAdminButtonUI(isLoggedIn) {
+      const btn = document.getElementById("adminBtn");
+      if (!btn) return;
+      if (isLoggedIn) {
+        btn.classList.add("admin-active");
+        btn.setAttribute("title", "Mode Admin Aktif: " + ((state.currentAdminUser && state.currentAdminUser.name) || "Administrator") + " • Buka Pengaturan");
+        btn.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+          </svg>
+          <span class="admin-active-dot"></span>
+        `;
+      } else {
+        btn.classList.remove("admin-active");
+        btn.setAttribute("title", "Menu Admin & Pengaturan Google Drive");
+        btn.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        `;
+      }
+    }
+
     function openAdminModal() {
       if (state.isAdminLoggedIn) {
         openAdminSettingsModal();
@@ -1663,7 +1693,7 @@
         state.isAdminLoggedIn = true;
         state.adminPin = password;
         state.currentAdminUser = user || { username: username, name: username, role: "Admin" };
-        document.getElementById("adminBtn").classList.add("admin-active");
+        updateAdminButtonUI(true);
 
         const greetingNameEl = document.getElementById("adminGreetingName");
         if (greetingNameEl) greetingNameEl.innerText = state.currentAdminUser.name || state.currentAdminUser.username || "Admin";
@@ -3012,7 +3042,7 @@
       state.adminPin = "";
       const floatBar = document.getElementById("adminActiveFloatingBar");
       if (floatBar) floatBar.style.display = "none";
-      document.getElementById("adminBtn").classList.remove("admin-active");
+      updateAdminButtonUI(false);
       closeAdminSettingsModal();
       showToast("Anda telah keluar dari mode admin.");
     }
@@ -3142,6 +3172,22 @@
     function downloadCurrentPhotoWithFrame() {
       const photo = state.filteredPhotos[state.currentLightboxIndex];
       if (!photo) return;
+
+      // JAMINAN MUTLAK: Kategori khusus Photobooth SELALU diunduh ukuran aslinya tanpa kompresi dan tanpa bingkai!
+      const isPhotobooth = Boolean(
+        photo.isVideo ||
+        photo.isKing ||
+        photo.isPhotobooth ||
+        (photo.category && photo.category.toLowerCase().includes("photobooth")) ||
+        (state.activeCategory && state.activeCategory.toLowerCase().includes("photobooth")) ||
+        (photo.downloadUrl && (photo.downloadUrl.includes("kingphotobooth.co") || photo.downloadUrl.includes("fotoshare.co") || photo.downloadUrl.includes("photos.google.com"))) ||
+        (photo.previewUrl && (photo.previewUrl.includes("kingphotobooth.co") || photo.previewUrl.includes("fotoshare.co") || photo.previewUrl.includes("photos.google.com")))
+      );
+
+      if (isPhotobooth) {
+        downloadPhotoboothOriginal(photo);
+        return;
+      }
 
       // Cek apakah foto ini sudah ada dalam antrean atau sedang diproses
       const isAlreadyQueued = downloadQueue.items.some(function(item) {
@@ -3591,11 +3637,6 @@
     function applyLightboxZoom() {
       const img = document.getElementById("lightboxImg");
       const wrapper = document.getElementById("lightboxImgWrapper");
-      const textEl = document.getElementById("lightboxZoomLevelText");
-
-      if (textEl) {
-        textEl.innerText = Math.round(lightboxZoom.scale * 100) + "%";
-      }
 
       if (wrapper) {
         if (lightboxZoom.scale > 1.05) {
@@ -3851,12 +3892,17 @@
         if (zoomToolbar) zoomToolbar.style.display = "inline-flex";
 
         const isPhotobooth = photo && (
+          Boolean(photo.isVideo) ||
+          Boolean(photo.isKing) ||
+          Boolean(photo.isPhotobooth) ||
           (photo.category && photo.category.toLowerCase().includes("photobooth")) ||
-          (state.activeCategory && state.activeCategory.toLowerCase().includes("photobooth"))
+          (state.activeCategory && state.activeCategory.toLowerCase().includes("photobooth")) ||
+          (photo.downloadUrl && (photo.downloadUrl.includes("kingphotobooth.co") || photo.downloadUrl.includes("fotoshare.co") || photo.downloadUrl.includes("photos.google.com"))) ||
+          (photo.previewUrl && (photo.previewUrl.includes("kingphotobooth.co") || photo.previewUrl.includes("fotoshare.co") || photo.previewUrl.includes("photos.google.com")))
         );
 
         if (isPhotobooth) {
-          if (btnLabel) btnLabel.innerText = "⬇️ Unduh Foto Asli Photobooth";
+          if (btnLabel) btnLabel.innerText = "⬇️ Unduh Foto Asli (Ukuran Penuh)";
           if (btn) {
             btn.onclick = function() {
               downloadPhotoboothOriginal(photo);
@@ -3909,6 +3955,12 @@
             .catch(function() {
               // 3. Fallback hening ke invisible hidden iframe (TIDAK PERNAH BUKA WINDOW / TAB BARU)
               triggerSilentIframeDownload(proxyUrl, isVideo);
+              setTimeout(function() {
+                const testFrame = document.getElementById("silentDownloadFrame");
+                if (testFrame && !testFrame.src.includes(encodeURIComponent(rawUrl))) {
+                  triggerSilentIframeDownload(rawUrl, isVideo);
+                }
+              }, 400);
             });
         });
     }
