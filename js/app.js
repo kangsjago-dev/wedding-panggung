@@ -1199,6 +1199,7 @@ const GLOBAL_CONFIG = {
         if (cfg.FRAME_IMAGE_URL) {
           frameBadge.innerText = "✓ Bingkai Aktif";
           frameBadge.style.color = "#10B981";
+          preloadFrameAssets(normalizeDriveImageUrl(cfg.FRAME_IMAGE_URL));
         } else {
           frameBadge.innerText = "Tanpa Bingkai";
           frameBadge.style.color = "#64748B";
@@ -3844,11 +3845,11 @@ const GLOBAL_CONFIG = {
 
       const match = raw.match(/\/d\/([a-zA-Z0-9_\-]+)/) || raw.match(/id=([a-zA-Z0-9_\-]+)/);
       if (match && match[1]) {
-        return "https://drive.google.com/thumbnail?id=" + match[1] + "&sz=w2500";
+        return "https://lh3.googleusercontent.com/d/" + match[1] + "=w2500";
       }
 
       if (/^[a-zA-Z0-9_\-]{20,}$/.test(raw) && !raw.startsWith("http")) {
-        return "https://drive.google.com/thumbnail?id=" + raw + "&sz=w2500";
+        return "https://lh3.googleusercontent.com/d/" + raw + "=w2500";
       }
 
       return raw;
@@ -4028,8 +4029,192 @@ const GLOBAL_CONFIG = {
       executeFramedPhotoDownload(photo, frameUrl, advanceQueue);
     }
 
+    function generateUniqueFileName(baseName, suffix, ext) {
+      const clean = (baseName || "wedding-photo")
+        .replace(/\.[^/.]+$/, "")
+        .replace(/[^a-zA-Z0-9_-]/g, "_")
+        .slice(0, 45);
+      // Garam salt 4 digit waktu saat ini agar tidak terjadi duplikasi (-2.jpg) pada penyimpanan Android
+      const salt = Date.now().toString().slice(-4);
+      const sfx = suffix ? ("-" + suffix) : "";
+      const extension = ext || ".jpg";
+      return clean + sfx + "_" + salt + extension;
+    }
+
+    function preloadFrameAssets(frameUrl) {
+      if (!frameUrl) return;
+      if (state.cachedFrame && state.cachedFrame.url === frameUrl) return;
+
+      loadSafeCanvasImage(frameUrl, function(frameImg) {
+        try {
+          const fw = frameImg.naturalWidth || 2400;
+          const fh = frameImg.naturalHeight || 1600;
+          const scanMax = 500;
+          const scanScale = Math.min(1, scanMax / Math.max(fw, fh));
+          const scanW = Math.max(1, Math.round(fw * scanScale));
+          const scanH = Math.max(1, Math.round(fh * scanScale));
+
+          const scanCanvas = document.createElement("canvas");
+          scanCanvas.width = scanW;
+          scanCanvas.height = scanH;
+          const scanCtx = scanCanvas.getContext("2d");
+          scanCtx.drawImage(frameImg, 0, 0, scanW, scanH);
+          const scanData = scanCtx.getImageData(0, 0, scanW, scanH).data;
+
+          let minX = scanW, minY = scanH, maxX = -1, maxY = -1;
+          let transparentCount = 0;
+
+          for (let y = 0; y < scanH; y++) {
+            for (let x = 0; x < scanW; x++) {
+              const alpha = scanData[(y * scanW + x) * 4 + 3];
+              if (alpha < 80) {
+                transparentCount++;
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+              }
+            }
+          }
+
+          let cutoutX, cutoutY, cutoutW, cutoutH;
+          if (transparentCount > (scanW * scanH * 0.05) && maxX > minX && maxY > minY) {
+            cutoutX = Math.round(minX / scanScale);
+            cutoutY = Math.round(minY / scanScale);
+            cutoutW = Math.round((maxX - minX + 1) / scanScale);
+            cutoutH = Math.round((maxY - minY + 1) / scanScale);
+          } else {
+            cutoutX = 0;
+            cutoutY = 0;
+            cutoutW = fw;
+            cutoutH = fh;
+          }
+
+          state.cachedFrame = {
+            url: frameUrl,
+            img: frameImg,
+            fw: fw,
+            fh: fh,
+            cutout: { x: cutoutX, y: cutoutY, w: cutoutW, h: cutoutH }
+          };
+        } catch (e) {
+          console.warn("Frame pre-caching failed:", e);
+        }
+      }, function() {});
+    }
+
+    function prepareLightboxFramedBlob(photo) {
+      if (!photo || isPhotoPhotobooth(photo)) return;
+      const rawFrameConfig = state.activeConfig.FRAME_IMAGE_URL ? state.activeConfig.FRAME_IMAGE_URL.trim() : "";
+      const frameUrl = normalizeDriveImageUrl(rawFrameConfig);
+      if (!frameUrl) return;
+
+      if (state.currentPreparedFramedBlobPhotoId === photo.id && state.currentPreparedFramedBlob) return;
+
+      const photoSrc = photo.downloadUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || (photo.id ? ("https://lh3.googleusercontent.com/d/" + photo.id + "=w2500") : "");
+      if (!photoSrc) return;
+
+      loadSafeCanvasImage(photoSrc, function(photoImg) {
+        function doComposite(frameImg, cutoutInfo) {
+          try {
+            const fw = frameImg.naturalWidth || 2400;
+            const fh = frameImg.naturalHeight || 1600;
+            const cutoutX = cutoutInfo.x;
+            const cutoutY = cutoutInfo.y;
+            const cutoutW = cutoutInfo.w;
+            const cutoutH = cutoutInfo.h;
+
+            const pw = photoImg.naturalWidth || photoImg.width || 1920;
+            const ph = photoImg.naturalHeight || photoImg.height || 1080;
+
+            const scale = Math.max(1, pw / cutoutW, ph / cutoutH);
+            const targetW = Math.round(fw * scale);
+            const targetH = Math.round(fh * scale);
+
+            const canvas = document.createElement("canvas");
+            canvas.width = targetW;
+            canvas.height = targetH;
+            const ctx = canvas.getContext("2d");
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+
+            const scaledCutoutX = Math.round(cutoutX * scale);
+            const scaledCutoutY = Math.round(cutoutY * scale);
+            const scaledCutoutW = Math.round(cutoutW * scale);
+            const scaledCutoutH = Math.round(cutoutH * scale);
+
+            const photoAspect = pw / ph;
+            const cutoutAspect = scaledCutoutW / scaledCutoutH;
+
+            let drawX = scaledCutoutX;
+            let drawY = scaledCutoutY;
+            let drawW = scaledCutoutW;
+            let drawH = scaledCutoutH;
+
+            if (Math.abs(photoAspect - cutoutAspect) < 0.05) {
+              drawX = scaledCutoutX;
+              drawY = scaledCutoutY;
+              drawW = scaledCutoutW;
+              drawH = scaledCutoutH;
+            } else if (photoAspect > cutoutAspect) {
+              drawW = scaledCutoutW;
+              drawH = scaledCutoutW / photoAspect;
+              drawX = scaledCutoutX;
+              drawY = scaledCutoutY + (scaledCutoutH - drawH) / 2;
+            } else {
+              drawH = scaledCutoutH;
+              drawW = scaledCutoutH * photoAspect;
+              drawY = scaledCutoutY;
+              drawX = scaledCutoutX + (scaledCutoutW - drawW) / 2;
+            }
+
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(0, 0, targetW, targetH);
+
+            const rot = getPhotoRotation(photo.id, photo.category);
+            if (rot % 360 !== 0) {
+              ctx.save();
+              const cx = drawX + drawW / 2;
+              const cy = drawY + drawH / 2;
+              ctx.translate(cx, cy);
+              ctx.rotate((rot * Math.PI) / 180);
+              if (rot % 180 !== 0) {
+                const scaleRatio = Math.max(drawW / drawH, drawH / drawW);
+                ctx.drawImage(photoImg, -drawH / 2 * scaleRatio, -drawW / 2 * scaleRatio, drawH * scaleRatio, drawW * scaleRatio);
+              } else {
+                ctx.drawImage(photoImg, -drawW / 2, -drawH / 2, drawW, drawH);
+              }
+              ctx.restore();
+            } else {
+              ctx.drawImage(photoImg, drawX, drawY, drawW, drawH);
+            }
+
+            ctx.drawImage(frameImg, 0, 0, targetW, targetH);
+
+            canvas.toBlob(function(blob) {
+              if (blob) {
+                state.currentPreparedFramedBlob = blob;
+                state.currentPreparedFramedBlobPhotoId = photo.id;
+              }
+            }, "image/jpeg", 0.94);
+          } catch (err) {
+            console.warn("Pre-composite failed:", err);
+          }
+        }
+
+        if (state.cachedFrame && state.cachedFrame.url === frameUrl) {
+          doComposite(state.cachedFrame.img, state.cachedFrame.cutout);
+        } else {
+          loadSafeCanvasImage(frameUrl, function(fImg) {
+            preloadFrameAssets(frameUrl);
+            doComposite(fImg, { x: 0, y: 0, w: fImg.naturalWidth || 2400, h: fImg.naturalHeight || 1600 });
+          }, function() {});
+        }
+      }, function() {});
+    }
+
     function loadSafeCanvasImage(urlOrId, callback, errCallback) {
-      if (!urlOrId) { errCallback(); return; }
+      if (!urlOrId) { if (errCallback) errCallback(); return; }
       if (urlOrId.startsWith("data:")) {
         const img = new Image();
         img.onload = function() { callback(img); };
@@ -4038,27 +4223,14 @@ const GLOBAL_CONFIG = {
         return;
       }
 
-      const isHttp = urlOrId.startsWith("http");
-      if (isHttp) {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = function() { callback(img); };
-        img.onerror = function() {
-          // Muat via proxy Vercel untuk mengabaikan CORS taint pada canvas
-          const proxyImg = new Image();
-          proxyImg.crossOrigin = "anonymous";
-          proxyImg.onload = function() { callback(proxyImg); };
-          proxyImg.onerror = function() {
-            errCallback();
-          };
-          proxyImg.src = "/api/download-proxy?url=" + encodeURIComponent(urlOrId);
-        };
-        img.src = urlOrId;
-        return;
+      let effectiveUrl = urlOrId;
+      const dMatch = urlOrId.match(/(?:\/d\/|id=)([a-zA-Z0-9_-]{25,})/);
+      if (dMatch && (urlOrId.includes("drive.google.com") || urlOrId.includes("docs.google.com") || !urlOrId.startsWith("http"))) {
+        effectiveUrl = "https://lh3.googleusercontent.com/d/" + dMatch[1] + "=w2500";
+      } else if (/^[a-zA-Z0-9_\-]{20,}$/.test(urlOrId) && !urlOrId.startsWith("http")) {
+        effectiveUrl = "https://lh3.googleusercontent.com/d/" + urlOrId + "=w2500";
       }
 
-      // Jika input adalah ID Google Drive murni
-      const directDriveUrl = "https://drive.google.com/thumbnail?id=" + urlOrId + "&sz=w2500";
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.onload = function() { callback(img); };
@@ -4067,72 +4239,27 @@ const GLOBAL_CONFIG = {
         proxyImg.crossOrigin = "anonymous";
         proxyImg.onload = function() { callback(proxyImg); };
         proxyImg.onerror = function() {
-          callBackend("getImageBase64", { fileId: urlOrId }, function(res) {
-            if (res && res.success && res.dataUrl) {
-              const b64 = new Image();
-              b64.onload = function() { callback(b64); };
-              b64.onerror = errCallback;
-              b64.src = res.dataUrl;
-            } else {
-              errCallback();
-            }
-          }, errCallback);
+          if (errCallback) errCallback();
         };
-        proxyImg.src = "/api/download-proxy?url=" + encodeURIComponent(directDriveUrl);
+        proxyImg.src = "/api/download-proxy?url=" + encodeURIComponent(effectiveUrl);
       };
-      img.src = directDriveUrl;
+      img.src = effectiveUrl;
     }
 
     function executeFramedPhotoDownload(photo, frameUrl, onDone) {
-      const photoSrc = photo.downloadUrl || photo.highResUrl || photo.thumbnailUrl || (photo.id ? ("https://drive.google.com/thumbnail?id=" + photo.id + "&sz=w2500") : "");
+      const photoSrc = photo.downloadUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || (photo.id ? ("https://lh3.googleusercontent.com/d/" + photo.id + "=w2500") : "");
       
       loadSafeCanvasImage(photoSrc, function(photoImg) {
         updateDownloadWidget(55, "Menggabungkan Foto Beresolusi Penuh...", (photo.name || "Foto") + " • Menjaga Ukuran Asli", false);
 
-        loadSafeCanvasImage(frameUrl, function(frameImg) {
+        function renderFrameWithCutout(frameImg, cutoutInfo) {
           try {
             const fw = frameImg.naturalWidth || 2400;
             const fh = frameImg.naturalHeight || 1600;
-            const scanMax = 500;
-            const scanScale = Math.min(1, scanMax / Math.max(fw, fh));
-            const scanW = Math.max(1, Math.round(fw * scanScale));
-            const scanH = Math.max(1, Math.round(fh * scanScale));
-
-            const scanCanvas = document.createElement("canvas");
-            scanCanvas.width = scanW;
-            scanCanvas.height = scanH;
-            const scanCtx = scanCanvas.getContext("2d");
-            scanCtx.drawImage(frameImg, 0, 0, scanW, scanH);
-            const scanData = scanCtx.getImageData(0, 0, scanW, scanH).data;
-
-            let minX = scanW, minY = scanH, maxX = -1, maxY = -1;
-            let transparentCount = 0;
-
-            for (let y = 0; y < scanH; y++) {
-              for (let x = 0; x < scanW; x++) {
-                const alpha = scanData[(y * scanW + x) * 4 + 3];
-                if (alpha < 80) {
-                  transparentCount++;
-                  if (x < minX) minX = x;
-                  if (x > maxX) maxX = x;
-                  if (y < minY) minY = y;
-                  if (y > maxY) maxY = y;
-                }
-              }
-            }
-
-            let cutoutX, cutoutY, cutoutW, cutoutH;
-            if (transparentCount > (scanW * scanH * 0.05) && maxX > minX && maxY > minY) {
-              cutoutX = Math.round(minX / scanScale);
-              cutoutY = Math.round(minY / scanScale);
-              cutoutW = Math.round((maxX - minX + 1) / scanScale);
-              cutoutH = Math.round((maxY - minY + 1) / scanScale);
-            } else {
-              cutoutX = 0;
-              cutoutY = 0;
-              cutoutW = fw;
-              cutoutH = fh;
-            }
+            const cutoutX = cutoutInfo.x;
+            const cutoutY = cutoutInfo.y;
+            const cutoutW = cutoutInfo.w;
+            const cutoutH = cutoutInfo.h;
 
             const pw = photoImg.naturalWidth || photoImg.width || 1920;
             const ph = photoImg.naturalHeight || photoImg.height || 1080;
@@ -4205,8 +4332,7 @@ const GLOBAL_CONFIG = {
 
             canvas.toBlob(function(blob) {
               if (blob) {
-                const cleanName = (photo.rawName || photo.name || "wedding-photo").replace(/\.[^/.]+$/, "").replace(/[\/\\]/g, "_");
-                const fileName = cleanName + "-berbingkai.jpg";
+                const fileName = generateUniqueFileName(photo.rawName || photo.name, "berbingkai", ".jpg");
                 saveBlobToDevice(blob, fileName);
                 if (onDone) onDone();
               } else {
@@ -4218,9 +4344,18 @@ const GLOBAL_CONFIG = {
             console.warn("Canvas compositing error, fallback to direct download:", eCanvas);
             executeDirectPhotoDownload(photo, onDone);
           }
-        }, function() {
-          executeDirectPhotoDownload(photo, onDone);
-        });
+        }
+
+        if (state.cachedFrame && state.cachedFrame.url === frameUrl) {
+          renderFrameWithCutout(state.cachedFrame.img, state.cachedFrame.cutout);
+        } else {
+          loadSafeCanvasImage(frameUrl, function(frameImg) {
+            preloadFrameAssets(frameUrl);
+            renderFrameWithCutout(frameImg, { x: 0, y: 0, w: frameImg.naturalWidth || 2400, h: frameImg.naturalHeight || 1600 });
+          }, function() {
+            executeDirectPhotoDownload(photo, onDone);
+          });
+        }
       }, function() {
         executeDirectPhotoDownload(photo, onDone);
       });
@@ -4230,7 +4365,7 @@ const GLOBAL_CONFIG = {
       const isVideo = Boolean(photo.isVideo);
       let rawUrl = photo.downloadUrl || photo.videoUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || photo.img;
       if (!rawUrl && photo.id) {
-        rawUrl = "https://drive.google.com/uc?export=download&id=" + photo.id;
+        rawUrl = "https://lh3.googleusercontent.com/d/" + photo.id + "=w3200";
       }
       if (!rawUrl) {
         if (onDone) onDone();
@@ -4241,35 +4376,13 @@ const GLOBAL_CONFIG = {
       }
 
       const ext = isVideo ? ".mp4" : ".jpg";
-      const cleanName = (photo.rawName || photo.name || (isVideo ? "video-photobooth" : "foto-asli")).replace(/\.[^/.]+$/, "").replace(/[\/\\]/g, "_");
-      const fileName = cleanName + ext;
-
+      const fileName = generateUniqueFileName(photo.rawName || photo.name || (isVideo ? "video-photobooth" : "foto-asli"), "", ext);
       const proxyUrl = "/api/download-proxy?url=" + encodeURIComponent(rawUrl) + "&filename=" + encodeURIComponent(fileName);
 
-      fetch(proxyUrl)
-        .then(function(res) {
-          if (!res.ok) throw new Error("Proxy error " + res.status);
-          return res.blob();
-        })
-        .then(function(blob) {
-          saveBlobToDevice(blob, fileName);
-          if (onDone) onDone();
-        })
-        .catch(function() {
-          fetch(rawUrl)
-            .then(function(res) {
-              if (!res.ok) throw new Error("Direct fetch error " + res.status);
-              return res.blob();
-            })
-            .then(function(blob) {
-              saveBlobToDevice(blob, fileName);
-              if (onDone) onDone();
-            })
-            .catch(function() {
-              triggerDirectLinkDownload(proxyUrl, fileName);
-              if (onDone) setTimeout(onDone, 800);
-            });
-        });
+      triggerDirectLinkDownload(proxyUrl, fileName);
+      if (onDone) {
+        setTimeout(onDone, 600);
+      }
     }
 
     function triggerDirectDownload(photo) {
@@ -4282,22 +4395,26 @@ const GLOBAL_CONFIG = {
       a.style.display = "none";
       a.href = blobUrl;
       a.download = fileName;
+      a.target = "_self";
       document.body.appendChild(a);
       a.click();
       setTimeout(function() {
-        a.remove();
+        if (a.parentNode) a.parentNode.removeChild(a);
         URL.revokeObjectURL(blobUrl);
-      }, 25000);
+      }, 30000);
     }
 
     function triggerDirectLinkDownload(url, fileName) {
       const a = document.createElement("a");
       a.style.display = "none";
       a.href = url;
-      a.download = fileName;
+      if (fileName) a.download = fileName;
+      a.target = "_self";
       document.body.appendChild(a);
       a.click();
-      setTimeout(function() { a.remove(); }, 15000);
+      setTimeout(function() {
+        if (a.parentNode) a.parentNode.removeChild(a);
+      }, 15000);
     }
 
     function fallbackSaveLink(url, fileName) {
@@ -4713,15 +4830,37 @@ const GLOBAL_CONFIG = {
           if (btnLabel) btnLabel.innerText = "⬇️ Unduh Foto Asli (Ukuran Penuh)";
           if (btn) {
             btn.onclick = function() {
-              queuePhotoDownload(photo);
+              const ext = Boolean(photo.isVideo) ? ".mp4" : ".jpg";
+              let rawUrl = photo.downloadUrl || photo.videoUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || photo.img;
+              if (!rawUrl && photo.id) {
+                rawUrl = "https://lh3.googleusercontent.com/d/" + photo.id + "=w3200";
+              }
+              if (rawUrl) {
+                if (rawUrl.includes("fotoshare.co")) rawUrl = rawUrl.replace(/\?.*$/, "");
+                const fileName = generateUniqueFileName(photo.rawName || photo.name || (photo.isVideo ? "video-photobooth" : "foto-asli"), "", ext);
+                const proxyUrl = "/api/download-proxy?url=" + encodeURIComponent(rawUrl) + "&filename=" + encodeURIComponent(fileName);
+                triggerDirectLinkDownload(proxyUrl, fileName);
+                showToast("✓ Memulai penyimpanan berkas asli ke perangkat...");
+                updateDownloadWidget(100, "✓ Berhasil Disimpan!", photo.name || "Foto", true);
+              } else {
+                queuePhotoDownload(photo);
+              }
             };
           }
         } else {
           // Semua kategori momen lainnya mengikuti settingan kategori utama (berbingkai)
           if (btnLabel) btnLabel.innerText = "✨ Simpan Kenangan Berbingkai";
+          prepareLightboxFramedBlob(photo);
           if (btn) {
             btn.onclick = function() {
-              queuePhotoDownload(photo);
+              if (state.currentPreparedFramedBlobPhotoId === photo.id && state.currentPreparedFramedBlob) {
+                const fileName = generateUniqueFileName(photo.rawName || photo.name, "berbingkai", ".jpg");
+                saveBlobToDevice(state.currentPreparedFramedBlob, fileName);
+                showToast("✓ Foto berbingkai berhasil tersimpan ke perangkat!");
+                updateDownloadWidget(100, "✓ Berhasil Disimpan!", photo.name || "Foto", true);
+              } else {
+                queuePhotoDownload(photo);
+              }
             };
           }
         }
