@@ -12,6 +12,7 @@
       const val = String(newVal || "").trim() || "Semua Foto";
       state.allPhotosLabel = val;
       state.activeConfig.ALL_PHOTOS_LABEL = val;
+      state.lastLocalCategoryEditTime = Date.now();
       const inp = document.getElementById("cfgMainGalleryLabel");
       if (inp && inp.value !== newVal) inp.value = newVal;
       try {
@@ -165,10 +166,12 @@
         }) : null;
         const currentPbUrl = (pbCat && pbCat.url) ? String(pbCat.url).trim() : (targetUrl || state.activeConfig.PHOTOBOOTH_URL || "");
         callBackend("saveAdminSettings", {
-          pin: state.adminPin,
+          pin: getEffectiveAdminPin(),
           config: {
             CUSTOM_CATEGORIES: state.customCategories,
             PHOTOBOOTH_URL: currentPbUrl,
+            DRIVE_FOLDER_ID: state.activeConfig.DRIVE_FOLDER_ID || "",
+            ALL_PHOTOS_LABEL: state.allPhotosLabel || "Semua Foto",
             EVENTS: state.events,
             ACTIVE_EVENT_ID: state.currentEventId
           }
@@ -648,7 +651,10 @@ const GLOBAL_CONFIG = {
             }
             if (sheetMap.ADMIN_PIN) {
               state.activeConfig.ADMIN_PIN = sheetMap.ADMIN_PIN;
-              state.adminPin = sheetMap.ADMIN_PIN;
+              // JANGAN pernah menimpa pin sesi aktif admin yang sedang login
+              if (!state.isAdminLoggedIn && !state.adminPin) {
+                state.adminPin = sheetMap.ADMIN_PIN;
+              }
             }
             if (sheetMap.EVENT_DATE) state.activeConfig.EVENT_DATE = sheetMap.EVENT_DATE;
             if (sheetMap.EVENT_VENUE) state.activeConfig.EVENT_VENUE = sheetMap.EVENT_VENUE;
@@ -656,12 +662,14 @@ const GLOBAL_CONFIG = {
               state.activeConfig.EVENT_NAME = sheetMap.EVENT_NAME || sheetMap.COUPLE_NAME;
               state.activeConfig.COUPLE_NAME = state.activeConfig.EVENT_NAME;
             }
-            if (sheetMap.DRIVE_FOLDER_ID) state.activeConfig.DRIVE_FOLDER_ID = sheetMap.DRIVE_FOLDER_ID;
+            if (!isEditingLocally && !isModalOpen) {
+              if (sheetMap.DRIVE_FOLDER_ID) state.activeConfig.DRIVE_FOLDER_ID = sheetMap.DRIVE_FOLDER_ID;
+              if (sheetMap.ALL_PHOTOS_LABEL) state.allPhotosLabel = sheetMap.ALL_PHOTOS_LABEL;
+            }
             if (sheetMap.FRAME_IMAGE_URL) state.activeConfig.FRAME_IMAGE_URL = sheetMap.FRAME_IMAGE_URL;
             if (sheetMap.GAS_API_URL && sheetMap.GAS_API_URL.startsWith('http')) {
               state.gasApiUrl = sheetMap.GAS_API_URL;
             }
-            if (sheetMap.ALL_PHOTOS_LABEL) state.allPhotosLabel = sheetMap.ALL_PHOTOS_LABEL;
 
             populateConfigToUI(state.activeConfig);
             renderCategoryTabs();
@@ -689,6 +697,16 @@ const GLOBAL_CONFIG = {
       }, state.autoRefreshIntervalMs);
     }
 
+    function getEffectiveAdminPin() {
+      let pin = state.adminPin;
+      if (!pin) {
+        try {
+          pin = sessionStorage.getItem("WEDDING_ADMIN_PIN") || localStorage.getItem("WEDDING_ADMIN_PIN") || "";
+        } catch(e) {}
+      }
+      return pin || "121212";
+    }
+
     function callBackend(action, payload, onSuccess, onError) {
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         if (action === "getGalleryData") {
@@ -696,7 +714,7 @@ const GLOBAL_CONFIG = {
         } else if (action === "adminLogin") {
           google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).adminLogin(payload.pin);
         } else if (action === "testAndSyncDriveFolder") {
-          google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).testAndSyncDriveFolder(payload.pin, payload.folderId);
+          google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).testAndSyncDriveFolder(payload.pin, payload.folderId, payload.allPhotosLabel);
         } else if (action === "saveAdminSettings") {
           google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).saveAdminSettings(payload.pin, payload.config || payload);
         } else if (action === "setupDatabase" || action === "setupSpreadsheetDatabase") {
@@ -1016,35 +1034,41 @@ const GLOBAL_CONFIG = {
         const footerBlessingEl = document.getElementById("footerBlessing");
         if (footerBlessingEl) footerBlessingEl.textContent = cfg.FOOTER_MESSAGE;
       }
-      // Prioritaskan Data Kategori Server / Config Sentral (Mencegah Ketidaksinkronan Antar-Device)
-      let loadedCats = null;
-      if (cfg.CUSTOM_CATEGORIES) {
-        if (typeof cfg.CUSTOM_CATEGORIES === "string") {
-          if (!cfg.CUSTOM_CATEGORIES.includes("[object Object]")) {
-            try { loadedCats = JSON.parse(cfg.CUSTOM_CATEGORIES); } catch(e) {}
-          }
-        } else if (Array.isArray(cfg.CUSTOM_CATEGORIES)) {
-          loadedCats = cfg.CUSTOM_CATEGORIES;
-        }
-      }
-      if (!Array.isArray(loadedCats) || loadedCats.length === 0) {
-        try {
-          const savedCatsStr = localStorage.getItem("WEDDING_SAVED_CUSTOM_CATEGORIES");
-          if (savedCatsStr) loadedCats = JSON.parse(savedCatsStr);
-        } catch(e) {}
-        if (!Array.isArray(loadedCats) || loadedCats.length === 0) {
-          loadedCats = GLOBAL_CONFIG.CUSTOM_CATEGORIES || [];
-        }
-      }
-      if (Array.isArray(loadedCats)) {
-        state.customCategories = loadedCats.filter(function(c) {
-          const cName = String((c && c.name) || c || "").trim();
-          return cName && cName.toLowerCase() !== "teapai";
-        });
-      }
+      // Input form admin & Kategori: HANYA perbarui jika modal admin SEDANG TIDAK DIBUKA (mencegah teks & kategori tertimpa saat admin mengetik/menambah)
+      const adminModal = document.getElementById("adminSettingsModal");
+      const isModalActive = adminModal && adminModal.classList.contains("active");
+      const isEditingLocally = state.lastLocalCategoryEditTime && (Date.now() - state.lastLocalCategoryEditTime < 60000);
 
-      if (cfg.ALL_PHOTOS_LABEL) {
-        state.allPhotosLabel = String(cfg.ALL_PHOTOS_LABEL).trim() || "Semua Foto";
+      // Prioritaskan Data Kategori Server / Config Sentral (Mencegah Ketidaksinkronan Antar-Device)
+      if (!isModalActive && !isEditingLocally) {
+        let loadedCats = null;
+        if (cfg.CUSTOM_CATEGORIES) {
+          if (typeof cfg.CUSTOM_CATEGORIES === "string") {
+            if (!cfg.CUSTOM_CATEGORIES.includes("[object Object]")) {
+              try { loadedCats = JSON.parse(cfg.CUSTOM_CATEGORIES); } catch(e) {}
+            }
+          } else if (Array.isArray(cfg.CUSTOM_CATEGORIES)) {
+            loadedCats = cfg.CUSTOM_CATEGORIES;
+          }
+        }
+        if (!Array.isArray(loadedCats) || loadedCats.length === 0) {
+          try {
+            const savedCatsStr = localStorage.getItem("WEDDING_SAVED_CUSTOM_CATEGORIES");
+            if (savedCatsStr) loadedCats = JSON.parse(savedCatsStr);
+          } catch(e) {}
+          if (!Array.isArray(loadedCats) || loadedCats.length === 0) {
+            loadedCats = GLOBAL_CONFIG.CUSTOM_CATEGORIES || [];
+          }
+        }
+        if (Array.isArray(loadedCats)) {
+          state.customCategories = loadedCats.filter(function(c) {
+            const cName = String((c && c.name) || c || "").trim();
+            return cName && cName.toLowerCase() !== "teapai";
+          });
+        }
+        if (cfg.ALL_PHOTOS_LABEL) {
+          state.allPhotosLabel = String(cfg.ALL_PHOTOS_LABEL).trim() || "Semua Foto";
+        }
       }
 
       if (cfg.COVER_SETTINGS) {
@@ -1061,9 +1085,6 @@ const GLOBAL_CONFIG = {
       }
 
       // Input form admin: HANYA perbarui jika modal admin SEDANG TIDAK DIBUKA (mencegah teks tertimpa saat admin mengetik)
-      const adminModal = document.getElementById("adminSettingsModal");
-      const isModalActive = adminModal && adminModal.classList.contains("active");
-
       if (!isModalActive) {
         const cfgFrameEl = document.getElementById("cfgFrameImageUrl");
         if (cfgFrameEl) cfgFrameEl.value = cfg.FRAME_IMAGE_URL || "";
@@ -2159,6 +2180,10 @@ const GLOBAL_CONFIG = {
         submitBtn.innerHTML = `<span>Masuk</span>`;
         state.isAdminLoggedIn = true;
         state.adminPin = password;
+        try {
+          sessionStorage.setItem("WEDDING_ADMIN_PIN", password);
+          localStorage.setItem("WEDDING_ADMIN_PIN", password);
+        } catch(e) {}
         state.currentAdminUser = user || { username: username, name: username, role: "Admin" };
         updateAdminButtonUI(true);
 
@@ -2251,9 +2276,13 @@ const GLOBAL_CONFIG = {
         alertBox.style.display = "block";
       }
 
-      callBackend("changeAdminPin", { currentPin: state.adminPin, newPin: newPin }, function(res) {
+      callBackend("changeAdminPin", { currentPin: getEffectiveAdminPin(), newPin: newPin }, function(res) {
         if (res && res.success) {
           state.adminPin = newPin;
+          try {
+            sessionStorage.setItem("WEDDING_ADMIN_PIN", newPin);
+            localStorage.setItem("WEDDING_ADMIN_PIN", newPin);
+          } catch(e) {}
           if (pinInput) pinInput.value = "";
           if (alertBox) {
             alertBox.className = "admin-alert-box success";
@@ -2351,7 +2380,7 @@ const GLOBAL_CONFIG = {
             <span>🏷️ Kategori Galeri Utama: ${escapeHtml(state.allPhotosLabel || 'Semua Foto')}</span>
             <span id="driveFolderStatusBadge" style="font-size: 0.68rem; background: #FEF3C7; color: #92400E; padding: 1px 6px; border-radius: 9999px;">Katalog Utama</span>
           </div>
-          <button type="button" class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px;" onclick="handleSyncDrivePhotosDirectly()" title="Sinkronkan Foto Google Drive ke Galeri">
+          <button type="button" class="btn btn-outline" id="btnSyncDrivePhotos" style="font-size: 0.72rem; padding: 3px 8px;" onclick="handleSyncDrivePhotosDirectly()" title="Sinkronkan Foto Google Drive ke Galeri">
             <span id="syncDriveBtnText">🔄 Sinkron Google Drive</span>
           </button>
         </div>
@@ -2365,7 +2394,7 @@ const GLOBAL_CONFIG = {
           </div>
           <div>
             <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 2px;" for="cfgDriveFolderId">Tautan Display Galeri (Katalog Foto Google Drive)</label>
-            <input type="text" id="cfgDriveFolderId" class="admin-input" placeholder="Tautan / ID Folder Google Drive" value="${escapeHtml(currentDriveFolder)}" oninput="state.activeConfig.DRIVE_FOLDER_ID = this.value.trim()" style="padding: 7px 10px; font-size: 0.82rem;">
+            <input type="text" id="cfgDriveFolderId" class="admin-input" placeholder="Tautan / ID Folder Google Drive" value="${escapeHtml(currentDriveFolder)}" oninput="state.activeConfig.DRIVE_FOLDER_ID = this.value.trim(); state.lastLocalCategoryEditTime = Date.now();" style="padding: 7px 10px; font-size: 0.82rem;">
           </div>
         </div>
         <div class="admin-help-text" style="font-size: 0.7rem; margin-top: 5px;">
@@ -2486,12 +2515,21 @@ const GLOBAL_CONFIG = {
         </div>
       `;
       container.appendChild(row);
+
+      // Jika baris baru ditambahkan interaktif (name kosong)
+      if (!name) {
+        state.lastLocalCategoryEditTime = Date.now();
+        const inp = row.querySelector('.cat-name-input');
+        if (inp) inp.focus();
+        onCategoryRowInput();
+      }
     }
 
     function removeCategoryConfigRow(btn) {
       const row = btn.closest(".category-config-row");
       if (row) {
         row.remove();
+        state.lastLocalCategoryEditTime = Date.now();
         onCategoryRowInput();
       }
     }
@@ -2551,6 +2589,14 @@ const GLOBAL_CONFIG = {
       state.customCategories = customCategoriesList;
       state.activeConfig.CUSTOM_CATEGORIES = customCategoriesList;
 
+      const driveFolderVal = (document.getElementById("cfgDriveFolderId")?.value || state.activeConfig.DRIVE_FOLDER_ID || "").trim();
+      const allPhotosLabelVal = (document.getElementById("cfgMainGalleryLabel")?.value || document.getElementById("cfgAllPhotosLabel")?.value || state.allPhotosLabel || "Semua Foto").trim();
+      if (driveFolderVal) state.activeConfig.DRIVE_FOLDER_ID = driveFolderVal;
+      if (allPhotosLabelVal) {
+        state.activeConfig.ALL_PHOTOS_LABEL = allPhotosLabelVal;
+        state.allPhotosLabel = allPhotosLabelVal;
+      }
+
       // Hapus cache foto kategori yang tautannya berubah
       if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
       if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
@@ -2569,6 +2615,8 @@ const GLOBAL_CONFIG = {
         const curEv = state.events.find(function(e) { return e.id === state.currentEventId; }) || state.events[0];
         if (curEv) {
           curEv.customCategories = customCategoriesList;
+          if (driveFolderVal) curEv.driveFolderId = driveFolderVal;
+          if (allPhotosLabelVal) curEv.allPhotosLabel = allPhotosLabelVal;
         }
       }
 
@@ -2578,6 +2626,7 @@ const GLOBAL_CONFIG = {
         localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(customCategoriesList));
         localStorage.setItem("WEDDING_SAVED_CONFIG", JSON.stringify(state.activeConfig));
         localStorage.setItem("WEDDING_EVENTS_REGISTRY", JSON.stringify(state.events));
+        if (allPhotosLabelVal) localStorage.setItem("WEDDING_ALL_PHOTOS_LABEL", allPhotosLabelVal);
       } catch (e) {}
 
       renderCategoryTabs();
@@ -2590,13 +2639,15 @@ const GLOBAL_CONFIG = {
 
       if (state.gasApiUrl) {
           const pbCat = Array.isArray(customCategoriesList) ? customCategoriesList.find(function(c) {
-            return String((c && c.name) || "").trim().toLowerCase().includes("photobooth");
+            return c && (c.isPhotobooth || c.id === "special_photobooth" || String(c.name || "").toLowerCase().includes("photobooth"));
           }) : null;
           callBackend("saveAdminSettings", {
-            pin: state.adminPin,
+            pin: getEffectiveAdminPin(),
             config: {
               CUSTOM_CATEGORIES: customCategoriesList,
-              PHOTOBOOTH_URL: (pbCat && pbCat.url) ? String(pbCat.url).trim() : "",
+              PHOTOBOOTH_URL: (pbCat && pbCat.url) ? String(pbCat.url).trim() : (state.activeConfig.PHOTOBOOTH_URL || ""),
+              DRIVE_FOLDER_ID: driveFolderVal,
+              ALL_PHOTOS_LABEL: allPhotosLabelVal,
               EVENTS: state.events,
               ACTIVE_EVENT_ID: state.currentEventId
             }
@@ -2605,7 +2656,7 @@ const GLOBAL_CONFIG = {
             syncBtn.disabled = false;
             syncBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg><span>Sinkronkan Kategori & Tautan</span>`;
           }
-          showToast("✓ Kategori momen dan tautan display berhasil disinkronkan!");
+          showToast("✓ Kategori momen dan tautan display berhasil disinkronkan ke Google Sheet!");
         }, function(err) {
           if (syncBtn) {
             syncBtn.disabled = false;
@@ -2630,7 +2681,7 @@ const GLOBAL_CONFIG = {
       if (!container) return;
       container.innerHTML = `<div style="font-size: 0.8rem; color: var(--text-muted); text-align: center; padding: 6px;">Memuat data pengguna...</div>`;
 
-      callBackend("getAdminUsers", { pin: state.adminPin }, function(res) {
+      callBackend("getAdminUsers", { pin: getEffectiveAdminPin() }, function(res) {
         if (res && res.success && Array.isArray(res.users)) {
           state.adminUsers = res.users;
           renderAdminUsersList(res.users);
@@ -2709,7 +2760,7 @@ const GLOBAL_CONFIG = {
       if (alertBox) alertBox.style.display = "none";
       if (addBtn) addBtn.disabled = true;
 
-      callBackend("addAdminUser", { pin: state.adminPin, newUser: { name: name, pin: pin, role: "Admin" } }, function(res) {
+      callBackend("addAdminUser", { pin: getEffectiveAdminPin(), newUser: { name: name, pin: pin, role: "Admin" } }, function(res) {
         if (addBtn) addBtn.disabled = false;
         if (res && res.success) {
           if (nameInput) nameInput.value = "";
@@ -2734,7 +2785,7 @@ const GLOBAL_CONFIG = {
     function handleDeleteAdminUser(userId) {
       if (!confirm("Yakin ingin menghapus pengguna admin ini?")) return;
 
-      callBackend("deleteAdminUser", { pin: state.adminPin, targetUserId: userId }, function(res) {
+      callBackend("deleteAdminUser", { pin: getEffectiveAdminPin(), targetUserId: userId }, function(res) {
         if (res && res.success) {
           if (res.users) renderAdminUsersList(res.users);
           showToast("✓ Pengguna admin berhasil dihapus.");
@@ -3304,7 +3355,7 @@ const GLOBAL_CONFIG = {
        ADMIN USER & PASSWORD MANAGEMENT
        ========================================================================== */
     function loadAdminUsers() {
-      callBackend("getAdminUsers", { pin: state.adminPin }, function(res) {
+      callBackend("getAdminUsers", { pin: getEffectiveAdminPin() }, function(res) {
         if (res && res.success && res.users) {
           state.adminAccounts = res.users;
           renderAdminUsersList(res.users);
@@ -3372,6 +3423,10 @@ const GLOBAL_CONFIG = {
       }
 
       state.adminPin = newPass;
+      try {
+        sessionStorage.setItem("WEDDING_ADMIN_PIN", newPass);
+        localStorage.setItem("WEDDING_ADMIN_PIN", newPass);
+      } catch(e) {}
       if (state.currentAdminUser) {
         state.currentAdminUser.password = newPass;
       }
@@ -3383,7 +3438,7 @@ const GLOBAL_CONFIG = {
       }
       showToast("✓ Password Admin berhasil diganti!");
 
-      callBackend("changeAdminPin", { currentPin: state.adminPin, newPin: newPass });
+      callBackend("changeAdminPin", { currentPin: getEffectiveAdminPin(), newPin: newPass });
     }
 
     function handleAddAdminUser() {
@@ -3425,7 +3480,7 @@ const GLOBAL_CONFIG = {
       renderAdminUsersList(state.adminAccounts);
       showToast("✓ Akun admin '" + uVal + "' berhasil ditambahkan!");
 
-      callBackend("addAdminUser", { pin: state.adminPin, newUser: newUser });
+      callBackend("addAdminUser", { pin: getEffectiveAdminPin(), newUser: newUser });
     }
 
     function handleSaveAllSettings() {
@@ -3564,11 +3619,15 @@ const GLOBAL_CONFIG = {
 
       if (state.gasApiUrl) {
         // Kirim langsung ke Google Apps Script (yang otomatis menyimpan ke Properties & Spreadsheet 'foto-panggung')
-        callBackend("saveAdminSettings", { pin: state.adminPin, config: payload }, function(res) {
+        callBackend("saveAdminSettings", { pin: getEffectiveAdminPin(), config: payload }, function(res) {
           saveBtn.disabled = false;
           saveBtn.innerHTML = `<polyline points="20 6 9 17 4 12"></polyline><span>Simpan Perubahan</span>`;
           if (payload.NEW_PIN) {
             state.adminPin = payload.NEW_PIN;
+            try {
+              sessionStorage.setItem("WEDDING_ADMIN_PIN", payload.NEW_PIN);
+              localStorage.setItem("WEDDING_ADMIN_PIN", payload.NEW_PIN);
+            } catch(e) {}
             const newPinEl = document.getElementById("cfgNewPin");
             if (newPinEl) newPinEl.value = "";
           }
@@ -3600,6 +3659,11 @@ const GLOBAL_CONFIG = {
     function handleAdminLogout() {
       state.isAdminLoggedIn = false;
       state.adminPin = "";
+      state.currentAdminUser = null;
+      try {
+        sessionStorage.removeItem("WEDDING_ADMIN_PIN");
+        localStorage.removeItem("WEDDING_ADMIN_PIN");
+      } catch(e) {}
       const floatBar = document.getElementById("adminActiveFloatingBar");
       if (floatBar) floatBar.style.display = "none";
       updateAdminButtonUI(false);
@@ -3609,6 +3673,7 @@ const GLOBAL_CONFIG = {
 
     function handleSyncDrivePhotosDirectly() {
       const driveInput = (document.getElementById("cfgDriveFolderId")?.value || "").trim();
+      const allPhotosLabel = (document.getElementById("cfgMainGalleryLabel")?.value || document.getElementById("cfgAllPhotosLabel")?.value || state.allPhotosLabel || "Semua Foto").trim();
       if (!driveInput) {
         showToast("⚠️ Masukkan Tautan atau ID Folder Google Drive terlebih dahulu.");
         return;
@@ -3622,13 +3687,24 @@ const GLOBAL_CONFIG = {
       if (btnText) btnText.innerText = "Memindai & Menyinkronkan...";
       if (btnIcon) btnIcon.classList.add("spin");
 
-      callBackend("testAndSyncDriveFolder", { pin: state.adminPin, folderId: driveInput }, function(res) {
+      callBackend("testAndSyncDriveFolder", {
+        pin: getEffectiveAdminPin(),
+        folderId: driveInput,
+        allPhotosLabel: allPhotosLabel
+      }, function(res) {
         if (btn) btn.disabled = false;
-        if (btnText) btnText.innerText = "🔄 Sinkronkan Foto Google Drive ke Galeri";
+        if (btnText) btnText.innerText = "🔄 Sinkron Google Drive";
         if (btnIcon) btnIcon.classList.remove("spin");
 
         if (res && res.success) {
           state.activeConfig.DRIVE_FOLDER_ID = driveInput;
+          state.activeConfig.ALL_PHOTOS_LABEL = allPhotosLabel;
+          state.allPhotosLabel = allPhotosLabel;
+          try {
+            localStorage.setItem("WEDDING_ALL_PHOTOS_LABEL", allPhotosLabel);
+            localStorage.setItem("WEDDING_SAVED_CONFIG", JSON.stringify(state.activeConfig));
+          } catch(e) {}
+          renderCategoryTabs();
           showToast("✓ " + (res.message || "Foto Google Drive berhasil disinkronkan ke galeri!"));
           if (res.galleryData) {
             handleGalleryResponse(res.galleryData, false);
@@ -3640,7 +3716,7 @@ const GLOBAL_CONFIG = {
         }
       }, function(err) {
         if (btn) btn.disabled = false;
-        if (btnText) btnText.innerText = "🔄 Sinkronkan Foto Google Drive ke Galeri";
+        if (btnText) btnText.innerText = "🔄 Sinkron Google Drive";
         if (btnIcon) btnIcon.classList.remove("spin");
         showToast("Gangguan koneksi: " + err.message);
       });

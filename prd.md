@@ -417,6 +417,12 @@ const WEDDING_CONFIG = {
 - **v1.1.0 (Menu Admin & Sinkronisasi Drive):** Login admin PIN.
 - **v1.0.0 (Inisialisasi PRD):** Blueprint awal sistem.
 
+- **v3.8.0 (Perbaikan Penuh Menu Kategori Admin, Google Drive Sync, Multi-Admin PIN, & Konsistensi Header):**
+  - **Kategori Galeri Utama ("Semua Foto") Bebas Ubah Tautan:** Input tautan Google Drive galeri utama (`#cfgDriveFolderId`) dan nama tab (`#cfgMainGalleryLabel`) dapat diubah bebas dan tidak lagi tertimpa periodik oleh background GViz sync.
+  - **Eliminasi "Akses Ditolak" Saat Klik Sinkron Google Drive:** Menghentikan penimpaan `state.adminPin` oleh background GViz sync (yang sebelumnya menimpa PIN sesi aktif dengan nilai default). Dibuatkan helper `getEffectiveAdminPin()` dengan persistensi ke `sessionStorage` dan `localStorage` sehingga otorisasi admin multi-user (`ilham`/`121212`, `Wanta`/`888888`, `admin`/`111111`) selalu sah dan sinkronisasi 60 foto Google Drive berhasil 100%.
+  - **Kategori Momen Lainnya Bebas Tambah & Hapus Tanpa Reset:** Baris kategori yang ditambah atau dihapus kini otomatis memicu event `onCategoryRowInput()` dan mengunci `state.lastLocalCategoryEditTime`, mencegah pembalikan (revert) oleh background sync. Tombol `[🔄 Sinkronkan Kategori & Tautan]` menyinkronkan seluruh perubahan ke Google Apps Script dan Google Spreadsheet sheet `Pengaturan`.
+  - **Pencatatan Penuh ke Google Spreadsheet & Log Aktivitas:** Seluruh modifikasi kategori, folder Google Drive, label tab utama, dan tautan Photobooth tersimpan rapi ke lembar `Pengaturan` dan tercatat otomatis di lembar `Log_Aktivitas` dengan identitas nama admin yang aktif.
+  - **Konsistensi Header Menu Admin (Anti Naik-Turun):** Modal admin `#adminSettingsModal` diposisikan fixed di bagian atas (`align-items: flex-start; padding-top: clamp(16px, 3.5vh, 36px);`) dengan tinggi tetap (`height: min(88vh, 800px);`) dan scroll internal, sehingga header modal tidak lagi melompat naik-turun saat berpindah antar tab.
 - **v3.7.0 (Kustomisasi Bebas & Multi-Vendor Display Kategori Spesial Photobooth):**
   - **Tautan & Nama Tab Bebas Dicustom:** Input link dan nama tab kategori Photobooth 100% bebas diedit tanpa terkunci atau ter-reset periodik oleh GViz background sync.
   - **Multi-Vendor Support:** Mendukung tautan Google Photos (album bersama / photos.app.goo.gl), Google Drive folder, Fotoshare (`fotoshare.co`), dan Kingphotobooth (`kingphotobooth.co`).

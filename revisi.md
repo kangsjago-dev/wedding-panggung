@@ -146,3 +146,46 @@ TANGGAL: 18 November 2026
 - Mendukung Google Photos (`photos.google.com`, `photos.app.goo.gl`), Google Drive folder, Fotoshare (`fotoshare.co`), dan Kingphotobooth.
 - Galeri langsung memperbarui foto seketika saat disimpan atau disinkronkan.
 - Syntax `code.gs` dan `js/app.js` 100% valid dan lolos uji integrasi.
+
+---
+
+# RENCANA REVISI & CATATAN RILIS SISTEM: v3.8.0
+================================================================================
+PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
+ENGINE: ZettBOT v4.1 by Zettbos
+STATUS: IMPLEMENTASI & VERIFIKASI (v3.8.0) - 100% SUKSES
+TANGGAL: 18 November 2026
+
+### 5 Poin Masalah yang Diperbaiki:
+1. **Kategori Galeri Utama: Semua Foto Tidak Bisa Ganti Link & Nama Tab:**
+   - **Akar Masalah:** Sinkronisasi background GViz menimpa nilai `DRIVE_FOLDER_ID` dan `ALL_PHOTOS_LABEL` setiap 20 detik saat admin sedang mengedit.
+   - **Solusi:** Proteksi ketat `if (!isModalActive && !isEditingLocally)` pada `populateConfigToUI` dan `syncFromSpreadsheetGViz`. Input folder dan nama tab kini otomatis mengunci status editing lokal (`state.lastLocalCategoryEditTime`) sehingga tidak tertimpa.
+
+2. **Error "Akses Ditolak. PIN Salah atau Sesi Kedaluwarsa" Saat Sinkron Google Drive:**
+   - **Akar Masalah:** Fungsi periodic GViz sync menimpa variabel `state.adminPin` dengan PIN bawaan spreadsheet (`123456`), sehingga saat admin aktif (`ilham` dengan PIN `121212`) mengeklik sinkronisasi, PIN yang dikirim ke backend menjadi `123456` dan ditolak oleh Google Apps Script.
+   - **Solusi:** 
+     - Menghapus penimpaan `state.adminPin` di GViz jika admin sedang login atau PIN telah terisi.
+     - Menyimpan PIN aktif ke `sessionStorage` dan `localStorage` (`WEDDING_ADMIN_PIN`).
+     - Menyediakan helper terpusat `getEffectiveAdminPin()` yang digunakan oleh seluruh pemanggilan backend admin (`testAndSyncDriveFolder`, `saveAdminSettings`, `addAdminUser`, `deleteAdminUser`, `getAdminUsers`).
+
+3. **Kategori Momen Lainnya = Tambah & Hapus Kategori Tidak Hilang / Kembali Normal:**
+   - **Akar Masalah:** `addCategoryConfigRow` dan `removeCategoryConfigRow` tidak langsung memperbarui `state.lastLocalCategoryEditTime` saat baris ditambah/dihapus, sehingga GViz yang berjalan di latar belakang mengembalikan daftar kategori ke data lama.
+   - **Solusi:** 
+     - `addCategoryConfigRow` langsung memicu `onCategoryRowInput()`, mengaktifkan lock waktu edit lokal, dan memfokuskan kursor ke input baru.
+     - `removeCategoryConfigRow` langsung menghapus baris, mengunci waktu edit, dan memanggil `onCategoryRowInput()`.
+     - Tombol `[🔄 Sinkronkan Kategori & Tautan]` menyinkronkan seluruh kategori, folder Google Drive, label tab utama, dan URL Photobooth langsung ke Google Apps Script dan Google Spreadsheet sheet `Pengaturan`.
+
+4. **Pencatatan Penuh ke Google Spreadsheet (`Pengaturan` & `Log_Aktivitas`):**
+   - Setiap sinkronisasi folder Google Drive (`testAndSyncDriveFolder`) dan simpan pengaturan (`saveAdminSettings`) mencatat pembaruan ke sheet `Pengaturan` serta merekam riwayat aksi secara real-time ke sheet `Log_Aktivitas` lengkap dengan nama admin yang bertugas.
+
+5. **Header Menu Admin Pengaturan Naik-Turun (Konsistensi Posisi Modal):**
+   - **Akar Masalah:** `.admin-modal-overlay` menggunakan `align-items: center` dengan tinggi modal dinamis (`max-height: 90vh`). Saat berpindah dari tab pendek (seperti tab Keamanan) ke tab panjang (seperti tab Foto & Kategori), tinggi kartu berubah drastis dan posisi tengah menyebabkan header bergerak naik-turun.
+   - **Solusi:** Modal `#adminSettingsModal` diposisikan fixed di atas dengan `align-items: flex-start`, padding atas `clamp(16px, 3.5vh, 36px)`, dan tinggi kartu tetap `height: min(88vh, 800px);` dengan area scroll internal di `.admin-card-body`. Header modal terkunci kokoh dan tidak bergerak sama sekali saat berpindah tab.
+
+### Hasil Uji Otomatis & Verifikasi (scratch/test_v380.js):
+- `js/app.js` syntax check: 100% VALID.
+- `code.gs` syntax check: 100% VALID.
+- CSS Modal Header lock test: PASS.
+- `getEffectiveAdminPin` fallback test: PASS.
+- Live GAS `testAndSyncDriveFolder` (PIN 121212): SUKSES (membaca 60 foto langsung dari Google Drive).
+- Live GAS `saveAdminSettings` (PIN 121212): SUKSES (tersimpan ke Google Spreadsheet sheet `Pengaturan` & `Log_Aktivitas`).

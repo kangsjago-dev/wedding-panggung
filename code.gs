@@ -711,7 +711,8 @@ function handleApiRequest(e) {
       return getEvents();
     } else if (action === "testAndSyncDriveFolder" || action === "syncDriveFolder") {
       var targetFolder = params.folderId || (params.config && params.config.DRIVE_FOLDER_ID) || params.DRIVE_FOLDER_ID;
-      return testAndSyncDriveFolder(params.pin, targetFolder);
+      var allLabel = params.allPhotosLabel || (params.config && params.config.ALL_PHOTOS_LABEL) || params.ALL_PHOTOS_LABEL;
+      return testAndSyncDriveFolder(params.pin, targetFolder, allLabel);
     } else if (action === "saveAdminSettings") {
       return saveAdminSettings(params.pin, params.config || params);
     } else if (action === "setupDatabase" || action === "setupSpreadsheetDatabase" || action === "setupDemo" || action === "setupDemoSystem" || action === "setupTargetSpreadsheetDatabase" || action === "syncAllDatabaseToSheet" || action === "populateAllDatabase" || action === "syncDaftarFoto") {
@@ -1324,13 +1325,53 @@ function getAdminUsersList() {
     } catch (eParse) {}
   }
 
+  // Sinkronkan juga langsung dengan Google Spreadsheet sheet 'Pengguna_Admin' jika ada akun tambahan (seperti ilham, Wanta, dll)
+  try {
+    var ss = getDatabaseSpreadsheet();
+    if (ss) {
+      var sheet = ss.getSheetByName("Pengguna_Admin");
+      if (sheet && sheet.getLastRow() > 1) {
+        var values = sheet.getDataRange().getValues();
+        var sheetUsers = [];
+        for (var r = 1; r < values.length; r++) {
+          var uRow = values[r];
+          var uId = String(uRow[0] || "").trim();
+          var uUsername = String(uRow[1] || "").trim();
+          var uName = String(uRow[2] || uUsername || "").trim();
+          var uPin = String(uRow[3] || "").trim();
+          var uRole = String(uRow[4] || "Admin").trim();
+          var uDate = String(uRow[5] || "").trim();
+          if ((uUsername || uName) && uPin) {
+            sheetUsers.push({
+              id: uId || ("usr_" + r),
+              username: uUsername || uName,
+              name: uName || uUsername,
+              pin: uPin,
+              password: uPin,
+              role: uRole,
+              createdAt: uDate || "2026-11-15 00:00:00"
+            });
+          }
+        }
+        if (sheetUsers.length > 0) {
+          users = sheetUsers;
+          props.setProperty("ADMIN_USERS_JSON", JSON.stringify(users));
+        }
+      }
+    }
+  } catch (eSheetUsers) {
+    Logger.log("Info load users from sheet: " + eSheetUsers.toString());
+  }
+
   // Jika belum ada daftar user, buat user default pertama
   if (!users || !Array.isArray(users) || users.length === 0) {
     users = [
       {
         id: "usr_superadmin",
+        username: "admin",
         name: "Super Admin",
         pin: defaultPin,
+        password: defaultPin,
         role: "Super Admin",
         createdAt: "2026-11-15 00:00:00"
       }
@@ -1717,7 +1758,7 @@ function getImageBase64(fileIdOrUrl) {
 /**
  * Sinkronisasi & Uji Coba ID Folder Google Drive (Tanpa menulis ke sheet Daftar_Foto)
  */
-function testAndSyncDriveFolder(pin, folderId) {
+function testAndSyncDriveFolder(pin, folderId, allPhotosLabel) {
   var loginResult = adminLogin(pin);
   if (!loginResult.success) {
     return { success: false, message: "Akses ditolak. PIN salah atau sesi kedaluwarsa." };
@@ -1734,7 +1775,15 @@ function testAndSyncDriveFolder(pin, folderId) {
   }
 
   try {
-    PropertiesService.getScriptProperties().setProperty("DRIVE_FOLDER_ID", cleanId);
+    var props = PropertiesService.getScriptProperties();
+    props.setProperty("DRIVE_FOLDER_ID", cleanId);
+
+    var sheetPayload = { DRIVE_FOLDER_ID: cleanId };
+    if (allPhotosLabel && String(allPhotosLabel).trim()) {
+      var cleanLabel = String(allPhotosLabel).trim();
+      props.setProperty("ALL_PHOTOS_LABEL", cleanLabel);
+      sheetPayload.ALL_PHOTOS_LABEL = cleanLabel;
+    }
 
     // Hapus cache lama agar foto langsung segar dari Drive
     var cache = CacheService.getScriptCache();
@@ -1742,8 +1791,8 @@ function testAndSyncDriveFolder(pin, folderId) {
 
     var ss = getDatabaseSpreadsheet();
     if (ss) {
-      writeConfigToSheet(ss, { DRIVE_FOLDER_ID: cleanId });
-      logActivityToSheet(ss, "Tautkan Folder Google Drive", "Folder ID: " + cleanId + " ditautkan oleh " + loginResult.user.name, loginResult.user.name);
+      writeConfigToSheet(ss, sheetPayload);
+      logActivityToSheet(ss, "Tautkan Folder Google Drive", "Folder ID: " + cleanId + (allPhotosLabel ? (" (" + allPhotosLabel + ")") : "") + " ditautkan oleh " + loginResult.user.name, loginResult.user.name);
     }
 
     var scanResult = scanDriveFolderDirectly(cleanId);
