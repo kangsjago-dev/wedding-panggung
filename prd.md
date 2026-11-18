@@ -346,6 +346,22 @@ const WEDDING_CONFIG = {
   - **Retensi Badge Counter Photobooth Saat Refresh:** Memori jumlah foto disimpan ke `localStorage` (`WEDDING_CAT_COUNT_{kategori}`) dan di-pre-seed saat `DOMContentLoaded` sehingga saat halaman di-refresh, angka lencana counter di samping nama tab kategori Photobooth tetap tampil dan tidak hilang atau kembali ke 0.
   - **Kategori Wedding 116 Foto & Integrasi Galeri Utama:** Pembuatan endpoint serverless [api/drive-folder.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/api/drive-folder.js) dan cache kilat `WEDDING_INITIAL_CACHE` berisi 116 foto resolusi tinggi dari folder Google Drive `1GGB77clCMYBIg17J0ECr2eVbD02ZeInW`. Seluruh kategori momen kustom mewarisi pengaturan galeri utama (format kartu, lightbox resolusi tajam, serta unduh kenangan berbingkai).
   - **Pembersihan Modal Bagikan (Hanya Icon Buttons):** Input link teks disembunyikan (`type="hidden"`). Area aksi modal Bagikan & QR Code menyajikan 3 icon button elegan di posisi tengah (Bagikan Web Share, Salin Link, dan Unduh Gambar QR Code PNG).
+- **v3.6.8 (Inisialisasi Database Penuh ke Google Spreadsheet: Postingan Foto, ID Admin, Username, & Seluruh Tautan Sistem):**
+  - **Sinkronisasi Seluruh Tautan Sistem:** Google Spreadsheet sheet `Pengaturan` dan file `config.json` kini memuat seluruh tautan resmi sistem:
+    * `SPREADSHEET_URL`: `https://docs.google.com/spreadsheets/d/133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20/edit`
+    * `GAS_API_URL`: `https://script.google.com/macros/s/AKfycbzGgpibRzZboG9vNrTyxzko5mGkW6LfabNYfBxm2v6c-gO9O_iKLqMocxCZ5GVdiM1l/exec`
+    * `DRIVE_FOLDER_URL`: `https://drive.google.com/drive/folders/1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5`
+    * `WEDDING_FOLDER_URL`: `https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI`
+    * `FRAME_IMAGE_URL`: `https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk`
+    * `PHOTOBOOTH_URL`: `https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs`
+  - **Inisialisasi Seluruh Akun & ID Admin Lengkap dengan Username:**
+    * Sheet `Pengguna_Admin` kini terstruktur lengkap dengan kolom `["ID_User", "Username", "Nama_Pengguna", "PIN", "Peran", "Tanggal_Dibuat"]`.
+    * Memuat 3 akun admin resmi: Super Admin (`usr_superadmin`, username: `admin`), Admin Ilham (`usr_mwid2vkz_759`, username: `ilham`), dan Admin Wanta (`usr_mwii1zmz_598`, username: `Wanta`).
+    * Nilai terangkum juga pada parameter `ADMIN_ACCOUNTS_INFO` di sheet `Pengaturan`.
+  - **Pembersihan Serialisasi JSON di Google Spreadsheet:**
+    * Parameter `EVENTS` dan `COVER_SETTINGS` di sheet `Pengaturan` dijamin tersimpan sebagai string JSON murni dan valid, mengeliminasi masalah `[object Object]`.
+  - **Inisialisasi Postingan Foto Database Google Drive:**
+    * Fungsi `setupTargetSpreadsheetDatabase()` di [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide\project\wedding-panggung\setup.gs) dan [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide\project\wedding-panggung\code.gs) memindai seluruh postingan foto asli dari Folder Utama (`1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5` - 60 foto) dan Folder Wedding Panggung (`1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI` - 30 foto) lengkap dengan metadata URL thumbnail, URL download resolusi penuh, ukuran berkas, dan waktu unggah ke sheet `Daftar_Foto`.
 - **v3.6.7 (Penghapusan Tombol Rotate Manual, Auto-Rotate Sistem Otomatis, Multi-Device Central Sync, & 2-Tier Mobile Filter Bar):**
   - **Penghapusan Tombol Rotate Manual Total:** Menghapus seluruh tombol putar manual di galeri (`.photo-card-rotate-btn`), lightbox (`#lightboxRotateBtn`), kontrol bar (`#btnAutoRotateCategory`), serta dropdown rotasi di panel admin.
   - **Auto-Rotate Cerdas oleh Sistem:** Foto panggung (folder `1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI` dan kategori Wedding) otomatis dideteksi dan diputar 90° tegak lurus oleh sistem di kartu grid galeri, pratinjau lightbox, dan canvas download berbingkai.

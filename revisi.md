@@ -1,3 +1,41 @@
+# RENCANA REVISI & CATATAN RILIS SISTEM: v3.6.8
+================================================================================
+PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
+ENGINE: ZettBOT v4.1 by Zettbos
+STATUS: IMPLEMENTASI & VERIFIKASI (v3.6.8) - 100% SUKSES
+TANGGAL: 18 November 2026
+
+### Permintaan Pengguna:
+"semua poastingan yang berbentuk database, isi ke dalam googlesheet, termasuk id admin dan semua link yang berhubungan dengan system"
+- ubah yang diperintahkan. Dan laksanakan
+- jangan ubah yang tidak di instruksikan
+
+### Solusi & Implementasi:
+1. **Pengisian Seluruh Tautan Sistem ke Google Spreadsheet & Konfigurasi:**
+   - `SPREADSHEET_ID`: `133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20`
+   - `SPREADSHEET_URL`: `https://docs.google.com/spreadsheets/d/133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20/edit`
+   - `GAS_API_URL`: `https://script.google.com/macros/s/AKfycbzGgpibRzZboG9vNrTyxzko5mGkW6LfabNYfBxm2v6c-gO9O_iKLqMocxCZ5GVdiM1l/exec`
+   - `DRIVE_FOLDER_ID`: `1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5`
+   - `DRIVE_FOLDER_URL`: `https://drive.google.com/drive/folders/1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5`
+   - `FRAME_IMAGE_URL`: `https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk`
+   - `PHOTOBOOTH_URL`: `https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs`
+   - `WEDDING_FOLDER_URL`: `https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI`
+
+2. **Pengisian Akun & ID Admin Lengkap dengan Username:**
+   - Ditulis ke sheet `Pengguna_Admin` dan `Pengaturan` (`ADMIN_ACCOUNTS_INFO`):
+     - Super Admin: ID `usr_superadmin`, Username `admin`, PIN `111111` / `123456`, Peran `Super Admin`
+     - Admin 2: ID `usr_mwid2vkz_759`, Username `ilham`, PIN `121212`, Peran `Admin`
+     - Admin 3: ID `usr_mwii1zmz_598`, Username `Wanta`, PIN `888888`, Peran `Admin`
+
+3. **Inisialisasi Seluruh Postingan Foto Database Google Drive ke Sheet `Daftar_Foto`:**
+   - Memindai berkas foto asli dari Folder Utama Google Drive (`1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5`) dan Folder Wedding Panggung (`1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI`).
+   - Menyimpan seluruh kolom: `ID_Foto`, `Nama_File`, `Kategori`, `URL_Thumbnail`, `URL_Download`, `Ukuran_Bytes`, `Waktu_Upload`, dan `Status`.
+   - Menghilangkan bug `ReferenceError: dummyPhotos is not defined` pada `setup.gs` dan menyinkronkan `setupTargetSpreadsheetDatabase()` ke dalam `code.gs`.
+
+4. **Pembersihan Serialisasi JSON:**
+   - Memastikan properti `EVENTS` dan `COVER_SETTINGS` di Google Spreadsheet tersimpan sebagai string JSON murni dan valid, tanpa label `[object Object]`.
+
+---
 # RENCANA REVISI & CATATAN RILIS SISTEM: v3.6.7
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")

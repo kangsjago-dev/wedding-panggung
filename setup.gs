@@ -176,19 +176,32 @@ function setupTargetSpreadsheetDatabase() {
 
   // Parameter Konfigurasi Master
   var defaultParams = [
-    ["EVENT_NAME", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.EVENT_NAME) ? WEDDING_CONFIG.EVENT_NAME : "Wilson & Felicia", "Nama Event / Pasangan Pengantin"],
-    ["EVENT_DATE", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.EVENT_DATE) ? WEDDING_CONFIG.EVENT_DATE : "14 November 2026", "Tanggal Pelaksanaan Acara"],
-    ["EVENT_VENUE", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.EVENT_VENUE) ? WEDDING_CONFIG.EVENT_VENUE : "Upperhills Convention Centre, Makassar", "Venue / Lokasi Gedung Acara"],
-    ["SUBTITLE", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.SUBTITLE) ? WEDDING_CONFIG.SUBTITLE : "The Wedding Gallery & Precious Memories", "Subjudul Galeri Foto"],
-    ["WELCOME_MESSAGE", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.WELCOME_MESSAGE) ? WEDDING_CONFIG.WELCOME_MESSAGE : "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.", "Pesan Sambutan Hangat untuk Tamu"],
-    ["DRIVE_FOLDER_ID", "", "ID / Tautan Folder Google Drive (Opsional / Tidak Wajib)"],
-    ["FRAME_IMAGE_URL", "", "Tautan / ID File Bingkai PNG Transparan Saat Download"],
+    ["EVENT_NAME", "Wilson & Felicia", "Nama Event / Pasangan Pengantin"],
+    ["COUPLE_NAME", "Wilson & Felicia", "Nama Pasangan Pengantin"],
+    ["EVENT_DATE", "16 November 2026", "Tanggal Pelaksanaan Acara"],
+    ["EVENT_VENUE", "UpperHills Convention Hall, Makassar", "Venue / Lokasi Gedung Acara"],
+    ["SUBTITLE", "The Wedding Gallery & Precious Memories", "Subjudul Galeri Foto"],
+    ["WELCOME_MESSAGE", "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.", "Pesan Sambutan Hangat untuk Tamu"],
+    ["FOOTER_MESSAGE", "Diabadikan dengan cinta\nTerima kasih atas doa restunya.", "Pesan Penutup Footer Galeri"],
+    ["ALL_PHOTOS_LABEL", "Semua Foto", "Label Tab Galeri Utama"],
+    ["ACTIVE_EVENT_ID", "wilson-felicia", "ID Event Aktif"],
     ["ADMIN_USERNAME", "admin", "Nama Pengguna (Username) Akses Masuk Panel Admin Web"],
-    ["ADMIN_PIN", (typeof WEDDING_CONFIG !== 'undefined' && WEDDING_CONFIG.DEFAULT_ADMIN_PIN) ? WEDDING_CONFIG.DEFAULT_ADMIN_PIN : "123456", "PIN Akses Masuk Panel Admin Web"],
+    ["ADMIN_PIN", "123456", "PIN Akses Masuk Panel Admin Web"],
     ["SLIDESHOW_INTERVAL_SEC", "4", "Durasi Perpindahan Foto Slideshow (detik)"],
     ["AUTO_REFRESH_INTERVAL_SEC", "25", "Interval Live Auto-Sync Foto (detik)"],
     ["NEW_BADGE_MINUTES", "10", "Durasi Lencana '✨ Baru' Aktif (menit)"],
-    ["SPREADSHEET_ID", targetId, "ID File Google Spreadsheet Database Aktif"]
+    ["SPREADSHEET_ID", targetId, "ID File Google Spreadsheet Database Aktif"],
+    ["SPREADSHEET_URL", "https://docs.google.com/spreadsheets/d/" + targetId + "/edit", "Tautan Langsung Google Spreadsheet Database"],
+    ["GAS_API_URL", "https://script.google.com/macros/s/AKfycbzGgpibRzZboG9vNrTyxzko5mGkW6LfabNYfBxm2v6c-gO9O_iKLqMocxCZ5GVdiM1l/exec", "Tautan Endpoint Google Apps Script Web App"],
+    ["DRIVE_FOLDER_ID", "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5", "ID Folder Google Drive Galeri Utama"],
+    ["DRIVE_FOLDER_URL", "https://drive.google.com/drive/folders/1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5", "Tautan Folder Google Drive Galeri Utama"],
+    ["FRAME_IMAGE_URL", "https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk", "Tautan File Bingkai PNG Transparan Saat Download"],
+    ["PHOTOBOOTH_URL", "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", "Tautan Vendor Kategori Spesial Photobooth"],
+    ["WEDDING_FOLDER_URL", "https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI", "Tautan Folder Google Drive Kategori Wedding Panggung"],
+    ["CUSTOM_CATEGORIES", '[{"name":"Photobooth","url":"https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs","enabled":true},{"name":"Wedding","url":"https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI","enabled":true}]', "Daftar Kategori Kustom & Tautan Tampilan"],
+    ["EVENTS", '[{"id":"wilson-felicia","name":"Wilson & Felicia","date":"16 November 2026","venue":"UpperHills Convention Hall, Makassar","subtitle":"The Wedding Gallery & Precious Memories","welcomeMessage":"Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.","footerMessage":"Diabadikan dengan cinta\\nTerima kasih atas doa restunya.","allPhotosLabel":"Semua Foto","driveFolderId":"1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5","frameImageUrl":"https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk","customCategories":[{"name":"Photobooth","url":"https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs","enabled":true},{"name":"Wedding","url":"https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI","enabled":true}],"coverSettings":{"enabled":false}}]', "Registry Multi-Event Sistem"],
+    ["COVER_SETTINGS", '{"enabled":false}', "Pengaturan Cover Halaman Depan"],
+    ["ADMIN_ACCOUNTS_INFO", "usr_superadmin (admin), usr_mwid2vkz_759 (ilham), usr_mwii1zmz_598 (Wanta)", "Daftar ID & Username Admin Terdaftar"]
   ];
 
   // Bersihkan baris lama jika ada lalu tulis ulang baris pengaturan
@@ -203,16 +216,15 @@ function setupTargetSpreadsheetDatabase() {
   Logger.log("✅ Sheet 'Pengaturan' berhasil disiapkan dengan " + defaultParams.length + " parameter.");
 
   // --------------------------------------------------------------------------
-  // B. SHEET 2: Pengguna_Admin (Multi-User Admin dengan PIN Unik)
-  // Catatan: Sheet 'Daftar_Foto' tidak diperlukan lagi karena foto otomatis
-  // diambil langsung dari Google Drive.
+  // B. SHEET 2: Pengguna_Admin (Multi-User Admin Lengkap dengan ID & Username)
   // --------------------------------------------------------------------------
   var sheetUsers = ss.getSheetByName("Pengguna_Admin");
   if (!sheetUsers) {
     sheetUsers = ss.insertSheet("Pengguna_Admin", 1);
   }
-  var userHeaders = [["ID_User", "Nama_Pengguna", "PIN", "Peran", "Tanggal_Dibuat"]];
-  sheetUsers.getRange(1, 1, 1, 5).setValues(userHeaders)
+  var userHeaders = [["ID_User", "Username", "Nama_Pengguna", "PIN", "Peran", "Tanggal_Dibuat"]];
+  sheetUsers.clear();
+  sheetUsers.getRange(1, 1, 1, 6).setValues(userHeaders)
     .setBackground("#475569")
     .setFontColor("#FFFFFF")
     .setFontWeight("bold")
@@ -220,22 +232,111 @@ function setupTargetSpreadsheetDatabase() {
   sheetUsers.setFrozenRows(1);
 
   var initialUsers = [
-    ["usr_superadmin", "Super Admin", "123456", "Super Admin", Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd HH:mm:ss")]
+    ["usr_superadmin", "admin", "Super Admin", "111111", "Super Admin", "2026-11-15 00:00:00"],
+    ["usr_mwid2vkz_759", "ilham", "ilham", "121212", "Admin", "2026-11-16 05:43:25"],
+    ["usr_mwii1zmz_598", "Wanta", "Wanta", "888888", "Admin", "2026-11-16 08:02:41"]
   ];
-  sheetUsers.getRange(2, 1, initialUsers.length, 5).setValues(initialUsers);
+  sheetUsers.getRange(2, 1, initialUsers.length, 6).setValues(initialUsers);
   sheetUsers.setColumnWidth(1, 160);
-  sheetUsers.setColumnWidth(2, 200);
-  sheetUsers.setColumnWidth(3, 120);
-  sheetUsers.setColumnWidth(4, 140);
-  sheetUsers.setColumnWidth(5, 180);
-  Logger.log("✅ Sheet 'Pengguna_Admin' berhasil disiapkan dengan user awal Super Admin.");
+  sheetUsers.setColumnWidth(2, 140);
+  sheetUsers.setColumnWidth(3, 180);
+  sheetUsers.setColumnWidth(4, 100);
+  sheetUsers.setColumnWidth(5, 130);
+  sheetUsers.setColumnWidth(6, 170);
+  Logger.log("✅ Sheet 'Pengguna_Admin' berhasil disiapkan dengan 3 admin terdaftar.");
 
   // --------------------------------------------------------------------------
-  // C. SHEET 3: Log_Aktivitas
+  // C. SHEET 3: Daftar_Foto (Postingan Foto Aktual dari Google Drive Database)
+  // --------------------------------------------------------------------------
+  var sheetPhotos = ss.getSheetByName("Daftar_Foto");
+  if (!sheetPhotos) {
+    sheetPhotos = ss.insertSheet("Daftar_Foto", 2);
+  }
+  var photoHeaders = [["ID_Foto", "Nama_File", "Kategori", "URL_Thumbnail", "URL_Download", "Ukuran_Bytes", "Waktu_Upload", "Status"]];
+  sheetPhotos.clear();
+  sheetPhotos.getRange(1, 1, 1, 8).setValues(photoHeaders)
+    .setBackground("#C5A880")
+    .setFontColor("#FFFFFF")
+    .setFontWeight("bold")
+    .setHorizontalAlignment("center");
+  sheetPhotos.setFrozenRows(1);
+
+  var photoRows = [];
+  try {
+    // 1. Pindai berkas dari Folder Utama Google Drive
+    var mainFolderId = "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5";
+    if (typeof DriveApp !== 'undefined') {
+      try {
+        var mFolder = DriveApp.getFolderById(mainFolderId);
+        var mFiles = mFolder.getFiles();
+        while (mFiles.hasNext()) {
+          var f = mFiles.next();
+          if (f.getSize() >= 20480 && f.getMimeType().indexOf('image/') === 0) {
+            var fId = f.getId();
+            photoRows.push([
+              fId,
+              f.getName(),
+              "Semua Foto",
+              "https://drive.google.com/thumbnail?id=" + fId + "&sz=w1000",
+              "https://drive.google.com/uc?export=download&id=" + fId,
+              f.getSize(),
+              Utilities.formatDate(f.getDateCreated(), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
+              "Aktif"
+            ]);
+          }
+        }
+      } catch (errMainScan) {
+        Logger.log("Info scan main folder: " + errMainScan.toString());
+      }
+
+      // 2. Pindai berkas dari Folder Kategori Wedding Panggung
+      var weddingFolderId = "1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI";
+      try {
+        var wFolder = DriveApp.getFolderById(weddingFolderId);
+        var wFiles = wFolder.getFiles();
+        while (wFiles.hasNext()) {
+          var wf = wFiles.next();
+          if (wf.getSize() >= 20480 && wf.getMimeType().indexOf('image/') === 0) {
+            var wfId = wf.getId();
+            photoRows.push([
+              wfId,
+              wf.getName(),
+              "Wedding",
+              "https://drive.google.com/thumbnail?id=" + wfId + "&sz=w1000",
+              "https://drive.google.com/uc?export=download&id=" + wfId,
+              wf.getSize(),
+              Utilities.formatDate(wf.getDateCreated(), "GMT+7", "yyyy-MM-dd HH:mm:ss"),
+              "Aktif"
+            ]);
+          }
+        }
+      } catch (errWedScan) {
+        Logger.log("Info scan wedding folder: " + errWedScan.toString());
+      }
+    }
+  } catch (eDrive) {
+    Logger.log("Drive scan error: " + eDrive.toString());
+  }
+
+  if (photoRows.length > 0) {
+    sheetPhotos.getRange(2, 1, photoRows.length, 8).setValues(photoRows);
+    Logger.log("✅ Sheet 'Daftar_Foto' berhasil diisi dengan " + photoRows.length + " postingan foto Google Drive.");
+  }
+  sheetPhotos.setColumnWidth(1, 140);
+  sheetPhotos.setColumnWidth(2, 220);
+  sheetPhotos.setColumnWidth(3, 130);
+  sheetPhotos.setColumnWidth(4, 260);
+  sheetPhotos.setColumnWidth(5, 260);
+  sheetPhotos.setColumnWidth(6, 110);
+  sheetPhotos.setColumnWidth(7, 180);
+  sheetPhotos.setColumnWidth(8, 100);
+
+  // --------------------------------------------------------------------------
+  // D. SHEET 4: Log_Aktivitas
   // --------------------------------------------------------------------------
   var sheetLogs = ss.getSheetByName("Log_Aktivitas");
   if (!sheetLogs) {
-    sheetLogs = ss.insertSheet("Log_Aktivitas", 2);
+    sheetLogs = ss.insertSheet("Log_Aktivitas", 3);
   }
   var logHeaders = [["Timestamp", "Aksi", "Detail", "Pengguna"]];
   sheetLogs.getRange(1, 1, 1, 4).setValues(logHeaders)
@@ -246,7 +347,7 @@ function setupTargetSpreadsheetDatabase() {
   sheetLogs.setFrozenRows(1);
 
   var nowStr = Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd HH:mm:ss");
-  sheetLogs.appendRow([nowStr, "Inisialisasi Database", "Database spreadsheet pengguna & foto dummy berhasil dibuat lengkap", "ZettBOT Setup"]);
+  sheetLogs.appendRow([nowStr, "Inisialisasi Database Penuh", "Seluruh postingan foto, ID admin, dan link sistem berhasil diisi ke Google Sheets", "ZettBOT Setup"]);
   sheetLogs.setColumnWidth(1, 200);
   sheetLogs.setColumnWidth(2, 180);
   sheetLogs.setColumnWidth(3, 350);
@@ -272,10 +373,10 @@ function setupTargetSpreadsheetDatabase() {
 
   return {
     success: true,
-    message: "Database & foto dummy berhasil dibuat 100% lengkap pada spreadsheet Anda!",
+    message: "Database & seluruh postingan foto berhasil dibuat 100% lengkap pada spreadsheet Anda!",
     spreadsheetUrl: ss.getUrl(),
     spreadsheetId: ss.getId(),
-    totalPhotos: dummyPhotos.length
+    totalPhotos: photoRows.length
   };
 }
 

@@ -3,10 +3,28 @@
   "ALL_PHOTOS_LABEL": "Semua Foto",
   "ADMIN_ACCOUNTS": [
     {
+      "id": "usr_superadmin",
       "username": "admin",
+      "name": "Super Admin",
       "password": "123",
-      "name": "Administrator",
-      "role": "superadmin"
+      "pin": "111111",
+      "role": "Super Admin"
+    },
+    {
+      "id": "usr_mwid2vkz_759",
+      "username": "ilham",
+      "name": "ilham",
+      "password": "123",
+      "pin": "121212",
+      "role": "Admin"
+    },
+    {
+      "id": "usr_mwii1zmz_598",
+      "username": "Wanta",
+      "name": "Wanta",
+      "password": "123",
+      "pin": "888888",
+      "role": "Admin"
     }
   ],
   "EVENTS": [
@@ -19,7 +37,7 @@
       "welcomeMessage": "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
       "footerMessage": "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
       "allPhotosLabel": "Semua Foto",
-      "driveFolderId": "https://drive.google.com/drive/folders/1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
+      "driveFolderId": "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
       "frameImageUrl": "https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk",
       "customCategories": [
         {
@@ -56,9 +74,13 @@
       "enabled": true
     }
   ],
-  "DRIVE_FOLDER_ID": "https://drive.google.com/drive/folders/1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
+  "DRIVE_FOLDER_ID": "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
+  "DRIVE_FOLDER_URL": "https://drive.google.com/drive/folders/1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
   "FRAME_IMAGE_URL": "https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk",
+  "PHOTOBOOTH_URL": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+  "WEDDING_FOLDER_URL": "https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI",
   "SPREADSHEET_ID": "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20",
+  "SPREADSHEET_URL": "https://docs.google.com/spreadsheets/d/133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20/edit",
   "GAS_API_URL": "https://script.google.com/macros/s/AKfycbzGgpibRzZboG9vNrTyxzko5mGkW6LfabNYfBxm2v6c-gO9O_iKLqMocxCZ5GVdiM1l/exec",
   "DEFAULT_ADMIN_USERNAME": "admin",
   "ADMIN_USERNAME": "admin",
