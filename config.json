@@ -42,7 +42,7 @@
       "customCategories": [
         {
           "name": "Photobooth",
-          "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+          "url": "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
           "enabled": true
         },
         {
@@ -65,7 +65,7 @@
   "CUSTOM_CATEGORIES": [
     {
       "name": "Photobooth",
-      "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+      "url": "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
       "enabled": true
     },
     {
@@ -77,7 +77,7 @@
   "DRIVE_FOLDER_ID": "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
   "DRIVE_FOLDER_URL": "https://drive.google.com/drive/folders/1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
   "FRAME_IMAGE_URL": "https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk",
-  "PHOTOBOOTH_URL": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+  "PHOTOBOOTH_URL": "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
   "WEDDING_FOLDER_URL": "https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI",
   "SPREADSHEET_ID": "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20",
   "SPREADSHEET_URL": "https://docs.google.com/spreadsheets/d/133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20/edit",

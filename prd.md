@@ -417,6 +417,10 @@ const WEDDING_CONFIG = {
 - **v1.1.0 (Menu Admin & Sinkronisasi Drive):** Login admin PIN.
 - **v1.0.0 (Inisialisasi PRD):** Blueprint awal sistem.
 
+- **v3.8.1 (Eliminasi Ghost Tab Kategori, Anti-Flicker Badge 0, & JSON Serialisasi Google Sheets):**
+  - **Eliminasi Tab Hantu Muncul & Hilang Saat Refresh:** Memperbaiki fungsi `renderCategoryTabs()` agar tidak lagi membaca dari `state.categories` yang menampung sisa render sebelumnya. Tab kategori kini dirender murni dari `state.customCategories` dan `state.driveSubfolders` sehingga tab yang telah dihapus atau diubah namanya tidak pernah lagi muncul sekilas lalu hilang saat refresh.
+  - **Anti-Flicker Lencana Jumlah Foto:** Menghilangkan kedipan angka 0 pada tombol tab "Semua Foto" saat inisialisasi awal sebelum respon jaringan tiba dengan memanfaatkan cache memori `localStorage` (`WEDDING_ALL_PHOTOS_COUNT`) dan membersihkan angka hardcoded 0 di `index.html`.
+  - **Serialisasi JSON Bersih ke Google Spreadsheet:** Memperbaiki pengiriman parameter `CUSTOM_CATEGORIES` di `syncCategoriesAndDisplayLinks` dan `code.gs` agar selalu tersimpan sebagai JSON string valid, menuntaskan masalah `[object Object]` pada baris `Pengaturan` di Google Spreadsheet.
 - **v3.8.0 (Perbaikan Penuh Menu Kategori Admin, Google Drive Sync, Multi-Admin PIN, & Konsistensi Header):**
   - **Kategori Galeri Utama ("Semua Foto") Bebas Ubah Tautan:** Input tautan Google Drive galeri utama (`#cfgDriveFolderId`) dan nama tab (`#cfgMainGalleryLabel`) dapat diubah bebas dan tidak lagi tertimpa periodik oleh background GViz sync.
   - **Eliminasi "Akses Ditolak" Saat Klik Sinkron Google Drive:** Menghentikan penimpaan `state.adminPin` oleh background GViz sync (yang sebelumnya menimpa PIN sesi aktif dengan nilai default). Dibuatkan helper `getEffectiveAdminPin()` dengan persistensi ke `sessionStorage` dan `localStorage` sehingga otorisasi admin multi-user (`ilham`/`121212`, `Wanta`/`888888`, `admin`/`111111`) selalu sah dan sinkronisasi 60 foto Google Drive berhasil 100%.

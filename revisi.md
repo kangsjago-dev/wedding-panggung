@@ -189,3 +189,42 @@ TANGGAL: 18 November 2026
 - `getEffectiveAdminPin` fallback test: PASS.
 - Live GAS `testAndSyncDriveFolder` (PIN 121212): SUKSES (membaca 60 foto langsung dari Google Drive).
 - Live GAS `saveAdminSettings` (PIN 121212): SUKSES (tersimpan ke Google Spreadsheet sheet `Pengaturan` & `Log_Aktivitas`).
+
+---
+
+# RENCANA REVISI & CATATAN RILIS SISTEM: v3.8.1
+================================================================================
+PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
+ENGINE: ZettBOT v4.1 by Zettbos
+STATUS: IMPLEMENTASI & VERIFIKASI (v3.8.1) - 100% SUKSES
+TANGGAL: 19 November 2026
+
+### Masalah Utama yang Dilaporkan & Ditemukan:
+1. **Ghost Tab / Tab Kategori Hantu Muncul Saat Refresh Lalu Lenyap (contoh: `Wedding 30` muncul mendampingi `Wedding1 116` lalu hilang):**
+   - **Akar Masalah:**
+     Pada fungsi `renderCategoryTabs()`, langkah 2 mengakumulasi kategori dari `state.categories` (`(state.categories || []).forEach(...)`) dan di akhir fungsi menetapkan `state.categories = uniqueCategories`. Akibatnya, `state.categories` menyimpan output render sebelumnya. Saat kategori kustom diperbarui (misal menjadi `Wedding1`), nama lama (`Wedding`) masih tertinggal di `state.categories` dan ikut dirender. Ketika `fetchGalleryData` dari GAS selesai 1 detik kemudian, `handleGalleryResponse` me-reset `state.categories = response.categories || ["Semua Foto"]`, sehingga `Wedding 30` tiba-tiba hilang/lenyap.
+   - **Solusi:**
+     - Mengubah langkah 2 `renderCategoryTabs()` agar membaca strictly dari `state.driveSubfolders`, bukan dari `state.categories`.
+     - Output `state.categories` tidak pernah lagi digunakan sebagai input untuk konstruksi `uniqueCategories`, mencegah tab ganda/leaking.
+     - Menyinkronkan daftar subfolder Google Drive riil di `handleGalleryResponse`: `state.driveSubfolders = (response.categories || []).filter(...)`.
+
+2. **Flicker Badge "Semua Foto 0" Saat Halaman Di-refresh:**
+   - **Akar Masalah:**
+     `renderCategoryTabs()` membaca `state.allPhotos.length`. Saat pertama kali refresh sebelum respon network tiba, `state.allPhotos.length` bernilai 0. Selain itu, elemen HTML awal di `index.html` memuat `<span class="pill-count" id="countAll">0</span>`.
+   - **Solusi:**
+     - Menghapus angka `0` hardcoded di `index.html` menjadi `<span class="pill-count" id="countAll"></span>`.
+     - Menggunakan cache persisten `localStorage.getItem("WEDDING_ALL_PHOTOS_COUNT")` di `renderCategoryTabs()`, sehingga saat refresh angka jumlah foto langsung tampil (misal: 60) dan tidak pernah berkedip menjadi 0.
+
+3. **Format Data `[object Object]` pada Baris `CUSTOM_CATEGORIES` di Google Spreadsheet:**
+   - **Akar Masalah:**
+     Pemanggilan backend di `syncCategoriesAndDisplayLinks` mengirim array JavaScript mentah `CUSTOM_CATEGORIES: customCategoriesList`. Google Apps Script menuliskan representasi array `[object Object],[object Object]` ke sel spreadsheet Google Sheets `Pengaturan`, sehingga ditolak oleh parser GViz di perangkat lain.
+   - **Solusi:**
+     - Menambahkan `JSON.stringify(customCategoriesList)` di `syncCategoriesAndDisplayLinks` dan `saveAdminSettings`.
+     - Di `code.gs`, `saveAdminSettings` memastikan `CUSTOM_CATEGORIES` selalu diubah menjadi JSON string sebelum disimpan ke Google Sheets.
+     - Membersihkan baris `CUSTOM_CATEGORIES` di Google Spreadsheet aktif (`133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20`) menjadi JSON string murni.
+
+### Hasil Uji Verifikasi (scratch/test_refresh_tabs.js):
+- Inisialisasi awal sebelum respon jaringan: Badge `Semua Foto` menampilkan `60` (bukan 0), kategori bersih `Semua Foto, Photobooth, Wedding`.
+- Respon jaringan tiba (`handleGalleryResponse`): Tab kategori tetap stabil dan konsisten.
+- Render berulang: 100% deterministik, zero leaking tab hantu.
+- Status Google Spreadsheet `Pengaturan` via GViz: JSON Valid, bebas `[object Object]`.

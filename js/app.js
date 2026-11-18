@@ -341,17 +341,17 @@ const GLOBAL_CONFIG = {
           welcomeMessage: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
           footerMessage: "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
           allPhotosLabel: "Semua Foto",
-          driveFolderId: "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxI5",
-          frameImageUrl: "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing",
+          driveFolderId: "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
+          frameImageUrl: "https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk",
           customCategories: [
             {
               name: "Photobooth",
-              url: "https://photos.google.com/share/AF1QipMagPm7xWB2YANajDr3hx-J4WKyhOgIQ41jUjqQnxv5LSy6392pyWC5hOfsQoz1mA?key=c1BLMDNyRGw4bEJyUWo5b1Y0eFlmTy14X1pESEdR",
+              url: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
               enabled: true
             },
             {
               name: "Wedding",
-              url: "https://drive.google.com/drive/folders/1GGB77clCMYBIg17J0ECr2eVbD02ZeInW",
+              url: "https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI",
               enabled: true
             }
           ],
@@ -366,22 +366,24 @@ const GLOBAL_CONFIG = {
         }
       ],
       ADMIN_ACCOUNTS: [
-        { id: "usr_superadmin", username: "admin", password: "123", name: "Super Admin", role: "Super Admin" }
+        { id: "usr_superadmin", username: "admin", password: "123", name: "Super Admin", role: "Super Admin" },
+        { id: "usr_mwid2vkz_759", username: "ilham", password: "123", name: "ilham", role: "Admin" },
+        { id: "usr_mwii1zmz_598", username: "Wanta", password: "123", name: "Wanta", role: "Admin" }
       ],
       CUSTOM_CATEGORIES: [
         {
-                "name": "Photobooth",
-                "url": "https://photos.google.com/share/AF1QipMagPm7xWB2YANajDr3hx-J4WKyhOgIQ41jUjqQnxv5LSy6392pyWC5hOfsQoz1mA?key=c1BLMDNyRGw4bEJyUWo5b1Y0eFlmTy14X1pESEdR",
-                "enabled": true
+          name: "Photobooth",
+          url: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
+          enabled: true
         },
         {
-                "name": "Wedding",
-                "url": "https://drive.google.com/drive/folders/1GGB77clCMYBIg17J0ECr2eVbD02ZeInW",
-                "enabled": true
+          name: "Wedding",
+          url: "https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI",
+          enabled: true
         }
-],
-      DRIVE_FOLDER_ID: "1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxI5",
-      FRAME_IMAGE_URL: "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing",
+      ],
+      DRIVE_FOLDER_ID: "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
+      FRAME_IMAGE_URL: "https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk",
       SPREADSHEET_ID: "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20",
       SPREADSHEET_URL: "https://docs.google.com/spreadsheets/d/133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20/edit",
       DEFAULT_ADMIN_PIN: "123456",
@@ -483,6 +485,7 @@ const GLOBAL_CONFIG = {
       // Inisialisasi categoryPhotosMap & categoryPhotosUrlMap dinamis
       if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
       if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
+      state.driveSubfolders = [];
       setupKeyboardNav();
 
       // 1. Muat URL API backend yang tersimpan
@@ -558,6 +561,18 @@ const GLOBAL_CONFIG = {
             if (remoteCfg.ADMIN_ACCOUNTS) {
               state.adminAccounts = remoteCfg.ADMIN_ACCOUNTS;
             }
+
+            // Lindungi kategori tersimpan lokal dari Google Sheet agar tidak terjadi flicker/tab hantu
+            const savedCatsStr = localStorage.getItem("WEDDING_SAVED_CUSTOM_CATEGORIES");
+            if (savedCatsStr) {
+              try {
+                const parsedCats = JSON.parse(savedCatsStr);
+                if (Array.isArray(parsedCats) && parsedCats.length > 0) {
+                  remoteCfg.CUSTOM_CATEGORIES = parsedCats;
+                }
+              } catch(e) {}
+            }
+
             state.activeConfig = Object.assign({}, GLOBAL_CONFIG, remoteCfg);
             populateConfigToUI(state.activeConfig);
           }
@@ -921,7 +936,14 @@ const GLOBAL_CONFIG = {
             p.detectedAt = now;
           });
           state.allPhotos = incomingPhotos;
-          state.categories = response.categories || ["Semua Foto"];
+          try {
+            if (incomingPhotos.length > 0) {
+              localStorage.setItem("WEDDING_ALL_PHOTOS_COUNT", String(incomingPhotos.length));
+            }
+          } catch(e) {}
+          state.driveSubfolders = (response.categories || []).filter(function(c) {
+            return c && c !== "Semua Foto" && c !== state.allPhotosLabel;
+          });
           renderCategoryTabs();
           applyCategoryFilter(state.activeCategory);
           showToast("📸 " + newPhotos.length + " foto baru otomatis ditambahkan ke galeri!");
@@ -930,7 +952,14 @@ const GLOBAL_CONFIG = {
       }
 
       state.allPhotos = incomingPhotos;
-      state.categories = response.categories || ["Semua Foto"];
+      try {
+        if (incomingPhotos.length > 0) {
+          localStorage.setItem("WEDDING_ALL_PHOTOS_COUNT", String(incomingPhotos.length));
+        }
+      } catch(e) {}
+      state.driveSubfolders = (response.categories || []).filter(function(c) {
+        return c && c !== "Semua Foto" && c !== state.allPhotosLabel;
+      });
       
       renderCategoryTabs();
       applyCategoryFilter(state.activeCategory);
@@ -1174,14 +1203,16 @@ const GLOBAL_CONFIG = {
         });
       }
 
-      // 2. Kategori yang ditemukan dari subfolder Google Drive
-      (state.categories || []).forEach(function(c) {
-        const catName = String(c || "").trim();
-        if (catName && !seen[catName]) {
-          seen[catName] = true;
-          uniqueCategories.push(catName);
-        }
-      });
+      // 2. Kategori subfolder riil yang ditemukan dari Google Drive
+      if (Array.isArray(state.driveSubfolders)) {
+        state.driveSubfolders.forEach(function(c) {
+          const catName = String(c || "").trim();
+          if (catName && catName !== "Semua Foto" && catName !== mainLabel && !seen[catName]) {
+            seen[catName] = true;
+            uniqueCategories.push(catName);
+          }
+        });
+      }
       state.categories = uniqueCategories;
 
       state.categories.forEach(function(cat) {
@@ -1199,7 +1230,13 @@ const GLOBAL_CONFIG = {
         let countBadgeText = "";
 
         if (isMain) {
-          countBadgeText = String(state.allPhotos.length);
+          if (state.allPhotos && state.allPhotos.length > 0) {
+            countBadgeText = String(state.allPhotos.length);
+            try { localStorage.setItem("WEDDING_ALL_PHOTOS_COUNT", countBadgeText); } catch(e) {}
+          } else {
+            const cachedCount = localStorage.getItem("WEDDING_ALL_PHOTOS_COUNT");
+            countBadgeText = (cachedCount && cachedCount !== "0") ? cachedCount : "";
+          }
         } else if (state.categoryPhotosMap && state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0) {
           countBadgeText = String(state.categoryPhotosMap[cat].length);
         } else {
@@ -2644,7 +2681,7 @@ const GLOBAL_CONFIG = {
           callBackend("saveAdminSettings", {
             pin: getEffectiveAdminPin(),
             config: {
-              CUSTOM_CATEGORIES: customCategoriesList,
+              CUSTOM_CATEGORIES: JSON.stringify(customCategoriesList),
               PHOTOBOOTH_URL: (pbCat && pbCat.url) ? String(pbCat.url).trim() : (state.activeConfig.PHOTOBOOTH_URL || ""),
               DRIVE_FOLDER_ID: driveFolderVal,
               ALL_PHOTOS_LABEL: allPhotosLabelVal,
