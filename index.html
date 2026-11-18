@@ -7,27 +7,16 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
-  <!-- Inline Micro-Loader: Mencegah Kedipan Nama Default Lama (Zero FOUC) -->
+  <!-- Inline Micro-Loader: Mencegah Kedipan Teks Lama (Zero FOUC) -->
   <script>
     (function() {
       try {
-        ['WEDDING_SAVED_CONFIG', 'wedding_panggung_config'].forEach(function(k) {
-          var val = localStorage.getItem(k);
-          if (val && val.indexOf('Hans & Yurike') >= 0) {
-            var o = JSON.parse(val);
-            delete o.EVENT_NAME;
-            delete o.COUPLE_NAME;
-            localStorage.setItem(k, JSON.stringify(o));
-          }
-        });
-        var s = localStorage.getItem("WEDDING_SAVED_CONFIG");
-        var name = "Wilson & Felicia";
+        var s = localStorage.getItem("WEDDING_ACTIVE_EVENT_CFG") || localStorage.getItem("WEDDING_SAVED_CONFIG");
         if (s) {
           var c = JSON.parse(s);
-          if (c.EVENT_NAME && c.EVENT_NAME !== "Hans & Yurike") name = c.EVENT_NAME;
-          else if (c.COUPLE_NAME && c.COUPLE_NAME !== "Hans & Yurike") name = c.COUPLE_NAME;
+          var name = c.EVENT_NAME || c.COUPLE_NAME || "";
+          if (name) document.title = name + " - Wedding Photo Gallery";
         }
-        document.title = name + " - Wedding Photo Gallery";
       } catch(e) {}
     })();
   </script>
@@ -98,7 +87,7 @@
       <div class="line right"></div>
     </div>
 
-    <!-- Nama Event Acara Pernikahan (Hydration Dinamis Tanpa Kedipan) -->
+    <!-- Nama Event Acara Pernikahan (Hydration Dinamis Realtime Tanpa Kedipan) -->
     <h1 id="coupleName" class="hero-title" style="min-height: 1.2em;"></h1>
     <script>
       (function() {
@@ -106,12 +95,11 @@
           var params = new URLSearchParams(window.location.search);
           var targetEventId = params.get("event") || params.get("e") || "";
           var cacheKey = targetEventId ? ("WEDDING_EVENT_CFG_" + targetEventId) : "WEDDING_ACTIVE_EVENT_CFG";
-          var saved = localStorage.getItem(cacheKey);
-          if (!saved && !targetEventId) saved = localStorage.getItem("WEDDING_SAVED_CONFIG");
+          var saved = localStorage.getItem(cacheKey) || localStorage.getItem("WEDDING_SAVED_CONFIG");
           if (saved) {
             var c = JSON.parse(saved);
             var n = c.EVENT_NAME || c.COUPLE_NAME;
-            if (n && n !== "Hans & Yurike") document.getElementById("coupleName").textContent = n;
+            if (n) document.getElementById("coupleName").textContent = n;
             if (c.SUBTITLE) document.getElementById("subtitle").textContent = c.SUBTITLE;
             if (c.EVENT_DATE) document.getElementById("eventDate").textContent = c.EVENT_DATE;
             if (c.EVENT_VENUE) document.getElementById("eventVenue").textContent = c.EVENT_VENUE;
@@ -120,9 +108,9 @@
         } catch(e) {}
       })();
     </script>
-    <div id="subtitle" class="hero-subtitle">The Wedding Gallery & Precious Memories</div>
+    <div id="subtitle" class="hero-subtitle"></div>
 
-    <!-- Badge Tanggal dan Venue (Lokasi Acara) -->
+    <!-- Badge Tanggal dan Venue (Lokasi Acara - Live Database) -->
     <div class="hero-badges-wrapper">
       <div class="hero-date-badge">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
@@ -131,7 +119,7 @@
           <line x1="8" y1="2" x2="8" y2="6"></line>
           <line x1="3" y1="10" x2="21" y2="10"></line>
         </svg>
-        <span id="eventDate">14 November 2026</span>
+        <span id="eventDate"></span>
       </div>
 
       <div class="hero-date-badge">
@@ -139,11 +127,11 @@
           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
           <circle cx="12" cy="10" r="3"></circle>
         </svg>
-        <span id="eventVenue">Upperhills Convention Centre, Makassar</span>
+        <span id="eventVenue"></span>
       </div>
     </div>
 
-    <p id="welcomeMessage" class="hero-desc">Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.</p>
+    <p id="welcomeMessage" class="hero-desc"></p>
   </header>
 
   <!-- Wedding Front Page Cover Showcase (Custom Wedding Landing Header) -->
@@ -726,17 +714,15 @@
 
   <!-- Footer -->
   <footer class="footer">
-    <div class="footer-names">Wilson & Felicia</div>
-    <p id="footerBlessing" style="white-space: pre-line; line-height: 1.6;">Diabadikan dengan cinta&#10;Terima kasih atas doa restunya.</p>
+    <div class="footer-names" id="footerCoupleName"></div>
+    <p id="footerBlessing" style="white-space: pre-line; line-height: 1.6;"></p>
   </footer>
 
   <!-- ==========================================================================
        CLIENT-SIDE JAVASCRIPT ENGINE (DUAL RUNTIME: VERCEL FETCH & GAS SCRIPT.RUN)
        ========================================================================== -->
 
-  <!-- Modular Static Pre-seeded Cache Script -->
-  <script src="js/cache-data.js"></script>
-  <!-- Main Modular Application Script -->
+  <!-- Main Modular Application Script (Live Realtime Database Engine) -->
   <script src="js/app.js"></script>
 </body>
 </html>

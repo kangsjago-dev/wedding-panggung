@@ -1317,7 +1317,7 @@ function scanDriveFolderDirectly(folderId) {
 function getAdminUsersList() {
   var props = PropertiesService.getScriptProperties();
   var rawJson = props.getProperty("ADMIN_USERS_JSON");
-  var defaultPin = props.getProperty("ADMIN_PIN") || WEDDING_CONFIG.DEFAULT_ADMIN_PIN || "123456";
+  var defaultPin = props.getProperty("ADMIN_PIN") || WEDDING_CONFIG.DEFAULT_ADMIN_PIN || "111111";
 
   var users = [];
   if (rawJson) {

@@ -1,5 +1,4 @@
-
-    function isGooglePhotosUrl(url) {
+function isGooglePhotosUrl(url) {
       if (!url) return false;
       const s = String(url).toLowerCase().trim();
       return s.includes("photos.google.com") || s.includes("photos.app.goo.gl");
@@ -314,21 +313,15 @@
       }
     }
 
-    // Pre-seeded cache data moved to js/cache-data.js for performance optimization
-if (typeof window !== "undefined") {
-  if (typeof GOOGLE_PHOTOS_INITIAL_CACHE === "undefined") window.GOOGLE_PHOTOS_INITIAL_CACHE = [];
-  if (typeof KING_PHOTOBOOTH_INITIAL_CACHE === "undefined") window.KING_PHOTOBOOTH_INITIAL_CACHE = [];
-  if (typeof WEDDING_INITIAL_CACHE === "undefined") window.WEDDING_INITIAL_CACHE = [];
-}
-
-const GLOBAL_CONFIG = {
+    // Realtime Database Engine: Seluruh data diserap langsung dari Google Spreadsheet & Backend API
+    const GLOBAL_CONFIG = {
       GAS_API_URL: "https://script.google.com/macros/s/AKfycbzGgpibRzZboG9vNrTyxzko5mGkW6LfabNYfBxm2v6c-gO9O_iKLqMocxCZ5GVdiM1l/exec",
-      EVENT_NAME: "Wilson & Felicia",
-      EVENT_DATE: "16 November 2026",
-      EVENT_VENUE: "UpperHills Convention Hall, Makassar",
-      SUBTITLE: "The Wedding Gallery & Precious Memories",
-      WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
-      FOOTER_MESSAGE: "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
+      EVENT_NAME: "",
+      EVENT_DATE: "",
+      EVENT_VENUE: "",
+      SUBTITLE: "",
+      WELCOME_MESSAGE: "",
+      FOOTER_MESSAGE: "",
       ALL_PHOTOS_LABEL: "Semua Foto",
       ACTIVE_EVENT_ID: "wilson-felicia",
       EVENTS: [
@@ -510,10 +503,6 @@ const GLOBAL_CONFIG = {
         }
         if (savedCfgStr) {
           const savedCfg = JSON.parse(savedCfgStr);
-          if (savedCfg.EVENT_NAME === "Hans & Yurike" || savedCfg.COUPLE_NAME === "Hans & Yurike") {
-            delete savedCfg.EVENT_NAME;
-            delete savedCfg.COUPLE_NAME;
-          }
           state.activeConfig = Object.assign({}, GLOBAL_CONFIG, savedCfg);
           populateConfigToUI(state.activeConfig);
         } else {
@@ -717,6 +706,51 @@ const GLOBAL_CONFIG = {
                 }
               }
             }
+
+            // Sinkronkan daftar foto riil dari Sheet Daftar_Foto jika dikatalogkan di Spreadsheet
+            fetch("https://docs.google.com/spreadsheets/d/" + sid + "/gviz/tq?tqx=out:json&sheet=Daftar_Foto&t=" + Date.now())
+              .then(function(r) { return r.text(); })
+              .then(function(t) {
+                const rawP = t.replace(/^\/\*.*?\*\/\s*google\.visualization\.Query\.setResponse\(/, '').replace(/\);?\s*$/, '');
+                const parsedP = JSON.parse(rawP);
+                if (parsedP && parsedP.table && Array.isArray(parsedP.table.rows)) {
+                  const dbPhotos = [];
+                  parsedP.table.rows.forEach(function(r, idx) {
+                    if (!r.c) return;
+                    const fId = r.c[0] ? String(r.c[0].v || '').trim() : '';
+                    const fName = r.c[1] ? String(r.c[1].v || '').trim() : ('Foto ' + (idx + 1));
+                    const fCat = r.c[2] ? String(r.c[2].v || '').trim() : 'Semua Foto';
+                    const fThumb = r.c[3] ? String(r.c[3].v || '').trim() : '';
+                    const fDl = r.c[4] ? String(r.c[4].v || '').trim() : fThumb;
+                    const fStatus = r.c[7] ? String(r.c[7].v || '').trim() : 'Aktif';
+
+                    if (fId && fThumb && fStatus !== 'Nonaktif' && !fId.startsWith('demo-') && !fThumb.includes('images.unsplash.com')) {
+                      dbPhotos.push({
+                        id: fId,
+                        name: fName,
+                        category: fCat,
+                        thumbnailUrl: fThumb,
+                        previewUrl: fThumb,
+                        highResUrl: fDl || fThumb,
+                        downloadUrl: fDl || fThumb
+                      });
+                    }
+                  });
+
+                  if (dbPhotos.length > 0) {
+                    const prevSig = (state.allPhotos || []).map(function(p) { return p.id; }).join(',');
+                    const newSig = dbPhotos.map(function(p) { return p.id; }).join(',');
+                    if (prevSig !== newSig) {
+                      state.allPhotos = dbPhotos;
+                      renderCategoryTabs();
+                      if (!state.activeCategory || state.activeCategory === "Semua Foto") {
+                        renderPhotoGrid(state.allPhotos);
+                      }
+                    }
+                  }
+                }
+              })
+              .catch(function() {});
           }
         })
         .catch(function(err) {
@@ -745,7 +779,7 @@ const GLOBAL_CONFIG = {
           pin = sessionStorage.getItem("WEDDING_ADMIN_PIN") || localStorage.getItem("WEDDING_ADMIN_PIN") || "";
         } catch(e) {}
       }
-      return pin || "121212";
+      return pin || "111111";
     }
 
     function callBackend(action, payload, onSuccess, onError) {
@@ -1082,10 +1116,10 @@ const GLOBAL_CONFIG = {
     function populateConfigToUI(cfg) {
       if (!cfg) return;
       const rawName = cfg.EVENT_NAME || cfg.COUPLE_NAME;
-      const eventName = (rawName && rawName !== "Hans & Yurike") ? rawName : "Wilson & Felicia";
-      const rawDate = cfg.EVENT_DATE || "14 November 2026";
+      const eventName = rawName ? String(rawName).trim() : "";
+      const rawDate = cfg.EVENT_DATE ? String(cfg.EVENT_DATE).trim() : "";
       const displayDate = formatIndonesianDate(rawDate);
-      const eventVenue = cfg.EVENT_VENUE || "UpperHills Convention Hall, Makassar";
+      const eventVenue = cfg.EVENT_VENUE ? String(cfg.EVENT_VENUE).trim() : "";
 
       // Mutasi DOM hanya jika teks benar-benar berubah (Cegah font re-rasterization & efek ghost / flicker)
       function setNodeTextIfChanged(idOrEl, newText) {
@@ -1248,28 +1282,18 @@ const GLOBAL_CONFIG = {
       seen["Semua Foto"] = true;
       uniqueCategories.push(mainLabel);
 
-      // 1. Kategori kustom dari admin / config (cek enabled flag)
+      // 1. Kategori kustom dari database spreadsheet / admin / config (cek enabled flag)
       if (Array.isArray(state.customCategories)) {
         state.customCategories.forEach(function(item) {
           const catName = String((item && item.name) || item || "").trim();
           const isEnabled = (item && item.enabled !== undefined) ? item.enabled : true;
-          if (catName && catName !== "Semua Foto" && isEnabled !== false && !seen[catName]) {
+          if (catName && catName !== "Semua Foto" && catName !== mainLabel && isEnabled !== false && !seen[catName]) {
             seen[catName] = true;
             uniqueCategories.push(catName);
           }
         });
       }
 
-      // 2. Kategori subfolder riil yang ditemukan dari Google Drive
-      if (Array.isArray(state.driveSubfolders)) {
-        state.driveSubfolders.forEach(function(c) {
-          const catName = String(c || "").trim();
-          if (catName && catName !== "Semua Foto" && catName !== mainLabel && !seen[catName]) {
-            seen[catName] = true;
-            uniqueCategories.push(catName);
-          }
-        });
-      }
       state.categories = uniqueCategories;
 
       state.categories.forEach(function(cat) {
@@ -1289,54 +1313,30 @@ const GLOBAL_CONFIG = {
         if (isMain) {
           if (state.allPhotos && state.allPhotos.length > 0) {
             countBadgeText = String(state.allPhotos.length);
-            try { localStorage.setItem("WEDDING_ALL_PHOTOS_COUNT", countBadgeText); } catch(e) {}
           } else {
-            const cachedCount = localStorage.getItem("WEDDING_ALL_PHOTOS_COUNT");
-            countBadgeText = (cachedCount && cachedCount !== "0") ? cachedCount : "";
+            countBadgeText = "";
           }
-        } else if (state.categoryPhotosMap && state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0) {
+        } else if (state.categoryPhotosMap && state.categoryPhotosMap[cat] && Array.isArray(state.categoryPhotosMap[cat])) {
           countBadgeText = String(state.categoryPhotosMap[cat].length);
         } else {
-          // 1. Ambil dari memori cache tersimpan (localStorage) agar saat refresh badge TIDAK HILANG
-          let savedCount = null;
-          try {
-            savedCount = localStorage.getItem("WEDDING_CAT_COUNT_" + cat);
-          } catch(e) {}
+          // Hitung foto aktual dari state.allPhotos jika cocok dengan kategori ini
+          const driveFolderId = extractDriveFolderId(targetUrl);
+          const directMatch = (state.allPhotos || []).filter(function(p) {
+            if (p.category && p.category.toLowerCase() === cat.toLowerCase()) return true;
+            if (driveFolderId && p.customFolderId === driveFolderId) return true;
+            if (p.name && p.name.toLowerCase().includes(cat.toLowerCase())) return true;
+            if (p.rawName && p.rawName.toLowerCase().includes(cat.toLowerCase())) return true;
+            return false;
+          }).length;
 
-          if (savedCount && savedCount !== "0") {
-            countBadgeText = savedCount;
-          } else if (cat.toLowerCase().includes("photobooth")) {
-            // Nilai awal bawaan jika Photobooth belum di-fetch
-            if (targetUrl && (targetUrl.includes("kingphotobooth.co") || targetUrl.includes("kingphoto"))) {
-              countBadgeText = typeof KING_PHOTOBOOTH_INITIAL_CACHE !== 'undefined' ? String(KING_PHOTOBOOTH_INITIAL_CACHE.length) : "274";
-            } else if (targetUrl && targetUrl.includes("photos.google.com")) {
-              countBadgeText = typeof GOOGLE_PHOTOS_INITIAL_CACHE !== 'undefined' ? String(GOOGLE_PHOTOS_INITIAL_CACHE.length) : "115";
-            } else {
-              countBadgeText = "637";
-            }
-          } else if (cat.toLowerCase().includes("wedding")) {
-            if (targetUrl && targetUrl.includes("1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI")) {
-              countBadgeText = "30";
-            } else if (targetUrl && targetUrl.includes("1GGB77clCMYBIg17J0ECr2eVbD02ZeInW")) {
-              countBadgeText = typeof WEDDING_INITIAL_CACHE !== 'undefined' ? String(WEDDING_INITIAL_CACHE.length) : "116";
-            } else {
-              countBadgeText = "...";
-            }
+          if (directMatch > 0) {
+            countBadgeText = String(directMatch);
           } else {
-            const driveFolderId = extractDriveFolderId(targetUrl);
-            const directMatch = state.allPhotos.filter(function(p) {
-              if (p.category && p.category.toLowerCase() === cat.toLowerCase()) return true;
-              if (driveFolderId && p.customFolderId === driveFolderId) return true;
-              if (p.name && p.name.toLowerCase().includes(cat.toLowerCase())) return true;
-              if (p.rawName && p.rawName.toLowerCase().includes(cat.toLowerCase())) return true;
-              return false;
-            }).length;
-
-            countBadgeText = directMatch > 0 ? String(directMatch) : "...";
+            countBadgeText = "";
           }
 
-          // Selalu trigger prefetch di latar belakang agar data foto & pill count langsung sinkron saat refresh
-          if (targetUrl || extractDriveFolderId(targetUrl)) {
+          // Trigger fetch realtime di latar belakang agar badge langsung terisi sesuai data aktual vendor
+          if (targetUrl || driveFolderId) {
             prefetchCategoryPhotos(cat, targetUrl);
           }
         }
@@ -1544,17 +1544,9 @@ const GLOBAL_CONFIG = {
       }
 
       function fallbackKing() {
-        if (typeof KING_PHOTOBOOTH_INITIAL_CACHE !== 'undefined' && Array.isArray(KING_PHOTOBOOTH_INITIAL_CACHE) && KING_PHOTOBOOTH_INITIAL_CACHE.length > 0) {
-          const list = buildKingPhotoList(KING_PHOTOBOOTH_INITIAL_CACHE, cat, url);
-          state.categoryPhotosMap[cat] = list;
-          state.categoryPhotosUrlMap[cat] = url;
-          try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(list.length)); } catch (e) {}
-          if (callback) callback(list);
-        } else {
-          state.categoryPhotosMap[cat] = [];
-          state.categoryPhotosUrlMap[cat] = url;
-          if (callback) callback([]);
-        }
+        state.categoryPhotosMap[cat] = [];
+        state.categoryPhotosUrlMap[cat] = url;
+        if (callback) callback([]);
       }
 
       // 1. Coba lewat API endpoint /api/kingphotobooth (Vercel) dengan timeout 6 detik
@@ -1820,14 +1812,7 @@ const GLOBAL_CONFIG = {
       }
 
       function fallbackDrive() {
-        // Jangan paksa fallback WEDDING_INITIAL_CACHE jika ada driveFolderId kustom dari admin
-        if (!driveFolderId && cat.toLowerCase().includes("wedding") && typeof WEDDING_INITIAL_CACHE !== 'undefined' && Array.isArray(WEDDING_INITIAL_CACHE) && WEDDING_INITIAL_CACHE.length > 0) {
-          state.categoryPhotosMap[cat] = WEDDING_INITIAL_CACHE;
-          state.categoryPhotosUrlMap[cat] = driveKey;
-          try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(WEDDING_INITIAL_CACHE.length)); } catch (e) {}
-          if (callback) callback(WEDDING_INITIAL_CACHE);
-          return;
-        }
+
 
         let matched = state.allPhotos.filter(function(p) {
           if (p.category && p.category.toLowerCase() === cat.toLowerCase()) return true;
@@ -2293,7 +2278,7 @@ const GLOBAL_CONFIG = {
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<span>Masuk</span>`;
         state.isAdminLoggedIn = true;
-        state.adminPin = password;
+        state.adminPin = (user && user.pin) ? String(user.pin).trim() : (user && user.password ? String(user.password).trim() : "111111");
         try {
           sessionStorage.setItem("WEDDING_ADMIN_PIN", password);
           localStorage.setItem("WEDDING_ADMIN_PIN", password);
@@ -3981,7 +3966,37 @@ const GLOBAL_CONFIG = {
 
     function downloadCurrentPhotoWithFrame() {
       const photo = state.filteredPhotos[state.currentLightboxIndex];
-      if (photo) queuePhotoDownload(photo);
+      if (!photo) return;
+
+      const isPhotobooth = isPhotoPhotobooth(photo);
+      const rawFrameConfig = state.activeConfig.FRAME_IMAGE_URL ? state.activeConfig.FRAME_IMAGE_URL.trim() : "";
+      const frameUrl = normalizeDriveImageUrl(rawFrameConfig);
+
+      // 1. Jika berkas Photobooth atau tanpa bingkai: unduh langsung tanpa proses canvas
+      if (isPhotobooth || !frameUrl) {
+        const isVideo = Boolean(photo.isVideo);
+        const rawUrl = photo.downloadUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || "";
+        const fileName = generateUniqueFileName(photo.rawName || photo.name, isVideo ? "video" : "original", isVideo ? ".mp4" : ".jpg");
+        if (rawUrl) {
+          const proxyUrl = "/api/download-proxy?url=" + encodeURIComponent(rawUrl) + "&filename=" + encodeURIComponent(fileName);
+          triggerDirectLinkDownload(proxyUrl, fileName);
+          showToast("✓ Foto asli berhasil diunduh ke perangkat!");
+          return;
+        }
+      }
+
+      // 2. Jika foto berbingkai SUDAH di-precomposite saat membuka lightbox:
+      // Eksekusi LANGSUNG 100% SINKRONIS (0ms) di dalam klik pengguna!
+      // Ini menjaga userActivation.isActive = true sehingga browser Android (Samsung Internet) TIDAK PERNAH memunculkan dialog konfirmasi!
+      if (state.precompositedBlob && state.precompositedPhotoId === photo.id) {
+        const fileName = generateUniqueFileName(photo.rawName || photo.name, "berbingkai", ".jpg");
+        saveBlobToDevice(state.precompositedBlob, fileName);
+        showToast("✓ Foto berbingkai berhasil tersimpan ke perangkat!");
+        return;
+      }
+
+      // 3. Fallback antrean unduh jika belum siap
+      queuePhotoDownload(photo);
     }
 
     function processNextDownloadQueue() {
@@ -4033,12 +4048,15 @@ const GLOBAL_CONFIG = {
       const clean = (baseName || "wedding-photo")
         .replace(/\.[^/.]+$/, "")
         .replace(/[^a-zA-Z0-9_-]/g, "_")
-        .slice(0, 45);
-      // Garam salt 4 digit waktu saat ini agar tidak terjadi duplikasi (-2.jpg) pada penyimpanan Android
-      const salt = Date.now().toString().slice(-4);
+        .slice(0, 35);
+      const now = new Date();
+      const timeHash = String(now.getHours()).padStart(2, '0') +
+                       String(now.getMinutes()).padStart(2, '0') +
+                       String(now.getSeconds()).padStart(2, '0') + "_" +
+                       Math.floor(Math.random() * 900 + 100);
       const sfx = suffix ? ("-" + suffix) : "";
       const extension = ext || ".jpg";
-      return clean + sfx + "_" + salt + extension;
+      return clean + sfx + "_" + timeHash + extension;
     }
 
     function preloadFrameAssets(frameUrl) {
@@ -4363,30 +4381,17 @@ const GLOBAL_CONFIG = {
 
     function executeDirectPhotoDownload(photo, onDone) {
       const isVideo = Boolean(photo.isVideo);
-      let rawUrl = photo.downloadUrl || photo.videoUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || photo.img;
-      if (!rawUrl && photo.id) {
-        rawUrl = "https://lh3.googleusercontent.com/d/" + photo.id + "=w3200";
-      }
-      if (!rawUrl) {
+      let rawUrl = photo.downloadUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || "";
+      const fileName = generateUniqueFileName(photo.rawName || photo.name, isVideo ? "video" : "original", isVideo ? ".mp4" : ".jpg");
+
+      if (rawUrl) {
+        const proxyUrl = "/api/download-proxy?url=" + encodeURIComponent(rawUrl) + "&filename=" + encodeURIComponent(fileName);
+        triggerDirectLinkDownload(proxyUrl, fileName);
+        showToast("✓ Foto asli berhasil diunduh!");
         if (onDone) onDone();
         return;
       }
-      if (rawUrl.includes("fotoshare.co")) {
-        rawUrl = rawUrl.replace(/\?.*$/, "");
-      }
-
-      const ext = isVideo ? ".mp4" : ".jpg";
-      const fileName = generateUniqueFileName(photo.rawName || photo.name || (isVideo ? "video-photobooth" : "foto-asli"), "", ext);
-      const proxyUrl = "/api/download-proxy?url=" + encodeURIComponent(rawUrl) + "&filename=" + encodeURIComponent(fileName);
-
-      triggerDirectLinkDownload(proxyUrl, fileName);
-      if (onDone) {
-        setTimeout(onDone, 600);
-      }
-    }
-
-    function triggerDirectDownload(photo) {
-      if (photo) queuePhotoDownload(photo);
+      if (onDone) onDone();
     }
 
     function saveBlobToDevice(blob, fileName) {
@@ -4732,6 +4737,7 @@ const GLOBAL_CONFIG = {
       initLightboxZoomEvents();
       resetLightboxZoom();
       resetDownloadButton();
+      precompositeLightboxPhoto(photo);
       updateLightboxContent();
     }
 
@@ -5119,4 +5125,63 @@ const GLOBAL_CONFIG = {
         categories: ["Semua Foto"],
         photos: []
       }, false);
+    }
+    /* ==========================================================================
+       INSTANT ZERO-CLICK PRE-COMPOSITE ENGINE (Android Direct Download)
+       ========================================================================== */
+    function precompositeLightboxPhoto(photo) {
+      if (!photo) return;
+      const rawFrameConfig = state.activeConfig.FRAME_IMAGE_URL ? state.activeConfig.FRAME_IMAGE_URL.trim() : "";
+      const frameUrl = normalizeDriveImageUrl(rawFrameConfig);
+      if (!frameUrl || isPhotoPhotobooth(photo)) return;
+
+      state.precompositedPhotoId = null;
+      state.precompositedBlob = null;
+
+      const photoSrc = photo.downloadUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || (photo.id ? ("https://lh3.googleusercontent.com/d/" + photo.id + "=w2500") : "");
+      if (!photoSrc) return;
+
+      loadSafeCanvasImage(photoSrc, function(photoImg) {
+        loadSafeCanvasImage(frameUrl, function(frameImg) {
+          try {
+            const fw = frameImg.naturalWidth || 2400;
+            const fh = frameImg.naturalHeight || 1600;
+            const pw = photoImg.naturalWidth || photoImg.width || 1920;
+            const ph = photoImg.naturalHeight || photoImg.height || 1080;
+
+            const canvas = document.createElement("canvas");
+            canvas.width = fw;
+            canvas.height = fh;
+            const ctx = canvas.getContext("2d");
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(0, 0, fw, fh);
+
+            const rot = getPhotoRotation(photo.id, photo.category);
+            if (rot % 360 !== 0) {
+              ctx.save();
+              ctx.translate(fw / 2, fh / 2);
+              ctx.rotate((rot * Math.PI) / 180);
+              ctx.drawImage(photoImg, -fw / 2, -fh / 2, fw, fh);
+              ctx.restore();
+            } else {
+              ctx.drawImage(photoImg, 0, 0, fw, fh);
+            }
+
+            ctx.drawImage(frameImg, 0, 0, fw, fh);
+
+            canvas.toBlob(function(blob) {
+              if (blob && state.currentLightboxIndex !== -1) {
+                const currentPhoto = state.filteredPhotos[state.currentLightboxIndex];
+                if (currentPhoto && currentPhoto.id === photo.id) {
+                  state.precompositedPhotoId = photo.id;
+                  state.precompositedBlob = blob;
+                }
+              }
+            }, "image/jpeg", 0.94);
+          } catch (e) {}
+        }, function() {});
+      }, function() {});
     }
