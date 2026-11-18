@@ -24,12 +24,12 @@
       "customCategories": [
         {
           "name": "Photobooth",
-          "url": "https://x1.kingphotobooth.co/e/23d0e80056ae8f2fbb5d116f",
+          "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
           "enabled": true
         },
         {
           "name": "Wedding",
-          "url": "https://drive.google.com/drive/folders/1GGB77clCMYBIg17J0ECr2eVbD02ZeInW",
+          "url": "https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI",
           "enabled": true
         }
       ],
@@ -47,12 +47,12 @@
   "CUSTOM_CATEGORIES": [
     {
       "name": "Photobooth",
-      "url": "https://x1.kingphotobooth.co/e/23d0e80056ae8f2fbb5d116f",
+      "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
       "enabled": true
     },
     {
       "name": "Wedding",
-      "url": "https://drive.google.com/drive/folders/1GGB77clCMYBIg17J0ECr2eVbD02ZeInW",
+      "url": "https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI",
       "enabled": true
     }
   ],

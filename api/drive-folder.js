@@ -29,6 +29,8 @@ export default async function handler(req, res) {
     const seen = new Set();
     let m;
 
+    const autoRotateDeg = (cleanId === "1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI" || String(category).toLowerCase().includes("wedding")) ? 90 : 0;
+
     while ((m = entryRegex.exec(html)) !== null) {
       const fId = m[1];
       const fName = m[2].trim();
@@ -43,6 +45,8 @@ export default async function handler(req, res) {
           highResUrl: "https://lh3.googleusercontent.com/d/" + fId + "=w3200",
           downloadUrl: "https://lh3.googleusercontent.com/d/" + fId + "=w3200",
           customFolderId: cleanId,
+          autoRotate: autoRotateDeg,
+          rotation: autoRotateDeg,
           isVideo: false
         });
       }
@@ -66,6 +70,8 @@ export default async function handler(req, res) {
             highResUrl: "https://lh3.googleusercontent.com/d/" + fId + "=w3200",
             downloadUrl: "https://lh3.googleusercontent.com/d/" + fId + "=w3200",
             customFolderId: cleanId,
+            autoRotate: autoRotateDeg,
+            rotation: autoRotateDeg,
             isVideo: false
           });
         }

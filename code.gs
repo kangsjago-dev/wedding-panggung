@@ -32,11 +32,11 @@ const WEDDING_CONFIG = {
   ALL_PHOTOS_LABEL: "Semua Foto",
 
   // Kategori Kustom & Tautan Target Display Galeri
-  CUSTOM_CATEGORIES: '[{"name":"Photobooth","url":"https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs"}]',
+  CUSTOM_CATEGORIES: '[{"name":"Photobooth","url":"https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs","enabled":true},{"name":"Wedding","url":"https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI","enabled":true}]',
 
   // Multi-Event Registry
   ACTIVE_EVENT_ID: "wilson-felicia",
-  EVENTS: '[{"id":"wilson-felicia","name":"Wilson & Felicia","date":"14 November 2026","venue":"Upperhills Convention Centre, Makassar","subtitle":"The Wedding Gallery & Precious Memories","welcomeMessage":"Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.","footerMessage":"Diabadikan dengan cinta\\nTerima kasih atas doa restunya.","allPhotosLabel":"Semua Foto","driveFolderId":"1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxI5","frameImageUrl":"https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing","customCategories":[{"name":"Photobooth","url":"https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs"}],"coverSettings":{"enabled":true,"style":"romantic-collage","heading":"The Wedding Celebration","subheading":"A Journey of Two Hearts Joined as One","quote":"Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda.","photos":[]}}]',
+  EVENTS: '[{"id":"wilson-felicia","name":"Wilson & Felicia","date":"14 November 2026","venue":"Upperhills Convention Centre, Makassar","subtitle":"The Wedding Gallery & Precious Memories","welcomeMessage":"Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.","footerMessage":"Diabadikan dengan cinta\\nTerima kasih atas doa restunya.","allPhotosLabel":"Semua Foto","driveFolderId":"1AhdkSch9C-F2FvYKd_IO2O7RSsRDJxI5","frameImageUrl":"https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing","customCategories":[{"name":"Photobooth","url":"https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs","enabled":true},{"name":"Wedding","url":"https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI","enabled":true}],"coverSettings":{"enabled":false,"style":"romantic-collage","heading":"The Wedding Celebration","subheading":"A Journey of Two Hearts Joined as One","quote":"Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda.","photos":[]}}]',
 
   // Akun Admin (Username & Password)
   ADMIN_ACCOUNTS: '[{"id":"usr_superadmin","username":"admin","password":"123","name":"Super Admin","role":"Super Admin"}]',

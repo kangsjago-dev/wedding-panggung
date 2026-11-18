@@ -27,9 +27,27 @@
     }
 
     /* ==========================================================================
-       AUTO-ROTATE & ORIENTATION SYSTEM (v3.6.6)
+       AUTO-ROTATE & ORIENTATION SYSTEM (v3.6.7) - OTOMATIS OLEH SISTEM TANPA TOMBOL MANUAL
        ========================================================================== */
     function getPhotoRotation(photoId, categoryName) {
+      // 1. Cek langsung objek foto di state.allPhotos jika memiliki atribut autoRotate atau rotation
+      if (photoId && state.allPhotos) {
+        const p = state.allPhotos.find(function(x) { return x && x.id === photoId; });
+        if (p) {
+          if (p.autoRotate !== undefined && p.autoRotate !== 0) return parseInt(p.autoRotate, 10);
+          if (p.rotation !== undefined && p.rotation !== 0) return parseInt(p.rotation, 10);
+          if (p.customFolderId === "1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI") return 90;
+        }
+      }
+      // 2. Cek di state.filteredPhotos
+      if (photoId && state.filteredPhotos) {
+        const p = state.filteredPhotos.find(function(x) { return x && x.id === photoId; });
+        if (p) {
+          if (p.autoRotate !== undefined && p.autoRotate !== 0) return parseInt(p.autoRotate, 10);
+          if (p.rotation !== undefined && p.rotation !== 0) return parseInt(p.rotation, 10);
+          if (p.customFolderId === "1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI") return 90;
+        }
+      }
       if (state.photoRotations && state.photoRotations[photoId] !== undefined) {
         return parseInt(state.photoRotations[photoId], 10) || 0;
       }
@@ -38,8 +56,12 @@
         if (saved !== null) return parseInt(saved, 10) || 0;
       } catch (e) {}
 
+      // 3. Deteksi otomatis berdasarkan folder / kategori panggung pernikahan
       const cat = categoryName || state.activeCategory || "";
       if (cat) {
+        if (cat.toLowerCase().includes("wedding") || cat.toLowerCase().includes("panggung")) {
+          return 90;
+        }
         if (state.categoryRotations && state.categoryRotations[cat] !== undefined) {
           return parseInt(state.categoryRotations[cat], 10) || 0;
         }
@@ -47,15 +69,6 @@
           const savedCatRot = localStorage.getItem("WEDDING_CAT_ROTATION_" + cat);
           if (savedCatRot !== null) return parseInt(savedCatRot, 10) || 0;
         } catch (e) {}
-
-        if (Array.isArray(state.customCategories)) {
-          const match = state.customCategories.find(function(c) {
-            return String((c && c.name) || "").trim().toLowerCase() === cat.toLowerCase();
-          });
-          if (match && match.rotation !== undefined) {
-            return parseInt(match.rotation, 10) || 0;
-          }
-        }
       }
       return 0;
     }
@@ -85,58 +98,14 @@
       const current = getPhotoRotation(photoId);
       const next = (current + 90) % 360;
       setPhotoRotation(photoId, next);
-      showToast("✓ Foto diputar " + next + "°");
     }
 
     function toggleActiveCategoryRotation() {
-      const cat = state.activeCategory || "Semua Foto";
-      const current = (state.categoryRotations && state.categoryRotations[cat] !== undefined)
-        ? parseInt(state.categoryRotations[cat], 10)
-        : getPhotoRotation("dummy", cat);
-      const next = (current + 90) % 360;
-      if (!state.categoryRotations) state.categoryRotations = {};
-      state.categoryRotations[cat] = next;
-      try {
-        localStorage.setItem("WEDDING_CAT_ROTATION_" + cat, String(next));
-      } catch (e) {}
-
-      if (Array.isArray(state.customCategories)) {
-        const match = state.customCategories.find(function(c) {
-          return String((c && c.name) || "").trim().toLowerCase() === cat.toLowerCase();
-        });
-        if (match) {
-          match.rotation = next;
-          state.activeConfig.CUSTOM_CATEGORIES = state.customCategories;
-          try {
-            localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(state.customCategories));
-          } catch (e) {}
-          if (state.gasApiUrl) {
-            callBackend("saveAdminSettings", {
-              pin: state.adminPin,
-              config: {
-                CUSTOM_CATEGORIES: state.customCategories,
-                EVENTS: state.events,
-                ACTIVE_EVENT_ID: state.currentEventId
-              }
-            });
-          }
-        }
-      }
-
-      renderPhotoGrid(null, cat);
-      showToast("✓ Seluruh foto kategori " + cat + " diputar ke " + next + "°");
+      // No-op: tombol manual telah dihapus, rotasi otomatis oleh sistem
     }
 
     function rotateLightboxCurrentPhoto() {
-      if (currentLightboxIndex < 0 || !state.filteredPhotos || !state.filteredPhotos[currentLightboxIndex]) return;
-      const photo = state.filteredPhotos[currentLightboxIndex];
-      const current = getPhotoRotation(photo.id, photo.category);
-      const next = (current + 90) % 360;
-      setPhotoRotation(photo.id, next, photo.category);
-      applyLightboxZoom();
-      const labelEl = document.getElementById("lightboxRotateLabel");
-      if (labelEl) labelEl.innerText = next > 0 ? "Putar (" + next + "°)" : "Putar 90°";
-      showToast("✓ Foto preview diputar " + next + "°");
+      // No-op: tombol manual telah dihapus, rotasi otomatis oleh sistem
     }
 
     function syncSingleCategory(categoryName) {
@@ -458,14 +427,9 @@ const GLOBAL_CONFIG = {
     document.addEventListener("DOMContentLoaded", function() {
       setupTouchSwipe();
 
-      // Pre-seed categoryPhotosMap agar saat refresh counter tidak kosong & foto langsung siap instan
+      // Inisialisasi categoryPhotosMap & categoryPhotosUrlMap dinamis
       if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
-      if (typeof WEDDING_INITIAL_CACHE !== 'undefined' && Array.isArray(WEDDING_INITIAL_CACHE) && WEDDING_INITIAL_CACHE.length > 0) {
-        state.categoryPhotosMap["Wedding"] = WEDDING_INITIAL_CACHE;
-      }
-      if (typeof KING_PHOTOBOOTH_INITIAL_CACHE !== 'undefined' && Array.isArray(KING_PHOTOBOOTH_INITIAL_CACHE) && KING_PHOTOBOOTH_INITIAL_CACHE.length > 0) {
-        state.categoryPhotosMap["Photobooth"] = buildKingPhotoList(KING_PHOTOBOOTH_INITIAL_CACHE, "Photobooth", "https://x1.kingphotobooth.co/e/23d0e80056ae8f2fbb5d116f");
-      }
+      if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
       setupKeyboardNav();
 
       // 1. Muat URL API backend yang tersimpan
@@ -581,17 +545,24 @@ const GLOBAL_CONFIG = {
               try {
                 const parsedCats = JSON.parse(sheetMap.CUSTOM_CATEGORIES);
                 if (Array.isArray(parsedCats) && parsedCats.length > 0) {
-                  state.customCategories = parsedCats;
-                  state.activeConfig.CUSTOM_CATEGORIES = parsedCats;
-                  localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(parsedCats));
-
+                  // Invalidate cache jika URL kategori berubah
                   parsedCats.forEach(function(c) {
                     const cName = String((c && c.name) || c || "").trim();
                     const cUrl = String((c && c.url) || "").trim();
                     if (cName && cUrl) {
+                      const prevUrl = state.categoryPhotosUrlMap ? state.categoryPhotosUrlMap[cName] : null;
+                      if (prevUrl && prevUrl !== cUrl) {
+                        if (state.categoryPhotosMap) delete state.categoryPhotosMap[cName];
+                        try { localStorage.removeItem("WEDDING_CAT_COUNT_" + cName); } catch(e) {}
+                      }
                       prefetchCategoryPhotos(cName, cUrl);
                     }
                   });
+                  state.customCategories = parsedCats;
+                  state.activeConfig.CUSTOM_CATEGORIES = parsedCats;
+                  try {
+                    localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(parsedCats));
+                  } catch (e) {}
                 }
               } catch(eCats) {}
             }
@@ -619,6 +590,9 @@ const GLOBAL_CONFIG = {
 
             populateConfigToUI(state.activeConfig);
             renderCategoryTabs();
+            if (state.activeCategory && state.activeCategory !== "Semua Foto") {
+              applyCategoryFilter(state.activeCategory);
+            }
           }
         })
         .catch(function(err) {
@@ -1147,7 +1121,13 @@ const GLOBAL_CONFIG = {
               countBadgeText = "637";
             }
           } else if (cat.toLowerCase().includes("wedding")) {
-            countBadgeText = typeof WEDDING_INITIAL_CACHE !== 'undefined' ? String(WEDDING_INITIAL_CACHE.length) : "116";
+            if (targetUrl && targetUrl.includes("1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI")) {
+              countBadgeText = "30";
+            } else if (targetUrl && targetUrl.includes("1GGB77clCMYBIg17J0ECr2eVbD02ZeInW")) {
+              countBadgeText = typeof WEDDING_INITIAL_CACHE !== 'undefined' ? String(WEDDING_INITIAL_CACHE.length) : "116";
+            } else {
+              countBadgeText = "...";
+            }
           } else {
             const driveFolderId = extractDriveFolderId(targetUrl);
             const directMatch = state.allPhotos.filter(function(p) {
@@ -1811,9 +1791,6 @@ const GLOBAL_CONFIG = {
         card.innerHTML = `
           ${newBadgeHtml}
           ${videoBadgeHtml}
-          <button type="button" class="photo-card-rotate-btn" onclick="event.stopPropagation(); rotateSinglePhoto('${escapeHtml(photo.id)}');" title="Putar Foto 90°">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-1.19"/></svg>
-          </button>
           <img class="photo-img${rotClass}" 
                src="${photo.thumbnailUrl}" 
                alt="${escapeHtml(photo.name)}" 
@@ -2170,7 +2147,7 @@ const GLOBAL_CONFIG = {
             </button>
           </div>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1.3fr 0.9fr; gap: 8px; align-items: flex-end;">
+        <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px; align-items: flex-end;">
           <div>
             <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 2px;">Nama Tampilan Tab</label>
             <input type="text" id="pbNameInput" class="admin-input cat-name-input" value="${escapeHtml(pbItem.name || 'Photobooth')}" oninput="onCategoryRowInput()" placeholder="Photobooth" style="padding: 7px 10px; font-size: 0.82rem;">
@@ -2178,15 +2155,6 @@ const GLOBAL_CONFIG = {
           <div>
             <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 2px;">Tautan Display / Vendor (Dapat Dicustom)</label>
             <input type="text" id="pbUrlInput" class="admin-input cat-url-input" value="${escapeHtml(pbItem.url || 'https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs')}" oninput="onCategoryRowInput()" placeholder="https://fotoshare.co/e/..." style="padding: 7px 10px; font-size: 0.82rem;">
-          </div>
-          <div>
-            <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 2px;">Auto-Rotate</label>
-            <select id="pbRotationSelect" class="admin-input" onchange="onCategoryRowInput()" style="padding: 7px 6px; font-size: 0.78rem;">
-              <option value="0" ${pbItem.rotation == 0 ? 'selected' : ''}>0° Normal</option>
-              <option value="90" ${pbItem.rotation == 90 ? 'selected' : ''}>90° ↻ Tegak</option>
-              <option value="180" ${pbItem.rotation == 180 ? 'selected' : ''}>180° Balik</option>
-              <option value="270" ${pbItem.rotation == 270 ? 'selected' : ''}>270° ↺</option>
-            </select>
           </div>
         </div>
         <div style="font-size: 0.7rem; color: #166534; margin-top: 5px; opacity: 0.85;">
@@ -2217,21 +2185,19 @@ const GLOBAL_CONFIG = {
       categories.forEach(function(item) {
         const catName = String((item && item.name) || item || "").trim();
         const catUrl = String((item && item.url) || "").trim();
-        const catRot = (item && item.rotation !== undefined) ? item.rotation : 0;
         if (catName && catName !== "Semua Foto" && !catName.toLowerCase().includes("photobooth") && catName.toLowerCase() !== "teapai") {
-          addCategoryConfigRow(catName, catUrl, catRot);
+          addCategoryConfigRow(catName, catUrl);
         }
       });
     }
 
-    function addCategoryConfigRow(name, url, rotation) {
+    function addCategoryConfigRow(name, url) {
       const container = document.getElementById("customCategoryRowsWrapper") || document.getElementById("adminCategoriesContainer");
       if (!container) return;
 
-      const rot = parseInt(rotation, 10) || 0;
       const row = document.createElement("div");
       row.className = "category-config-row";
-      row.style.cssText = "display: grid; grid-template-columns: 1fr 1.3fr 0.8fr auto auto; gap: 6px; align-items: flex-end; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 10px;";
+      row.style.cssText = "display: grid; grid-template-columns: 1fr 1.6fr auto auto; gap: 6px; align-items: flex-end; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 10px;";
       row.innerHTML = `
         <div>
           <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 3px;">Nama Kategori</label>
@@ -2240,15 +2206,6 @@ const GLOBAL_CONFIG = {
         <div>
           <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 3px;">Tautan Display Galeri (Google Drive / Web)</label>
           <input type="text" class="admin-input cat-url-input" value="${escapeHtml(url || '')}" oninput="onCategoryRowInput()" placeholder="https://drive.google.com/drive/folders/..." style="padding: 7px 10px; font-size: 0.82rem;">
-        </div>
-        <div>
-          <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 3px;">Auto-Rotate</label>
-          <select class="admin-input cat-rotation-select" onchange="onCategoryRowInput()" style="padding: 7px 6px; font-size: 0.78rem;">
-            <option value="0" ${rot === 0 ? 'selected' : ''}>0° Normal</option>
-            <option value="90" ${rot === 90 ? 'selected' : ''}>90° ↻ Tegak</option>
-            <option value="180" ${rot === 180 ? 'selected' : ''}>180° Balik</option>
-            <option value="270" ${rot === 270 ? 'selected' : ''}>270° ↺</option>
-          </select>
         </div>
         <div>
           <button type="button" class="btn btn-outline" onclick="syncSingleCategory(this.closest('.category-config-row').querySelector('.cat-name-input').value)" title="Sinkronkan Kategori Ini" style="height: 34px; padding: 0 8px; font-size: 0.74rem;">
@@ -2292,16 +2249,13 @@ const GLOBAL_CONFIG = {
       const pbNameInput = document.getElementById("pbNameInput");
       const pbUrlInput = document.getElementById("pbUrlInput");
       const pbVisCheck = document.getElementById("pbVisibilityCheck");
-      const pbRotSelect = document.getElementById("pbRotationSelect");
       const pbName = (pbNameInput ? pbNameInput.value : "").trim() || "Photobooth";
       const pbUrl = (pbUrlInput ? pbUrlInput.value : "").trim() || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
       const pbEnabled = pbVisCheck ? pbVisCheck.checked : true;
-      const pbRot = pbRotSelect ? (parseInt(pbRotSelect.value, 10) || 0) : 0;
 
       list.push({
         name: pbName,
         url: pbUrl,
-        rotation: pbRot,
         enabled: pbEnabled
       });
 
@@ -2310,12 +2264,10 @@ const GLOBAL_CONFIG = {
       rows.forEach(function(r) {
         const nameInput = r.querySelector(".cat-name-input");
         const urlInput = r.querySelector(".cat-url-input");
-        const rotSelect = r.querySelector(".cat-rotation-select");
         const nameVal = (nameInput ? nameInput.value : "").trim();
         const urlVal = (urlInput ? urlInput.value : "").trim();
-        const rotVal = rotSelect ? (parseInt(rotSelect.value, 10) || 0) : 0;
         if (nameVal && nameVal.toLowerCase() !== "semua foto" && !nameVal.toLowerCase().includes("photobooth")) {
-          list.push({ name: nameVal, url: urlVal, rotation: rotVal, enabled: true });
+          list.push({ name: nameVal, url: urlVal, enabled: true });
         }
       });
       return list;

@@ -376,26 +376,60 @@
       }
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 768px) {
       .filter-wrapper {
-        padding: 8px 12px;
+        padding: 8px 12px 10px 12px;
       }
       .filter-container {
+        flex-direction: column;
+        align-items: stretch;
         gap: 8px;
-      }
-      .filter-scroll {
-        gap: 6px;
-      }
-      .filter-pill {
-        padding: 6px 12px;
-        font-size: 0.82rem;
+        width: 100%;
       }
       .action-controls-group {
-        gap: 6px;
+        order: 1;
+        align-self: flex-end;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(197, 168, 128, 0.35);
+        border-radius: 9999px;
+        padding: 3px 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       }
       .ctrl-icon-btn {
         width: 34px;
         height: 34px;
+        border: none;
+        background: transparent;
+      }
+      .ctrl-icon-btn:hover {
+        background: var(--gold-light);
+      }
+      .ctrl-icon-btn.admin-active {
+        background: var(--gold-primary);
+        color: #FFFFFF;
+      }
+      .filter-scroll {
+        order: 2;
+        width: 100%;
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 2px 2px 4px 2px;
+      }
+      .filter-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .filter-pill {
+        padding: 7px 16px;
+        font-size: 0.85rem;
+        flex-shrink: 0;
       }
     }
 
@@ -557,47 +591,7 @@
       transform: rotate(270deg) scale(1.35) !important;
     }
 
-    .photo-card-rotate-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.92);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(197, 168, 128, 0.4);
-      color: #334155;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      opacity: 0;
-      transition: all 0.25s ease;
-      z-index: 6;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    }
 
-    .photo-card:hover .photo-card-rotate-btn {
-      opacity: 1;
-    }
-
-    .photo-card-rotate-btn:hover {
-      background: #FFF;
-      color: var(--gold-dark);
-      transform: scale(1.1);
-      border-color: var(--gold-primary);
-    }
-
-    @media (hover: none), (max-width: 768px) {
-      .photo-card-rotate-btn {
-        opacity: 0.88;
-        top: 8px;
-        right: 8px;
-        width: 30px;
-        height: 30px;
-      }
-    }
 
     .photo-card:hover .photo-img {
       transform: scale(1.05);
