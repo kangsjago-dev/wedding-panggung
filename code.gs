@@ -954,7 +954,7 @@ function getGalleryData(targetEventId) {
 function getCategoryDrivePhotos(folderTarget, catName) {
   try {
     var cleanId = String(folderTarget || "").trim();
-    if (cleanId.indexOf("photos.google.com") !== -1) {
+    if (cleanId.indexOf("photos.google.com") !== -1 || cleanId.indexOf("photos.app.goo.gl") !== -1) {
       return scanGooglePhotosAlbum(cleanId, catName);
     }
     if (cleanId.indexOf("kingphotobooth.co") !== -1 || cleanId.indexOf("kingphoto") !== -1) {
@@ -996,6 +996,7 @@ function scanGooglePhotosAlbum(albumUrl, catName) {
   try {
     var response = UrlFetchApp.fetch(albumUrl, {
       muteHttpExceptions: true,
+      followRedirects: true,
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
       }
@@ -1005,6 +1006,9 @@ function scanGooglePhotosAlbum(albumUrl, catName) {
     }
     var html = response.getContentText();
     var matches = html.match(/https:\/\/lh3\.googleusercontent\.com\/pw\/[a-zA-Z0-9_\-]+/g) || [];
+    if (matches.length === 0) {
+      matches = html.match(/https:\/\/lh3\.googleusercontent\.com\/[a-zA-Z0-9_\-]{30,}/g) || [];
+    }
     var seen = {};
     var photos = [];
     var count = 0;
@@ -1020,7 +1024,8 @@ function scanGooglePhotosAlbum(albumUrl, catName) {
           previewUrl: base + "=w1600-h1200",
           highResUrl: base + "=w2400-h1800",
           downloadUrl: base + "=d",
-          category: catName || "Photobooth"
+          category: catName || "Photobooth",
+          isPhotobooth: true
         });
       }
     }
@@ -1751,6 +1756,10 @@ function saveAdminSettings(pin, updatedConfig) {
       } catch (eEvSync) {
         Logger.log("Info sinkronisasi EVENTS: " + eEvSync.toString());
       }
+    }
+
+    if (updatedConfig.PHOTOBOOTH_URL !== undefined) {
+      props.setProperty("PHOTOBOOTH_URL", String(updatedConfig.PHOTOBOOTH_URL).trim());
     }
 
     if (updatedConfig.ALL_PHOTOS_LABEL !== undefined) {

@@ -1,3 +1,39 @@
+# RENCANA REVISI & CATATAN RILIS SISTEM: v3.6.9
+================================================================================
+PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")
+ENGINE: ZettBOT v4.1 by Zettbos
+STATUS: IMPLEMENTASI & VERIFIKASI (v3.6.9) - 100% SUKSES
+TANGGAL: 18 November 2026
+
+### 6 Poin Instruksi Utama Pengguna:
+1. **Kategori Momen Lainnya = JANGAN DI-ROTATE:**
+   - Foto pada kategori momen lainnya (seperti Wedding, Akad Nikah, Resepsi, dll) dipastikan tidak dirotasi sama sekali (rotasi normal 0°).
+   - `getPhotoRotation()` diatur ketat: jika kategori bukan "Semua Foto" dan bukan "Photobooth", rotasi selalu mengembalikan 0°.
+   - `api/drive-folder.js` menetapkan `autoRotateDeg = 0` secara konsisten.
+
+2. **Kategori Spesial Photobooth Mendukung Format Link `https://photos.app.goo.gl/`:**
+   - Ditambahkan helper `isGooglePhotosUrl()` yang mengenali domain `photos.google.com` dan shortlink `photos.app.goo.gl`.
+   - Backend `api/google-photos.js` dan Apps Script `code.gs` (`scanGooglePhotosAlbum`) menggunakan `redirect: "follow"` / `followRedirects: true` dan matcher regex fleksibel (`/pw/` maupun direktori gambar Google Photos).
+
+3. **Sinkronisasi Tampilan Galeri Sesuai Link yang Diberikan:**
+   - Menyelesaikan masalah fallback paksa ke `fotoshare.co` saat `targetUrl` tidak dioper pada pemanggilan `applyCategoryFilter()`.
+   - `targetUrl` kini di-resolve secara dinamis dari `state.customCategories`.
+   - Invalidation cache instan: begitu link diganti, cache foto kategori lama langsung dihapus dan foto baru langsung dimuat seketika.
+
+4. **Percepatan Loading & Anti Delay 5 Menit:**
+   - `fetchGooglePhotos` dilengkapi dengan `AbortController` timeout 6 detik sehingga tidak terjadi freeze atau hang jika endpoint API tertahan.
+   - Foto langsung ditampilkan dengan skeleton loader elegan dan ter-render otomatis tanpa perlu refresh halaman berulang-ulang.
+
+5. **Eliminasi Menu Duplikat Label Tab Galeri Utama:**
+   - Input duplikat `cfgAllPhotosLabel` pada tab "Acara & Event" (`tabPane-event`) telah dihapus.
+   - Pengaturan nama kategori galeri utama kini terpusat dan satu-satunya di tab "Foto & Kategori" (`tabPane-media`) pada `#cfgMainGalleryLabel`.
+
+6. **Anti-Revert Link Photobooth & Kategori Momen:**
+   - Menyimpan parameter `PHOTOBOOTH_URL` dan `CUSTOM_CATEGORIES` secara terpadu ke Google Apps Script dan Google Spreadsheet sheet `Pengaturan`.
+   - `syncFromSpreadsheetGViz` menyinkronkan kedua kolom secara simultan sehingga tautan tidak akan kembali ter-reset ke bawaan setelah beberapa saat.
+
+---
+
 # RENCANA REVISI & CATATAN RILIS SISTEM: v3.6.8
 ================================================================================
 PROJEK: Wedding Photo Gallery Web App ("Wedding Panggung")

@@ -1,4 +1,10 @@
 
+    function isGooglePhotosUrl(url) {
+      if (!url) return false;
+      const s = String(url).toLowerCase().trim();
+      return s.includes("photos.google.com") || s.includes("photos.app.goo.gl");
+    }
+
     /* ==========================================================================
        MULTI-DEVICE SYNC & CATEGORY SYNC UTILITIES (v3.3.0)
        ========================================================================== */
@@ -14,7 +20,7 @@
         localStorage.setItem(cacheKey, JSON.stringify(state.activeConfig));
       } catch (e) {}
       // Prefetch & update badge foto untuk setiap kategori yang disinkronkan
-      customCategoriesList.forEach(function(cat) {
+      (state.customCategories || []).forEach(function(cat) {
         const catName = String((cat && cat.name) || cat || "").trim();
         const catUrl = String((cat && cat.url) || "").trim();
         if (catName && catUrl) {
@@ -27,48 +33,34 @@
     }
 
     /* ==========================================================================
-       AUTO-ROTATE & ORIENTATION SYSTEM (v3.6.7) - OTOMATIS OLEH SISTEM TANPA TOMBOL MANUAL
+       AUTO-ROTATE & ORIENTATION SYSTEM
+       Instruksi: Kategori Momen Lainnya = JANGAN DI ROTATE (rotasi 0 derajat normal)
        ========================================================================== */
     function getPhotoRotation(photoId, categoryName) {
-      // 1. Cek langsung objek foto di state.allPhotos jika memiliki atribut autoRotate atau rotation
+      // 1. Kategori Momen Lainnya (seperti Wedding, Akad, Resepsi, dsb): JANGAN DI-ROTATE (rotasi normal 0 derajat)
+      let cat = categoryName || state.activeCategory || "";
+      if (!cat && photoId) {
+        const found = (state.filteredPhotos || []).find(function(x) { return x && x.id === photoId; }) ||
+                      (state.allPhotos || []).find(function(x) { return x && x.id === photoId; });
+        if (found && found.category) cat = found.category;
+      }
+
+      const mainLabel = state.allPhotosLabel || "Semua Foto";
+      const isMain = (cat === mainLabel || cat === "Semua Foto");
+      const isPb = cat.toLowerCase().includes("photobooth");
+
+      if (cat && !isMain && !isPb) {
+        return 0;
+      }
+
+      // 2. Cek langsung objek foto jika memiliki autoRotate eksplisit
       if (photoId && state.allPhotos) {
         const p = state.allPhotos.find(function(x) { return x && x.id === photoId; });
-        if (p) {
-          if (p.autoRotate !== undefined && p.autoRotate !== 0) return parseInt(p.autoRotate, 10);
-          if (p.rotation !== undefined && p.rotation !== 0) return parseInt(p.rotation, 10);
-          if (p.customFolderId === "1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI") return 90;
-        }
+        if (p && p.autoRotate !== undefined && p.autoRotate !== 0) return parseInt(p.autoRotate, 10);
       }
-      // 2. Cek di state.filteredPhotos
       if (photoId && state.filteredPhotos) {
         const p = state.filteredPhotos.find(function(x) { return x && x.id === photoId; });
-        if (p) {
-          if (p.autoRotate !== undefined && p.autoRotate !== 0) return parseInt(p.autoRotate, 10);
-          if (p.rotation !== undefined && p.rotation !== 0) return parseInt(p.rotation, 10);
-          if (p.customFolderId === "1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI") return 90;
-        }
-      }
-      if (state.photoRotations && state.photoRotations[photoId] !== undefined) {
-        return parseInt(state.photoRotations[photoId], 10) || 0;
-      }
-      try {
-        const saved = localStorage.getItem("WEDDING_PHOTO_ROT_" + photoId);
-        if (saved !== null) return parseInt(saved, 10) || 0;
-      } catch (e) {}
-
-      // 3. Deteksi otomatis berdasarkan folder / kategori panggung pernikahan
-      const cat = categoryName || state.activeCategory || "";
-      if (cat) {
-        if (cat.toLowerCase().includes("wedding") || cat.toLowerCase().includes("panggung")) {
-          return 90;
-        }
-        if (state.categoryRotations && state.categoryRotations[cat] !== undefined) {
-          return parseInt(state.categoryRotations[cat], 10) || 0;
-        }
-        try {
-          const savedCatRot = localStorage.getItem("WEDDING_CAT_ROTATION_" + cat);
-          if (savedCatRot !== null) return parseInt(savedCatRot, 10) || 0;
-        } catch (e) {}
+        if (p && p.autoRotate !== undefined && p.autoRotate !== 0) return parseInt(p.autoRotate, 10);
       }
       return 0;
     }
@@ -153,10 +145,14 @@
 
       // SIMPAN PERMANEN KE SCRIPT PROPERTIES & SHEET AGAR TIDAK TER-RESET
       if (state.gasApiUrl) {
+        const pbCat = Array.isArray(state.customCategories) ? state.customCategories.find(function(c) {
+          return String((c && c.name) || "").trim().toLowerCase().includes("photobooth");
+        }) : null;
         callBackend("saveAdminSettings", {
           pin: state.adminPin,
           config: {
             CUSTOM_CATEGORIES: state.customCategories,
+            PHOTOBOOTH_URL: (pbCat && pbCat.url) ? String(pbCat.url).trim() : "",
             EVENTS: state.events,
             ACTIVE_EVENT_ID: state.currentEventId
           }
@@ -172,7 +168,7 @@
       const driveFolderId = extractDriveFolderId(targetUrl);
 
       // Fleksibilitas Tautan Kategori (Mendukung Google Photos, Kingphotobooth, Fotoshare, Google Drive, dsb)
-      if (targetUrl && targetUrl.includes("photos.google.com")) {
+      if (isGooglePhotosUrl(targetUrl)) {
         fetchGooglePhotos(categoryName, targetUrl, function(photos) {
           updateCategoryPillCount(categoryName, photos.length);
           if (state.activeCategory === categoryName) {
@@ -213,14 +209,26 @@
         });
         return;
       } else if (categoryName.toLowerCase().includes("photobooth")) {
-        fetchFotosharePhotos(categoryName, targetUrl || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", function(photos) {
-          updateCategoryPillCount(categoryName, photos.length);
-          if (state.activeCategory === categoryName) {
-            state.filteredPhotos = photos;
-            renderPhotoGrid(targetUrl, categoryName);
-          }
-          showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
-        });
+        const pbLink = targetUrl || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
+        if (isGooglePhotosUrl(pbLink)) {
+          fetchGooglePhotos(categoryName, pbLink, function(photos) {
+            updateCategoryPillCount(categoryName, photos.length);
+            if (state.activeCategory === categoryName) {
+              state.filteredPhotos = photos;
+              renderPhotoGrid(pbLink, categoryName);
+            }
+            showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
+          });
+        } else {
+          fetchFotosharePhotos(categoryName, pbLink, function(photos) {
+            updateCategoryPillCount(categoryName, photos.length);
+            if (state.activeCategory === categoryName) {
+              state.filteredPhotos = photos;
+              renderPhotoGrid(pbLink, categoryName);
+            }
+            showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
+          });
+        }
         return;
       }
 
@@ -587,6 +595,17 @@ const GLOBAL_CONFIG = {
               state.gasApiUrl = sheetMap.GAS_API_URL;
             }
             if (sheetMap.ALL_PHOTOS_LABEL) state.allPhotosLabel = sheetMap.ALL_PHOTOS_LABEL;
+            if (sheetMap.PHOTOBOOTH_URL) {
+              state.activeConfig.PHOTOBOOTH_URL = sheetMap.PHOTOBOOTH_URL;
+              if (Array.isArray(state.customCategories)) {
+                const pb = state.customCategories.find(function(c) {
+                  return String((c && c.name) || "").trim().toLowerCase().includes("photobooth");
+                });
+                if (pb && pb.url !== sheetMap.PHOTOBOOTH_URL) {
+                  pb.url = sheetMap.PHOTOBOOTH_URL;
+                }
+              }
+            }
 
             populateConfigToUI(state.activeConfig);
             renderCategoryTabs();
@@ -1002,7 +1021,7 @@ const GLOBAL_CONFIG = {
         if (cfgWelcomeEl) cfgWelcomeEl.value = cfg.WELCOME_MESSAGE || "";
         const cfgFooterEl = document.getElementById("cfgFooterMessage");
         if (cfgFooterEl) cfgFooterEl.value = cfg.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.";
-        const cfgAllPhotosLabelEl = document.getElementById("cfgAllPhotosLabel");
+        const cfgAllPhotosLabelEl = document.getElementById("cfgMainGalleryLabel") || document.getElementById("cfgAllPhotosLabel");
         if (cfgAllPhotosLabelEl) cfgAllPhotosLabelEl.value = state.allPhotosLabel || "Semua Foto";
 
         renderAdminCoverManager();
@@ -1175,7 +1194,7 @@ const GLOBAL_CONFIG = {
       if (state.categoryPhotosMap[cat]) return;
 
       const driveFolderId = extractDriveFolderId(targetUrl);
-      if (targetUrl && targetUrl.includes("photos.google.com")) {
+      if (isGooglePhotosUrl(targetUrl)) {
         fetchGooglePhotos(cat, targetUrl, function(photos) {
           updateCategoryPillCount(cat, photos.length);
         });
@@ -1192,15 +1211,22 @@ const GLOBAL_CONFIG = {
           updateCategoryPillCount(cat, photos.length);
         });
       } else if (cat && cat.toLowerCase().includes("photobooth")) {
-        fetchFotosharePhotos(cat, targetUrl || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", function(photos) {
-          updateCategoryPillCount(cat, photos.length);
-        });
+        const pbLink = targetUrl || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
+        if (isGooglePhotosUrl(pbLink)) {
+          fetchGooglePhotos(cat, pbLink, function(photos) {
+            updateCategoryPillCount(cat, photos.length);
+          });
+        } else {
+          fetchFotosharePhotos(cat, pbLink, function(photos) {
+            updateCategoryPillCount(cat, photos.length);
+          });
+        }
       }
     }
 
-        function fetchGooglePhotos(cat, url, callback) {
+    function fetchGooglePhotos(cat, url, callback) {
       if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
-      if (state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0) {
+      if (state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0 && state.categoryPhotosUrlMap && state.categoryPhotosUrlMap[cat] === url) {
         if (callback) callback(state.categoryPhotosMap[cat]);
         return;
       }
@@ -1223,46 +1249,48 @@ const GLOBAL_CONFIG = {
         });
       }
 
-      // 1. Coba lewat API endpoint /api/google-photos (Vercel)
-      fetch("/api/google-photos?url=" + encodeURIComponent(url) + "&category=" + encodeURIComponent(cat))
+      // 1. Coba lewat API endpoint /api/google-photos dengan timeout 6 detik
+      const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      let timeoutId = null;
+      if (controller) {
+        timeoutId = setTimeout(function() {
+          try { controller.abort(); } catch(e) {}
+        }, 6000);
+      }
+
+      const fetchOpts = controller ? { signal: controller.signal } : {};
+      fetch("/api/google-photos?url=" + encodeURIComponent(url) + "&category=" + encodeURIComponent(cat), fetchOpts)
         .then(function(res) {
+          if (timeoutId) clearTimeout(timeoutId);
           if (!res.ok) throw new Error("HTTP " + res.status);
           return res.json();
         })
         .then(function(data) {
           if (data && data.success && Array.isArray(data.photos) && data.photos.length > 0) {
             state.categoryPhotosMap[cat] = data.photos;
+            if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
+            state.categoryPhotosUrlMap[cat] = url;
+            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(data.photos.length)); } catch(e) {}
             if (callback) callback(data.photos);
             return;
           }
           throw new Error("No photos from API");
         })
         .catch(function() {
+          if (timeoutId) clearTimeout(timeoutId);
           // 2. Coba lewat GAS Backend
           callBackend("getCategoryPhotos", { url: url, category: cat }, function(res) {
             if (res && res.success && Array.isArray(res.photos) && res.photos.length > 0) {
               state.categoryPhotosMap[cat] = res.photos;
+              if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
+              state.categoryPhotosUrlMap[cat] = url;
+              try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(res.photos.length)); } catch(e) {}
               if (callback) callback(res.photos);
               return;
             }
-            // 3. Fallback ke GOOGLE_PHOTOS_INITIAL_CACHE
-            if (typeof GOOGLE_PHOTOS_INITIAL_CACHE !== 'undefined' && Array.isArray(GOOGLE_PHOTOS_INITIAL_CACHE) && GOOGLE_PHOTOS_INITIAL_CACHE.length > 0) {
-              const list = buildGooglePhotoList(GOOGLE_PHOTOS_INITIAL_CACHE);
-              state.categoryPhotosMap[cat] = list;
-              if (callback) callback(list);
-            } else {
-              state.categoryPhotosMap[cat] = [];
-              if (callback) callback([]);
-            }
+            if (callback) callback(state.categoryPhotosMap[cat] || []);
           }, function() {
-            if (typeof GOOGLE_PHOTOS_INITIAL_CACHE !== 'undefined' && Array.isArray(GOOGLE_PHOTOS_INITIAL_CACHE) && GOOGLE_PHOTOS_INITIAL_CACHE.length > 0) {
-              const list = buildGooglePhotoList(GOOGLE_PHOTOS_INITIAL_CACHE);
-              state.categoryPhotosMap[cat] = list;
-              if (callback) callback(list);
-            } else {
-              state.categoryPhotosMap[cat] = [];
-              if (callback) callback([]);
-            }
+            if (callback) callback(state.categoryPhotosMap[cat] || []);
           });
         });
     }
@@ -1595,6 +1623,16 @@ const GLOBAL_CONFIG = {
         return;
       }
 
+      // Pastikan targetUrl selalu di-resolve dari customCategories jika tidak dioper
+      if (!targetUrl && Array.isArray(state.customCategories)) {
+        const matchedCat = state.customCategories.find(function(c) {
+          return String((c && c.name) || "").trim().toLowerCase() === category.toLowerCase();
+        });
+        if (matchedCat && matchedCat.url) {
+          targetUrl = String(matchedCat.url).trim();
+        }
+      }
+
       if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
       if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
 
@@ -1604,15 +1642,15 @@ const GLOBAL_CONFIG = {
           // Tautan telah diganti! Hapus cache lama agar foto dimuat dari tautan baru
           delete state.categoryPhotosMap[category];
           delete state.categoryPhotosUrlMap[category];
-        } else {
+        } else if (state.categoryPhotosMap[category].length > 0) {
           state.filteredPhotos = state.categoryPhotosMap[category];
           renderPhotoGrid(targetUrl, category);
           return;
         }
       }
 
-      // 2. Jika tautan Google Photos (album bersama)
-      if (targetUrl && targetUrl.includes("photos.google.com")) {
+      // 2. Jika tautan Google Photos (album bersama atau photos.app.goo.gl)
+      if (isGooglePhotosUrl(targetUrl)) {
         const grid = document.getElementById("photosGrid");
         if (grid) {
           grid.innerHTML = `
@@ -1700,13 +1738,26 @@ const GLOBAL_CONFIG = {
         return;
       }
 
-      // 4b. Jika kategori Photobooth (fallback default tautan vendor)
+      // 4b. Jika kategori Photobooth (fallback hanya jika targetUrl kosong atau fotoshare)
       if (category.toLowerCase().includes("photobooth")) {
-        fetchFotosharePhotos(category, targetUrl || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", function(photos) {
+        const pbLink = targetUrl || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
+        if (isGooglePhotosUrl(pbLink)) {
+          fetchGooglePhotos(category, pbLink, function(photos) {
+            state.categoryPhotosUrlMap[category] = pbLink;
+            updateCategoryPillCount(category, photos.length);
+            if (state.activeCategory === category) {
+              state.filteredPhotos = photos;
+              renderPhotoGrid(pbLink, category);
+            }
+          });
+          return;
+        }
+        fetchFotosharePhotos(category, pbLink, function(photos) {
+          state.categoryPhotosUrlMap[category] = pbLink;
           updateCategoryPillCount(category, photos.length);
           if (state.activeCategory === category) {
             state.filteredPhotos = photos;
-            renderPhotoGrid(targetUrl, category);
+            renderPhotoGrid(pbLink, category);
           }
         });
         return;
@@ -2317,14 +2368,18 @@ const GLOBAL_CONFIG = {
       }
 
       if (state.gasApiUrl) {
-        callBackend("saveAdminSettings", {
-          pin: state.adminPin,
-          config: {
-            CUSTOM_CATEGORIES: customCategoriesList,
-            EVENTS: state.events,
-            ACTIVE_EVENT_ID: state.currentEventId
-          }
-        }, function(res) {
+          const pbCat = Array.isArray(customCategoriesList) ? customCategoriesList.find(function(c) {
+            return String((c && c.name) || "").trim().toLowerCase().includes("photobooth");
+          }) : null;
+          callBackend("saveAdminSettings", {
+            pin: state.adminPin,
+            config: {
+              CUSTOM_CATEGORIES: customCategoriesList,
+              PHOTOBOOTH_URL: (pbCat && pbCat.url) ? String(pbCat.url).trim() : "",
+              EVENTS: state.events,
+              ACTIVE_EVENT_ID: state.currentEventId
+            }
+          }, function(res) {
           if (syncBtn) {
             syncBtn.disabled = false;
             syncBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg><span>Sinkronkan Kategori & Tautan</span>`;
@@ -2869,7 +2924,7 @@ const GLOBAL_CONFIG = {
       if (cfgDateEl) cfgDateEl.value = formatDateForInput(cfg.EVENT_DATE);
       const cfgVenueEl = document.getElementById("cfgEventVenue");
       if (cfgVenueEl) cfgVenueEl.value = cfg.EVENT_VENUE || "";
-      const cfgAllPhotosLabelEl = document.getElementById("cfgAllPhotosLabel");
+      const cfgAllPhotosLabelEl = document.getElementById("cfgMainGalleryLabel") || document.getElementById("cfgAllPhotosLabel");
       if (cfgAllPhotosLabelEl) cfgAllPhotosLabelEl.value = cfg.ALL_PHOTOS_LABEL || "Semua Foto";
       const cfgSubtitleEl = document.getElementById("cfgSubtitle");
       if (cfgSubtitleEl) cfgSubtitleEl.value = cfg.SUBTITLE || "";
@@ -3177,7 +3232,7 @@ const GLOBAL_CONFIG = {
       const formattedDate = eventDateInput ? formatIndonesianDate(eventDateInput) : (state.activeConfig.EVENT_DATE || "14 November 2026");
       const finalEventName = eventNameInput || state.activeConfig.EVENT_NAME || "Wilson & Felicia";
 
-      const allPhotosLabelInput = (document.getElementById("cfgAllPhotosLabel")?.value || "").trim() || "Semua Foto";
+      const allPhotosLabelInput = (document.getElementById("cfgMainGalleryLabel")?.value || document.getElementById("cfgAllPhotosLabel")?.value || state.allPhotosLabel || "").trim() || "Semua Foto";
       const coverEnabledInput = document.getElementById("cfgCoverEnabled") ? document.getElementById("cfgCoverEnabled").checked : true;
       const coverStyleInput = (document.getElementById("cfgCoverStyle")?.value || "romantic-collage");
       const coverHeadingInput = (document.getElementById("cfgCoverHeading")?.value || "").trim();
@@ -3217,6 +3272,11 @@ const GLOBAL_CONFIG = {
         }
       }
 
+      const pbItem = customCategoriesList.find(function(c) {
+        return String((c && c.name) || "").trim().toLowerCase().includes("photobooth");
+      });
+      const pbUrlVal = pbItem ? String(pbItem.url || "").trim() : "";
+
       const payload = {
         ACTIVE_EVENT_ID: state.currentEventId,
         EVENT_NAME: finalEventName,
@@ -3228,6 +3288,7 @@ const GLOBAL_CONFIG = {
         FOOTER_MESSAGE: footerInput || state.activeConfig.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
         ALL_PHOTOS_LABEL: allPhotosLabelInput,
         CUSTOM_CATEGORIES: JSON.stringify(customCategoriesList),
+        PHOTOBOOTH_URL: pbUrlVal,
         COVER_SETTINGS: coverSettingsPayload,
         EVENTS: state.events,
         DRIVE_FOLDER_ID: driveFolderInput,
@@ -3249,18 +3310,32 @@ const GLOBAL_CONFIG = {
         if (state.categoryPhotosUrlMap[cName] !== cUrl) {
           delete state.categoryPhotosMap[cName];
           delete state.categoryPhotosUrlMap[cName];
+          try { localStorage.removeItem("WEDDING_CAT_COUNT_" + cName); } catch(e) {}
         }
       });
       state.lastLocalCategoryEditTime = Date.now();
 
       try {
         localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(customCategoriesList));
+        if (pbUrlVal) localStorage.setItem("WEDDING_PHOTOBOOTH_URL", pbUrlVal);
         localStorage.setItem("WEDDING_SAVED_CONFIG", JSON.stringify(state.activeConfig));
       } catch (e) {}
 
       // Langsung perbarui tampilan visual seketika (Instant UI Update)
       populateConfigToUI(state.activeConfig);
       renderCategoryTabs();
+
+      // Langsung muat ulang foto kategori aktif seketika tanpa perlu refresh halaman
+      if (state.activeCategory && state.activeCategory !== "Semua Foto") {
+        const curCat = customCategoriesList.find(function(c) {
+          return String((c && c.name) || "").trim().toLowerCase() === state.activeCategory.toLowerCase();
+        });
+        if (curCat) {
+          applyCategoryFilter(curCat.name, curCat.url);
+        } else {
+          applyCategoryFilter(state.activeCategory);
+        }
+      }
 
       saveBtn.disabled = true;
       saveBtn.innerHTML = `<span>Menyimpan Pengaturan...</span>`;

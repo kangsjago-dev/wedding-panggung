@@ -29,7 +29,8 @@ export default async function handler(req, res) {
     const seen = new Set();
     let m;
 
-    const autoRotateDeg = (cleanId === "1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI" || String(category).toLowerCase().includes("wedding")) ? 90 : 0;
+    // Kategori Momen Lainnya = jangan di rotate (rotasi normal 0 derajat)
+    const autoRotateDeg = 0;
 
     while ((m = entryRegex.exec(html)) !== null) {
       const fId = m[1];
