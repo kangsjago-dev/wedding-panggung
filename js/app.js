@@ -1051,7 +1051,7 @@ function isGooglePhotosUrl(url) {
     ];
 
     function formatIndonesianDate(dateStr) {
-      if (!dateStr) return "14 November 2026";
+      if (!dateStr) return "";
       const s = String(dateStr).trim();
       if (/^\d{1,2}\s+[A-Za-z]+\s+\d{4}$/.test(s)) {
         return s;
@@ -1075,7 +1075,7 @@ function isGooglePhotosUrl(url) {
     }
 
     function formatDateForInput(dateStr) {
-      if (!dateStr) return "2026-11-14";
+      if (!dateStr) return "";
       const str = String(dateStr).trim();
       if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
         return str;
@@ -3246,34 +3246,40 @@ function isGooglePhotosUrl(url) {
       if (!selectedId || selectedId === state.currentEventId) return;
       state.currentEventId = selectedId;
 
-      const ev = state.events.find(function(e) { return e.id === selectedId; });
+      const ev = (state.events || []).find(function(e) { return e && e.id === selectedId; });
       if (ev) {
         state.activeConfig = Object.assign({}, state.activeConfig, {
-          EVENT_NAME: ev.name,
-          COUPLE_NAME: ev.name,
-          EVENT_DATE: ev.date,
-          EVENT_VENUE: ev.venue,
+          ACTIVE_EVENT_ID: selectedId,
+          EVENT_NAME: ev.name || "",
+          COUPLE_NAME: ev.name || "",
+          EVENT_DATE: ev.date || "",
+          EVENT_VENUE: ev.venue || "",
           SUBTITLE: ev.subtitle || "",
           WELCOME_MESSAGE: ev.welcomeMessage || "",
           FOOTER_MESSAGE: ev.footerMessage || "",
           ALL_PHOTOS_LABEL: ev.allPhotosLabel || "Semua Foto",
           DRIVE_FOLDER_ID: ev.driveFolderId || "",
+          PHOTOBOOTH_URL: ev.photoboothUrl || "",
           FRAME_IMAGE_URL: ev.frameImageUrl || "",
-          CUSTOM_CATEGORIES: ev.customCategories || [],
-          COVER_SETTINGS: ev.coverSettings || null
+          CUSTOM_CATEGORIES: Array.isArray(ev.customCategories) ? ev.customCategories : []
         });
-        state.customCategories = ev.customCategories || [];
+
+        state.customCategories = Array.isArray(ev.customCategories) ? ev.customCategories : [];
         state.allPhotosLabel = ev.allPhotosLabel || "Semua Foto";
-        state.coverSettings = ev.coverSettings || null;
+
+        // Bersihkan cache foto agar foto event sebelumnya tidak tercampur ke event baru
+        state.allPhotos = [];
+        state.filteredPhotos = [];
+        state.categoryPhotosMap = {};
+        state.categoryPhotosUrlMap = {};
 
         // Perbarui input form admin seketika
         populateAdminInputsForActiveEvent(state.activeConfig);
         populateConfigToUI(state.activeConfig);
         renderCategoryTabs();
-        renderAdminCoverManager();
         renderAdminCategoriesManager();
 
-        // Ganti parameter URL tanpa reload halaman
+        // Ganti parameter URL secara dinamis tanpa reload halaman
         try {
           const newUrl = window.location.pathname + "?event=" + encodeURIComponent(selectedId);
           window.history.replaceState({ eventId: selectedId }, "", newUrl);
@@ -3282,7 +3288,7 @@ function isGooglePhotosUrl(url) {
         const previewEl = document.getElementById("activeEventUrlPreview");
         if (previewEl) previewEl.innerText = "?event=" + selectedId;
 
-        // Ambil data foto untuk event yang dipilih
+        // Ambil data foto murni untuk event yang dipilih
         fetchGalleryData(true, false);
         showToast("✓ Berpindah ke event: " + (ev.name || selectedId));
       }
@@ -3309,44 +3315,117 @@ function isGooglePhotosUrl(url) {
       if (cfgFrameEl) cfgFrameEl.value = cfg.FRAME_IMAGE_URL || "";
     }
 
-    function promptAddNewEvent() {
-      const name = prompt("Masukkan Nama Event / Pasangan Baru (misal: Romeo & Juliet):");
-      if (!name || !name.trim()) return;
+    function openNewEventModal() {
+      const modal = document.getElementById("modalNewEvent");
+      if (!modal) return;
+      document.getElementById("neEventName").value = "";
+      document.getElementById("neEventDate").value = "";
+      document.getElementById("neEventVenue").value = "";
+      document.getElementById("neDriveFolderId").value = "";
+      document.getElementById("nePhotoboothUrl").value = "";
+      const alertBox = document.getElementById("neAlertBox");
+      if (alertBox) { alertBox.style.display = "none"; alertBox.innerText = ""; }
+      modal.classList.add("active");
+      setTimeout(function() {
+        const inp = document.getElementById("neEventName");
+        if (inp) inp.focus();
+      }, 100);
+    }
 
-      const dateStr = prompt("Masukkan Tanggal Acara (misal: 25 Desember 2026):", "25 Desember 2026");
-      const venueStr = prompt("Masukkan Venue / Lokasi Acara:", "Grand Ballroom, Jakarta");
+    function closeNewEventModal() {
+      const modal = document.getElementById("modalNewEvent");
+      if (modal) modal.classList.remove("active");
+    }
 
-      const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    function confirmAddNewEvent() {
+      const name = (document.getElementById("neEventName")?.value || "").trim();
+      const dateVal = (document.getElementById("neEventDate")?.value || "").trim();
+      const venue = (document.getElementById("neEventVenue")?.value || "").trim();
+      const driveFolder = (document.getElementById("neDriveFolderId")?.value || "").trim();
+      const pbUrl = (document.getElementById("nePhotoboothUrl")?.value || "").trim();
+      const alertBox = document.getElementById("neAlertBox");
+
+      if (!name) {
+        if (alertBox) {
+          alertBox.innerText = "Nama Event / Pasangan wajib diisi.";
+          alertBox.style.display = "block";
+        }
+        return;
+      }
+      if (!dateVal) {
+        if (alertBox) {
+          alertBox.innerText = "Tanggal Acara wajib dipilih dari kalender.";
+          alertBox.style.display = "block";
+        }
+        return;
+      }
+
+      const formattedDate = formatIndonesianDate(dateVal);
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
       const newId = slug ? (slug + "-" + Math.floor(100 + Math.random() * 900)) : ("event-" + Date.now());
+
+      const initialCats = [];
+      if (pbUrl) {
+        initialCats.push({
+          name: "Photobooth",
+          url: pbUrl,
+          enabled: true,
+          isPhotobooth: true
+        });
+      }
+      if (driveFolder) {
+        initialCats.push({
+          name: "Wedding",
+          url: driveFolder.startsWith("http") ? driveFolder : ("https://drive.google.com/drive/folders/" + driveFolder),
+          enabled: true
+        });
+      }
 
       const newEventObj = {
         id: newId,
-        name: name.trim(),
-        date: dateStr ? dateStr.trim() : "25 Desember 2026",
-        venue: venueStr ? venueStr.trim() : "Grand Ballroom",
-        subtitle: "The Wedding Celebration",
-        welcomeMessage: "Terima kasih atas kehadiran dan doa restu Anda.",
+        name: name,
+        date: formattedDate,
+        venue: venue || "",
+        subtitle: "The Wedding Gallery & Precious Memories",
+        welcomeMessage: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
         footerMessage: "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
         allPhotosLabel: "Semua Foto",
-        driveFolderId: "",
+        driveFolderId: driveFolder,
+        photoboothUrl: pbUrl,
         frameImageUrl: "",
-        customCategories: [],
-        coverSettings: {
-          enabled: true,
-          style: "romantic-collage",
-          heading: "The Wedding of " + name.trim(),
-          subheading: "A Celebration of Love, Laughter & Happily Ever After",
-          quote: "Dua hati yang bersatu dalam cinta mengukir kisah abadi.",
-          photos: []
-        }
+        customCategories: initialCats
       };
 
       if (!Array.isArray(state.events)) state.events = [];
       state.events.push(newEventObj);
 
+      closeNewEventModal();
       renderAdminEventsManager();
       handleSelectEventChange(newId);
-      showToast("✓ Event baru '" + name.trim() + "' berhasil dibuat!");
+
+      // Otomatis sinkronkan event baru ke database Google Sheets
+      if (state.gasApiUrl) {
+        callBackend("saveAdminSettings", {
+          pin: getEffectiveAdminPin(),
+          config: {
+            EVENTS: state.events,
+            ACTIVE_EVENT_ID: newId
+          }
+        }, function() {
+          showToast("✓ Event baru '" + name + "' berhasil dibuat dan disimpan ke database!");
+        }, function(err) {
+          showToast("✓ Event baru '" + name + "' aktif di browser.");
+        });
+      } else {
+        showToast("✓ Event baru '" + name + "' berhasil dibuat!");
+      }
+    }
+
+    function openActiveEventHome() {
+      const curOrigin = window.location.origin || (window.location.protocol + "//" + window.location.host);
+      const curPath = window.location.pathname || "/";
+      const fullUrl = curOrigin + curPath + "?event=" + encodeURIComponent(state.currentEventId);
+      window.open(fullUrl, "_blank");
     }
 
     function handleDeleteCurrentEvent() {
@@ -3444,11 +3523,7 @@ function isGooglePhotosUrl(url) {
       return list;
     }
 
-    function toggleCoverSectionPreview(enabled) {
-      if (!state.coverSettings) state.coverSettings = {};
-      state.coverSettings.enabled = enabled;
-      renderWeddingCoverShowcase();
-    }
+    function toggleCoverSectionPreview() {}
 
     /* ==========================================================================
        ADMIN USER & PASSWORD MANAGEMENT
@@ -3627,22 +3702,27 @@ function isGooglePhotosUrl(url) {
       state.allPhotosLabel = allPhotosLabelInput;
       state.coverSettings = coverSettingsPayload;
 
-      // Perbarui data event aktif di daftar events
+      // Perbarui data event aktif di daftar events secara terisolasi
       if (Array.isArray(state.events)) {
         const evIdx = state.events.findIndex(function(e) { return e.id === state.currentEventId; });
         if (evIdx >= 0) {
+          const curPbItem = customCategoriesList.find(function(c) {
+            return c && (c.isPhotobooth === true || c.id === "special_photobooth" || String(c.name || "").trim().toLowerCase().includes("photobooth"));
+          });
+          const curPbUrl = curPbItem ? String(curPbItem.url || "").trim() : "";
+
           state.events[evIdx] = Object.assign({}, state.events[evIdx], {
             name: finalEventName,
             date: formattedDate,
-            venue: eventVenueInput || state.events[evIdx].venue,
-            subtitle: subtitleInput || state.events[evIdx].subtitle,
-            welcomeMessage: welcomeInput || state.events[evIdx].welcomeMessage,
-            footerMessage: footerInput || state.events[evIdx].footerMessage,
+            venue: eventVenueInput || "",
+            subtitle: subtitleInput || "",
+            welcomeMessage: welcomeInput || "",
+            footerMessage: footerInput || "",
             allPhotosLabel: allPhotosLabelInput,
             driveFolderId: driveFolderInput,
+            photoboothUrl: curPbUrl,
             frameImageUrl: frameUrlInput,
-            customCategories: customCategoriesList,
-            coverSettings: coverSettingsPayload
+            customCategories: customCategoriesList
           });
         }
       }

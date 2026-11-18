@@ -808,19 +808,15 @@ function getGalleryData(targetEventId) {
       safeConfig.WELCOME_MESSAGE = currentEvent.welcomeMessage !== undefined ? currentEvent.welcomeMessage : safeConfig.WELCOME_MESSAGE;
       safeConfig.FOOTER_MESSAGE = currentEvent.footerMessage !== undefined ? currentEvent.footerMessage : safeConfig.FOOTER_MESSAGE;
       safeConfig.ALL_PHOTOS_LABEL = currentEvent.allPhotosLabel || safeConfig.ALL_PHOTOS_LABEL || "Semua Foto";
-      safeConfig.DRIVE_FOLDER_ID = currentEvent.driveFolderId || safeConfig.DRIVE_FOLDER_ID;
+      safeConfig.DRIVE_FOLDER_ID = currentEvent.driveFolderId || "";
+      safeConfig.PHOTOBOOTH_URL = currentEvent.photoboothUrl || "";
       safeConfig.FRAME_IMAGE_URL = currentEvent.frameImageUrl || safeConfig.FRAME_IMAGE_URL;
 
-      // SINKRONISASI KATEGORI 2-ARAH: Prioritaskan konfigurasi kategori terbaru agar tidak ter-reset oleh cache objek event lama
-      var effectiveCats = config.CUSTOM_CATEGORIES;
-      if (typeof effectiveCats === "string") {
-        try { effectiveCats = JSON.parse(effectiveCats); } catch(e) {}
-      }
-      if (Array.isArray(effectiveCats) && effectiveCats.length > 0) {
-        currentEvent.customCategories = effectiveCats;
-        safeConfig.CUSTOM_CATEGORIES = effectiveCats;
-      } else if (Array.isArray(currentEvent.customCategories) && currentEvent.customCategories.length > 0) {
+      // Isolasi Kategori Tiap Event: Gunakan kategori milik event aktif
+      if (Array.isArray(currentEvent.customCategories) && currentEvent.customCategories.length > 0) {
         safeConfig.CUSTOM_CATEGORIES = currentEvent.customCategories;
+      } else {
+        safeConfig.CUSTOM_CATEGORIES = [];
       }
 
       safeConfig.COVER_SETTINGS = currentEvent.coverSettings || safeConfig.COVER_SETTINGS;

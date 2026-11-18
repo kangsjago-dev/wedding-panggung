@@ -134,11 +134,6 @@
     <p id="welcomeMessage" class="hero-desc"></p>
   </header>
 
-  <!-- Wedding Front Page Cover Showcase (Custom Wedding Landing Header) -->
-  <section id="weddingCoverSection" class="wedding-cover-hero" style="display: none !important;">
-    <!-- Diinjeksi dinamis oleh renderWeddingCoverShowcase() -->
-  </section>
-
   <!-- Sticky Filter Bar with Admin Trigger & Live Sync Indicator -->
   <div class="filter-wrapper" id="gallerySection">
     <div class="filter-container">
@@ -243,8 +238,8 @@
     <div class="slideshow-progress-bar" id="slideshowProgress"></div>
 
     <div class="slideshow-watermark">
-      <h2 id="slideshowCouple">Wilson & Felicia</h2>
-      <p id="slideshowCategory">14 November 2026 • Upperhills Convention Centre, Makassar</p>
+      <h2 id="slideshowCouple"></h2>
+      <p id="slideshowCategory"></p>
     </div>
 
     <div class="slideshow-stage">
@@ -307,9 +302,9 @@
 
       <div class="admin-card-body share-modal-body">
         <div class="share-meta-header">
-          <div class="share-event-title" id="shareEventTitle">Wilson & Felicia</div>
+          <div class="share-event-title" id="shareEventTitle"></div>
           <div class="share-event-date" id="shareEventDate">Senin, 16 November 2026</div>
-          <div class="share-event-venue" id="shareEventVenue">UpperHills Convention Hall, Makassar</div>
+          <div class="share-event-venue" id="shareEventVenue"></div>
         </div>
 
         <!-- QR Code Box -->
@@ -435,9 +430,6 @@
           <button type="button" class="admin-tab-btn active" id="tabBtn-event" onclick="switchAdminTab('event')">
             <span>💍 Acara & Event</span>
           </button>
-          <button type="button" class="admin-tab-btn" id="tabBtn-cover" onclick="switchAdminTab('cover')">
-            <span>🎨 Cover Depan</span>
-          </button>
           <button type="button" class="admin-tab-btn" id="tabBtn-media" onclick="switchAdminTab('media')">
             <span>🖼️ Foto & Kategori</span>
           </button>
@@ -455,7 +447,7 @@
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px; margin-bottom: 14px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
               <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-main);">📅 Kelola & Pilih Event (Multi-Event)</div>
-              <button type="button" class="btn btn-gold" style="font-size: 0.74rem; padding: 4px 10px;" onclick="promptAddNewEvent()">
+              <button type="button" class="btn btn-gold" style="font-size: 0.74rem; padding: 4px 10px;" onclick="openNewEventModal()">
                 <span>+ Tambah Event Baru</span>
               </button>
             </div>
@@ -470,6 +462,7 @@
             </div>
             <div id="eventShareLinkBox" style="margin-top: 8px; font-size: 0.74rem; color: #475569; display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 6px 10px; border-radius: 6px; border: 1px solid #E2E8F0;">
               <span>Tautan Event: <strong id="activeEventUrlPreview">...</strong></span>
+              <button type="button" class="btn btn-outline" style="font-size: 0.7rem; padding: 2px 8px;" onclick="openActiveEventHome()" title="Buka Halaman Utama Acara Ini">Buka Home</button>
               <button type="button" class="btn btn-outline" style="font-size: 0.7rem; padding: 2px 8px;" onclick="copyActiveEventUrl()">Salin Link</button>
             </div>
           </div>
@@ -507,59 +500,6 @@
         </div>
 
         <!-- Tab: Desain Cover & Halaman Depan -->
-        <div class="admin-tab-pane" id="tabPane-cover">
-          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px; margin-bottom: 14px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <div style="font-size: 0.86rem; font-weight: 700; color: var(--text-main);">✨ Tampilkan Cover Halaman Depan</div>
-                <div style="font-size: 0.72rem; color: #64748B;">Seksi cover mewah di atas galeri bertema wedding dengan foto-foto pilihan.</div>
-              </div>
-              <input type="checkbox" id="cfgCoverEnabled" onchange="toggleCoverSectionPreview(this.checked)" style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--gold-primary);">
-            </div>
-          </div>
-
-          <div class="admin-field-group">
-            <label class="admin-label" for="cfgCoverStyle">Gaya Tampilan Cover</label>
-            <select id="cfgCoverStyle" class="admin-input" style="padding: 7px 10px; font-size: 0.84rem;">
-              <option value="romantic-collage">Romantic Wedding Collage (Grid Foto Mewah)</option>
-              <option value="hero-carousel">Hero Slider Sinematik (Banner Bergulir Halus)</option>
-              <option value="polaroid-grid">Aesthetic Polaroid Memory Board (Foto Bersudut Estetik)</option>
-            </select>
-          </div>
-
-          <div class="admin-field-group">
-            <label class="admin-label" for="cfgCoverHeading">Judul Cover</label>
-            <input type="text" id="cfgCoverHeading" class="admin-input" placeholder="Contoh: The Wedding Celebration">
-          </div>
-
-          <div class="admin-field-group">
-            <label class="admin-label" for="cfgCoverSubheading">Subjudul Cover</label>
-            <input type="text" id="cfgCoverSubheading" class="admin-input" placeholder="Contoh: A Journey of Two Hearts Joined as One">
-          </div>
-
-          <div class="admin-field-group">
-            <label class="admin-label" for="cfgCoverQuote">Kalimat Mutiara / Quote Pernikahan</label>
-            <textarea id="cfgCoverQuote" class="admin-input" rows="2" placeholder="Contoh: Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda."></textarea>
-          </div>
-
-          <!-- Daftar Foto Unggulan Cover -->
-          <div class="admin-field-group" style="border-top: 1px solid #E2E8F0; padding-top: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <label class="admin-label" style="margin-bottom: 0;">📸 Foto Unggulan Cover (Beberapa Foto)</label>
-              <span style="font-size: 0.72rem; color: var(--gold-dark); font-weight: 600;">Google Drive / Direct URL</span>
-            </div>
-            <div class="admin-help-text" style="margin-bottom: 10px;">
-              Masukkan tautan foto momen/prewedding terbaik. Jika dibiarkan kosong, sistem otomatis menampilkan beberapa foto pertama dari galeri secara estetik.
-            </div>
-
-            <div id="coverPhotosListContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;"></div>
-
-            <button type="button" class="btn btn-outline" style="width: 100%; justify-content: center; font-size: 0.82rem; padding: 8px;" onclick="addCoverPhotoRow('')">
-              <span>+ Tambah Foto Cover</span>
-            </button>
-          </div>
-        </div>
-
         <!-- Tab 2: Foto & Bingkai -->
         <div class="admin-tab-pane" id="tabPane-media">
           <div class="admin-field-group">
@@ -724,5 +664,62 @@
 
   <!-- Main Modular Application Script (Live Realtime Database Engine) -->
   <script src="js/app.js"></script>
+
+  <!-- Modal Tambah Event Baru dengan Date Picker Native (Tanpa Browser Prompt) -->
+  <div id="modalNewEvent" class="admin-modal-overlay" style="z-index: 10500;">
+    <div class="admin-card" style="max-width: 500px; margin: 20px auto;">
+      <div class="admin-card-header">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+          </svg>
+          <span>Tambah Event / Acara Baru</span>
+        </h3>
+        <button type="button" class="ctrl-icon-btn" onclick="closeNewEventModal()" style="width: 32px; height: 32px;" title="Tutup">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="admin-card-body" style="padding: 16px;">
+        <div class="admin-field-group" style="margin-bottom: 12px;">
+          <label class="admin-label" for="neEventName">Nama Pasangan / Acara <span style="color: #EF4444;">*</span></label>
+          <input type="text" id="neEventName" class="admin-input" placeholder="Contoh: Romeo & Juliet" required>
+        </div>
+
+        <div class="admin-field-group" style="margin-bottom: 12px;">
+          <label class="admin-label" for="neEventDate">Tanggal Acara (Pilih Kalender) <span style="color: #EF4444;">*</span></label>
+          <input type="date" id="neEventDate" class="admin-input" onclick="try{this.showPicker()}catch(e){}" style="cursor: pointer;" required>
+        </div>
+
+        <div class="admin-field-group" style="margin-bottom: 12px;">
+          <label class="admin-label" for="neEventVenue">Venue / Lokasi Acara</label>
+          <input type="text" id="neEventVenue" class="admin-input" placeholder="Contoh: Grand Ballroom Hotel Mulia, Jakarta">
+        </div>
+
+        <div class="admin-field-group" style="margin-bottom: 12px;">
+          <label class="admin-label" for="neDriveFolderId">Tautan / Folder ID Google Drive (Opsional)</label>
+          <input type="text" id="neDriveFolderId" class="admin-input" placeholder="ID folder atau URL Google Drive">
+        </div>
+
+        <div class="admin-field-group" style="margin-bottom: 14px;">
+          <label class="admin-label" for="nePhotoboothUrl">Tautan Vendor Photobooth (Opsional)</label>
+          <input type="text" id="nePhotoboothUrl" class="admin-input" placeholder="https://fotoshare.co/... atau link Google Photos">
+        </div>
+
+        <div id="neAlertBox" class="admin-alert-box" style="display: none; margin-bottom: 12px;"></div>
+      </div>
+
+      <div class="admin-card-footer" style="display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px;">
+        <button type="button" class="btn btn-outline" onclick="closeNewEventModal()" style="font-size: 0.85rem; padding: 8px 16px;">Batal</button>
+        <button type="button" class="btn btn-gold" onclick="confirmAddNewEvent()" style="font-size: 0.85rem; padding: 8px 18px;">
+          <span>+ Buat & Simpan Event</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
