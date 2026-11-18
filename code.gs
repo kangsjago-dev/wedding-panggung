@@ -32,7 +32,7 @@ const WEDDING_CONFIG = {
   ALL_PHOTOS_LABEL: "Semua Foto",
 
   // Kategori Kustom & Tautan Target Display Galeri
-  CUSTOM_CATEGORIES: '[{"name":"Photobooth","url":"https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs","enabled":true},{"name":"Wedding","url":"https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI","enabled":true}]',
+  CUSTOM_CATEGORIES: '[{"id":"special_photobooth","isPhotobooth":true,"name":"Photobooth","url":"https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs","enabled":true},{"name":"Wedding","url":"https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI","enabled":true}]',
 
   // Multi-Event Registry
   ACTIVE_EVENT_ID: "wilson-felicia",
@@ -622,6 +622,7 @@ function getEffectiveConfig() {
     FOOTER_MESSAGE: sheetConfig.FOOTER_MESSAGE || props.FOOTER_MESSAGE || WEDDING_CONFIG.FOOTER_MESSAGE,
     ALL_PHOTOS_LABEL: sheetConfig.ALL_PHOTOS_LABEL || props.ALL_PHOTOS_LABEL || WEDDING_CONFIG.ALL_PHOTOS_LABEL || "Semua Foto",
     CUSTOM_CATEGORIES: (sheetConfig.CUSTOM_CATEGORIES && sheetConfig.CUSTOM_CATEGORIES !== "[object Object]") ? sheetConfig.CUSTOM_CATEGORIES : ((props.CUSTOM_CATEGORIES && props.CUSTOM_CATEGORIES !== "[object Object]") ? props.CUSTOM_CATEGORIES : WEDDING_CONFIG.CUSTOM_CATEGORIES),
+    PHOTOBOOTH_URL: sheetConfig.PHOTOBOOTH_URL || props.PHOTOBOOTH_URL || WEDDING_CONFIG.PHOTOBOOTH_URL || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
 
     // Multi-Event & Custom Cover
     ACTIVE_EVENT_ID: sheetConfig.ACTIVE_EVENT_ID || props.ACTIVE_EVENT_ID || WEDDING_CONFIG.ACTIVE_EVENT_ID || "wilson-felicia",
@@ -951,6 +952,17 @@ function getGalleryData(targetEventId) {
 /**
  * Mengambil foto dari folder Google Drive atau album Google Photos khusus kategori tertentu
  */
+function getCategoryPhotos(urlOrFolderId, categoryName) {
+  return getCategoryDrivePhotos(urlOrFolderId, categoryName);
+}
+
+function getFolderPhotos(folderId, categoryName) {
+  return getCategoryDrivePhotos(folderId, categoryName);
+}
+
+/**
+ * Mengambil foto dari folder Google Drive, album Google Photos, atau Fotoshare khusus kategori tertentu
+ */
 function getCategoryDrivePhotos(folderTarget, catName) {
   try {
     var cleanId = String(folderTarget || "").trim();
@@ -959,6 +971,9 @@ function getCategoryDrivePhotos(folderTarget, catName) {
     }
     if (cleanId.indexOf("kingphotobooth.co") !== -1 || cleanId.indexOf("kingphoto") !== -1) {
       return scanKingPhotoboothEvent(cleanId, catName);
+    }
+    if (cleanId.indexOf("fotoshare.co") !== -1) {
+      return scanFotoshareAlbum(cleanId, catName);
     }
     var match = cleanId.match(/folders\/([a-zA-Z0-9_\-]+)/);
     if (match && match[1]) cleanId = match[1];
@@ -1034,6 +1049,88 @@ function scanGooglePhotosAlbum(albumUrl, catName) {
       category: catName || "Photobooth",
       photos: photos,
       totalPhotos: photos.length
+    };
+  } catch (err) {
+    return { success: false, error: err.toString(), photos: [] };
+  }
+}
+
+/**
+ * Memindai album / event Fotoshare (https://fotoshare.co/e/...)
+ */
+function scanFotoshareAlbum(albumUrl, catName) {
+  try {
+    var response = UrlFetchApp.fetch(albumUrl, {
+      muteHttpExceptions: true,
+      followRedirects: true,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      }
+    });
+    if (response.getResponseCode() !== 200) {
+      return { success: false, message: "HTTP " + response.getResponseCode(), photos: [] };
+    }
+    var htmlText = response.getContentText();
+    var list = [];
+    var sessionMatch = htmlText.match(/let\s+sessionImages\s*=\s*(\{[\s\S]*?\});/);
+    if (sessionMatch) {
+      try {
+        var sessionObj = JSON.parse(sessionMatch[1]);
+        var idx = 0;
+        for (var sKey in sessionObj) {
+          var sess = sessionObj[sKey];
+          for (var imgKey in sess) {
+            var it = sess[imgKey];
+            idx++;
+            var fullWebUrl = it.url ? ("https://fotoshare.co" + it.url) : ("https://fotoshare.co/i/" + (it.hash || ""));
+            var rawMasterUrl = (it.url_hires || it.highres || it.img || it.url || "").replace(/\?.*$/, "");
+            list.push({
+              id: it.hash || ("pb_" + idx),
+              name: (catName || "Photobooth") + " " + idx,
+              category: catName || "Photobooth",
+              thumbnailUrl: it.thumb_url || it.img,
+              previewUrl: rawMasterUrl,
+              highResUrl: rawMasterUrl,
+              downloadUrl: rawMasterUrl,
+              originalWebUrl: fullWebUrl,
+              img: rawMasterUrl,
+              isPhotobooth: true
+            });
+          }
+        }
+      } catch (eJson) {}
+    }
+    if (list.length === 0) {
+      var regex = /(https:\/\/cdn-bz-op\.fotoshare\.co\/[^\s"'<>]+\.JPG)/gi;
+      var m;
+      var seen = {};
+      var count = 0;
+      while ((m = regex.exec(htmlText)) !== null) {
+        var u = m[1];
+        var cleanU = u.replace(/\?.*$/, "");
+        if (!seen[cleanU]) {
+          seen[cleanU] = true;
+          count++;
+          list.push({
+            id: "pb_" + count,
+            name: (catName || "Photobooth") + " " + count,
+            category: catName || "Photobooth",
+            thumbnailUrl: cleanU,
+            previewUrl: cleanU,
+            highResUrl: cleanU,
+            downloadUrl: cleanU,
+            originalWebUrl: albumUrl,
+            img: cleanU,
+            isPhotobooth: true
+          });
+        }
+      }
+    }
+    return {
+      success: true,
+      category: catName || "Photobooth",
+      photos: list,
+      totalPhotos: list.length
     };
   } catch (err) {
     return { success: false, error: err.toString(), photos: [] };
@@ -1760,6 +1857,21 @@ function saveAdminSettings(pin, updatedConfig) {
 
     if (updatedConfig.PHOTOBOOTH_URL !== undefined) {
       props.setProperty("PHOTOBOOTH_URL", String(updatedConfig.PHOTOBOOTH_URL).trim());
+    } else if (updatedConfig.CUSTOM_CATEGORIES) {
+      try {
+        var checkCats = (typeof updatedConfig.CUSTOM_CATEGORIES === "string")
+          ? JSON.parse(updatedConfig.CUSTOM_CATEGORIES)
+          : updatedConfig.CUSTOM_CATEGORIES;
+        if (Array.isArray(checkCats)) {
+          var pbMatch = checkCats.find(function(c) {
+            return c && (c.isPhotobooth || c.id === "special_photobooth" || String(c.name || "").toLowerCase().indexOf("photobooth") !== -1);
+          });
+          if (pbMatch && pbMatch.url) {
+            updatedConfig.PHOTOBOOTH_URL = String(pbMatch.url).trim();
+            props.setProperty("PHOTOBOOTH_URL", updatedConfig.PHOTOBOOTH_URL);
+          }
+        }
+      } catch (ePb) {}
     }
 
     if (updatedConfig.ALL_PHOTOS_LABEL !== undefined) {

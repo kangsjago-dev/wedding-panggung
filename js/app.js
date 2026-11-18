@@ -129,10 +129,20 @@
         localStorage.removeItem("WEDDING_CAT_COUNT_" + categoryName);
       } catch (e) {}
 
+      // Robust check apakah kategori yang disinkronkan adalah kategori spesial Photobooth
+      const isPbCat = (categoryName.toLowerCase().includes("photobooth")) ||
+        (Array.isArray(state.customCategories) && state.customCategories.some(function(c) {
+          return c && (c.isPhotobooth || c.id === "special_photobooth") && String(c.name || "").trim().toLowerCase() === categoryName.toLowerCase();
+        }));
+
       let targetUrl = "";
       if (Array.isArray(state.customCategories)) {
         const match = state.customCategories.find(function(c) {
-          return String((c && c.name) || c || "").trim().toLowerCase() === categoryName.toLowerCase();
+          if (!c) return false;
+          const cName = String(c.name || c || "").trim().toLowerCase();
+          if (cName === categoryName.toLowerCase()) return true;
+          if (isPbCat && (c.isPhotobooth || c.id === "special_photobooth")) return true;
+          return false;
         });
         if (match) {
           if (match.url) targetUrl = String(match.url).trim();
@@ -143,16 +153,22 @@
         }
       }
 
+      if (isPbCat && !targetUrl) {
+        const pbInput = document.getElementById("pbUrlInput");
+        targetUrl = (pbInput && pbInput.value) ? pbInput.value.trim() : (state.activeConfig.PHOTOBOOTH_URL || "");
+      }
+
       // SIMPAN PERMANEN KE SCRIPT PROPERTIES & SHEET AGAR TIDAK TER-RESET
       if (state.gasApiUrl) {
         const pbCat = Array.isArray(state.customCategories) ? state.customCategories.find(function(c) {
-          return String((c && c.name) || "").trim().toLowerCase().includes("photobooth");
+          return c && (c.isPhotobooth === true || c.id === "special_photobooth" || String(c.name || "").trim().toLowerCase().includes("photobooth"));
         }) : null;
+        const currentPbUrl = (pbCat && pbCat.url) ? String(pbCat.url).trim() : (targetUrl || state.activeConfig.PHOTOBOOTH_URL || "");
         callBackend("saveAdminSettings", {
           pin: state.adminPin,
           config: {
             CUSTOM_CATEGORIES: state.customCategories,
-            PHOTOBOOTH_URL: (pbCat && pbCat.url) ? String(pbCat.url).trim() : "",
+            PHOTOBOOTH_URL: currentPbUrl,
             EVENTS: state.events,
             ACTIVE_EVENT_ID: state.currentEventId
           }
@@ -170,6 +186,7 @@
       // Fleksibilitas Tautan Kategori (Mendukung Google Photos, Kingphotobooth, Fotoshare, Google Drive, dsb)
       if (isGooglePhotosUrl(targetUrl)) {
         fetchGooglePhotos(categoryName, targetUrl, function(photos) {
+          state.categoryPhotosUrlMap[categoryName] = targetUrl;
           updateCategoryPillCount(categoryName, photos.length);
           if (state.activeCategory === categoryName) {
             state.filteredPhotos = photos;
@@ -180,6 +197,7 @@
         return;
       } else if (targetUrl && (targetUrl.includes("kingphotobooth.co") || targetUrl.includes("kingphoto"))) {
         fetchKingPhotoboothPhotos(categoryName, targetUrl, function(photos) {
+          state.categoryPhotosUrlMap[categoryName] = targetUrl;
           updateCategoryPillCount(categoryName, photos.length);
           if (state.activeCategory === categoryName) {
             state.filteredPhotos = photos;
@@ -190,6 +208,7 @@
         return;
       } else if (targetUrl && targetUrl.includes("fotoshare.co")) {
         fetchFotosharePhotos(categoryName, targetUrl, function(photos) {
+          state.categoryPhotosUrlMap[categoryName] = targetUrl;
           updateCategoryPillCount(categoryName, photos.length);
           if (state.activeCategory === categoryName) {
             state.filteredPhotos = photos;
@@ -200,6 +219,7 @@
         return;
       } else if (driveFolderId) {
         fetchDriveCategoryPhotos(categoryName, driveFolderId, function(photos) {
+          state.categoryPhotosUrlMap[categoryName] = "drive:" + driveFolderId;
           updateCategoryPillCount(categoryName, photos.length);
           if (state.activeCategory === categoryName) {
             state.filteredPhotos = photos;
@@ -208,10 +228,11 @@
           showToast("✓ Kategori " + categoryName + " berhasil disinkronkan!");
         });
         return;
-      } else if (categoryName.toLowerCase().includes("photobooth")) {
-        const pbLink = targetUrl || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
+      } else if (isPbCat) {
+        const pbLink = targetUrl || state.activeConfig.PHOTOBOOTH_URL || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
         if (isGooglePhotosUrl(pbLink)) {
           fetchGooglePhotos(categoryName, pbLink, function(photos) {
+            state.categoryPhotosUrlMap[categoryName] = pbLink;
             updateCategoryPillCount(categoryName, photos.length);
             if (state.activeCategory === categoryName) {
               state.filteredPhotos = photos;
@@ -219,8 +240,29 @@
             }
             showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
           });
+        } else if (extractDriveFolderId(pbLink)) {
+          fetchDriveCategoryPhotos(categoryName, extractDriveFolderId(pbLink), function(photos) {
+            state.categoryPhotosUrlMap[categoryName] = "drive:" + extractDriveFolderId(pbLink);
+            updateCategoryPillCount(categoryName, photos.length);
+            if (state.activeCategory === categoryName) {
+              state.filteredPhotos = photos;
+              renderPhotoGrid(pbLink, categoryName);
+            }
+            showToast("✓ Kategori " + categoryName + " berhasil disinkronkan!");
+          });
+        } else if (pbLink.includes("kingphotobooth.co") || pbLink.includes("kingphoto")) {
+          fetchKingPhotoboothPhotos(categoryName, pbLink, function(photos) {
+            state.categoryPhotosUrlMap[categoryName] = pbLink;
+            updateCategoryPillCount(categoryName, photos.length);
+            if (state.activeCategory === categoryName) {
+              state.filteredPhotos = photos;
+              renderPhotoGrid(pbLink, categoryName);
+            }
+            showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " media)!");
+          });
         } else {
           fetchFotosharePhotos(categoryName, pbLink, function(photos) {
+            state.categoryPhotosUrlMap[categoryName] = pbLink;
             updateCategoryPillCount(categoryName, photos.length);
             if (state.activeCategory === categoryName) {
               state.filteredPhotos = photos;
@@ -549,30 +591,55 @@ const GLOBAL_CONFIG = {
             const isEditingLocally = state.lastLocalCategoryEditTime && (Date.now() - state.lastLocalCategoryEditTime < 60000);
             const isModalOpen = document.getElementById("adminSettingsModal") && document.getElementById("adminSettingsModal").classList.contains("active");
 
-            if (!isEditingLocally && !isModalOpen && sheetMap.CUSTOM_CATEGORIES && !sheetMap.CUSTOM_CATEGORIES.includes("[object Object]")) {
-              try {
-                const parsedCats = JSON.parse(sheetMap.CUSTOM_CATEGORIES);
-                if (Array.isArray(parsedCats) && parsedCats.length > 0) {
-                  // Invalidate cache jika URL kategori berubah
-                  parsedCats.forEach(function(c) {
-                    const cName = String((c && c.name) || c || "").trim();
-                    const cUrl = String((c && c.url) || "").trim();
-                    if (cName && cUrl) {
-                      const prevUrl = state.categoryPhotosUrlMap ? state.categoryPhotosUrlMap[cName] : null;
-                      if (prevUrl && prevUrl !== cUrl) {
-                        if (state.categoryPhotosMap) delete state.categoryPhotosMap[cName];
-                        try { localStorage.removeItem("WEDDING_CAT_COUNT_" + cName); } catch(e) {}
-                      }
-                      prefetchCategoryPhotos(cName, cUrl);
-                    }
+            if (!isEditingLocally && !isModalOpen) {
+              if (sheetMap.PHOTOBOOTH_URL) {
+                const prevPbUrl = state.activeConfig.PHOTOBOOTH_URL;
+                state.activeConfig.PHOTOBOOTH_URL = sheetMap.PHOTOBOOTH_URL;
+                if (Array.isArray(state.customCategories)) {
+                  const pb = state.customCategories.find(function(c) {
+                    return c && (c.isPhotobooth || c.id === "special_photobooth" || String(c.name || "").trim().toLowerCase().includes("photobooth"));
                   });
-                  state.customCategories = parsedCats;
-                  state.activeConfig.CUSTOM_CATEGORIES = parsedCats;
-                  try {
-                    localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(parsedCats));
-                  } catch (e) {}
+                  if (pb && pb.url !== sheetMap.PHOTOBOOTH_URL) {
+                    pb.url = sheetMap.PHOTOBOOTH_URL;
+                    // Hapus cache foto lama jika tautan photobooth di spreadsheet diperbarui
+                    if (state.categoryPhotosMap) {
+                      delete state.categoryPhotosMap[pb.name];
+                      delete state.categoryPhotosMap["Photobooth"];
+                    }
+                    if (state.categoryPhotosUrlMap) {
+                      delete state.categoryPhotosUrlMap[pb.name];
+                      delete state.categoryPhotosUrlMap["Photobooth"];
+                    }
+                    try { localStorage.removeItem("WEDDING_CAT_COUNT_" + pb.name); } catch(e) {}
+                  }
                 }
-              } catch(eCats) {}
+              }
+
+              if (sheetMap.CUSTOM_CATEGORIES && !sheetMap.CUSTOM_CATEGORIES.includes("[object Object]")) {
+                try {
+                  const parsedCats = JSON.parse(sheetMap.CUSTOM_CATEGORIES);
+                  if (Array.isArray(parsedCats) && parsedCats.length > 0) {
+                    // Invalidate cache jika URL kategori berubah
+                    parsedCats.forEach(function(c) {
+                      const cName = String((c && c.name) || c || "").trim();
+                      const cUrl = String((c && c.url) || "").trim();
+                      if (cName && cUrl) {
+                        const prevUrl = state.categoryPhotosUrlMap ? state.categoryPhotosUrlMap[cName] : null;
+                        if (prevUrl && prevUrl !== cUrl) {
+                          if (state.categoryPhotosMap) delete state.categoryPhotosMap[cName];
+                          try { localStorage.removeItem("WEDDING_CAT_COUNT_" + cName); } catch(e) {}
+                        }
+                        prefetchCategoryPhotos(cName, cUrl);
+                      }
+                    });
+                    state.customCategories = parsedCats;
+                    state.activeConfig.CUSTOM_CATEGORIES = parsedCats;
+                    try {
+                      localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(parsedCats));
+                    } catch (e) {}
+                  }
+                } catch(eCats) {}
+              }
             }
 
             if (sheetMap.ADMIN_USERNAME) {
@@ -595,17 +662,6 @@ const GLOBAL_CONFIG = {
               state.gasApiUrl = sheetMap.GAS_API_URL;
             }
             if (sheetMap.ALL_PHOTOS_LABEL) state.allPhotosLabel = sheetMap.ALL_PHOTOS_LABEL;
-            if (sheetMap.PHOTOBOOTH_URL) {
-              state.activeConfig.PHOTOBOOTH_URL = sheetMap.PHOTOBOOTH_URL;
-              if (Array.isArray(state.customCategories)) {
-                const pb = state.customCategories.find(function(c) {
-                  return String((c && c.name) || "").trim().toLowerCase().includes("photobooth");
-                });
-                if (pb && pb.url !== sheetMap.PHOTOBOOTH_URL) {
-                  pb.url = sheetMap.PHOTOBOOTH_URL;
-                }
-              }
-            }
 
             populateConfigToUI(state.activeConfig);
             renderCategoryTabs();
@@ -655,6 +711,10 @@ const GLOBAL_CONFIG = {
           google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).getImageBase64(payload.fileId);
         } else if (action === "changeAdminPin") {
           google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).changeAdminPin(payload.currentPin, payload.newPin);
+        } else if (action === "getCategoryPhotos" || action === "getFolderPhotos") {
+          const targetUrl = (payload && (payload.url || payload.folderId)) || "";
+          const catName = (payload && payload.category) || "Kategori";
+          google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).getCategoryPhotos(targetUrl, catName);
         }
         return;
       }
@@ -1191,7 +1251,13 @@ const GLOBAL_CONFIG = {
 
     function prefetchCategoryPhotos(cat, targetUrl) {
       if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
-      if (state.categoryPhotosMap[cat]) return;
+      if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
+      if (state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0 && (!targetUrl || state.categoryPhotosUrlMap[cat] === targetUrl)) return;
+
+      const isPbCat = Boolean((cat && cat.toLowerCase().includes("photobooth")) ||
+        (Array.isArray(state.customCategories) && state.customCategories.some(function(c) {
+          return c && (c.isPhotobooth || c.id === "special_photobooth") && String(c.name || "").trim().toLowerCase() === cat.toLowerCase();
+        })));
 
       const driveFolderId = extractDriveFolderId(targetUrl);
       if (isGooglePhotosUrl(targetUrl)) {
@@ -1210,10 +1276,18 @@ const GLOBAL_CONFIG = {
         fetchDriveCategoryPhotos(cat, driveFolderId, function(photos) {
           updateCategoryPillCount(cat, photos.length);
         });
-      } else if (cat && cat.toLowerCase().includes("photobooth")) {
-        const pbLink = targetUrl || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
+      } else if (isPbCat) {
+        const pbLink = targetUrl || state.activeConfig.PHOTOBOOTH_URL || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
         if (isGooglePhotosUrl(pbLink)) {
           fetchGooglePhotos(cat, pbLink, function(photos) {
+            updateCategoryPillCount(cat, photos.length);
+          });
+        } else if (extractDriveFolderId(pbLink)) {
+          fetchDriveCategoryPhotos(cat, extractDriveFolderId(pbLink), function(photos) {
+            updateCategoryPillCount(cat, photos.length);
+          });
+        } else if (pbLink.includes("kingphotobooth.co") || pbLink.includes("kingphoto")) {
+          fetchKingPhotoboothPhotos(cat, pbLink, function(photos) {
             updateCategoryPillCount(cat, photos.length);
           });
         } else {
@@ -1235,7 +1309,16 @@ const GLOBAL_CONFIG = {
         return rawList.map(function(item, idx) {
           const base = typeof item === 'string' ? item : (item.baseUrl || item.url || item.thumbnailUrl);
           const cleanBase = base ? base.replace(/=[^/]*$/, '') : '';
-          const isPbCat = Boolean((cat && cat.toLowerCase().includes("photobooth")) || (state.activeCategory && state.activeCategory.toLowerCase().includes("photobooth")));
+          const isPbCat = Boolean(
+            (cat && cat.toLowerCase().includes("photobooth")) ||
+            (state.activeCategory && state.activeCategory.toLowerCase().includes("photobooth")) ||
+            (Array.isArray(state.customCategories) && state.customCategories.some(function(c) {
+              return c && (c.isPhotobooth || c.id === "special_photobooth") && (
+                String(c.name || "").trim().toLowerCase() === String(cat || "").toLowerCase() ||
+                String(c.name || "").trim().toLowerCase() === String(state.activeCategory || "").toLowerCase()
+              );
+            }))
+          );
           return {
             id: (item.id || ("gp_" + (idx + 1))),
             name: (cat || "Photobooth") + " " + (idx + 1),
@@ -1339,7 +1422,8 @@ const GLOBAL_CONFIG = {
 
     function fetchKingPhotoboothPhotos(cat, url, callback) {
       if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
-      if (state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0) {
+      if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
+      if (state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0 && state.categoryPhotosUrlMap[cat] === url) {
         if (callback) callback(state.categoryPhotosMap[cat]);
         return;
       }
@@ -1348,32 +1432,50 @@ const GLOBAL_CONFIG = {
         if (typeof KING_PHOTOBOOTH_INITIAL_CACHE !== 'undefined' && Array.isArray(KING_PHOTOBOOTH_INITIAL_CACHE) && KING_PHOTOBOOTH_INITIAL_CACHE.length > 0) {
           const list = buildKingPhotoList(KING_PHOTOBOOTH_INITIAL_CACHE, cat, url);
           state.categoryPhotosMap[cat] = list;
+          state.categoryPhotosUrlMap[cat] = url;
+          try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(list.length)); } catch (e) {}
           if (callback) callback(list);
         } else {
           state.categoryPhotosMap[cat] = [];
+          state.categoryPhotosUrlMap[cat] = url;
           if (callback) callback([]);
         }
       }
 
-      // 1. Coba lewat API endpoint /api/kingphotobooth (Vercel)
-      fetch("/api/kingphotobooth?url=" + encodeURIComponent(url) + "&category=" + encodeURIComponent(cat))
+      // 1. Coba lewat API endpoint /api/kingphotobooth (Vercel) dengan timeout 6 detik
+      const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      let timeoutId = null;
+      if (controller) {
+        timeoutId = setTimeout(function() {
+          try { controller.abort(); } catch(e) {}
+        }, 6000);
+      }
+      const fetchOpts = controller ? { signal: controller.signal } : {};
+
+      fetch("/api/kingphotobooth?url=" + encodeURIComponent(url) + "&category=" + encodeURIComponent(cat), fetchOpts)
         .then(function(res) {
+          if (timeoutId) clearTimeout(timeoutId);
           if (!res.ok) throw new Error("HTTP " + res.status);
           return res.json();
         })
         .then(function(data) {
           if (data && data.success && Array.isArray(data.photos) && data.photos.length > 0) {
             state.categoryPhotosMap[cat] = data.photos;
+            state.categoryPhotosUrlMap[cat] = url;
+            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(data.photos.length)); } catch (e) {}
             if (callback) callback(data.photos);
             return;
           }
           throw new Error("No photos from Kingphotobooth API");
         })
         .catch(function() {
+          if (timeoutId) clearTimeout(timeoutId);
           // 2. Coba lewat GAS backend getCategoryPhotos
           callBackend("getCategoryPhotos", { url: url, category: cat }, function(res) {
             if (res && res.success && Array.isArray(res.photos) && res.photos.length > 0) {
               state.categoryPhotosMap[cat] = res.photos;
+              state.categoryPhotosUrlMap[cat] = url;
+              try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(res.photos.length)); } catch (e) {}
               if (callback) callback(res.photos);
               return;
             }
@@ -1386,81 +1488,141 @@ const GLOBAL_CONFIG = {
   
     function fetchFotosharePhotos(cat, url, callback) {
       if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
-      if (state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0) {
+      if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
+      if (state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0 && state.categoryPhotosUrlMap[cat] === url) {
         if (callback) callback(state.categoryPhotosMap[cat]);
         return;
       }
 
-      fetch(url)
-        .then(function(res) {
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          return res.text();
-        })
-        .then(function(htmlText) {
-          let list = [];
-          const sessionMatch = htmlText.match(/let\s+sessionImages\s*=\s*(\{[\s\S]*?\});/);
-          if (sessionMatch) {
-            try {
-              const sessionObj = JSON.parse(sessionMatch[1]);
-              let idx = 0;
-              for (const sKey in sessionObj) {
-                const sess = sessionObj[sKey];
-                for (const imgKey in sess) {
-                  const it = sess[imgKey];
-                  idx++;
-                  const fullWebUrl = it.url ? ("https://fotoshare.co" + it.url) : ("https://fotoshare.co/i/" + (it.hash || ""));
-                  const rawMasterUrl = (it.url_hires || it.highres || it.img || it.url || "").replace(/\?.*$/, "");
-                  list.push({
-                    id: it.hash || ("pb_" + idx),
-                    name: "Photobooth " + idx,
-                    category: cat,
-                    thumbnailUrl: it.thumb_url || it.img,
-                    previewUrl: rawMasterUrl,
-                    highResUrl: rawMasterUrl,
-                    downloadUrl: rawMasterUrl,
-                    originalWebUrl: fullWebUrl,
-                    img: rawMasterUrl,
-                    isPhotobooth: true,
-                    timestamp: it.date_added ? new Date(it.date_added).getTime() : Date.now()
-                  });
-                }
-              }
-            } catch (eJson) {}
-          }
-
-          if (list.length === 0) {
-            const regex = /(https:\/\/cdn-bz-op\.fotoshare\.co\/[^\s"'<>]+\.JPG)/gi;
-            let m;
-            const set = new Set();
-            while ((m = regex.exec(htmlText)) !== null) {
-              const u = m[1];
-              const rawMasterUrl = u.replace(/\?.*$/, "");
-              if (!set.has(rawMasterUrl)) {
-                set.add(rawMasterUrl);
+      function parseFotoshareHtml(htmlText) {
+        let list = [];
+        const sessionMatch = htmlText.match(/let\s+sessionImages\s*=\s*(\{[\s\S]*?\});/);
+        if (sessionMatch) {
+          try {
+            const sessionObj = JSON.parse(sessionMatch[1]);
+            let idx = 0;
+            for (const sKey in sessionObj) {
+              const sess = sessionObj[sKey];
+              for (const imgKey in sess) {
+                const it = sess[imgKey];
+                idx++;
+                const fullWebUrl = it.url ? ("https://fotoshare.co" + it.url) : ("https://fotoshare.co/i/" + (it.hash || ""));
+                const rawMasterUrl = (it.url_hires || it.highres || it.img || it.url || "").replace(/\?.*$/, "");
                 list.push({
-                  id: "pb_" + (list.length + 1),
-                  name: "Photobooth " + (list.length + 1),
+                  id: it.hash || ("pb_" + idx),
+                  name: (cat || "Photobooth") + " " + idx,
                   category: cat,
-                  thumbnailUrl: u,
+                  thumbnailUrl: it.thumb_url || it.img,
                   previewUrl: rawMasterUrl,
                   highResUrl: rawMasterUrl,
                   downloadUrl: rawMasterUrl,
-                  originalWebUrl: url || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+                  originalWebUrl: fullWebUrl,
                   img: rawMasterUrl,
                   isPhotobooth: true,
-                  timestamp: Date.now()
+                  timestamp: it.date_added ? new Date(it.date_added).getTime() : Date.now()
                 });
               }
             }
-          }
+          } catch (eJson) {}
+        }
 
-          state.categoryPhotosMap[cat] = list;
-          if (callback) callback(list);
-        })
-        .catch(function(err) {
-          console.error("Gagal mengambil foto fotoshare:", err);
+        if (list.length === 0) {
+          const regex = /(https:\/\/cdn-bz-op\.fotoshare\.co\/[^\s"'<>]+\.JPG)/gi;
+          let m;
+          const set = new Set();
+          while ((m = regex.exec(htmlText)) !== null) {
+            const u = m[1];
+            const rawMasterUrl = u.replace(/\?.*$/, "");
+            if (!set.has(rawMasterUrl)) {
+              set.add(rawMasterUrl);
+              list.push({
+                id: "pb_" + (list.length + 1),
+                name: (cat || "Photobooth") + " " + (list.length + 1),
+                category: cat,
+                thumbnailUrl: u,
+                previewUrl: rawMasterUrl,
+                highResUrl: rawMasterUrl,
+                downloadUrl: rawMasterUrl,
+                originalWebUrl: url || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+                img: rawMasterUrl,
+                isPhotobooth: true,
+                timestamp: Date.now()
+              });
+            }
+          }
+        }
+        return list;
+      }
+
+      function fallbackFotoshare() {
+        callBackend("getCategoryPhotos", { url: url, category: cat }, function(res) {
+          if (res && res.success && Array.isArray(res.photos) && res.photos.length > 0) {
+            state.categoryPhotosMap[cat] = res.photos;
+            state.categoryPhotosUrlMap[cat] = url;
+            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(res.photos.length)); } catch (e) {}
+            if (callback) callback(res.photos);
+            return;
+          }
           state.categoryPhotosMap[cat] = [];
+          state.categoryPhotosUrlMap[cat] = url;
           if (callback) callback([]);
+        }, function() {
+          state.categoryPhotosMap[cat] = [];
+          state.categoryPhotosUrlMap[cat] = url;
+          if (callback) callback([]);
+        });
+      }
+
+      const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      let timeoutId = null;
+      if (controller) {
+        timeoutId = setTimeout(function() {
+          try { controller.abort(); } catch (e) {}
+        }, 4000);
+      }
+      const fetchOpts = controller ? { signal: controller.signal } : {};
+
+      // 1. Coba lewat API endpoint /api/fotoshare (Vercel) dengan timeout 4 detik
+      fetch("/api/fotoshare?url=" + encodeURIComponent(url) + "&category=" + encodeURIComponent(cat), fetchOpts)
+        .then(function(res) {
+          if (timeoutId) clearTimeout(timeoutId);
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.json();
+        })
+        .then(function(data) {
+          if (data && data.success && Array.isArray(data.photos) && data.photos.length > 0) {
+            state.categoryPhotosMap[cat] = data.photos;
+            state.categoryPhotosUrlMap[cat] = url;
+            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(data.photos.length)); } catch (e) {}
+            if (callback) callback(data.photos);
+            return;
+          }
+          throw new Error("No photos from Fotoshare API");
+        })
+        .catch(function() {
+          // 2. Direct fetch jika sama origin/CORS
+          fetch(url, fetchOpts)
+            .then(function(res) {
+              if (timeoutId) clearTimeout(timeoutId);
+              if (!res.ok) throw new Error("HTTP " + res.status);
+              return res.text();
+            })
+            .then(function(htmlText) {
+              const list = parseFotoshareHtml(htmlText);
+              if (list.length > 0) {
+                state.categoryPhotosMap[cat] = list;
+                state.categoryPhotosUrlMap[cat] = url;
+                try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(list.length)); } catch (e) {}
+                if (callback) callback(list);
+                return;
+              }
+              fallbackFotoshare();
+            })
+            .catch(function() {
+              if (timeoutId) clearTimeout(timeoutId);
+              // 3. Fallback ke Google Apps Script backend getCategoryPhotos
+              fallbackFotoshare();
+            });
         });
     }
 
@@ -1535,7 +1697,9 @@ const GLOBAL_CONFIG = {
 
     function fetchDriveCategoryPhotos(cat, driveFolderId, callback) {
       if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
-      if (state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0) {
+      if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
+      const driveKey = "drive:" + driveFolderId;
+      if (state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0 && state.categoryPhotosUrlMap[cat] === driveKey) {
         if (callback) callback(state.categoryPhotosMap[cat]);
         return;
       }
@@ -1544,6 +1708,7 @@ const GLOBAL_CONFIG = {
         // Jangan paksa fallback WEDDING_INITIAL_CACHE jika ada driveFolderId kustom dari admin
         if (!driveFolderId && cat.toLowerCase().includes("wedding") && typeof WEDDING_INITIAL_CACHE !== 'undefined' && Array.isArray(WEDDING_INITIAL_CACHE) && WEDDING_INITIAL_CACHE.length > 0) {
           state.categoryPhotosMap[cat] = WEDDING_INITIAL_CACHE;
+          state.categoryPhotosUrlMap[cat] = driveKey;
           try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(WEDDING_INITIAL_CACHE.length)); } catch (e) {}
           if (callback) callback(WEDDING_INITIAL_CACHE);
           return;
@@ -1556,18 +1721,30 @@ const GLOBAL_CONFIG = {
           return false;
         });
         state.categoryPhotosMap[cat] = matched;
+        state.categoryPhotosUrlMap[cat] = driveKey;
         if (callback) callback(matched);
       }
 
-      // 1. Coba lewat API endpoint /api/drive-folder (Vercel / Node)
-      fetch("/api/drive-folder?folderId=" + encodeURIComponent(driveFolderId) + "&category=" + encodeURIComponent(cat))
+      // 1. Coba lewat API endpoint /api/drive-folder (Vercel / Node) dengan timeout 6 detik
+      const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      let timeoutId = null;
+      if (controller) {
+        timeoutId = setTimeout(function() {
+          try { controller.abort(); } catch(e) {}
+        }, 6000);
+      }
+      const fetchOpts = controller ? { signal: controller.signal } : {};
+
+      fetch("/api/drive-folder?folderId=" + encodeURIComponent(driveFolderId) + "&category=" + encodeURIComponent(cat), fetchOpts)
         .then(function(res) {
+          if (timeoutId) clearTimeout(timeoutId);
           if (!res.ok) throw new Error("HTTP " + res.status);
           return res.json();
         })
         .then(function(data) {
           if (data && data.success && Array.isArray(data.photos) && data.photos.length > 0) {
             state.categoryPhotosMap[cat] = data.photos;
+            state.categoryPhotosUrlMap[cat] = driveKey;
             try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(data.photos.length)); } catch (e) {}
             if (callback) callback(data.photos);
             return;
@@ -1575,10 +1752,12 @@ const GLOBAL_CONFIG = {
           throw new Error("No photos from drive-folder API");
         })
         .catch(function() {
+          if (timeoutId) clearTimeout(timeoutId);
           // 2. Coba lewat GAS Backend getCategoryPhotos
           callBackend("getCategoryPhotos", { folderId: driveFolderId, category: cat }, function(res) {
             if (res && res.success && Array.isArray(res.photos) && res.photos.length > 0) {
               state.categoryPhotosMap[cat] = res.photos;
+              state.categoryPhotosUrlMap[cat] = driveKey;
               try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(res.photos.length)); } catch (e) {}
               if (callback) callback(res.photos);
             } else {
@@ -1623,34 +1802,57 @@ const GLOBAL_CONFIG = {
         return;
       }
 
+      // Robust check apakah kategori ini merupakan kategori spesial Photobooth
+      const isPbCat = (category.toLowerCase().includes("photobooth")) ||
+        (Array.isArray(state.customCategories) && state.customCategories.some(function(c) {
+          return c && (c.isPhotobooth || c.id === "special_photobooth") && String(c.name || "").trim().toLowerCase() === category.toLowerCase();
+        }));
+
       // Pastikan targetUrl selalu di-resolve dari customCategories jika tidak dioper
       if (!targetUrl && Array.isArray(state.customCategories)) {
         const matchedCat = state.customCategories.find(function(c) {
-          return String((c && c.name) || "").trim().toLowerCase() === category.toLowerCase();
+          if (!c) return false;
+          const cName = String(c.name || "").trim().toLowerCase();
+          if (cName === category.toLowerCase()) return true;
+          if (isPbCat && (c.isPhotobooth || c.id === "special_photobooth")) return true;
+          return false;
         });
         if (matchedCat && matchedCat.url) {
           targetUrl = String(matchedCat.url).trim();
         }
       }
 
+      if (isPbCat && !targetUrl) {
+        const pbInput = document.getElementById("pbUrlInput");
+        targetUrl = (pbInput && pbInput.value) 
+          ? pbInput.value.trim() 
+          : (state.activeConfig.PHOTOBOOTH_URL || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs");
+      }
+
       if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
       if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
 
-      // 1. Jika sudah ada cache foto kategori & tautan tidak berubah
-      if (state.categoryPhotosMap[category]) {
-        if (targetUrl && state.categoryPhotosUrlMap[category] && state.categoryPhotosUrlMap[category] !== targetUrl) {
-          // Tautan telah diganti! Hapus cache lama agar foto dimuat dari tautan baru
-          delete state.categoryPhotosMap[category];
-          delete state.categoryPhotosUrlMap[category];
-        } else if (state.categoryPhotosMap[category].length > 0) {
+      const cachedUrl = state.categoryPhotosUrlMap[category];
+      const driveFolderId = extractDriveFolderId(targetUrl);
+      const effectiveTargetKey = driveFolderId ? ("drive:" + driveFolderId) : targetUrl;
+
+      // 1. Jika sudah ada cache foto kategori: cek ketat apakah URL berubah
+      if (effectiveTargetKey && cachedUrl && cachedUrl !== effectiveTargetKey && cachedUrl !== targetUrl) {
+        // Tautan telah diganti! Hapus cache lama agar foto dimuat dari tautan baru
+        delete state.categoryPhotosMap[category];
+        delete state.categoryPhotosUrlMap[category];
+      }
+
+      // Jika cache foto kategori sudah ada dan cocok dengan targetUrl, gunakan langsung
+      if (state.categoryPhotosMap[category] && state.categoryPhotosMap[category].length > 0) {
+        if (!effectiveTargetKey || cachedUrl === effectiveTargetKey || cachedUrl === targetUrl) {
           state.filteredPhotos = state.categoryPhotosMap[category];
           renderPhotoGrid(targetUrl, category);
           return;
         }
       }
 
-      // 2. Jika tautan Google Photos (album bersama atau photos.app.goo.gl)
-      if (isGooglePhotosUrl(targetUrl)) {
+      function showGridSkeleton() {
         const grid = document.getElementById("photosGrid");
         if (grid) {
           grid.innerHTML = `
@@ -1660,6 +1862,11 @@ const GLOBAL_CONFIG = {
             <div class="skeleton-card"></div>
           `;
         }
+      }
+
+      // 2. Jika tautan Google Photos (album bersama atau photos.app.goo.gl)
+      if (isGooglePhotosUrl(targetUrl)) {
+        showGridSkeleton();
         fetchGooglePhotos(category, targetUrl, function(photos) {
           state.categoryPhotosUrlMap[category] = targetUrl;
           updateCategoryPillCount(category, photos.length);
@@ -1673,15 +1880,7 @@ const GLOBAL_CONFIG = {
 
       // 3b. Jika tautan eksternal kingphotobooth
       if (targetUrl && (targetUrl.includes("kingphotobooth.co") || targetUrl.includes("kingphoto"))) {
-        const grid = document.getElementById("photosGrid");
-        if (grid) {
-          grid.innerHTML = `
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-          `;
-        }
+        showGridSkeleton();
         fetchKingPhotoboothPhotos(category, targetUrl, function(photos) {
           state.categoryPhotosUrlMap[category] = targetUrl;
           updateCategoryPillCount(category, photos.length);
@@ -1695,15 +1894,7 @@ const GLOBAL_CONFIG = {
 
       // 3. Jika tautan eksternal fotoshare
       if (targetUrl && targetUrl.includes("fotoshare.co")) {
-        const grid = document.getElementById("photosGrid");
-        if (grid) {
-          grid.innerHTML = `
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-          `;
-        }
+        showGridSkeleton();
         fetchFotosharePhotos(category, targetUrl, function(photos) {
           state.categoryPhotosUrlMap[category] = targetUrl;
           updateCategoryPillCount(category, photos.length);
@@ -1716,19 +1907,10 @@ const GLOBAL_CONFIG = {
       }
 
       // 4. Jika tautan folder Google Drive
-      const driveFolderId = extractDriveFolderId(targetUrl);
       if (driveFolderId) {
-        const grid = document.getElementById("photosGrid");
-        if (grid) {
-          grid.innerHTML = `
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-          `;
-        }
+        showGridSkeleton();
         fetchDriveCategoryPhotos(category, driveFolderId, function(photos) {
-          state.categoryPhotosUrlMap[category] = targetUrl;
+          state.categoryPhotosUrlMap[category] = "drive:" + driveFolderId;
           updateCategoryPillCount(category, photos.length);
           if (state.activeCategory === category) {
             state.filteredPhotos = photos;
@@ -1738,11 +1920,34 @@ const GLOBAL_CONFIG = {
         return;
       }
 
-      // 4b. Jika kategori Photobooth (fallback hanya jika targetUrl kosong atau fotoshare)
-      if (category.toLowerCase().includes("photobooth")) {
-        const pbLink = targetUrl || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
+      // 4b. Jika kategori Photobooth (mendukung segala variasi URL kustom)
+      if (isPbCat) {
+        const pbLink = targetUrl || state.activeConfig.PHOTOBOOTH_URL || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
+        showGridSkeleton();
         if (isGooglePhotosUrl(pbLink)) {
           fetchGooglePhotos(category, pbLink, function(photos) {
+            state.categoryPhotosUrlMap[category] = pbLink;
+            updateCategoryPillCount(category, photos.length);
+            if (state.activeCategory === category) {
+              state.filteredPhotos = photos;
+              renderPhotoGrid(pbLink, category);
+            }
+          });
+          return;
+        }
+        if (extractDriveFolderId(pbLink)) {
+          fetchDriveCategoryPhotos(category, extractDriveFolderId(pbLink), function(photos) {
+            state.categoryPhotosUrlMap[category] = "drive:" + extractDriveFolderId(pbLink);
+            updateCategoryPillCount(category, photos.length);
+            if (state.activeCategory === category) {
+              state.filteredPhotos = photos;
+              renderPhotoGrid(pbLink, category);
+            }
+          });
+          return;
+        }
+        if (pbLink.includes("kingphotobooth.co") || pbLink.includes("kingphoto")) {
+          fetchKingPhotoboothPhotos(category, pbLink, function(photos) {
             state.categoryPhotosUrlMap[category] = pbLink;
             updateCategoryPillCount(category, photos.length);
             if (state.activeCategory === category) {
@@ -2169,13 +2374,19 @@ const GLOBAL_CONFIG = {
       `;
       container.appendChild(mainLabelBox);
 
-      // Pisahkan Photobooth dari kategori biasa
+      // Pisahkan Photobooth dari kategori biasa (secara robust dengan flag isPhotobooth/id)
       let pbItem = categories.find(function(c) {
-        const n = String((c && c.name) || c || "").trim().toLowerCase();
-        return n.includes("photobooth");
+        return c && (c.isPhotobooth === true || c.id === "special_photobooth" || String(c.name || "").trim().toLowerCase().includes("photobooth"));
       });
+      const currentConfigPbUrl = state.activeConfig.PHOTOBOOTH_URL || "";
       if (!pbItem) {
-        pbItem = { name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", enabled: true };
+        pbItem = { id: "special_photobooth", isPhotobooth: true, name: "Photobooth", url: currentConfigPbUrl || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", enabled: true };
+      } else {
+        pbItem.isPhotobooth = true;
+        pbItem.id = "special_photobooth";
+        if (currentConfigPbUrl && !pbItem.url) {
+          pbItem.url = currentConfigPbUrl;
+        }
       }
 
       // 2. Dedicated Row Khusus Photobooth (Link vendor bebas dicustom, nama bebas diubah, toggle tampilkan/sembunyikan, tanpa tombol hapus)
@@ -2205,11 +2416,11 @@ const GLOBAL_CONFIG = {
           </div>
           <div>
             <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 2px;">Tautan Display / Vendor (Dapat Dicustom)</label>
-            <input type="text" id="pbUrlInput" class="admin-input cat-url-input" value="${escapeHtml(pbItem.url || 'https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs')}" oninput="onCategoryRowInput()" placeholder="https://fotoshare.co/e/..." style="padding: 7px 10px; font-size: 0.82rem;">
+            <input type="text" id="pbUrlInput" class="admin-input cat-url-input" value="${escapeHtml(pbItem.url || '')}" oninput="onCategoryRowInput()" placeholder="https://photos.app.goo.gl/... atau Drive / Fotoshare" style="padding: 7px 10px; font-size: 0.82rem;">
           </div>
         </div>
         <div style="font-size: 0.7rem; color: #166534; margin-top: 5px; opacity: 0.85;">
-          *Khusus Photobooth: Nama tab dan tautan link vendor bebas dicustom. Pengaturan lainnya terkunci aman (tidak dapat dihapus sembarangan). Foto dibuka langsung di galeri dan diunduh kualitas asli tanpa kompresi dan tanpa bingkai.
+          *Khusus Photobooth: Nama tab dan tautan link vendor bebas dicustom (Google Photos, Google Drive, Fotoshare, Kingphotobooth, dll). Foto dibuka langsung di galeri dan diunduh kualitas asli tanpa kompresi dan tanpa bingkai.
         </div>
       `;
       container.appendChild(pbBox);
@@ -2234,9 +2445,11 @@ const GLOBAL_CONFIG = {
       container.appendChild(rowsWrapper);
 
       categories.forEach(function(item) {
+        const isPb = item && (item.isPhotobooth === true || item.id === "special_photobooth" || String(item.name || "").trim().toLowerCase().includes("photobooth"));
+        if (isPb) return;
         const catName = String((item && item.name) || item || "").trim();
         const catUrl = String((item && item.url) || "").trim();
-        if (catName && catName !== "Semua Foto" && !catName.toLowerCase().includes("photobooth") && catName.toLowerCase() !== "teapai") {
+        if (catName && catName !== "Semua Foto" && catName.toLowerCase() !== "teapai") {
           addCategoryConfigRow(catName, catUrl);
         }
       });
@@ -2287,6 +2500,12 @@ const GLOBAL_CONFIG = {
       const list = getCategoriesFromAdminInputs();
       state.customCategories = list;
       state.activeConfig.CUSTOM_CATEGORIES = list;
+      state.lastLocalCategoryEditTime = Date.now();
+      const pb = list.find(c => c && (c.isPhotobooth || c.id === 'special_photobooth'));
+      if (pb) {
+        state.activeConfig.PHOTOBOOTH_URL = pb.url;
+        try { localStorage.setItem("WEDDING_PHOTOBOOTH_URL", pb.url); } catch(e) {}
+      }
       try {
         localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(list));
       } catch (e) {}
@@ -2301,10 +2520,12 @@ const GLOBAL_CONFIG = {
       const pbUrlInput = document.getElementById("pbUrlInput");
       const pbVisCheck = document.getElementById("pbVisibilityCheck");
       const pbName = (pbNameInput ? pbNameInput.value : "").trim() || "Photobooth";
-      const pbUrl = (pbUrlInput ? pbUrlInput.value : "").trim() || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
+      const pbUrl = (pbUrlInput ? pbUrlInput.value : "").trim();
       const pbEnabled = pbVisCheck ? pbVisCheck.checked : true;
 
       list.push({
+        id: "special_photobooth",
+        isPhotobooth: true,
         name: pbName,
         url: pbUrl,
         enabled: pbEnabled
@@ -3273,9 +3494,9 @@ const GLOBAL_CONFIG = {
       }
 
       const pbItem = customCategoriesList.find(function(c) {
-        return String((c && c.name) || "").trim().toLowerCase().includes("photobooth");
+        return c && (c.isPhotobooth === true || c.id === "special_photobooth" || String(c.name || "").trim().toLowerCase().includes("photobooth"));
       });
-      const pbUrlVal = pbItem ? String(pbItem.url || "").trim() : "";
+      const pbUrlVal = pbItem ? String(pbItem.url || "").trim() : (state.activeConfig.PHOTOBOOTH_URL || "");
 
       const payload = {
         ACTIVE_EVENT_ID: state.currentEventId,

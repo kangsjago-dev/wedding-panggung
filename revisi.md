@@ -115,3 +115,34 @@ TANGGAL: 18 November 2026
 5. `js/app.js`: Auto-rotate cerdas di `getPhotoRotation()`, penghapusan tombol rotate di `renderPhotoGrid()`, pembersihan dropdown rotate di modal admin, penghapusan pre-seed hardcoded lama, dan invalidasi cache dinamis di `syncFromSpreadsheetGViz()`.
 6. `code.gs`: Sinkronisasi tautan default `CUSTOM_CATEGORIES` dan `EVENTS`.
 7. `scratch/test_v367.js`: Pengujian otomatis regresi & fitur (100% PASS).
+
+---
+
+## Update Versi 3.7.0 (Kustomisasi Bebas & Tampilan Galeri Kategori Spesial Photobooth)
+
+### Masalah yang Dilaporkan:
+- Baris konfigurasi **Kategori Spesial: Photobooth** di panel admin tidak dapat diubah (terkunci/ter-reset otomatis).
+- Tautan baru tidak dapat dicustom atau foto dari tautan baru tidak tampil di galeri.
+
+### Akar Masalah yang Ditemukan & Diperbaiki:
+1. **Pembalikan Nilai Otomatis (Periodic Auto-Revert):**
+   - Fungsi sinkronisasi periodik Google Spreadsheet (GViz) menimpa `state.activeConfig.PHOTOBOOTH_URL` setiap 20 detik tanpa proteksi `isEditingLocally` / `isModalOpen`, sehingga input yang baru diketik pengguna langsung dikembalikan ke tautan lama.
+   - **Solusi:** Menempatkan pembaruan `PHOTOBOOTH_URL` dan `CUSTOM_CATEGORIES` di dalam proteksi ketat `if (!isEditingLocally && !isModalOpen)`.
+2. **Cache Foto Tidak Terinvalidasi (Stale Cache Loop):**
+   - `state.categoryPhotosUrlMap` tidak pernah diperbarui oleh pemanggilan Fotoshare, Kingphotobooth, atau Drive, sehingga sistem mengira tautan tidak berubah dan terus menyajikan 637 foto cache lama.
+   - **Solusi:** Menerapkan invalidasi cache ketat: setiap perubahan `targetUrl` otomatis menghapus cache foto lama (`categoryPhotosMap`), memicu pemuatan ulang, dan menyimpan URL aktif di `categoryPhotosUrlMap`.
+3. **Kerapuhan Deteksi Kategori Saat Di-rename:**
+   - Kategori Photobooth sebelumnya hanya dideteksi via `name.includes("photobooth")`. Jika pengguna mengubah nama tab menjadi "Foto Booth", "Dokumentasi", dll., sistem mengira kategori Photobooth hilang, membuat baris duplikat di kategori momen, dan mengunci input.
+   - **Solusi:** Memberikan penanda identitas permanen `id: "special_photobooth"` dan `isPhotobooth: true`. Nama tab bebas diubah tanpa menghilangkan fungsi spesialnya.
+4. **Ketiadaan Handler Backend Google Apps Script:**
+   - Lingkungan GAS (`google.script.run`) sebelumnya belum memetakan aksi `getCategoryPhotos` dan `getFolderPhotos`, sehingga jika link diubah ke album Google Photos atau Drive, panggilan gagal secara diam-diam.
+   - **Solusi:** Menambahkan fungsi `getCategoryPhotos`, `getFolderPhotos`, dan `scanFotoshareAlbum` di `code.gs` serta memetakan `action === "getCategoryPhotos"` di `callBackend`.
+5. **CORS & Endpoint Redundansi:**
+   - Direct fetch Fotoshare dari browser rentan terhambat CORS.
+   - **Solusi:** Dibuat rute serverless `api/fotoshare.js` dan fallback otomatis ke `code.gs` `scanFotoshareAlbum` via `UrlFetchApp.fetch`.
+
+### Hasil Verifikasi:
+- Input link & nama tab Photobooth di admin dapat diedit bebas tanpa ter-reset.
+- Mendukung Google Photos (`photos.google.com`, `photos.app.goo.gl`), Google Drive folder, Fotoshare (`fotoshare.co`), dan Kingphotobooth.
+- Galeri langsung memperbarui foto seketika saat disimpan atau disinkronkan.
+- Syntax `code.gs` dan `js/app.js` 100% valid dan lolos uji integrasi.

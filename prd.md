@@ -417,3 +417,9 @@ const WEDDING_CONFIG = {
 - **v1.1.0 (Menu Admin & Sinkronisasi Drive):** Login admin PIN.
 - **v1.0.0 (Inisialisasi PRD):** Blueprint awal sistem.
 
+- **v3.7.0 (Kustomisasi Bebas & Multi-Vendor Display Kategori Spesial Photobooth):**
+  - **Tautan & Nama Tab Bebas Dicustom:** Input link dan nama tab kategori Photobooth 100% bebas diedit tanpa terkunci atau ter-reset periodik oleh GViz background sync.
+  - **Multi-Vendor Support:** Mendukung tautan Google Photos (album bersama / photos.app.goo.gl), Google Drive folder, Fotoshare (`fotoshare.co`), dan Kingphotobooth (`kingphotobooth.co`).
+  - **Invalidasi Cache Otomatis:** Perubahan tautan langsung menghapus cache foto lama dan memuat foto dari tautan baru ke galeri seketika.
+  - **Identitas Kategori Permanen:** Menggunakan `id: "special_photobooth"` dan `isPhotobooth: true` sehingga penggantian nama tab tidak memecah konfigurasi atau membuat baris duplikat.
+  - **Redundansi Pemuatan Foto:** Mendukung rute endpoint serverless (`/api/fotoshare`), direct fetch, serta Google Apps Script server-side fetch (`scanFotoshareAlbum`, `scanGooglePhotosAlbum`, `scanDriveFolderDirectly`) tanpa kendala CORS.
