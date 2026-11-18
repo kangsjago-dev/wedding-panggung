@@ -26,21 +26,172 @@
       applyCategoryFilter(state.activeCategory);
     }
 
+    /* ==========================================================================
+       AUTO-ROTATE & ORIENTATION SYSTEM (v3.6.6)
+       ========================================================================== */
+    function getPhotoRotation(photoId, categoryName) {
+      if (state.photoRotations && state.photoRotations[photoId] !== undefined) {
+        return parseInt(state.photoRotations[photoId], 10) || 0;
+      }
+      try {
+        const saved = localStorage.getItem("WEDDING_PHOTO_ROT_" + photoId);
+        if (saved !== null) return parseInt(saved, 10) || 0;
+      } catch (e) {}
+
+      const cat = categoryName || state.activeCategory || "";
+      if (cat) {
+        if (state.categoryRotations && state.categoryRotations[cat] !== undefined) {
+          return parseInt(state.categoryRotations[cat], 10) || 0;
+        }
+        try {
+          const savedCatRot = localStorage.getItem("WEDDING_CAT_ROTATION_" + cat);
+          if (savedCatRot !== null) return parseInt(savedCatRot, 10) || 0;
+        } catch (e) {}
+
+        if (Array.isArray(state.customCategories)) {
+          const match = state.customCategories.find(function(c) {
+            return String((c && c.name) || "").trim().toLowerCase() === cat.toLowerCase();
+          });
+          if (match && match.rotation !== undefined) {
+            return parseInt(match.rotation, 10) || 0;
+          }
+        }
+      }
+      return 0;
+    }
+
+    function setPhotoRotation(photoId, deg, categoryName) {
+      const rot = ((deg % 360) + 360) % 360;
+      if (!state.photoRotations) state.photoRotations = {};
+      state.photoRotations[photoId] = rot;
+      try {
+        localStorage.setItem("WEDDING_PHOTO_ROT_" + photoId, String(rot));
+      } catch (e) {}
+
+      const card = document.querySelector(`.photo-card[data-photo-id="${photoId}"]`);
+      if (card) {
+        const img = card.querySelector(".photo-img");
+        if (img) {
+          img.classList.remove("rotate-90", "rotate-180", "rotate-270");
+          if (rot === 90) img.classList.add("rotate-90");
+          else if (rot === 180) img.classList.add("rotate-180");
+          else if (rot === 270) img.classList.add("rotate-270");
+        }
+      }
+      return rot;
+    }
+
+    function rotateSinglePhoto(photoId) {
+      const current = getPhotoRotation(photoId);
+      const next = (current + 90) % 360;
+      setPhotoRotation(photoId, next);
+      showToast("✓ Foto diputar " + next + "°");
+    }
+
+    function toggleActiveCategoryRotation() {
+      const cat = state.activeCategory || "Semua Foto";
+      const current = (state.categoryRotations && state.categoryRotations[cat] !== undefined)
+        ? parseInt(state.categoryRotations[cat], 10)
+        : getPhotoRotation("dummy", cat);
+      const next = (current + 90) % 360;
+      if (!state.categoryRotations) state.categoryRotations = {};
+      state.categoryRotations[cat] = next;
+      try {
+        localStorage.setItem("WEDDING_CAT_ROTATION_" + cat, String(next));
+      } catch (e) {}
+
+      if (Array.isArray(state.customCategories)) {
+        const match = state.customCategories.find(function(c) {
+          return String((c && c.name) || "").trim().toLowerCase() === cat.toLowerCase();
+        });
+        if (match) {
+          match.rotation = next;
+          state.activeConfig.CUSTOM_CATEGORIES = state.customCategories;
+          try {
+            localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(state.customCategories));
+          } catch (e) {}
+          if (state.gasApiUrl) {
+            callBackend("saveAdminSettings", {
+              pin: state.adminPin,
+              config: {
+                CUSTOM_CATEGORIES: state.customCategories,
+                EVENTS: state.events,
+                ACTIVE_EVENT_ID: state.currentEventId
+              }
+            });
+          }
+        }
+      }
+
+      renderPhotoGrid(null, cat);
+      showToast("✓ Seluruh foto kategori " + cat + " diputar ke " + next + "°");
+    }
+
+    function rotateLightboxCurrentPhoto() {
+      if (currentLightboxIndex < 0 || !state.filteredPhotos || !state.filteredPhotos[currentLightboxIndex]) return;
+      const photo = state.filteredPhotos[currentLightboxIndex];
+      const current = getPhotoRotation(photo.id, photo.category);
+      const next = (current + 90) % 360;
+      setPhotoRotation(photo.id, next, photo.category);
+      applyLightboxZoom();
+      const labelEl = document.getElementById("lightboxRotateLabel");
+      if (labelEl) labelEl.innerText = next > 0 ? "Putar (" + next + "°)" : "Putar 90°";
+      showToast("✓ Foto preview diputar " + next + "°");
+    }
+
     function syncSingleCategory(categoryName) {
       if (!categoryName) return;
+
+      // Ambil nilai terbaru langsung dari DOM form admin jika sedang dibuka
+      if (document.getElementById("customCategoryRowsWrapper") || document.getElementById("pbNameInput")) {
+        const currentInputs = getCategoriesFromAdminInputs();
+        if (Array.isArray(currentInputs) && currentInputs.length > 0) {
+          state.customCategories = currentInputs;
+          state.activeConfig.CUSTOM_CATEGORIES = currentInputs;
+          try {
+            localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(currentInputs));
+          } catch (e) {}
+        }
+      }
+      state.lastLocalCategoryEditTime = Date.now();
+
       showToast("🔄 Menyinkronkan kategori " + categoryName + "...");
       
-      // Hapus cache foto kategori agar dimuat ulang
+      // Hapus cache foto & URL kategori agar dimuat ulang dari tautan terbaru
       if (state.categoryPhotosMap) {
         delete state.categoryPhotosMap[categoryName];
       }
+      if (state.categoryPhotosUrlMap) {
+        delete state.categoryPhotosUrlMap[categoryName];
+      }
+      try {
+        localStorage.removeItem("WEDDING_CAT_COUNT_" + categoryName);
+      } catch (e) {}
 
       let targetUrl = "";
       if (Array.isArray(state.customCategories)) {
         const match = state.customCategories.find(function(c) {
           return String((c && c.name) || c || "").trim().toLowerCase() === categoryName.toLowerCase();
         });
-        if (match && match.url) targetUrl = String(match.url).trim();
+        if (match) {
+          if (match.url) targetUrl = String(match.url).trim();
+          if (match.rotation !== undefined) {
+            if (!state.categoryRotations) state.categoryRotations = {};
+            state.categoryRotations[categoryName] = parseInt(match.rotation, 10) || 0;
+          }
+        }
+      }
+
+      // SIMPAN PERMANEN KE SCRIPT PROPERTIES & SHEET AGAR TIDAK TER-RESET
+      if (state.gasApiUrl) {
+        callBackend("saveAdminSettings", {
+          pin: state.adminPin,
+          config: {
+            CUSTOM_CATEGORIES: state.customCategories,
+            EVENTS: state.events,
+            ACTIVE_EVENT_ID: state.currentEventId
+          }
+        });
       }
 
       const mainLabel = state.allPhotosLabel || "Semua Foto";
@@ -422,8 +573,11 @@ const GLOBAL_CONFIG = {
               if (k) sheetMap[k] = v;
             });
 
-            // Sinkronkan kategori dari Google Spreadsheet Database ke seluruh device
-            if (sheetMap.CUSTOM_CATEGORIES && !sheetMap.CUSTOM_CATEGORIES.includes("[object Object]")) {
+            // Sinkronkan kategori dari Google Spreadsheet Database ke seluruh device (proteksi jangan menimpa jika sedang diedit / modal buka)
+            const isEditingLocally = state.lastLocalCategoryEditTime && (Date.now() - state.lastLocalCategoryEditTime < 60000);
+            const isModalOpen = document.getElementById("adminSettingsModal") && document.getElementById("adminSettingsModal").classList.contains("active");
+
+            if (!isEditingLocally && !isModalOpen && sheetMap.CUSTOM_CATEGORIES && !sheetMap.CUSTOM_CATEGORIES.includes("[object Object]")) {
               try {
                 const parsedCats = JSON.parse(sheetMap.CUSTOM_CATEGORIES);
                 if (Array.isArray(parsedCats) && parsedCats.length > 0) {
@@ -1379,7 +1533,8 @@ const GLOBAL_CONFIG = {
       }
 
       function fallbackDrive() {
-        if (cat.toLowerCase().includes("wedding") && typeof WEDDING_INITIAL_CACHE !== 'undefined' && Array.isArray(WEDDING_INITIAL_CACHE) && WEDDING_INITIAL_CACHE.length > 0) {
+        // Jangan paksa fallback WEDDING_INITIAL_CACHE jika ada driveFolderId kustom dari admin
+        if (!driveFolderId && cat.toLowerCase().includes("wedding") && typeof WEDDING_INITIAL_CACHE !== 'undefined' && Array.isArray(WEDDING_INITIAL_CACHE) && WEDDING_INITIAL_CACHE.length > 0) {
           state.categoryPhotosMap[cat] = WEDDING_INITIAL_CACHE;
           try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(WEDDING_INITIAL_CACHE.length)); } catch (e) {}
           if (callback) callback(WEDDING_INITIAL_CACHE);
@@ -1461,12 +1616,19 @@ const GLOBAL_CONFIG = {
       }
 
       if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
+      if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
 
-      // 1. Jika sudah ada cache foto kategori
+      // 1. Jika sudah ada cache foto kategori & tautan tidak berubah
       if (state.categoryPhotosMap[category]) {
-        state.filteredPhotos = state.categoryPhotosMap[category];
-        renderPhotoGrid(targetUrl, category);
-        return;
+        if (targetUrl && state.categoryPhotosUrlMap[category] && state.categoryPhotosUrlMap[category] !== targetUrl) {
+          // Tautan telah diganti! Hapus cache lama agar foto dimuat dari tautan baru
+          delete state.categoryPhotosMap[category];
+          delete state.categoryPhotosUrlMap[category];
+        } else {
+          state.filteredPhotos = state.categoryPhotosMap[category];
+          renderPhotoGrid(targetUrl, category);
+          return;
+        }
       }
 
       // 2. Jika tautan Google Photos (album bersama)
@@ -1481,6 +1643,7 @@ const GLOBAL_CONFIG = {
           `;
         }
         fetchGooglePhotos(category, targetUrl, function(photos) {
+          state.categoryPhotosUrlMap[category] = targetUrl;
           updateCategoryPillCount(category, photos.length);
           if (state.activeCategory === category) {
             state.filteredPhotos = photos;
@@ -1502,6 +1665,7 @@ const GLOBAL_CONFIG = {
           `;
         }
         fetchKingPhotoboothPhotos(category, targetUrl, function(photos) {
+          state.categoryPhotosUrlMap[category] = targetUrl;
           updateCategoryPillCount(category, photos.length);
           if (state.activeCategory === category) {
             state.filteredPhotos = photos;
@@ -1523,6 +1687,7 @@ const GLOBAL_CONFIG = {
           `;
         }
         fetchFotosharePhotos(category, targetUrl, function(photos) {
+          state.categoryPhotosUrlMap[category] = targetUrl;
           updateCategoryPillCount(category, photos.length);
           if (state.activeCategory === category) {
             state.filteredPhotos = photos;
@@ -1545,6 +1710,7 @@ const GLOBAL_CONFIG = {
           `;
         }
         fetchDriveCategoryPhotos(category, driveFolderId, function(photos) {
+          state.categoryPhotosUrlMap[category] = targetUrl;
           updateCategoryPillCount(category, photos.length);
           if (state.activeCategory === category) {
             state.filteredPhotos = photos;
@@ -1636,10 +1802,19 @@ const GLOBAL_CONFIG = {
           </div>
         ` : '';
 
+        const rot = getPhotoRotation(photo.id, activeCat);
+        let rotClass = "";
+        if (rot === 90) rotClass = " rotate-90";
+        else if (rot === 180) rotClass = " rotate-180";
+        else if (rot === 270) rotClass = " rotate-270";
+
         card.innerHTML = `
           ${newBadgeHtml}
           ${videoBadgeHtml}
-          <img class="photo-img" 
+          <button type="button" class="photo-card-rotate-btn" onclick="event.stopPropagation(); rotateSinglePhoto('${escapeHtml(photo.id)}');" title="Putar Foto 90°">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-1.19"/></svg>
+          </button>
+          <img class="photo-img${rotClass}" 
                src="${photo.thumbnailUrl}" 
                alt="${escapeHtml(photo.name)}" 
                loading="lazy" 
@@ -1995,7 +2170,7 @@ const GLOBAL_CONFIG = {
             </button>
           </div>
         </div>
-        <div style="display: grid; grid-template-columns: 1.1fr 1.6fr; gap: 8px; align-items: flex-end;">
+        <div style="display: grid; grid-template-columns: 1fr 1.3fr 0.9fr; gap: 8px; align-items: flex-end;">
           <div>
             <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 2px;">Nama Tampilan Tab</label>
             <input type="text" id="pbNameInput" class="admin-input cat-name-input" value="${escapeHtml(pbItem.name || 'Photobooth')}" oninput="onCategoryRowInput()" placeholder="Photobooth" style="padding: 7px 10px; font-size: 0.82rem;">
@@ -2003,6 +2178,15 @@ const GLOBAL_CONFIG = {
           <div>
             <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 2px;">Tautan Display / Vendor (Dapat Dicustom)</label>
             <input type="text" id="pbUrlInput" class="admin-input cat-url-input" value="${escapeHtml(pbItem.url || 'https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs')}" oninput="onCategoryRowInput()" placeholder="https://fotoshare.co/e/..." style="padding: 7px 10px; font-size: 0.82rem;">
+          </div>
+          <div>
+            <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 2px;">Auto-Rotate</label>
+            <select id="pbRotationSelect" class="admin-input" onchange="onCategoryRowInput()" style="padding: 7px 6px; font-size: 0.78rem;">
+              <option value="0" ${pbItem.rotation == 0 ? 'selected' : ''}>0° Normal</option>
+              <option value="90" ${pbItem.rotation == 90 ? 'selected' : ''}>90° ↻ Tegak</option>
+              <option value="180" ${pbItem.rotation == 180 ? 'selected' : ''}>180° Balik</option>
+              <option value="270" ${pbItem.rotation == 270 ? 'selected' : ''}>270° ↺</option>
+            </select>
           </div>
         </div>
         <div style="font-size: 0.7rem; color: #166534; margin-top: 5px; opacity: 0.85;">
@@ -2033,19 +2217,21 @@ const GLOBAL_CONFIG = {
       categories.forEach(function(item) {
         const catName = String((item && item.name) || item || "").trim();
         const catUrl = String((item && item.url) || "").trim();
+        const catRot = (item && item.rotation !== undefined) ? item.rotation : 0;
         if (catName && catName !== "Semua Foto" && !catName.toLowerCase().includes("photobooth") && catName.toLowerCase() !== "teapai") {
-          addCategoryConfigRow(catName, catUrl);
+          addCategoryConfigRow(catName, catUrl, catRot);
         }
       });
     }
 
-    function addCategoryConfigRow(name, url) {
+    function addCategoryConfigRow(name, url, rotation) {
       const container = document.getElementById("customCategoryRowsWrapper") || document.getElementById("adminCategoriesContainer");
       if (!container) return;
 
+      const rot = parseInt(rotation, 10) || 0;
       const row = document.createElement("div");
       row.className = "category-config-row";
-      row.style.cssText = "display: grid; grid-template-columns: 1.1fr 1.6fr auto auto; gap: 6px; align-items: flex-end; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 10px;";
+      row.style.cssText = "display: grid; grid-template-columns: 1fr 1.3fr 0.8fr auto auto; gap: 6px; align-items: flex-end; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 10px; border-radius: 10px;";
       row.innerHTML = `
         <div>
           <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 3px;">Nama Kategori</label>
@@ -2054,6 +2240,15 @@ const GLOBAL_CONFIG = {
         <div>
           <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 3px;">Tautan Display Galeri (Google Drive / Web)</label>
           <input type="text" class="admin-input cat-url-input" value="${escapeHtml(url || '')}" oninput="onCategoryRowInput()" placeholder="https://drive.google.com/drive/folders/..." style="padding: 7px 10px; font-size: 0.82rem;">
+        </div>
+        <div>
+          <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 3px;">Auto-Rotate</label>
+          <select class="admin-input cat-rotation-select" onchange="onCategoryRowInput()" style="padding: 7px 6px; font-size: 0.78rem;">
+            <option value="0" ${rot === 0 ? 'selected' : ''}>0° Normal</option>
+            <option value="90" ${rot === 90 ? 'selected' : ''}>90° ↻ Tegak</option>
+            <option value="180" ${rot === 180 ? 'selected' : ''}>180° Balik</option>
+            <option value="270" ${rot === 270 ? 'selected' : ''}>270° ↺</option>
+          </select>
         </div>
         <div>
           <button type="button" class="btn btn-outline" onclick="syncSingleCategory(this.closest('.category-config-row').querySelector('.cat-name-input').value)" title="Sinkronkan Kategori Ini" style="height: 34px; padding: 0 8px; font-size: 0.74rem;">
@@ -2097,13 +2292,16 @@ const GLOBAL_CONFIG = {
       const pbNameInput = document.getElementById("pbNameInput");
       const pbUrlInput = document.getElementById("pbUrlInput");
       const pbVisCheck = document.getElementById("pbVisibilityCheck");
+      const pbRotSelect = document.getElementById("pbRotationSelect");
       const pbName = (pbNameInput ? pbNameInput.value : "").trim() || "Photobooth";
       const pbUrl = (pbUrlInput ? pbUrlInput.value : "").trim() || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
       const pbEnabled = pbVisCheck ? pbVisCheck.checked : true;
+      const pbRot = pbRotSelect ? (parseInt(pbRotSelect.value, 10) || 0) : 0;
 
       list.push({
         name: pbName,
         url: pbUrl,
+        rotation: pbRot,
         enabled: pbEnabled
       });
 
@@ -2112,10 +2310,12 @@ const GLOBAL_CONFIG = {
       rows.forEach(function(r) {
         const nameInput = r.querySelector(".cat-name-input");
         const urlInput = r.querySelector(".cat-url-input");
+        const rotSelect = r.querySelector(".cat-rotation-select");
         const nameVal = (nameInput ? nameInput.value : "").trim();
         const urlVal = (urlInput ? urlInput.value : "").trim();
+        const rotVal = rotSelect ? (parseInt(rotSelect.value, 10) || 0) : 0;
         if (nameVal && nameVal.toLowerCase() !== "semua foto" && !nameVal.toLowerCase().includes("photobooth")) {
-          list.push({ name: nameVal, url: urlVal, enabled: true });
+          list.push({ name: nameVal, url: urlVal, rotation: rotVal, enabled: true });
         }
       });
       return list;
@@ -2126,6 +2326,19 @@ const GLOBAL_CONFIG = {
       const customCategoriesList = getCategoriesFromAdminInputs();
       state.customCategories = customCategoriesList;
       state.activeConfig.CUSTOM_CATEGORIES = customCategoriesList;
+
+      // Hapus cache foto kategori yang tautannya berubah
+      if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
+      if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
+      customCategoriesList.forEach(function(c) {
+        const cName = String(c.name || "").trim();
+        const cUrl = String(c.url || "").trim();
+        if (state.categoryPhotosUrlMap[cName] !== cUrl) {
+          delete state.categoryPhotosMap[cName];
+          delete state.categoryPhotosUrlMap[cName];
+        }
+      });
+      state.lastLocalCategoryEditTime = Date.now();
 
       // Update properti customCategories pada objek event aktif di state.events
       if (Array.isArray(state.events)) {
@@ -3074,6 +3287,20 @@ const GLOBAL_CONFIG = {
 
       state.activeConfig = Object.assign({}, state.activeConfig, payload);
       state.customCategories = customCategoriesList;
+
+      // Hapus cache foto untuk kategori yang tautannya berubah
+      if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
+      if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
+      customCategoriesList.forEach(function(c) {
+        const cName = String(c.name || "").trim();
+        const cUrl = String(c.url || "").trim();
+        if (state.categoryPhotosUrlMap[cName] !== cUrl) {
+          delete state.categoryPhotosMap[cName];
+          delete state.categoryPhotosUrlMap[cName];
+        }
+      });
+      state.lastLocalCategoryEditTime = Date.now();
+
       try {
         localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(customCategoriesList));
         localStorage.setItem("WEDDING_SAVED_CONFIG", JSON.stringify(state.activeConfig));
@@ -3475,8 +3702,24 @@ const GLOBAL_CONFIG = {
             ctx.fillStyle = "#FFFFFF";
             ctx.fillRect(0, 0, targetW, targetH);
 
-            // 2. Gambar foto asli dengan resolusi penuh 100% tanpa kompresi/downscaling
-            ctx.drawImage(photoImg, drawX, drawY, drawW, drawH);
+            // 2. Gambar foto asli dengan resolusi penuh 100% tanpa kompresi/downscaling (mendukung auto-rotate)
+            const rot = getPhotoRotation(photo.id, photo.category);
+            if (rot % 360 !== 0) {
+              ctx.save();
+              const cx = drawX + drawW / 2;
+              const cy = drawY + drawH / 2;
+              ctx.translate(cx, cy);
+              ctx.rotate((rot * Math.PI) / 180);
+              if (rot % 180 !== 0) {
+                const scaleRatio = Math.max(drawW / drawH, drawH / drawW);
+                ctx.drawImage(photoImg, -drawH / 2 * scaleRatio, -drawW / 2 * scaleRatio, drawH * scaleRatio, drawW * scaleRatio);
+              } else {
+                ctx.drawImage(photoImg, -drawW / 2, -drawH / 2, drawW, drawH);
+              }
+              ctx.restore();
+            } else {
+              ctx.drawImage(photoImg, drawX, drawY, drawW, drawH);
+            }
 
             // 3. Gambar bingkai PNG di atasnya dengan resolusi ultra-tinggi yang tajam
             ctx.drawImage(frameImg, 0, 0, targetW, targetH);
@@ -3734,10 +3977,16 @@ const GLOBAL_CONFIG = {
       }
 
       if (img) {
+        let rot = 0;
+        if (state.currentLightboxIndex !== undefined && state.filteredPhotos && state.filteredPhotos[state.currentLightboxIndex]) {
+          const p = state.filteredPhotos[state.currentLightboxIndex];
+          rot = getPhotoRotation(p.id, p.category);
+        }
+        const rotStr = rot ? " rotate(" + rot + "deg)" : "";
         if (lightboxZoom.scale <= 1) {
-          img.style.transform = "none";
+          img.style.transform = rotStr ? ("rotate(" + rot + "deg)") : "none";
         } else {
-          img.style.transform = "translate(" + lightboxZoom.panX + "px, " + lightboxZoom.panY + "px) scale(" + lightboxZoom.scale + ")";
+          img.style.transform = "translate(" + lightboxZoom.panX + "px, " + lightboxZoom.panY + "px)" + rotStr + " scale(" + lightboxZoom.scale + ")";
         }
       }
     }
@@ -3981,6 +4230,13 @@ const GLOBAL_CONFIG = {
 
       resetLightboxZoom();
       resetDownloadButton();
+
+      const rot = getPhotoRotation(photo.id, photo.category);
+      const rotLabelEl = document.getElementById("lightboxRotateLabel");
+      if (rotLabelEl) {
+        rotLabelEl.innerText = rot > 0 ? "Putar (" + rot + "°)" : "Putar 90°";
+      }
+      applyLightboxZoom();
 
       if (photo.isVideo) {
         if (img) img.style.display = "none";
