@@ -1109,10 +1109,10 @@
           if (isVideo) {
             videoUrl = origin + it.thumb.replace("/storage/thumbs/", "/storage/photos/").replace(/\.jpg$/i, ".mp4");
             photoUrl = videoUrl;
-            downloadUrl = origin + "/dl/" + it.id + ".mp4";
+            downloadUrl = origin + "/dl/" + it.id;
           } else {
             photoUrl = origin + it.thumb.replace("/storage/thumbs/", "/storage/photos/");
-            downloadUrl = origin + "/dl/" + it.id + ".jpg";
+            downloadUrl = origin + "/dl/" + it.id;
           }
         }
 
@@ -1254,44 +1254,72 @@
         });
     }
 
+    function triggerSilentBlobDownload(blob, fileName, isVideo) {
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.style.display = "none";
+      a.href = blobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function() {
+        a.remove();
+        URL.revokeObjectURL(blobUrl);
+      }, 15000);
+      showToast(isVideo ? "✓ Video asli berhasil diunduh!" : "✓ Foto asli berhasil disimpan ke perangkat!");
+    }
+
+    function triggerSilentIframeDownload(url, isVideo) {
+      let frame = document.getElementById("silentDownloadFrame");
+      if (!frame) {
+        frame = document.createElement("iframe");
+        frame.id = "silentDownloadFrame";
+        frame.style.display = "none";
+        frame.style.width = "0px";
+        frame.style.height = "0px";
+        frame.style.border = "none";
+        document.body.appendChild(frame);
+      }
+      frame.src = url;
+      showToast(isVideo ? "✓ Video asli sedang diunduh tanpa membuka jendela baru!" : "✓ Foto asli sedang diunduh tanpa membuka jendela baru!");
+    }
+
     function handlePhotoboothPhotoClick(photo) {
       if (!photo) return;
-      // 1. Buka sesuai dengan link asli websitenya di tab baru
-      const targetWebUrl = photo.originalWebUrl || ("https://fotoshare.co" + (photo.url || "")) || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
-      window.open(targetWebUrl, '_blank');
-
-      // 2. Gambar di-download langsung dari web aslinya
-      const downloadUrl = photo.downloadUrl || photo.img || photo.previewUrl || photo.thumbnailUrl;
-      if (downloadUrl) {
-        downloadOriginalImageDirectly(downloadUrl, (photo.name || "Photobooth") + ".jpg");
-      }
+      downloadPhotoboothOriginal(photo);
     }
 
     function downloadOriginalImageDirectly(imgUrl, fileName) {
-      fetch(imgUrl)
+      if (!imgUrl) return;
+      const isVideo = imgUrl.toLowerCase().endsWith(".mp4");
+      const ext = isVideo ? ".mp4" : ".jpg";
+      const cleanName = (fileName || (isVideo ? "Video_Photobooth" : "Photobooth")).replace(/[\/\\]/g, "_");
+      const validFileName = cleanName.endsWith(ext) ? cleanName : (cleanName + ext);
+
+      showToast(isVideo ? "🎬 Mengunduh video asli kualitas penuh..." : "📸 Mengunduh foto asli kualitas penuh...");
+
+      const proxyUrl = "/api/download-proxy?url=" + encodeURIComponent(imgUrl) + "&filename=" + encodeURIComponent(validFileName);
+
+      fetch(proxyUrl)
         .then(function(res) {
-          if (!res.ok) throw new Error("HTTP " + res.status);
+          if (!res.ok) throw new Error("Proxy HTTP " + res.status);
           return res.blob();
         })
         .then(function(blob) {
-          const blobUrl = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = blobUrl;
-          a.download = fileName;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 3000);
-          showToast("✓ Foto Photobooth asli sedang diunduh dari web!");
+          triggerSilentBlobDownload(blob, validFileName, isVideo);
         })
-        .catch(function(err) {
-          const a = document.createElement("a");
-          a.href = imgUrl;
-          a.target = "_blank";
-          a.download = fileName;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
+        .catch(function() {
+          fetch(imgUrl)
+            .then(function(res) {
+              if (!res.ok) throw new Error("Direct HTTP " + res.status);
+              return res.blob();
+            })
+            .then(function(blob) {
+              triggerSilentBlobDownload(blob, validFileName, isVideo);
+            })
+            .catch(function() {
+              triggerSilentIframeDownload(proxyUrl, isVideo);
+            });
         });
     }
 
@@ -3815,6 +3843,9 @@
         }
         if (img) {
           img.style.display = "block";
+          img.style.opacity = "1";
+          img.style.filter = "none";
+          img.style.backgroundColor = "transparent";
           img.src = sharpUrl;
         }
         if (zoomToolbar) zoomToolbar.style.display = "inline-flex";
@@ -3846,39 +3877,39 @@
     function downloadPhotoboothOriginal(photo) {
       if (!photo) return;
       const isVideo = Boolean(photo.isVideo);
-      const downloadUrl = photo.downloadUrl || photo.videoUrl || photo.img || photo.previewUrl || photo.thumbnailUrl;
+      const rawUrl = photo.downloadUrl || photo.videoUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || photo.img;
+      if (!rawUrl) return;
       const ext = isVideo ? ".mp4" : ".jpg";
-      const fileName = (photo.name || (isVideo ? "Video_Photobooth" : "Photobooth")).replace(/[\/\\]/g, "_") + ext;
+      const cleanName = (photo.name || (isVideo ? "Video_Photobooth" : "Photobooth")).replace(/[\/\\]/g, "_");
+      const fileName = cleanName.endsWith(ext) ? cleanName : (cleanName + ext);
 
-      showToast(isVideo ? "🎬 Mengunduh video asli Photobooth..." : "📸 Mengunduh foto asli Photobooth kualitas penuh...");
+      showToast(isVideo ? "🎬 Mengunduh video asli tanpa kompresi..." : "📸 Mengunduh foto asli kualitas penuh...");
 
-      fetch(downloadUrl)
+      const proxyUrl = "/api/download-proxy?url=" + encodeURIComponent(rawUrl) + "&filename=" + encodeURIComponent(fileName);
+
+      // 1. Ambil file asli via server proxy (mengabaikan CORS & tanpa kompresi)
+      fetch(proxyUrl)
         .then(function(res) {
-          if (!res.ok) throw new Error("HTTP " + res.status);
+          if (!res.ok) throw new Error("Proxy HTTP " + res.status);
           return res.blob();
         })
         .then(function(blob) {
-          const blobUrl = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = blobUrl;
-          a.download = fileName;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          setTimeout(function() {
-            URL.revokeObjectURL(blobUrl);
-          }, 10000);
-          showToast(isVideo ? "✓ Video asli Photobooth berhasil diunduh!" : "✓ Foto asli Photobooth berhasil disimpan ke perangkat!");
+          triggerSilentBlobDownload(blob, fileName, isVideo);
         })
-        .catch(function(err) {
-          console.warn("Gagal mengunduh blob Photobooth, beralih ke tautan langsung:", err);
-          const a = document.createElement("a");
-          a.href = downloadUrl;
-          a.target = "_blank";
-          a.download = fileName;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
+        .catch(function() {
+          // 2. Coba fetch langsung jika domain asal mendukung CORS
+          fetch(rawUrl)
+            .then(function(res) {
+              if (!res.ok) throw new Error("Direct HTTP " + res.status);
+              return res.blob();
+            })
+            .then(function(blob) {
+              triggerSilentBlobDownload(blob, fileName, isVideo);
+            })
+            .catch(function() {
+              // 3. Fallback hening ke invisible hidden iframe (TIDAK PERNAH BUKA WINDOW / TAB BARU)
+              triggerSilentIframeDownload(proxyUrl, isVideo);
+            });
         });
     }
 

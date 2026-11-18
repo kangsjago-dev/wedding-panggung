@@ -294,6 +294,55 @@
       line-height: 1.6;
     }
 
+    /* Layout 1: Romantic Collage Desktop */
+    .cover-collage-layout {
+      display: grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 16px;
+      max-height: 480px;
+    }
+
+    .cover-photo-main {
+      border-radius: 16px;
+      overflow: hidden;
+      height: 100%;
+      min-height: 360px;
+    }
+
+    .cover-photo-main img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: 16px;
+      opacity: 1 !important;
+      filter: none !important;
+    }
+
+    .cover-photo-side-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      height: 100%;
+    }
+
+    .cover-photo-sub {
+      flex: 1;
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: 170px;
+    }
+
+    .cover-photo-sub img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: 14px;
+      opacity: 1 !important;
+      filter: none !important;
+    }
+
     /* Layout 1: Romantic Collage Responsive */
     @media (max-width: 768px) {
       .cover-collage-layout {
@@ -473,7 +522,9 @@
       object-fit: cover;
       display: block;
       transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-      background-color: #F1EFEA;
+      background-color: transparent;
+      opacity: 1 !important;
+      filter: none !important;
     }
 
     .photo-card:hover .photo-img {
@@ -483,14 +534,15 @@
     .photo-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(to top, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0) 60%);
+      background: transparent !important;
       opacity: 0;
-      transition: opacity 0.3s ease;
+      transition: opacity 0.25s ease;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
-      padding: 16px;
+      padding: 14px;
       color: #FFFFFF;
+      pointer-events: none;
     }
 
     .photo-card:hover .photo-overlay {
@@ -510,11 +562,12 @@
       font-weight: 600;
       letter-spacing: 0.05em;
       text-transform: uppercase;
-      background: rgba(197, 168, 128, 0.9);
+      background: rgba(197, 168, 128, 0.95);
       color: #FFFFFF;
       padding: 3px 8px;
       border-radius: 6px;
       margin-bottom: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
     }
 
     /* Lencana / Badge Foto Baru Diupload */
@@ -569,12 +622,22 @@
     }
 
     .photo-name {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 600;
       line-height: 1.3;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      background: rgba(15, 23, 42, 0.75);
+      color: #FFFFFF;
+      padding: 3px 10px;
+      border-radius: 6px;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: inline-block;
+      align-self: flex-start;
+      max-width: 90%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
 
     .skeleton-card {
@@ -613,13 +676,11 @@
       position: fixed;
       inset: 0;
       z-index: 100;
-      background-color: rgba(253, 251, 247, 0.97);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      background-color: #FFFFFF;
       display: none;
       flex-direction: column;
       opacity: 0;
-      transition: opacity 0.3s ease;
+      transition: opacity 0.25s ease;
     }
 
     .lightbox-modal.active {
@@ -631,9 +692,10 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 16px 24px;
+      padding: 14px 24px;
       color: #1E293B;
-      border-bottom: 1px solid rgba(197, 168, 128, 0.22);
+      background: #FFFFFF;
+      border-bottom: 1px solid rgba(197, 168, 128, 0.2);
       z-index: 10;
     }
 
@@ -761,12 +823,15 @@
       max-height: 75vh;
       object-fit: contain;
       border-radius: 8px;
-      box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
       user-select: none;
       -webkit-user-drag: none;
       transition: transform 0.15s ease-out;
       transform-origin: center center;
       image-rendering: -webkit-optimize-contrast;
+      opacity: 1 !important;
+      filter: none !important;
+      background-color: transparent !important;
     }
 
     .lightbox-video {
@@ -840,8 +905,8 @@
       justify-content: center;
       flex-wrap: wrap;
       gap: 14px;
-      padding: 14px 24px 24px;
-      background: rgba(253, 251, 247, 0.9);
+      padding: 14px 24px 20px;
+      background: #FFFFFF;
       border-top: 1px solid rgba(197, 168, 128, 0.2);
       z-index: 10;
     }

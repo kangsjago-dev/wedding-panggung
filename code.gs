@@ -845,10 +845,10 @@ function scanKingPhotoboothEvent(eventUrl, catName) {
         if (isVideo) {
           videoUrl = origin + it.thumb.replace("/storage/thumbs/", "/storage/photos/").replace(/\.jpg$/i, ".mp4");
           photoUrl = videoUrl;
-          downloadUrl = origin + "/dl/" + it.id + ".mp4";
+          downloadUrl = origin + "/dl/" + it.id;
         } else {
           photoUrl = origin + it.thumb.replace("/storage/thumbs/", "/storage/photos/");
-          downloadUrl = origin + "/dl/" + it.id + ".jpg";
+          downloadUrl = origin + "/dl/" + it.id;
         }
       }
 
