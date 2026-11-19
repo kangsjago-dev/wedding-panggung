@@ -883,8 +883,10 @@ function isGooglePhotosUrl(url) {
             if (!isEditingLocally && !isModalOpen) {
               if (sheetMap.DRIVE_FOLDER_ID && (!matchedEv || !matchedEv.driveFolderId)) state.activeConfig.DRIVE_FOLDER_ID = sheetMap.DRIVE_FOLDER_ID;
               if (sheetMap.ALL_PHOTOS_LABEL && (!matchedEv || !matchedEv.allPhotosLabel)) state.allPhotosLabel = sheetMap.ALL_PHOTOS_LABEL;
+              if (matchedEv) {
+                state.activeConfig.FRAME_IMAGE_URL = matchedEv.frameImageUrl || "";
+              }
             }
-            if (sheetMap.FRAME_IMAGE_URL) state.activeConfig.FRAME_IMAGE_URL = sheetMap.FRAME_IMAGE_URL;
             if (sheetMap.GAS_API_URL && sheetMap.GAS_API_URL.startsWith('http')) {
               state.gasApiUrl = sheetMap.GAS_API_URL;
             }
@@ -2488,26 +2490,6 @@ function isGooglePhotosUrl(url) {
 
       // Jika foto kosong untuk kategori ini
       if (!state.filteredPhotos || state.filteredPhotos.length === 0) {
-        let switchButtonHtml = "";
-        const mainLabel = state.allPhotosLabel || "Semua Foto";
-        const isMainTab = (activeCat.toLowerCase() === mainLabel.toLowerCase() || activeCat.toLowerCase() === "semua foto");
-        if (isMainTab && Array.isArray(state.customCategories)) {
-          const pbCat = state.customCategories.find(function(c) {
-            return c && c.enabled !== false && c.name && c.name.toLowerCase() !== mainLabel.toLowerCase();
-          });
-          if (pbCat && pbCat.name) {
-            const pbCount = (state.categoryPhotosMap && state.categoryPhotosMap[pbCat.name] && state.categoryPhotosMap[pbCat.name].length) || "";
-            switchButtonHtml = `
-              <button type="button" class="empty-gallery-btn-refresh" style="background: var(--gold-dark); color: #FFFFFF; border-color: var(--gold-dark); font-weight: 600;" onclick="selectCategory('${escapeHtml(pbCat.name)}', '${escapeHtml(pbCat.url || '')}')">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-                <span>Buka Foto ${escapeHtml(pbCat.name)} ${pbCount ? '(' + pbCount + ' Foto) ' : ''}&rarr;</span>
-              </button>
-            `;
-          }
-        }
-
         grid.innerHTML = `
           <div class="empty-gallery-card">
             <div class="empty-gallery-icon-wrap" aria-hidden="true">
@@ -2528,7 +2510,6 @@ function isGooglePhotosUrl(url) {
                 </svg>
                 <span>Segarkan Kategori Ini</span>
               </button>
-              ${switchButtonHtml}
               ${targetUrl ? `
                 <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="empty-gallery-btn-source">
                   <span>Buka Album Sumber</span>

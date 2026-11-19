@@ -66,9 +66,9 @@ test("applyCategoryFilter aman terhadap parameter category null/undefined", () =
   assert(appJs.includes('const effectiveCat = String(category || state.activeCategory || state.allPhotosLabel || "Semua Foto").trim()'), "applyCategoryFilter harus mendefinisikan effectiveCat yang aman");
 });
 
-// Test 8: renderPhotoGrid provides button to jump to Photobooth if main photos empty
-test("renderPhotoGrid menyediakan tombol pintas ke Photobooth jika foto photostage kosong", () => {
-  assert(appJs.includes('Buka Foto ${escapeHtml(pbCat.name)}'), "renderPhotoGrid harus menyediakan tombol Buka Foto Photobooth");
+// Test 8: renderPhotoGrid tidak lagi menyediakan tombol pintas ke Photobooth sesuai revisi v4.22.0
+test("renderPhotoGrid tidak lagi menyediakan tombol pintas Buka Foto Photobooth", () => {
+  assert(!appJs.includes('Buka Foto'), "renderPhotoGrid tidak boleh lagi memuat tombol Buka Foto Photobooth");
 });
 
 // Test 9: config.json is clean with 2 distinct events

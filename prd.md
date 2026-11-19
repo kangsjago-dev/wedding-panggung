@@ -1,6 +1,6 @@
 # PRD - Wedding Photo Gallery & Live Slideshow Platform
 **Sistem**: Multi-Event Wedding Gallery with ERP Master Data Architecture  
-**Versi**: v4.21.0-PROD  
+**Versi**: v4.22.0-PROD  
 **Arsitektur Database**: Google Sheets ERP Master Table + Google Drive Live Photo Catalog  
 **Terakhir Diperbarui**: 19 November 2026
 
@@ -190,3 +190,13 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
 - **Penyembunyian Menyeluruh Bilah Filter Bawah & Grup Kontrol Aksi (Share, Refresh, Gembok Admin)**:
   - Memperbaiki selektor penyembunyian pada hidrasi awal [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) dan fungsi `showEventNotFoundScreen()` di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) untuk secara akurat menargetkan `#gallerySection` (`.filter-wrapper`) dan `#adminActiveFloatingBar`.
   - Memasang aturan CSS fail-safe `#eventNotFoundScreen:not([style*="display: none"]) ~ #gallerySection` sehingga tab "Semua Foto" dan ikon aksi bawah terjamin 100% tersembunyi tanpa risiko keterlambatan eksekusi JavaScript.
+
+### 2.22 Redesain Galeri Frameless, Eliminasi Tombol Photobooth & Pembersihan Total Hardcoded Fallback (v4.22.0)
+- **Galeri Frameless & Borderless**:
+  - Menghapus border, box-shadow, dan background kaku pada kartu status kosong foto `.empty-gallery-card` di [css/style.css](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/css/style.css) sehingga tampil bersih menyatu dengan latar belakang (*minimalist aesthetic*).
+  - Menghapus border pada kartu foto individual `.photo-card` sehingga seluruh foto tampil bersih, elegan, dan *edge-to-edge* (borderless).
+- **Penghapusan Tombol Pintas Photobooth**:
+  - Menghapus tombol pintas `Buka Foto Photobooth (... Foto) →` dari `renderPhotoGrid()` di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js). Area kategori kosong hanya menyajikan tombol *"Segarkan Kategori Ini"*.
+- **Pembersihan Total Fallback Hardcode (100% Realtime Database Murni)**:
+  - Mengosongkan seluruh parameter fallback root di [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/config.json) (`FRAME_IMAGE_URL: ""`, `DRIVE_FOLDER_ID: ""`, `ACTIVE_EVENT_ID: ""`, `EVENT_NAME: ""`, `PHOTOBOOTH_URL: ""`, `CUSTOM_CATEGORIES: []`).
+  - Mengisolasi pembacaan frame per acara di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) murni dari `matchedEv.frameImageUrl`, mencegah pewarisan frame global yang tidak diinginkan.
