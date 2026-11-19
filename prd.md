@@ -1,8 +1,8 @@
 # PRD - Wedding Photo Gallery & Live Slideshow Platform
 **Sistem**: Multi-Event Wedding Gallery with ERP Master Data Architecture  
-**Versi**: v4.23.0-PROD  
+**Versi**: v4.25.0-PROD  
 **Arsitektur Database**: Google Sheets ERP Master Table + Google Drive Live Photo Catalog  
-**Terakhir Diperbarui**: 19 November 2026
+**Terakhir Diperbarui**: 20 November 2026
 
 ---
 
@@ -213,3 +213,26 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
   - Menambahkan `AbortController` dengan timeout 4 detik pada pemanggilan `/api/drive-folder` sehingga otomatis beralih ke backend GAS jika serverless scrape tidak merespons.
 - **Jaminan Konsistensi Metadata Multi-Event pada Backend Google Apps Script (`code.gs`)**:
   - Memastikan seluruh cabang pengembalian pada `getGalleryData()` (termasuk folder kosong dan folder baru) selalu menyertakan `events: eventsList` dan `activeEventId: selectedEventId` agar frontend selalu menerima registry acara lengkap.
+
+### 2.24 Resolusi Infinite Onerror Logo Loop & Penuntasan Tab Spinner Loading (v4.24.0)
+- **Eliminasi Infinite Onerror Loop pada Elemen Logo (`#heroLogoImg` & `#adminLogoPreviewImg`)**:
+  - Menghapus atribut kosong `src=""` pada tag `<img>` di [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) yang secara otomatis di-resolve browser ke URL halaman dan memicu loop penugasan error tak berujung.
+  - Memperbarui event handler `onerror` menjadi self-detaching: `this.onerror=null; this.removeAttribute('src'); if (this.parentElement) this.parentElement.style.display='none';`.
+  - Mengubah seluruh logika reset logo pada inline micro-loader [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) dan [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) dari `img.src = ""` menjadi `img.removeAttribute('src')`.
+- **Watchdog Timeout pada Koneksi Backend Apps Script (`callBackend`)**:
+  - Memasang `AbortController` dengan batas timeout 8 detik pada fungsi `callBackend()` di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) guna mencegah koneksi pending permanen dari pemanggilan macro GAS.
+- **Penyelarasan Pre-Hydration Event Tommy & Natasha di `config.json`**:
+  - Mendaftarkan `tommy-natasha-594` ke array `EVENTS` statis di [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/config.json) untuk memastikan hidrasi instan 0ms saat halaman di-refresh.
+
+### 2.25 Sinkronisasi Total Multi-Event ke Sheet 'Daftar_Acara' & Penambahan Baris Realtime (v4.25.0)
+- **Fungsi Setup Mandiri 1-Klik (`populateDaftarAcara`) pada `setup.gs`**:
+  - Menempatkan fungsi `populateDaftarAcara()` pada baris teratas [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/setup.gs) sebagai fungsi default saat berkas dibuka di Google Apps Script. Sekali klik **Run (▶️)**, ke-3 event aktif (`andre-fayola-281`, `wilson-felicia-133`, `tommy-natasha-594`) langsung dimasukkan dan diformat rapi dengan header emas 11 kolom pada spreadsheet `133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20`.
+  - Memperbarui `setupTargetSpreadsheetDatabase()` agar secara otomatis mengisikan ke-3 event tersebut jika baris data masih kosong ($row \le 1$).
+- **Fungsi Append Baris Realtime & Endpoint Backend (`code.gs`)**:
+  - Menambahkan fungsi `addEventToSheet(ss, ev)` dan `syncAllEventsToSheet()` pada [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) untuk menggaransi bahwa setiap penambahan event baru langsung menyisipkan baris fisik ke sheet `Daftar_Acara`.
+  - Menambahkan action API `addEvent` dan `syncDaftarAcara` pada `handleApiRequest()` untuk melayani instruksi sinkronisasi langsung dari Web Admin.
+  - Menyelaraskan ukuran 11 kolom penuh termasuk `Logo_Acara` (260px) dan `Status` (100px).
+- **Integrasi Dua Arah Web Admin & GViz Realtime Sync (`js/app.js` & `index.html`)**:
+  - Pada penambahan event baru (`handleAddNewEvent`), selain menyimpan konfigurasi global, frontend langsung memicu `callBackend("addEvent", ...)` untuk append baris ke sheet `Daftar_Acara`.
+  - Pada `syncFromSpreadsheetGViz()`, menambahkan pembacaan berkala dari `sheet=Daftar_Acara` sehingga penambahan atau perubahan baris event yang dilakukan langsung di Google Sheets secara realtime otomatis terbaca dan tersinkronisasi ke aplikasi web.
+  - Menambahkan tombol *"📊 Sinkronkan ke Sheets"* pada antarmuka admin Tab Acara di [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) yang memanggil `triggerSyncDaftarAcara()`.

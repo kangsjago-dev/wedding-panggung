@@ -384,15 +384,62 @@ function setupTargetSpreadsheetDatabase() {
   if (!sheetEvents) {
     sheetEvents = ss.insertSheet("Daftar_Acara", 2);
   }
+  var eventHeaders = [["ID_Event", "Nama_Acara", "Tanggal_Acara", "Venue_Lokasi", "Tautan_Home_Event", "Google_Drive_Folder_ID", "Photobooth_Vendor_URL", "Kategori_JSON", "Bingkai_URL", "Logo_Acara", "Status"]];
   if (sheetEvents.getLastRow() === 0) {
-    var eventHeaders = [["ID_Event", "Nama_Acara", "Tanggal_Acara", "Venue_Lokasi", "Tautan_Home_Event", "Google_Drive_Folder_ID", "Photobooth_Vendor_URL", "Kategori_JSON", "Bingkai_URL", "Status"]];
-    sheetEvents.getRange(1, 1, 1, 10).setValues(eventHeaders)
+    sheetEvents.getRange(1, 1, 1, 11).setValues(eventHeaders)
       .setBackground("#C5A880")
       .setFontColor("#FFFFFF")
       .setFontWeight("bold")
       .setHorizontalAlignment("center");
     sheetEvents.setFrozenRows(1);
   }
+
+  // Jika data masih kosong (hanya ada header), masukkan ke-3 event aktif default
+  if (sheetEvents.getLastRow() <= 1) {
+    var defaultEvents = [
+      [
+        "andre-fayola-281",
+        "Andre & Fayola",
+        "22 November 2026",
+        "UPPERHILLS CONVENTION HALLS",
+        "https://gallery.runway.my.id/?event=andre-fayola-281",
+        "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh",
+        "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
+        JSON.stringify([{ name: "Photobooth", url: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8", enabled: true, isPhotobooth: true }]),
+        "",
+        "",
+        "Aktif"
+      ],
+      [
+        "wilson-felicia-133",
+        "Wilson & Felicia",
+        "16 November 2026",
+        "UpperHills Convention Hall, Makassar",
+        "https://gallery.runway.my.id/?event=wilson-felicia-133",
+        "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
+        "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+        JSON.stringify([{ name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", enabled: true, isPhotobooth: true }]),
+        "",
+        "",
+        "Aktif"
+      ],
+      [
+        "tommy-natasha-594",
+        "Tommy & Natasha",
+        "Rabu, 25 November 2026",
+        "UpperHills Convention Hall, Makassar",
+        "https://gallery.runway.my.id/?event=tommy-natasha-594",
+        "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh",
+        "https://photos.google.com/share/AF1QipMagPm7xWB2YANajDr3hx-J4WKyhOgIQ41jUjqQnxv5LSy6392pyWC5hOfsQoz1mA?key=c1BLMDNyRGw4bEJyUWo5b1Y0eFlmTy14X1pESEdR",
+        JSON.stringify([{ id: "special_photobooth", name: "Photobooth", url: "https://photos.google.com/share/AF1QipMagPm7xWB2YANajDr3hx-J4WKyhOgIQ41jUjqQnxv5LSy6392pyWC5hOfsQoz1mA?key=c1BLMDNyRGw4bEJyUWo5b1Y0eFlmTy14X1pESEdR", enabled: true, isPhotobooth: true }]),
+        "",
+        "",
+        "Aktif"
+      ]
+    ];
+    sheetEvents.getRange(2, 1, defaultEvents.length, eventHeaders[0].length).setValues(defaultEvents);
+  }
+
   sheetEvents.setColumnWidth(1, 180);
   sheetEvents.setColumnWidth(2, 220);
   sheetEvents.setColumnWidth(3, 160);
@@ -402,7 +449,8 @@ function setupTargetSpreadsheetDatabase() {
   sheetEvents.setColumnWidth(7, 300);
   sheetEvents.setColumnWidth(8, 300);
   sheetEvents.setColumnWidth(9, 260);
-  sheetEvents.setColumnWidth(10, 100);
+  sheetEvents.setColumnWidth(10, 260);
+  sheetEvents.setColumnWidth(11, 100);
 
   // 3. Sheet: Daftar_Foto (Safe Non-Destructive Init)
   var sheetPhotos = ss.getSheetByName("Daftar_Foto");
@@ -655,12 +703,142 @@ function syncEventsToSheet(ss, eventsList) {
     sheet.setColumnWidth(7, 300);
     sheet.setColumnWidth(8, 300);
     sheet.setColumnWidth(9, 260);
-    sheet.setColumnWidth(10, 100);
+    sheet.setColumnWidth(10, 260);
+    sheet.setColumnWidth(11, 100);
 
     SpreadsheetApp.flush();
   } catch (e) {
     Logger.log('Gagal sinkronisasi Daftar_Acara: ' + e.toString());
   }
+}
+
+/**
+ * 4d. Menambahkan atau Memperbarui 1 Event ke Sheet 'Daftar_Acara'
+ */
+function addEventToSheet(ss, ev) {
+  if (!ss || !ev || !ev.id) return false;
+  try {
+    var sheet = ss.getSheetByName('Daftar_Acara');
+    if (!sheet) {
+      syncEventsToSheet(ss, [ev]);
+      return true;
+    }
+
+    var data = sheet.getDataRange().getValues();
+    var existingRowIndex = -1;
+    for (var r = 1; r < data.length; r++) {
+      if (String(data[r][0] || '').trim().toLowerCase() === String(ev.id).trim().toLowerCase()) {
+        existingRowIndex = r + 1; // 1-based index
+        break;
+      }
+    }
+
+    var homeLink = ev.homeUrl || ('https://gallery.runway.my.id/?event=' + encodeURIComponent(ev.id));
+    var catStr = '';
+    if (ev.customCategories) {
+      catStr = typeof ev.customCategories === 'string' ? ev.customCategories : JSON.stringify(ev.customCategories);
+    }
+    var rowData = [
+      ev.id,
+      ev.name || '',
+      ev.date || '',
+      ev.venue || '',
+      homeLink,
+      ev.driveFolderId || '',
+      ev.photoboothUrl || '',
+      catStr,
+      ev.frameImageUrl || '',
+      ev.logoUrl || ev.EVENT_LOGO_URL || '',
+      ev.status || 'Aktif'
+    ];
+
+    if (existingRowIndex > 0) {
+      sheet.getRange(existingRowIndex, 1, 1, rowData.length).setValues([rowData]);
+    } else {
+      sheet.appendRow(rowData);
+    }
+
+    SpreadsheetApp.flush();
+    return true;
+  } catch (e) {
+    Logger.log('Gagal menambah event ke sheet: ' + e.toString());
+    return false;
+  }
+}
+
+/**
+ * 4e. Sinkronisasi Semua Event dari Registry / Script Properties ke Sheet 'Daftar_Acara'
+ */
+function syncAllEventsToSheet() {
+  var ss = getDatabaseSpreadsheet();
+  if (!ss) return { success: false, message: "Database spreadsheet tidak ditemukan." };
+
+  var config = getEffectiveConfig();
+  var evList = [];
+  try {
+    evList = typeof config.EVENTS === 'string' ? JSON.parse(config.EVENTS) : (config.EVENTS || []);
+  } catch (e) {
+    evList = [];
+  }
+
+  // Jika evList kosong, gunakan default 3 event
+  if (!Array.isArray(evList) || evList.length === 0) {
+    evList = [
+      {
+        id: "andre-fayola-281",
+        name: "Andre & Fayola",
+        date: "22 November 2026",
+        venue: "UPPERHILLS CONVENTION HALLS",
+        homeUrl: "https://gallery.runway.my.id/?event=andre-fayola-281",
+        driveFolderId: "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh",
+        photoboothUrl: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
+        customCategories: [{ name: "Photobooth", url: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8", enabled: true, isPhotobooth: true }],
+        frameImageUrl: "",
+        logoUrl: "",
+        status: "Aktif"
+      },
+      {
+        id: "wilson-felicia-133",
+        name: "Wilson & Felicia",
+        date: "16 November 2026",
+        venue: "UpperHills Convention Hall, Makassar",
+        homeUrl: "https://gallery.runway.my.id/?event=wilson-felicia-133",
+        driveFolderId: "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
+        photoboothUrl: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+        customCategories: [{ name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", enabled: true, isPhotobooth: true }],
+        frameImageUrl: "",
+        logoUrl: "",
+        status: "Aktif"
+      },
+      {
+        id: "tommy-natasha-594",
+        name: "Tommy & Natasha",
+        date: "Rabu, 25 November 2026",
+        venue: "UpperHills Convention Hall, Makassar",
+        homeUrl: "https://gallery.runway.my.id/?event=tommy-natasha-594",
+        driveFolderId: "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh",
+        photoboothUrl: "https://photos.google.com/share/AF1QipMagPm7xWB2YANajDr3hx-J4WKyhOgIQ41jUjqQnxv5LSy6392pyWC5hOfsQoz1mA?key=c1BLMDNyRGw4bEJyUWo5b1Y0eFlmTy14X1pESEdR",
+        customCategories: [{ id: "special_photobooth", name: "Photobooth", url: "https://photos.google.com/share/AF1QipMagPm7xWB2YANajDr3hx-J4WKyhOgIQ41jUjqQnxv5LSy6392pyWC5hOfsQoz1mA?key=c1BLMDNyRGw4bEJyUWo5b1Y0eFlmTy14X1pESEdR", enabled: true, isPhotobooth: true }],
+        frameImageUrl: "",
+        logoUrl: "",
+        status: "Aktif"
+      }
+    ];
+  }
+
+  syncEventsToSheet(ss, evList);
+  return {
+    success: true,
+    message: "Seluruh " + evList.length + " event berhasil disinkronkan ke sheet 'Daftar_Acara'!",
+    totalEvents: evList.length
+  };
+}
+
+/**
+ * 4f. Alias fungsi populateDaftarAcara untuk kompatibilitas 1-Klik di Apps Script
+ */
+function populateDaftarAcara() {
+  return syncAllEventsToSheet();
 }
 
 /**
@@ -859,6 +1037,13 @@ function handleApiRequest(e) {
       return deleteAdminUser(params.pin, params.targetUserId);
     } else if (action === "deleteEvent") {
       return deleteEvent(params.pin, params.targetEventId || params.eventId);
+    } else if (action === "addEvent") {
+      var evData = params.event || params.eventData || params;
+      var ssDb = getDatabaseSpreadsheet();
+      var added = addEventToSheet(ssDb, evData);
+      return { success: added, message: added ? "Event berhasil ditambahkan ke sheet 'Daftar_Acara'!" : "Gagal menambahkan event ke sheet 'Daftar_Acara'." };
+    } else if (action === "syncDaftarAcara" || action === "syncEvents" || action === "populateDaftarAcara") {
+      return syncAllEventsToSheet();
     } else if (action === "changeAdminPin") {
       return changeAdminPin(params.pin, params.newPin);
     } else if (action === "getFolderPhotos" || action === "getCategoryPhotos") {
@@ -2271,6 +2456,15 @@ function saveAdminSettings(pin, updatedConfig) {
             }
           } catch(eEvSync) {
             Logger.log("Info syncEventsToSheet: " + eEvSync.toString());
+          }
+        }
+
+        // Jika ada penambahan event tunggal spesifik
+        if (updatedConfig.event && updatedConfig.event.id) {
+          try {
+            addEventToSheet(dbSpreadsheet, updatedConfig.event);
+          } catch(eEvSingle) {
+            Logger.log("Info addEventToSheet: " + eEvSingle.toString());
           }
         }
 

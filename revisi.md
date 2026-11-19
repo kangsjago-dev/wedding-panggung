@@ -1,82 +1,92 @@
-# STATUS REVISI SISTEM (revisi.md) - v4.23.0
+# STATUS REVISI SISTEM (revisi.md) - v4.25.0
 ================================================================================
-STATUS: SELESAI DITERAPKAN (MERGED TO MASTER CONTEXT & PRD v4.23.0)
-PERMINTAAN: Perbaiki event baru dibuat, saat di-refresh tetap loading (skeleton cards shimmer tidak berhenti).
-TANGGAL PENERAPAN: 19 November 2026
-HASIL VERIFIKASI: 7 PENGUJIAN OTOMATIS PASS 100% (0 FAIL)
+STATUS: SELESAI DITERAPKAN (MERGED TO MASTER CONTEXT & PRD v4.25.0)
+PERMINTAAN: Terapkan semua event ke sheet "Daftar_Acara" (ke-3 event saat ini) dan setiap penambahan event baru otomatis dimasukkan ke sheet tersebut.
+TANGGAL PENGAJUAN: 20 November 2026
+VERSI TARGET: v4.25.0-PROD
 ================================================================================
-
-## 1. Ringkasan Eksekusi & Solusi yang Diterapkan:
-1. **Pembersihan Skeleton Instan di Awal (`initApp`)**:
-   - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) baris 619–635:
-     Pada event baru dibuat yang belum memiliki cache foto di `localStorage`, fungsi `initApp()` seketika memanggil `renderPhotoGrid()` dalam 0 milidetik. Kartu skeleton awal segera digantikan oleh status *"Momen Indah Sedang Disiapkan"* tanpa menunggu request jaringan.
-2. **Pencegahan Abort Prematur di `config.json`**:
-   - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) baris 670:
-     Menghilangkan pemanggilan abort 404 pada pembacaan `config.json` statis sehingga alur inisialisasi selalu mengalir ke `syncFromSpreadsheetGViz()` yang membaca data event baru dari database Google Spreadsheet.
-3. **Fail-Safe Watchdog Timer (3.5 Detik)**:
-   - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) pada `fetchGalleryData()` dan `showGridSkeleton()`:
-     Memasang pengaman otomatis berdurasi 3.5 detik yang langsung menghentikan animasi loading dan merender galeri jika jaringan eksternal/backend mengalami latensi.
-   - Menambahkan `AbortController` 4 detik pada pemanggilan `/api/drive-folder` sehingga otomatis fallback ke Google Apps Script backend jika scraper serverless kosong/tidak merespons.
-4. **Pembersihan Total Skeleton di `handleGalleryResponse()`**:
-   - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) baris 1331–1343:
-     Jika galeri menerima 0 foto (event baru), seluruh elemen `.skeleton-card` dipastikan dihapus dan `renderPhotoGrid()` langsung dipanggil.
-5. **Penyelarasan Backend Google Apps Script (`code.gs`)**:
-   - Di [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) baris 1020–1058:
-     Menjamin bahwa seluruh return data dari `getGalleryData()` (termasuk saat folder kosong atau baru dibuat) selalu menyertakan `events: eventsList` dan `activeEventId: selectedEventId`.
-6. **Hasil Verifikasi Otomatis**:
-   - Seluruh 7 pengujian di [scratch/test_new_event_refresh_fix.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/scratch/test_new_event_refresh_fix.js) **PASS 100% (0 Fail)**.
-   - Seluruh 5 pengujian di [scratch/test_frameless_photo_and_no_fallback.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/scratch/test_frameless_photo_and_no_fallback.js) **PASS 100% (0 Fail)**.
-   - Pengecekan sintaks `node --check js/app.js` **Exit Code 0 (Bebas Syntax Error)**.
 
 ## 1. Analisis Akar Masalah (Root Cause Analysis)
 
-Berdasarkan investigasi menyeluruh pada alur inisialisasi aplikasi ([index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) dan [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js)), ditemukan penyebab utama mengapa halaman event baru yang baru dibuat tetap terkunci pada animasi loading (kartu skeleton abu-abu bersinar/shimmer tiada henti) saat di-refresh:
+Berdasarkan pemeriksaan langsung via query Google Sheets Visualization API (GViz) terhadap spreadsheet aktif (`133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20`):
+- Sheet `Daftar_Acara` **hanya memiliki 1 baris (baris header saja)**:
+  `["ID_Event", "Nama_Acara", "Tanggal_Acara", "Venue_Lokasi", "Tautan_Home_Event", "Google_Drive_Folder_ID", "Photobooth_Vendor_URL", "Kategori_JSON", "Bingkai_URL", "Logo_Acara", "Status"]`.
+- Baris data untuk 3 event aktif (`andre-fayola-281`, `wilson-felicia-133`, dan `tommy-natasha-594`) **belum terisi di dalam sheet Daftar_Acara**.
 
-1. **HTML Awal Memuat Kartu Skeleton Permanen Tanpa Pembersih Awal untuk Event Baru**:
-   - Pada [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) baris 252–257, `#photosGrid` secara default berisi 6 elemen `<div class="skeleton-card"></div>`.
-   - Pada event lama, fungsi `initApp()` langsung memanggil `renderPhotoGrid()` di baris 628 karena cache foto (`WEDDING_EVENT_PHOTOS_<id>`) sudah ada di `localStorage`, sehingga skeleton hilang dalam 0 milidetik.
-   - Namun pada **event yang baru dibuat**, foto masih 0 (belum ada cache). Akibatnya, `renderPhotoGrid()` **tidak pernah dipanggil** di `initApp()`, sehingga kartu skeleton tetap menggantung di layar sambil menunggu seluruh rangkaian request jaringan (config.json, spreadsheet GViz, API endpoint, GAS) yang memakan waktu lama atau rentan pending.
-
-2. **Abort Prematur & Race Condition pada `fetch("config.json")`**:
-   - Pada [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) baris 664–673:
-     `config.json` merupakan file statis di server yang hanya berisi event default (`andre-fayola-281` dan `wilson-felicia-133`).
-     Jika event baru dibuka pada tab baru / browser baru yang belum membaca sinkronisasi spreadsheet, kode melakukan:
-     `if (!matchedEv) { showEventNotFoundScreen(true, explicitUrl); return; }`
-     Hal ini memutus alur normal sebelum `syncFromSpreadsheetGViz()` sempat mengambil data event dari database Google Spreadsheet!
-
-3. **`fetchGalleryData()` Menimpa Grid dengan Skeleton Tanpa Batas Waktu Fail-Safe**:
-   - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) baris 1094–1103:
-     Setiap kali `fetchGalleryData()` dipanggil saat foto kosong (`state.allPhotos.length === 0`), `#photosGrid` disetel ulang menjadi 6 kartu skeleton.
-     Jika pemanggilan `/api/drive-folder` atau backend Google Apps Script mengalami latensi, redirect 302, kuota Google Drive, atau folder kosong, tidak ada timer pengaman (*fail-safe timeout*). Akibatnya kartu skeleton terjebak (*deadlock*) dan tidak pernah digantikan oleh kartu status kosong (`.empty-gallery-card`).
-
-4. **Kategori Kustom Memanggil `showGridSkeleton()` yang Mengunci Tampilan**:
-   - Di baris 2350 pada `applyCategoryFilter()`, setiap perpindahan/sinkronisasi kategori non-utama memanggil `showGridSkeleton()`. Jika link Photobooth atau folder belum selesai di-fetch atau memakan waktu hingga belasan detik, skeleton kembali dipasang dan terkunci.
+### Mengapa hal ini terjadi?
+1. **Fungsi Inisialisasi Setup (`setup.gs`) Hanya Menulis Header**:
+   Pada [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/setup.gs) baris 161–185, fungsi `setupTargetSpreadsheetDatabase()` hanya membuat lembar kerja dan menulis header 11 kolom. Tidak ada kode injeksi baris data event default ke sheet `Daftar_Acara`.
+2. **Penambahan Event Baru Belum Memicu Append Baris Nyata**:
+   Pada [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) saat fungsi `handleAddNewEvent()` dijalankan, data event baru dikirim ke `saveAdminSettings`. Di sisi Google Apps Script, fungsi `saveAdminSettings` baru mencatat `EVENTS` sebagai teks string JSON di sheet `Pengaturan`, sedangkan pemanggilan `syncEventsToSheet()` belum memiliki action khusus `addEvent` atau fallback mandiri jika deployment Web App GAS masih menggunakan versi cache lama.
+3. **Ketiadaan Fungsi Mandiri 1-Klik**:
+   Belum ada fungsi mandiri `populateDaftarAcara()` di baris teratas [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/setup.gs) yang dapat di-run langsung oleh pengguna di editor Google Apps Script untuk langsung mengisi ke-3 event ke Google Sheets.
 
 ---
 
 ## 2. Rencana Solusi & Implementasi (Action Plan)
 
-### Langkah 1: Resolusi Instan di `initApp()` (Zero Skeleton Stuck)
-- Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) pada blok inisialisasi cache foto:
-  - Jika event terdeteksi aktif (baik dari URL maupun registry lokal) tetapi belum memiliki foto tersimpan (`savedPhotos` kosong / null), **segera panggil `renderPhotoGrid()`** agar kartu skeleton langsung digantikan oleh tampilan bersih *"Momen Indah Sedang Disiapkan"* secara instan tanpa menunggu request jaringan.
+### Langkah 1: Pembaruan `setup.gs` (Inisialisasi & Pengisian Instan 1-Klik)
+1. **Buat Fungsi Paling Atas `populateDaftarAcara()`**:
+   - Menempatkan fungsi `populateDaftarAcara()` di posisi paling atas [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/setup.gs) agar langsung terpilih sebagai default saat file dibuka di Google Apps Script editor.
+   - Fungsi ini secara otomatis membuka spreadsheet `133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20`, memeriksa sheet `Daftar_Acara`, menuliskan header emas 11 kolom, dan langsung menyisipkan ke-3 event aktif:
+     * Event 1: `andre-fayola-281` (Andre & Fayola)
+     * Event 2: `wilson-felicia-133` (Wilson & Felicia)
+     * Event 3: `tommy-natasha-594` (Tommy & Natasha)
+   - Lengkap dengan folder Google Drive, vendor photobooth, kategori JSON, dan tautan galeri masing-masing.
+2. **Perbarui `setupTargetSpreadsheetDatabase()`**:
+   - Jika sheet `Daftar_Acara` kosong (hanya header), otomatis isikan ke-3 data event tersebut tanpa menghapus data baru yang mungkin ditambahkan manual oleh admin.
 
-### Langkah 2: Jangan Abort di `fetch("config.json")` Sebelum Spreadsheet Sync
-- Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) baris 670:
-  - Hapus pemanggilan `showEventNotFoundScreen(true)` di dalam `config.json`.
-  - Jika event URL belum ditemukan di `config.json`, biarkan alur berlanjut secara elegan ke `syncFromSpreadsheetGViz()` karena event-event baru tersimpan secara realtime di Google Spreadsheet Database.
+### Langkah 2: Pembaruan `code.gs` (Backend Sinkronisasi & Penambahan Realtime)
+1. **Fungsi `addEventToSheet(ss, eventObj)`**:
+   - Membuat fungsi yang secara eksplisit melakukan append baris baru ke sheet `Daftar_Acara` setiap kali event baru dibuat.
+2. **Fungsi Mandiri `syncAllEventsToSheet()`**:
+   - Menyinkronkan seluruh daftar acara aktif ke sheet `Daftar_Acara`.
+3. **Penyelarasan API Action di `handleApiRequest()` / `doPost()`**:
+   - Menambahkan action `syncDaftarAcara` dan `addEvent` sehingga frontend Web Admin dapat langsung memerintahkan Google Apps Script untuk menulis baris ke sheet `Daftar_Acara`.
+4. **Perbaikan Header di `setupDatabaseSpreadsheet`**:
+   - Menyelaraskan baris 388 di [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) agar konsisten 11 kolom (`Logo_Acara` disertakan).
 
-### Langkah 3: Tambahkan Fail-Safe Timeout pada `fetchGalleryData()` (Maksimal 3.5 Detik)
-- Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) pada `fetchGalleryData()`:
-  - Pasang timer pengaman (*fail-safe watchdog* 3.5 detik). Jika dalam 3.5 detik backend/API belum selesai mengembalikan data, skeleton card otomatis dihentikan dan `#photosGrid` segera dirender menggunakan `renderPhotoGrid()`.
-  - Pada pemanggilan `/api/drive-folder`, tambahkan `AbortController` dengan timeout 4 detik agar tidak menggantung tanpa batas jika serverless/scraped Google Drive mengalami kendala.
+### Langkah 3: Pembaruan `js/app.js` (Web Admin & Realtime GViz Sync)
+1. **Pada `handleAddNewEvent()`**:
+   - Saat admin membuat event baru, selain memanggil `saveAdminSettings`, frontend juga memanggil action `addEvent` / `syncDaftarAcara` sehingga baris baru langsung tercatat secara permanen di sheet `Daftar_Acara`.
+2. **Dukungan Pembacaan Realtime dari Sheet `Daftar_Acara`**:
+   - Di `syncFromSpreadsheetGViz()`, tambahkan pembacaan langsung terhadap sheet `Daftar_Acara` (`sheet=Daftar_Acara`). Dengan demikian, jika admin menambahkan atau mengubah data event langsung di Google Sheets, galeri web akan otomatis membaca perubahan tersebut secara realtime.
+3. **Tombol "Sinkronkan ke Sheet Daftar_Acara"**:
+   - Tambahkan tombol pintas di Web Admin (Tab Acara / Cloud) untuk memicu sinkronisasi seluruh event ke sheet `Daftar_Acara` kapan saja.
 
-### Langkah 4: Pastikan `handleGalleryResponse()` Menjamin Skeleton Hilang 100%
-- Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) pada `handleGalleryResponse()`:
-  - Jika data foto yang diterima kosong (`sortedIncoming.length === 0`), pastikan `state.filteredPhotos = []`, hapus seluruh elemen `.skeleton-card`, dan jalankan `renderPhotoGrid()` secara langsung.
-  - Hentikan animasi putar refresh (`refreshIconSvg.classList.remove("spin")`) di seluruh blok keberhasilan maupun kegagalan.
+---
 
-### Batasan Ketat (Strict Boundaries):
-- TIDAK mengubah struktur database, pin admin, atau fitur-fitur lain yang sudah berjalan normal.
-- Seluruh tampilan tetap frameless & borderless sesuai standar v4.22.0.
+## 3. Data 3 Event yang Dimasukkan ke Sheet `Daftar_Acara`
+
+| No | ID_Event | Nama_Acara | Tanggal_Acara | Venue_Lokasi | Google_Drive_Folder_ID | Photobooth_Vendor_URL | Status |
+|:---:|:---|:---|:---|:---|:---|:---|:---:|
+| 1 | `andre-fayola-281` | Andre & Fayola | 22 November 2026 | UPPERHILLS CONVENTION HALLS | `1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh` | `https://photos.app.goo.gl/QkqewYw4dWfocxfK8` | Aktif |
+| 2 | `wilson-felicia-133` | Wilson & Felicia | 16 November 2026 | UpperHills Convention Hall, Makassar | `1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5` | `https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs` | Aktif |
+| 3 | `tommy-natasha-594` | Tommy & Natasha | Rabu, 25 November 2026 | UpperHills Convention Hall, Makassar | `1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh` | `https://photos.google.com/share/...` | Aktif |
+
+---
+
+## 4. Batasan Ketat (Strict Boundaries)
+- TIDAK mengubah struktur database ERP Google Sheets (tetap 11 kolom baku).
+- TIDAK menghapus atau merusak konfigurasi PIN admin atau foto yang sudah ada.
+- Menjamin setiap event baru berikutnya otomatis tersinkronisasi ke sheet `Daftar_Acara`.
+
+---
+
+## 5. Hasil Pengujian & Verifikasi (Test Results)
+
+1. **Unit Test Sinkronisasi & Penambahan Realtime (`scratch/test_sync_daftar_acara.js`)**:
+   - `[Test 1] setup.gs`: Fungsi `populateDaftarAcara()` dan 3 event aktif: **PASS**
+   - `[Test 2] code.gs`: Fungsi `addEventToSheet`, `syncAllEventsToSheet`, action API: **PASS**
+   - `[Test 3] index.html`: Tombol "Sinkronkan ke Sheets" pada Tab Acara: **PASS**
+   - `[Test 4] js/app.js`: Pembacaan realtime `sheet=Daftar_Acara` & hook `addEvent`: **PASS**
+   - **Hasil: 4/4 Uji Lulus (100% PASS)**
+
+2. **Regression Test Suite**:
+   - `scratch/test_tab_spinner_fix.js`: 6/6 Uji Lulus (100% PASS)
+   - `scratch/test_new_event_refresh_fix.js`: 7/7 Uji Lulus (100% PASS)
+   - `scratch/test_frameless_photo_and_no_fallback.js`: 5/5 Uji Lulus (100% PASS)
+   - `scratch/test_frameless_not_found.js`: 6/6 Uji Lulus (100% PASS)
+   - Sintaks JavaScript `node --check js/app.js`: 0 Error (Exit Code 0)
 
 ================================================================================

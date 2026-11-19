@@ -528,8 +528,8 @@ function isGooglePhotosUrl(url) {
         pImg.style.display = "block";
         pIcon.style.display = "none";
       } else {
-        pImg.src = "";
         pImg.style.display = "none";
+        pImg.removeAttribute("src");
         pIcon.style.display = "block";
       }
     }
@@ -554,7 +554,7 @@ function isGooglePhotosUrl(url) {
           logoContainer.style.display = "flex";
         } else {
           logoContainer.style.display = "none";
-          logoImg.src = "";
+          logoImg.removeAttribute("src");
         }
       }
     }
@@ -838,6 +838,69 @@ function isGooglePhotosUrl(url) {
               } catch(eEvs) {}
             }
 
+            // Sinkronkan juga pembacaan realtime dari sheet 'Daftar_Acara'
+            try {
+              fetch("https://docs.google.com/spreadsheets/d/" + sid + "/gviz/tq?tqx=out:json&sheet=Daftar_Acara&t=" + Date.now())
+                .then(function(ar) { return ar.text(); })
+                .then(function(at) {
+                  try {
+                    const aRaw = at.replace(/^\/\*.*?\*\/\s*google\.visualization\.Query\.setResponse\(/, '').replace(/\);?\s*$/, '');
+                    const aParsed = JSON.parse(aRaw);
+                    if (aParsed && aParsed.table && aParsed.table.rows && aParsed.table.rows.length > 1) {
+                      const hRow = (aParsed.table.rows[0].c || []).map(function(c) { return c ? String(c.v || '').trim() : ''; });
+                      const idIdx = hRow.indexOf("ID_Event") >= 0 ? hRow.indexOf("ID_Event") : 0;
+                      const nameIdx = hRow.indexOf("Nama_Acara") >= 0 ? hRow.indexOf("Nama_Acara") : 1;
+                      const dateIdx = hRow.indexOf("Tanggal_Acara") >= 0 ? hRow.indexOf("Tanggal_Acara") : 2;
+                      const venueIdx = hRow.indexOf("Venue_Lokasi") >= 0 ? hRow.indexOf("Venue_Lokasi") : 3;
+                      const urlIdx = hRow.indexOf("Tautan_Home_Event") >= 0 ? hRow.indexOf("Tautan_Home_Event") : 4;
+                      const driveIdx = hRow.indexOf("Google_Drive_Folder_ID") >= 0 ? hRow.indexOf("Google_Drive_Folder_ID") : 5;
+                      const pbIdx = hRow.indexOf("Photobooth_Vendor_URL") >= 0 ? hRow.indexOf("Photobooth_Vendor_URL") : 6;
+                      const catIdx = hRow.indexOf("Kategori_JSON") >= 0 ? hRow.indexOf("Kategori_JSON") : 7;
+                      const frameIdx = hRow.indexOf("Bingkai_URL") >= 0 ? hRow.indexOf("Bingkai_URL") : 8;
+                      const logoIdx = hRow.indexOf("Logo_Acara") >= 0 ? hRow.indexOf("Logo_Acara") : 9;
+                      const statusIdx = hRow.indexOf("Status") >= 0 ? hRow.indexOf("Status") : 10;
+
+                      const sheetEvs = [];
+                      for (let r = 1; r < aParsed.table.rows.length; r++) {
+                        const rowCells = aParsed.table.rows[r].c || [];
+                        const evId = rowCells[idIdx] ? String(rowCells[idIdx].v || '').trim() : '';
+                        if (!evId) continue;
+                        let parsedCats = [];
+                        if (rowCells[catIdx] && rowCells[catIdx].v) {
+                          try {
+                            parsedCats = typeof rowCells[catIdx].v === 'string' ? JSON.parse(rowCells[catIdx].v) : rowCells[catIdx].v;
+                          } catch(e) { parsedCats = []; }
+                        }
+                        sheetEvs.push({
+                          id: evId,
+                          name: rowCells[nameIdx] ? String(rowCells[nameIdx].v || '').trim() : evId,
+                          date: rowCells[dateIdx] ? String(rowCells[dateIdx].v || '').trim() : '',
+                          venue: rowCells[venueIdx] ? String(rowCells[venueIdx].v || '').trim() : '',
+                          homeUrl: rowCells[urlIdx] ? String(rowCells[urlIdx].v || '').trim() : '',
+                          driveFolderId: rowCells[driveIdx] ? String(rowCells[driveIdx].v || '').trim() : '',
+                          photoboothUrl: rowCells[pbIdx] ? String(rowCells[pbIdx].v || '').trim() : '',
+                          customCategories: Array.isArray(parsedCats) ? parsedCats : [],
+                          frameImageUrl: rowCells[frameIdx] ? String(rowCells[frameIdx].v || '').trim() : '',
+                          logoUrl: rowCells[logoIdx] ? String(rowCells[logoIdx].v || '').trim() : '',
+                          status: rowCells[statusIdx] ? String(rowCells[statusIdx].v || 'Aktif').trim() : 'Aktif'
+                        });
+                      }
+                      if (sheetEvs.length > 0) {
+                        const evMap = new Map();
+                        (state.events || []).forEach(function(e) { if (e && e.id) evMap.set(e.id, e); });
+                        sheetEvs.forEach(function(e) {
+                          const prev = evMap.get(e.id) || {};
+                          evMap.set(e.id, Object.assign({}, prev, e));
+                        });
+                        state.events = Array.from(evMap.values());
+                        try { localStorage.setItem("WEDDING_EVENTS_REGISTRY", JSON.stringify(state.events)); } catch(e) {}
+                        renderAdminEventsManager();
+                      }
+                    }
+                  } catch(eParse) {}
+                }).catch(function() {});
+            } catch(eFetch) {}
+
             const explicitUrlParam = getActiveEventIdFromUrl();
             if (!explicitUrlParam) {
               showEventNotFoundScreen(true);
@@ -1070,11 +1133,22 @@ function isGooglePhotosUrl(url) {
 
       const requestUrl = apiUrl + (apiUrl.includes("?") ? "&" : "?") + queryParams.toString();
 
-      fetch(requestUrl, {
+      const backendController = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      let backendTimeoutId = null;
+      if (backendController) {
+        backendTimeoutId = setTimeout(function() {
+          try { backendController.abort(); } catch(e) {}
+        }, 8000);
+      }
+      const fetchOpts = {
         method: "GET",
         mode: "cors"
-      })
+      };
+      if (backendController) fetchOpts.signal = backendController.signal;
+
+      fetch(requestUrl, fetchOpts)
       .then(function(res) {
+        if (backendTimeoutId) clearTimeout(backendTimeoutId);
         if (!res.ok) throw new Error("HTTP Status " + res.status);
         return res.json();
       })
@@ -1087,6 +1161,7 @@ function isGooglePhotosUrl(url) {
         if (onSuccess) onSuccess(data);
       })
       .catch(function(err) {
+        if (backendTimeoutId) clearTimeout(backendTimeoutId);
         console.error("Gagal menghubungi Google Apps Script API:", err);
         onError(err);
       });
@@ -1559,7 +1634,7 @@ function isGooglePhotosUrl(url) {
           logoContainer.style.display = "flex";
         } else {
           logoContainer.style.display = "none";
-          logoImg.src = "";
+          logoImg.removeAttribute("src");
         }
       }
 
@@ -4143,12 +4218,13 @@ function isGooglePhotosUrl(url) {
       renderAdminEventsManager();
       handleSelectEventChange(newId);
 
-      // Otomatis sinkronkan event baru ke database Google Sheets
+      // Otomatis sinkronkan event baru ke database Google Sheets (sheet Daftar_Acara & Pengaturan)
       if (state.gasApiUrl) {
         callBackend("saveAdminSettings", {
           pin: getEffectiveAdminPin(),
           config: {
             EVENTS: JSON.stringify(state.events),
+            event: newEventObj,
             ACTIVE_EVENT_ID: newId,
             EVENT_NAME: name,
             COUPLE_NAME: name,
@@ -4162,6 +4238,12 @@ function isGooglePhotosUrl(url) {
           showToast("✓ Event baru '" + name + "' berhasil dibuat dan disimpan ke database!");
         }, function(err) {
           showToast("✓ Event baru '" + name + "' aktif di browser.");
+        });
+
+        // Trigger eksplisit penambahan baris langsung ke sheet 'Daftar_Acara'
+        callBackend("addEvent", {
+          pin: getEffectiveAdminPin(),
+          event: newEventObj
         });
       } else {
         showToast("✓ Event baru '" + name + "' berhasil dibuat!");
@@ -4302,6 +4384,46 @@ function isGooglePhotosUrl(url) {
         fallbackCopyText(fullUrl);
       }
     }
+
+    function triggerSyncDaftarAcara() {
+      if (!state.gasApiUrl) {
+        showToast("⚠️ URL Google Apps Script belum dikonfigurasi.", "warning");
+        return;
+      }
+      showToast("⏳ Menyinkronkan seluruh event ke sheet 'Daftar_Acara'...", "info");
+      callBackend("syncDaftarAcara", {
+        pin: getEffectiveAdminPin(),
+        events: state.events
+      }, function(res) {
+        if (res && res.success) {
+          showToast("✓ Berhasil! " + (res.message || "Seluruh event berhasil disinkronkan ke sheet 'Daftar_Acara'"));
+        } else {
+          // Fallback via saveAdminSettings
+          callBackend("saveAdminSettings", {
+            pin: getEffectiveAdminPin(),
+            config: {
+              EVENTS: JSON.stringify(state.events)
+            }
+          }, function() {
+            showToast("✓ Seluruh event berhasil disinkronkan ke database Google Sheets!");
+          }, function(err) {
+            showToast("⚠️ Gagal sinkronisasi ke Sheets: " + (err || "Jaringan sibuk"), "warning");
+          });
+        }
+      }, function(err) {
+        callBackend("saveAdminSettings", {
+          pin: getEffectiveAdminPin(),
+          config: {
+            EVENTS: JSON.stringify(state.events)
+          }
+        }, function() {
+          showToast("✓ Seluruh event berhasil disinkronkan ke database Google Sheets!");
+        }, function(fallbackErr) {
+          showToast("⚠️ Gagal sinkronisasi: " + (fallbackErr || err), "warning");
+        });
+      });
+    }
+    window.triggerSyncDaftarAcara = triggerSyncDaftarAcara;
 
     /* ==========================================================================
        COVER & DESAIN HALAMAN DEPAN ADMIN FUNCTIONS

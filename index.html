@@ -99,7 +99,7 @@
   <header class="hero" id="heroSection">
     <!-- Logo Acara / Monogram (Dapat diatur via link Google Drive dari Admin) -->
     <div id="heroLogoContainer" class="hero-logo-container" style="display: none;">
-      <img id="heroLogoImg" src="" alt="Logo Acara / Monogram" class="hero-logo-img" onerror="this.src=''; this.parentElement.style.display='none';">
+      <img id="heroLogoImg" alt="Logo Acara / Monogram" class="hero-logo-img" onerror="this.onerror=null; this.removeAttribute('src'); if (this.parentElement) this.parentElement.style.display='none';">
     </div>
 
     <div class="hero-ornament">
@@ -152,7 +152,7 @@
               }
             } else {
               if (img && cont) {
-                img.src = "";
+                img.removeAttribute("src");
                 cont.style.display = "none";
               }
             }
@@ -528,9 +528,14 @@
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px; margin-bottom: 14px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
               <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-main);">📅 Kelola & Pilih Event (Multi-Event)</div>
-              <button type="button" class="btn btn-gold" style="font-size: 0.74rem; padding: 4px 10px;" onclick="openNewEventModal()">
-                <span>+ Tambah Event Baru</span>
-              </button>
+              <div style="display: flex; gap: 6px;">
+                <button type="button" class="btn btn-outline" style="font-size: 0.74rem; padding: 4px 10px; border-color: #CBD5E1; color: #334155;" onclick="triggerSyncDaftarAcara()" title="Sinkronkan seluruh event ke sheet Google Spreadsheet 'Daftar_Acara'">
+                  <span>📊 Sinkronkan ke Sheets</span>
+                </button>
+                <button type="button" class="btn btn-gold" style="font-size: 0.74rem; padding: 4px 10px;" onclick="openNewEventModal()">
+                  <span>+ Tambah Event Baru</span>
+                </button>
+              </div>
             </div>
             <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;">
               <div>
@@ -576,7 +581,7 @@
               <input type="text" id="cfgEventLogoUrl" class="admin-input" placeholder="Contoh: https://drive.google.com/file/d/... atau https://..." oninput="handleEventLogoInput(this.value)" style="flex: 1;">
               <div id="adminLogoPreviewBox" style="width: 44px; height: 44px; border-radius: 8px; border: 1px solid #CBD5E1; background: #F8FAFC; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;" title="Pratinjau Logo">
                 <span id="adminLogoPreviewPlaceholder" style="font-size: 1.1rem; color: #94A3B8;">💍</span>
-                <img id="adminLogoPreviewImg" src="" alt="Pratinjau Logo" style="display: none; width: 100%; height: 100%; object-fit: contain; padding: 2px;" onerror="this.style.display='none'; document.getElementById('adminLogoPreviewPlaceholder').style.display='block';">
+                <img id="adminLogoPreviewImg" alt="Pratinjau Logo" style="display: none; width: 100%; height: 100%; object-fit: contain; padding: 2px;" onerror="this.onerror=null; this.removeAttribute('src'); this.style.display='none'; const ph = document.getElementById('adminLogoPreviewPlaceholder'); if (ph) ph.style.display='block';">
               </div>
             </div>
             <div class="admin-help-text">Mendukung link Google Drive atau URL gambar. Ditampilkan menarik & proporsional tepat di atas nama pengantin.</div>
