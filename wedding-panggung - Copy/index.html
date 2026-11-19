@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <!-- Inline Micro-Loader: Mencegah Kedipan Teks Lama (Zero FOUC) -->
+  <script>
+    (function() {
+      try {
+        var s = localStorage.getItem("WEDDING_ACTIVE_EVENT_CFG");
+        if (s) {
+          var c = JSON.parse(s);
+          var name = c.EVENT_NAME || c.COUPLE_NAME || "";
+          if (name) document.title = name + " - Wedding Photo Gallery";
+        }
+      } catch(e) {}
+    })();
+  </script>
+
+  <!-- Google Fonts: Cormorant Garamond (Serif Elegan) & Plus Jakarta Sans (Modern Clean) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Floating Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Floating Background Download Progress Bar Widget -->
+  <div id="downloadProgressWidget" class="download-progress-widget">
+    <div class="dpw-header">
+      <div class="dpw-icon-box">
+        <svg id="dpwIconSpinner" class="spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.25"></circle>
+          <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"></path>
+        </svg>
+        <svg id="dpwIconCheck" style="display: none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <div class="dpw-info">
+        <div class="dpw-title" id="dpwTitle">Menyiapkan Kenangan Berbingkai...</div>
+        <div class="dpw-subtitle" id="dpwSubtitle">Resolusi Asli • Berjalan di latar belakang</div>
+      </div>
+      <span class="dpw-badge" id="dpwBadge">1 Foto</span>
+      <button type="button" class="dpw-close-btn" onclick="dismissDownloadWidget()" title="Sembunyikan notifikasi">✕</button>
+    </div>
+
+    <div class="dpw-progress-track">
+      <div class="dpw-progress-fill" id="dpwProgressFill" style="width: 15%;"></div>
+    </div>
+
+    <div class="dpw-footer-note">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      <span id="dpwFooterText">Berjalan di latar belakang • Anda bebas melihat foto lainnya</span>
+    </div>
+  </div>
+
+  <!-- Demo Notice Banner -->
+  <div id="demoNotice" class="demo-banner" style="display: none;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <span><strong>Mode Demo Aktif:</strong> Menampilkan foto sampel. Klik ikon <strong>Gembok (Admin)</strong> untuk menghubungkan Google Apps Script Backend atau folder Google Drive Anda.</span>
+  </div>
+
+  <!-- Hero Header Section -->
+  <header class="hero">
+    <div class="hero-ornament">
+      <div class="line"></div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+      </svg>
+      <div class="line right"></div>
+    </div>
+
+    <!-- Nama Event Acara Pernikahan (Hydration Dinamis Realtime Tanpa Kedipan) -->
+    <h1 id="coupleName" class="hero-title" style="min-height: 1.2em;"></h1>
+    <script>
+      (function() {
+        try {
+          var params = new URLSearchParams(window.location.search);
+          var targetEventId = params.get("event") || params.get("e") || "";
+          var cacheKey = targetEventId ? ("WEDDING_EVENT_CFG_" + targetEventId) : "WEDDING_ACTIVE_EVENT_CFG";
+          var saved = localStorage.getItem(cacheKey);
+          if (saved) {
+            var c = JSON.parse(saved);
+            var n = c.EVENT_NAME || c.COUPLE_NAME;
+            if (n) document.getElementById("coupleName").textContent = n;
+            if (c.SUBTITLE) document.getElementById("subtitle").textContent = c.SUBTITLE;
+            if (c.EVENT_DATE) {
+              var rawD = String(c.EVENT_DATE).trim().replace(/^[a-zA-Z]+,?\s+/, '');
+              var days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+              var months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+              var mMap = { "januari":0,"februari":1,"maret":2,"april":3,"mei":4,"juni":5,"juli":6,"agustus":7,"september":8,"oktober":9,"november":10,"desember":11 };
+              var m = rawD.match(/^(\d{1,2})\s+([a-zA-Z]+)\s+(\d{4})/);
+              if (m && mMap[m[2].toLowerCase()] !== undefined) {
+                var dt = new Date(parseInt(m[3],10), mMap[m[2].toLowerCase()], parseInt(m[1],10));
+                document.getElementById("eventDate").textContent = days[dt.getDay()] + ", " + m[1] + " " + months[mMap[m[2].toLowerCase()]] + " " + m[3];
+              } else {
+                var ymd = rawD.match(/^(\d{4})-(\d{2})-(\d{2})/);
+                if (ymd) {
+                  var dt2 = new Date(parseInt(ymd[1],10), parseInt(ymd[2],10)-1, parseInt(ymd[3],10));
+                  document.getElementById("eventDate").textContent = days[dt2.getDay()] + ", " + parseInt(ymd[3],10) + " " + months[parseInt(ymd[2],10)-1] + " " + ymd[1];
+                } else {
+                  document.getElementById("eventDate").textContent = c.EVENT_DATE;
+                }
+              }
+            }
+            if (c.EVENT_VENUE) document.getElementById("eventVenue").textContent = c.EVENT_VENUE;
+            if (c.WELCOME_MESSAGE) document.getElementById("welcomeMessage").textContent = c.WELCOME_MESSAGE;
+          }
+        } catch(e) {}
+      })();
+    </script>
+    <div id="subtitle" class="hero-subtitle"></div>
+
+    <!-- Badge Tanggal dan Venue (Lokasi Acara - Live Database) -->
+    <div class="hero-badges-wrapper">
+      <div class="hero-date-badge">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        <span id="eventDate"></span>
+      </div>
+
+      <div class="hero-date-badge">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span id="eventVenue"></span>
+      </div>
+    </div>
+
+    <p id="welcomeMessage" class="hero-desc"></p>
+  </header>
+
+  <!-- Sticky Filter Bar with Admin Trigger & Live Sync Indicator -->
+  <div class="filter-wrapper" id="gallerySection">
+    <div class="filter-container">
+      <div class="filter-scroll" id="categoryTabs">
+        <button class="filter-pill active" data-category="Semua Foto">
+          <span>Semua Foto</span>
+          <span class="pill-count" id="countAll"></span>
+        </button>
+      </div>
+
+      <div class="action-controls-group">
+        <button id="btnShareModal" class="ctrl-icon-btn" onclick="openShareModal()" title="Bagikan & QR Code Galeri" aria-label="Bagikan & QR Code">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="18" cy="5" r="3"></circle>
+            <circle cx="6" cy="12" r="3"></circle>
+            <circle cx="18" cy="19" r="3"></circle>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+          </svg>
+        </button>
+
+        <button class="ctrl-icon-btn" onclick="fetchGalleryData(true)" title="Sinkronkan foto sekarang (Auto-sync aktif)">
+          <svg id="refreshIconSvg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6"></path>
+            <path d="M1 20v-6h6"></path>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+        </button>
+
+        <button id="adminBtn" class="ctrl-icon-btn" onclick="openAdminModal()" title="Menu Admin & Pengaturan Google Drive">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Photo Gallery Grid -->
+  <main class="gallery-container">
+    <div class="gallery-grid" id="photosGrid">
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    </div>
+  </main>
+
+  <!-- Lightbox Modal -->
+  <div id="lightbox" class="lightbox-modal">
+    <div class="lightbox-topbar">
+      <div class="lightbox-info">
+        <span class="lightbox-counter" id="lightboxCounter">FOTO 1 DARI 8</span>
+        <span class="lightbox-title" id="lightboxTitle">Judul Foto</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="lightbox-close" onclick="closeLightbox()" title="Tutup (Esc)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="lightbox-body" id="lightboxBody">
+      <button class="lightbox-nav-btn prev" onclick="navigateLightbox(-1)" title="Sebelumnya (Panah Kiri)">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      <div class="lightbox-img-wrapper" id="lightboxImgWrapper">
+        <img id="lightboxImg" class="lightbox-img" src="" alt="Wedding Photo Preview">
+        <video id="lightboxVideo" class="lightbox-video" src="" controls playsinline autoplay loop style="display:none;"></video>
+      </div>
+
+      <button class="lightbox-nav-btn next" onclick="navigateLightbox(1)" title="Berikutnya (Panah Kanan)">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <div class="lightbox-bottombar">
+      <button id="lightboxDownloadBtn" class="btn btn-gold" onclick="handleCurrentLightboxDownload()">
+        <svg id="downloadIconSvg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span id="downloadBtnLabel">Simpan Foto Asli</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Stage Slideshow Overlay (Mode Panggung Layar Penuh) -->
+  <div id="slideshowOverlay" class="slideshow-overlay">
+    <div class="slideshow-progress-bar" id="slideshowProgress"></div>
+
+    <div class="slideshow-watermark">
+      <h2 id="slideshowCouple"></h2>
+      <p id="slideshowCategory"></p>
+    </div>
+
+    <div class="slideshow-stage">
+      <img id="slideshowImgA" class="slideshow-img visible" src="" alt="Slideshow A">
+      <img id="slideshowImgB" class="slideshow-img" src="" alt="Slideshow B">
+    </div>
+
+    <div class="slideshow-controls">
+      <button class="slideshow-ctrl-btn" onclick="prevSlide()" title="Sebelumnya">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      <button class="slideshow-ctrl-btn" id="slideshowPlayBtn" onclick="togglePlayPause()" title="Jeda / Putar">
+        <svg id="playIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        <svg id="pauseIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="6" y="4" width="4" height="16"></rect>
+          <rect x="14" y="4" width="4" height="16"></rect>
+        </svg>
+      </button>
+
+      <button class="slideshow-ctrl-btn" onclick="nextSlide()" title="Berikutnya">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+
+      <button class="slideshow-ctrl-btn" onclick="closeSlideshow()" title="Keluar Layar Penuh (Esc)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal: Bagikan & QR Code Galeri -->
+  <div id="shareQrModal" class="admin-modal-overlay">
+    <div class="admin-card share-qr-card">
+      <div class="admin-card-header share-modal-header">
+        <h3 class="share-modal-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Bagikan & QR Code Galeri</span>
+        </h3>
+        <button class="ctrl-icon-btn share-close-btn" onclick="closeShareModal()" title="Tutup">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="admin-card-body share-modal-body">
+        <div class="share-meta-header">
+          <div class="share-event-title" id="shareEventTitle"></div>
+          <div class="share-event-date" id="shareEventDate"></div>
+          <div class="share-event-venue" id="shareEventVenue"></div>
+        </div>
+
+        <!-- QR Code Box -->
+        <div class="qr-code-display-box">
+          <img id="shareQrImg" src="" alt="QR Code Galeri">
+        </div>
+
+        <!-- Logo Buttons (Bagikan, Salin, & Unduh QR Code) - Hanya Icon Saja -->
+        <input type="hidden" id="shareUrlInput" value="">
+        <div class="share-actions-row">
+          <button type="button" class="ctrl-icon-btn share-action-btn" onclick="shareViaWebShare()" title="Bagikan Tautan (Share Link)" aria-label="Bagikan Tautan">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+          </button>
+          <button type="button" class="ctrl-icon-btn share-action-btn" onclick="copyShareUrl()" title="Salin Tautan (Copy Link)" aria-label="Salin Tautan">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+          <button type="button" class="ctrl-icon-btn share-action-btn share-download-btn" onclick="downloadQrCodeImage()" title="Unduh Gambar QR Code (PNG)" aria-label="Unduh QR Code">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 1: Login Admin (Username & Password) -->
+  <div id="adminLoginModal" class="admin-modal-overlay">
+    <div class="admin-card" style="max-width: 400px;">
+      <div class="admin-card-header">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>Masuk Admin</span>
+        </h3>
+        <button class="ctrl-icon-btn" onclick="closeAdminLoginModal()" style="width: 32px; height: 32px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+        <div class="admin-card-body" style="padding-top: 8px;">
+          <div class="admin-field-group">
+            <label class="admin-label" for="adminUsernameInput">Nama Pengguna (Username)</label>
+            <input type="text" id="adminUsernameInput" class="admin-input" placeholder="Masukkan username" required autocomplete="username" value="">
+          </div>
+
+          <div class="admin-field-group">
+            <label class="admin-label" for="adminPasswordInput">Kata Sandi (Password)</label>
+            <div style="position: relative;">
+              <input type="password" id="adminPasswordInput" class="admin-input" placeholder="Masukkan password" required autocomplete="current-password" style="padding-right: 42px;">
+              <button type="button" id="toggleAdminPassVisibility" onclick="togglePasswordVisibility('adminPasswordInput', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #64748B; padding: 4px; display: flex; align-items: center; justify-content: center;" title="Lihat/Sembunyikan Password" aria-label="Lihat Password">
+                <svg class="pass-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div id="loginAlertBox" class="admin-alert-box error" style="display: none;"></div>
+        </div>
+
+        <div class="admin-card-footer">
+          <button type="button" class="btn btn-outline" onclick="closeAdminLoginModal()">Batal</button>
+          <button type="submit" id="loginSubmitBtn" class="btn btn-gold">
+            <span>Masuk</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Panel Pengaturan Admin & Vercel -->
+  <div id="adminSettingsModal" class="admin-modal-overlay">
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <div>
+          <h3 style="display: flex; align-items: center; gap: 8px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>Pengaturan Admin & Vercel</span>
+          </h3>
+          <div id="adminUserGreeting" style="font-size: 0.78rem; color: #1E3A8A; background: #DBEAFE; padding: 2px 10px; border-radius: 9999px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; border: 1px solid #BFDBFE;">
+            👤 Masuk sebagai: <span id="adminGreetingName">Super Admin</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" class="btn btn-outline" onclick="closeAdminSettingsModal()" style="font-size: 0.78rem; padding: 5px 12px; border-color: #CBD5E1; color: #334155; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;" title="Lihat dan uji coba galeri tanpa keluar dari mode admin">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <span>Lihat / Test Galeri</span>
+          </button>
+          <button class="ctrl-icon-btn" onclick="closeAdminSettingsModal()" style="width: 32px; height: 32px;" title="Tutup Pengaturan">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Locked Sticky Admin Navigation Tabs (Terkunci Tidak Tertutup Saat Scroll) -->
+      <div class="admin-tabs-sticky-wrapper">
+        <div class="admin-tabs-nav">
+          <button type="button" class="admin-tab-btn active" id="tabBtn-event" onclick="switchAdminTab('event')">
+            <span>💍 Acara & Event</span>
+          </button>
+          <button type="button" class="admin-tab-btn" id="tabBtn-media" onclick="switchAdminTab('media')">
+            <span>🖼️ Foto & Kategori</span>
+          </button>
+          <button type="button" class="admin-tab-btn" id="tabBtn-users" onclick="switchAdminTab('users')">
+            <span>👥 Akun Admin</span>
+          </button>
+          <button type="button" class="admin-tab-btn" id="tabBtn-cloud" onclick="switchAdminTab('cloud')">
+            <span>☁️ Cloud & API</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="admin-card-body">
+
+        <!-- Tab 1: Acara & Pernikahan -->
+        <div class="admin-tab-pane active" id="tabPane-event">
+          <!-- Multi-Event Manager Box -->
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-main);">📅 Kelola & Pilih Event (Multi-Event)</div>
+              <button type="button" class="btn btn-gold" style="font-size: 0.74rem; padding: 4px 10px;" onclick="openNewEventModal()">
+                <span>+ Tambah Event Baru</span>
+              </button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;">
+              <div>
+                <label class="admin-label" style="font-size: 0.72rem; margin-bottom: 2px;" for="adminEventSelect">Event Aktif yang Sedang Diedit:</label>
+                <select id="adminEventSelect" class="admin-input" onchange="handleSelectEventChange(this.value)" style="padding: 6px 10px; font-size: 0.84rem;"></select>
+              </div>
+              <button type="button" id="btnDeleteCurrentEvent" class="btn btn-outline" style="color: #EF4444; border-color: #FCA5A5; padding: 6px 10px; font-size: 0.76rem; margin-top: 14px;" onclick="handleDeleteCurrentEvent()" title="Hapus Event Ini">
+                <span>🗑️ Hapus</span>
+              </button>
+            </div>
+            <div id="eventShareLinkBox" style="margin-top: 10px; background: #FFFFFF; padding: 10px 12px; border-radius: 8px; border: 1px solid #CBD5E1;">
+              <div style="font-size: 0.72rem; font-weight: 700; color: #334155; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                <span>🔗 Link Khusus Event Ini (Dedicated Home Link):</span>
+                <span id="activeEventBadgeTag" style="background: #ECFDF5; color: #059669; padding: 2px 8px; border-radius: 4px; font-size: 0.68rem; font-weight: 700; border: 1px solid #A7F3D0;">✓ Terisolasi</span>
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <input type="text" id="activeEventUrlInput" class="admin-input" readonly style="font-size: 0.75rem; background: #F8FAFC; color: #1E293B; font-family: monospace; padding: 6px 10px; font-weight: 600;" onclick="this.select()" title="Klik untuk menyeleksi link event">
+                <button type="button" class="btn btn-outline" style="font-size: 0.74rem; padding: 6px 10px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;" onclick="copyActiveEventUrl()" title="Salin Link Event Khusus Ini">
+                  <span>📋 Salin Link</span>
+                </button>
+                <button type="button" class="btn btn-gold" style="font-size: 0.74rem; padding: 6px 10px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;" onclick="openActiveEventHome()" title="Buka Halaman Utama Acara Ini">
+                  <span>🌐 Buka Home</span>
+                </button>
+              </div>
+              <div style="display: none;" id="activeEventUrlPreview"></div>
+              <div style="font-size: 0.68rem; color: #64748B; margin-top: 6px; line-height: 1.4;">
+                * <strong>1 Link per Event:</strong> Setiap event memiliki halaman home tersendiri sehingga nama pengantin, tanggal, dan foto tidak akan saling bercampur.
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-field-group">
+            <label class="admin-label" for="cfgCoupleName">Nama Event / Pasangan Pengantin</label>
+            <input type="text" id="cfgCoupleName" class="admin-input" placeholder="Contoh: Nama Pasangan / Acara">
+          </div>
+
+          <div class="admin-field-group">
+            <label class="admin-label" for="cfgEventDate">Tanggal Acara (Klik untuk Buka Kalender)</label>
+            <input type="date" id="cfgEventDate" class="admin-input" onclick="try{this.showPicker()}catch(e){}" onfocus="try{this.showPicker()}catch(e){}" style="cursor: pointer;">
+          </div>
+
+          <div class="admin-field-group">
+            <label class="admin-label" for="cfgEventVenue">Venue (Lokasi Acara)</label>
+            <input type="text" id="cfgEventVenue" class="admin-input" placeholder="Contoh: Lokasi Gedung / Hotel">
+          </div>
+
+          <div class="admin-field-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <label class="admin-label" for="cfgEventDriveFolderId" style="margin-bottom: 0;">📁 Folder Google Drive (Kategori 'Semua Foto' Event Ini)</label>
+              <span id="activeEventDriveBadge" style="font-size: 0.7rem; color: var(--gold-dark); font-weight: 600;">Link Khusus Event</span>
+            </div>
+            <input type="text" id="cfgEventDriveFolderId" class="admin-input" placeholder="Tautan / ID Folder Google Drive untuk kategori Semua Foto event ini" oninput="handleEventDriveFolderInput(this.value)">
+            <div class="admin-help-text">Setiap event mempunyai link Google Drive tersendiri untuk kategori "Semua Foto". Foto event ini tidak akan tercampur dengan event lain.</div>
+          </div>
+
+          <div class="admin-field-group">
+            <label class="admin-label" for="cfgSubtitle">Subjudul Galeri</label>
+            <input type="text" id="cfgSubtitle" class="admin-input" placeholder="Contoh: The Wedding Gallery & Precious Memories">
+          </div>
+
+          <div class="admin-field-group">
+            <label class="admin-label" for="cfgWelcomeMessage">Pesan Sambutan Tamu</label>
+            <textarea id="cfgWelcomeMessage" class="admin-input" rows="3" style="resize: vertical; font-family: inherit; font-size: 0.88rem; box-sizing: border-box; width: 100%;" placeholder="Pesan sambutan hangat untuk tamu undangan..."></textarea>
+          </div>
+
+          <div class="admin-field-group">
+            <label class="admin-label" for="cfgFooterMessage">Pesan Penutup Footer (Di Bagian Bawah)</label>
+            <textarea id="cfgFooterMessage" class="admin-input" rows="2" style="resize: vertical; font-family: inherit; font-size: 0.88rem; box-sizing: border-box; width: 100%;" placeholder="Diabadikan dengan cinta&#10;Terima kasih atas doa restunya."></textarea>
+            <span style="font-size: 0.72rem; color: #64748B; margin-top: 3px; display: block;">Mendukung tombol Enter / baris baru untuk tampilan multi-baris di footer.</span>
+          </div>
+        </div>
+
+        <!-- Tab: Desain Cover & Halaman Depan -->
+        <!-- Tab 2: Foto & Bingkai -->
+        <div class="admin-tab-pane" id="tabPane-media">
+          <div class="admin-field-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="admin-label" for="cfgFrameImageUrl" style="margin-bottom: 0;">Bingkai PNG Transparan Saat Download</label>
+              <span id="frameStatusBadge" style="font-size: 0.75rem; font-weight: 600;"></span>
+            </div>
+            <input type="text" id="cfgFrameImageUrl" class="admin-input" placeholder="Tautan / ID File Bingkai PNG Google Drive">
+            <div class="admin-help-text">Unggah file bingkai berformat PNG transparan ke Google Drive dengan izin <em>"Anyone with the link can view"</em>.</div>
+          </div>
+
+          <!-- Pengaturan Kategori & Tautan Display Galeri Kustom -->
+          <div class="admin-field-group" style="margin-top: 16px; border-top: 1px solid #E2E8F0; padding-top: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="admin-label" style="margin-bottom: 0;">📁 Kategori Momen & Tautan Display Galeri</label>
+              <span style="font-size: 0.72rem; color: var(--gold-dark); font-weight: 600;">Google Drive / Link Lain</span>
+            </div>
+            <div class="admin-help-text" style="margin-bottom: 10px;">
+              Atur kategori / folder galeri (misal: <em>Teapai, Photobooth, Akad Nikah, Resepsi</em>) dan custom link target display (misal Google Drive atau <em>https://fotoshare.co</em>).
+            </div>
+
+            <div id="adminCategoriesContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;"></div>
+
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-outline" style="flex: 1; min-width: 140px; justify-content: center; font-size: 0.82rem; padding: 8px;" onclick="addCategoryConfigRow('', '')">
+                <span>+ Tambah Kategori</span>
+              </button>
+              <button type="button" id="btnSyncCategories" class="btn btn-gold" style="flex: 1; min-width: 170px; justify-content: center; font-size: 0.82rem; padding: 8px;" onclick="syncCategoriesAndDisplayLinks()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+                <span>Sinkronkan Kategori & Tautan</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Pengguna & Akun Admin -->
+        <div class="admin-tab-pane" id="tabPane-users">
+          <!-- Ubah Password Akun Sendiri -->
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px; margin-bottom: 14px;">
+            <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">🔐 Ubah Password Akun Anda</div>
+            <div style="display: flex; gap: 8px;">
+              <input type="password" id="cfgNewAdminPassword" class="admin-input" placeholder="Password Baru (Min 4 karakter)" style="padding: 7px 10px; font-size: 0.84rem;">
+              <button type="button" class="btn btn-gold" style="white-space: nowrap; padding: 7px 14px; font-size: 0.82rem;" onclick="handleChangeAdminPassword()">Perbarui Password</button>
+            </div>
+            <div id="changePassAlertBox" class="admin-alert-box" style="margin-top: 6px; font-size: 0.78rem; display: none;"></div>
+          </div>
+
+          <!-- Form Tambah Akun Admin Baru -->
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px; margin-bottom: 14px;">
+            <div style="font-size: 0.84rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">➕ Tambah Akun Admin Baru</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+              <div>
+                <label class="admin-label" style="font-size: 0.75rem;" for="newAdminUsernameInput">Username</label>
+                <input type="text" id="newAdminUsernameInput" class="admin-input" placeholder="Contoh: panitia1" style="padding: 7px 10px; font-size: 0.84rem;">
+              </div>
+              <div>
+                <label class="admin-label" style="font-size: 0.75rem;" for="newAdminNameInput">Nama Lengkap</label>
+                <input type="text" id="newAdminNameInput" class="admin-input" placeholder="Contoh: Panitia Foto" style="padding: 7px 10px; font-size: 0.84rem;">
+              </div>
+            </div>
+            <div style="margin-bottom: 8px;">
+              <label class="admin-label" style="font-size: 0.75rem;" for="newAdminPasswordInput">Password</label>
+              <input type="password" id="newAdminPasswordInput" class="admin-input" placeholder="Minimal 4 karakter" style="padding: 7px 10px; font-size: 0.84rem;">
+            </div>
+            <div id="addUserAlertBox" class="admin-alert-box error" style="margin-bottom: 8px; font-size: 0.78rem; display: none;"></div>
+            <button type="button" id="btnAddAdminUserBtn" class="btn btn-gold" style="width: 100%; padding: 8px; font-size: 0.84rem; justify-content: center;" onclick="handleAddAdminUser()">
+              <span>+ Tambahkan Akun Admin</span>
+            </button>
+          </div>
+
+          <!-- Daftar Admin Terdaftar -->
+          <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Daftar Akun Admin:</div>
+          <div id="adminUsersList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+        </div>
+
+        <!-- Tab 4: Cloud Vercel -->
+        <div class="admin-tab-pane" id="tabPane-cloud">
+          <div class="admin-field-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="admin-label" for="cfgGasApiUrl" style="margin-bottom: 0;">URL Web App Google Apps Script</label>
+              <span id="apiStatusBadge" style="font-size: 0.75rem; color: #10B981; font-weight: 600;"></span>
+            </div>
+            <input type="text" id="cfgGasApiUrl" class="admin-input" placeholder="https://script.google.com/macros/s/.../exec">
+            <div class="admin-help-text" style="margin-top: 6px;">
+              Salin URL Web App dari Google Apps Script (setelah Deploy: <em>Execute as: Me</em>, <em>Who has access: Anyone</em>).
+            </div>
+          </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
+            💡 <strong>Panduan Vercel Live Multi-Device:</strong> Masukkan URL Web App Google Apps Script di atas lalu klik <strong>Simpan Perubahan</strong> agar seluruh foto dari Google Drive & Google Spreadsheet langsung sinkron secara live di semua perangkat.
+          </div>
+
+          <div style="background: #FAF8F5; border: 1px solid rgba(197, 168, 128, 0.4); border-radius: 12px; padding: 14px; margin-top: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
+              <div style="font-weight: 700; color: var(--gold-dark); font-size: 0.86rem; display: flex; align-items: center; gap: 6px;">
+                <span>📊 Database Google Sheets (ERP Master Data)</span>
+              </div>
+              <a href="https://docs.google.com/spreadsheets/d/133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20/edit" target="_blank" class="btn btn-outline" style="font-size: 0.72rem; padding: 3px 8px; text-decoration: none;">
+                <span>↗️ Buka Google Sheet</span>
+              </a>
+            </div>
+            <div style="font-size: 0.74rem; color: #475569; line-height: 1.5; margin-bottom: 8px;">
+              File ID: <code>133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20</code><br>
+              Tabel Master ERP: <strong>Daftar_Acara</strong> (10 kolom), <strong>Pengaturan</strong>, <strong>Pengguna_Admin</strong>, <strong>Daftar_Foto</strong>, <strong>Log_Aktivitas</strong>.
+            </div>
+            <button type="button" class="btn btn-outline" id="btnSyncDatabaseToSheet" onclick="handleTriggerDatabaseSetup()" style="font-size: 0.74rem; padding: 5px 12px; border-color: var(--gold-dark); color: var(--gold-dark); font-weight: 600;" title="Jalankan inisialisasi / sinkronisasi tabel ERP ke spreadsheet">
+              <span id="syncDbBtnText">⚡ Sinkronkan / Inisialisasi Database Google Sheets</span>
+            </button>
+            <div id="dbSyncStatusText" style="font-size: 0.72rem; margin-top: 6px; display: none;"></div>
+          </div>
+        </div>
+
+        <div id="saveAlertBox" class="admin-alert-box"></div>
+      </div>
+
+      <div class="admin-card-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <button type="button" class="btn btn-outline" onclick="handleAdminLogout()" style="color: #EF4444; border-color: #FECACA;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Keluar</span>
+        </button>
+
+        <button type="button" class="btn btn-outline" onclick="closeAdminSettingsModal()" style="font-size: 0.84rem; padding: 8px 16px; border-color: var(--gold-dark); color: var(--gold-dark); font-weight: 600;" title="Tutup jendela pengaturan untuk melihat & menguji coba menu galeri">
+          <span>👁️ Lihat / Test Galeri</span>
+        </button>
+
+        <button type="button" id="btnSaveSettings" class="btn btn-gold" onclick="handleSaveAllSettings()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>Simpan Perubahan</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Bar Mode Admin Aktif (Modern Luxury Dock saat View Gallery) -->
+  <div id="adminActiveFloatingBar" class="admin-floating-dock">
+    <div class="admin-dock-identity">
+      <div class="admin-dock-badge-pulse" title="Sesi Admin Aktif & Terverifikasi">
+        <span class="dot"></span>
+      </div>
+      <div class="admin-dock-text-col">
+        <span class="admin-dock-sub">Mode Admin • Pratinjau</span>
+        <span class="admin-dock-name" id="floatingBarAdminName">Administrator</span>
+      </div>
+    </div>
+    <div class="admin-dock-divider"></div>
+    <div class="admin-dock-actions">
+      <button type="button" class="admin-float-btn settings" onclick="openAdminSettingsModal()" title="Buka Panel Pengaturan Admin">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span>Pengaturan</span>
+      </button>
+      <button type="button" class="admin-float-btn logout" onclick="handleAdminLogout()" title="Keluar dari Akun Admin">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span>Keluar</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-names" id="footerCoupleName"></div>
+    <p id="footerBlessing" style="white-space: pre-line; line-height: 1.6;"></p>
+  </footer>
+
+  <!-- ==========================================================================
+       CLIENT-SIDE JAVASCRIPT ENGINE (DUAL RUNTIME: VERCEL FETCH & GAS SCRIPT.RUN)
+       ========================================================================== -->
+
+  <!-- Main Modular Application Script (Live Realtime Database Engine) -->
+  <script src="js/app.js"></script>
+
+  <!-- Modal Tambah Event Baru dengan Date Picker Native (Tanpa Browser Prompt) -->
+  <div id="modalNewEvent" class="admin-modal-overlay" style="z-index: 10500;">
+    <div class="admin-card" style="max-width: 500px; margin: 20px auto;">
+      <div class="admin-card-header">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+          </svg>
+          <span>Tambah Event / Acara Baru</span>
+        </h3>
+        <button type="button" class="ctrl-icon-btn" onclick="closeNewEventModal()" style="width: 32px; height: 32px;" title="Tutup">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="admin-card-body" style="padding: 16px;">
+        <div class="admin-field-group" style="margin-bottom: 12px;">
+          <label class="admin-label" for="neEventName">Nama Pasangan / Acara <span style="color: #EF4444;">*</span></label>
+          <input type="text" id="neEventName" class="admin-input" placeholder="Contoh: Romeo & Juliet" required>
+        </div>
+
+        <div class="admin-field-group" style="margin-bottom: 12px;">
+          <label class="admin-label" for="neEventDate">Tanggal Acara (Pilih Kalender) <span style="color: #EF4444;">*</span></label>
+          <input type="date" id="neEventDate" class="admin-input" onclick="try{this.showPicker()}catch(e){}" style="cursor: pointer;" required>
+        </div>
+
+        <div class="admin-field-group" style="margin-bottom: 12px;">
+          <label class="admin-label" for="neEventVenue">Venue / Lokasi Acara</label>
+          <input type="text" id="neEventVenue" class="admin-input" placeholder="Contoh: Grand Ballroom Hotel Mulia, Jakarta">
+        </div>
+
+        <div class="admin-field-group" style="margin-bottom: 12px;">
+          <label class="admin-label" for="neDriveFolderId">Tautan / Folder ID Google Drive (Opsional)</label>
+          <input type="text" id="neDriveFolderId" class="admin-input" placeholder="ID folder atau URL Google Drive">
+        </div>
+
+        <div class="admin-field-group" style="margin-bottom: 14px;">
+          <label class="admin-label" for="nePhotoboothUrl">Tautan Vendor Photobooth (Opsional)</label>
+          <input type="text" id="nePhotoboothUrl" class="admin-input" placeholder="https://fotoshare.co/... atau link Google Photos">
+        </div>
+
+        <div id="neAlertBox" class="admin-alert-box" style="display: none; margin-bottom: 12px;"></div>
+      </div>
+
+      <div class="admin-card-footer" style="display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px;">
+        <button type="button" class="btn btn-outline" onclick="closeNewEventModal()" style="font-size: 0.85rem; padding: 8px 16px;">Batal</button>
+        <button type="button" class="btn btn-gold" onclick="confirmAddNewEvent()" style="font-size: 0.85rem; padding: 8px 18px;">
+          <span>+ Buat & Simpan Event</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

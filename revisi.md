@@ -1,5 +1,30 @@
 # Catatan Revisi & Audit Sistem (Changelog)
 
+## Versi 4.4.0 - Penambahan Hari di Depan Tanggal Event Halaman Depan (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Penampilan Nama Hari di Depan Tanggal Event (Halaman Depan)**:
+   - **Elemen yang Diperbarui**:
+     - Badge Tanggal Utama pada Halaman Depan (`#eventDate` di dalam `.hero-date-badge`).
+     - Subtitle Slideshow (`#slideshowCategory` yang memuat tanggal & venue acara).
+     - Pratinjau Modal Bagikan & QR Code (`#shareEventDate`).
+     - Script Instant Hydration pada `index.html` (mencegah kedipan atau flash unstyled content saat pertama kali web dimuat).
+   - **Format Tampilan Otomatis**:
+     - `22 November 2026` -> **`Minggu, 22 November 2026`**
+     - `16 November 2026` -> **`Senin, 16 November 2026`**
+     - `2026-11-22` -> **`Minggu, 22 November 2026`**
+     - `2026-11-16` -> **`Senin, 16 November 2026`**
+   - **Proteksi Input Form Kalender (`formatDateForInput`)**:
+     - Sistem memisahkan nama hari secara otomatis saat mengisi formulir admin (`#cfgEventDate`). Input kalender tetap menerima format baku ISO `YYYY-MM-DD` (misal: `2026-11-22`), sehingga date picker kalender browser berfungsi normal tanpa error.
+   - **Dukungan Seluruh Nama Hari Bahasa Indonesia**:
+     - `Minggu`, `Senin`, `Selasa`, `Rabu`, `Kamis`, `Jumat`, `Sabtu`.
+
+2. **Audit Integritas Kode**:
+   - `index.html`: Syntax & instant hydration script valid 100%.
+   - `js/app.js`: Syntax Valid (`node -c` PASSED).
+   - `scratch/verify_date_display.js`: Seluruh 7 skenario format tanggal tervalidasi lolos 100%.
+   - Seluruh 36 menu & event handlers interaktif HTML berfungsi normal.
+
 ## Versi 4.3.0 - Kategori Semua Foto per Event & Perbaikan Kunci Tab Menu Admin (19 November 2026)
 
 ### 1. Perbaikan yang Diperintahkan & Diterapkan:

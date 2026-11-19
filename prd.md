@@ -41,5 +41,10 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
 - Eksekusi fungsi tersebut secara otomatis membuat dan menyusun ke-5 sheet database lengkap dengan styling header emas dan data aktual.
 - Disediakan tombol inisialisasi langsung pada antarmuka admin (Tab Cloud & API).
 
-### 2.3 Realtime Murni Tanpa Hardcode (Anti-Fallback)
+### 2.3 Format Tanggal Halaman Depan dengan Nama Hari Otomatis (v4.4.0)
+- Tanggal acara pada badge hero halaman depan (`#eventDate`), subtitle slideshow, dan kartu pratinjau bagikan kini otomatis menampilkan nama hari berbahasa Indonesia di depannya:
+  - Contoh: `Minggu, 22 November 2026` atau `Senin, 16 November 2026`.
+- Fungsi `formatIndonesianDateWithDay()` menghitung hari secara matematis dari tanggal kalender (`Date.getDay()`), menghindari duplikasi jika nama hari sudah ada, dan tetap memetakan nilai input kalender `YYYY-MM-DD` secara aman ke elemen `<input type="date">`.
+
+### 2.4 Realtime Murni Tanpa Hardcode (Anti-Fallback)
 - Seluruh data dibaca secara dinamis dari database tanpa data mockup.

@@ -1247,38 +1247,87 @@ function isGooglePhotosUrl(url) {
     /* ==========================================================================
        DATE FORMATTING UTILITIES (INDONESIAN & DATE PICKER)
        ========================================================================== */
+    const INDONESIAN_DAYS = [
+      "Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"
+    ];
     const INDONESIAN_MONTHS = [
       "Januari", "Februari", "Maret", "April", "Mei", "Juni",
       "Juli", "Agustus", "September", "Oktober", "November", "Desember"
     ];
+    const INDONESIAN_MONTH_MAP = {
+      "januari": 0, "january": 0, "jan": 0,
+      "februari": 1, "february": 1, "feb": 1,
+      "maret": 2, "march": 2, "mar": 2,
+      "april": 3, "apr": 3,
+      "mei": 4, "may": 4,
+      "juni": 5, "june": 5, "jun": 5,
+      "juli": 6, "july": 6, "jul": 6,
+      "agustus": 7, "august": 7, "agu": 7, "aug": 7,
+      "september": 8, "sep": 8,
+      "oktober": 9, "october": 9, "okt": 9, "oct": 9,
+      "november": 10, "nov": 10,
+      "desember": 11, "december": 11, "des": 11, "dec": 11
+    };
+
+    function formatIndonesianDateWithDay(dateStr) {
+      if (!dateStr) return "";
+      let s = String(dateStr).trim();
+
+      // Jika sudah memiliki nama hari di depannya (misal: "Minggu, 22 November 2026"), lepaskan dulu untuk evaluasi konsisten
+      for (let i = 0; i < INDONESIAN_DAYS.length; i++) {
+        const dayName = INDONESIAN_DAYS[i];
+        if (new RegExp("^" + dayName + "[,\\s]+", "i").test(s)) {
+          s = s.replace(new RegExp("^" + dayName + "[,\\s]+", "i"), "").trim();
+          break;
+        }
+      }
+
+      // Format YYYY-MM-DD
+      const ymdMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (ymdMatch) {
+        const y = parseInt(ymdMatch[1], 10);
+        const m = parseInt(ymdMatch[2], 10) - 1;
+        const d = parseInt(ymdMatch[3], 10);
+        const dateObj = new Date(y, m, d);
+        const dayName = INDONESIAN_DAYS[dateObj.getDay()];
+        const monthName = INDONESIAN_MONTHS[m] || ymdMatch[2];
+        return dayName + ", " + d + " " + monthName + " " + y;
+      }
+
+      // Format DD Bulan YYYY (misal: "22 November 2026")
+      const dmyMatch = s.match(/^(\d{1,2})\s+([a-zA-Z]+)\s+(\d{4})/);
+      if (dmyMatch) {
+        const d = parseInt(dmyMatch[1], 10);
+        const mStr = dmyMatch[2].toLowerCase();
+        const m = INDONESIAN_MONTH_MAP[mStr] !== undefined ? INDONESIAN_MONTH_MAP[mStr] : -1;
+        const y = parseInt(dmyMatch[3], 10);
+        if (m >= 0) {
+          const dateObj = new Date(y, m, d);
+          const dayName = INDONESIAN_DAYS[dateObj.getDay()];
+          return dayName + ", " + d + " " + INDONESIAN_MONTHS[m] + " " + y;
+        }
+      }
+
+      // Fallback native Date parser
+      const parsedDate = new Date(s);
+      if (!isNaN(parsedDate.getTime())) {
+        const dayName = INDONESIAN_DAYS[parsedDate.getDay()];
+        const d = parsedDate.getDate();
+        const m = INDONESIAN_MONTHS[parsedDate.getMonth()];
+        const y = parsedDate.getFullYear();
+        return dayName + ", " + d + " " + m + " " + y;
+      }
+
+      return s;
+    }
 
     function formatIndonesianDate(dateStr) {
-      if (!dateStr) return "";
-      const s = String(dateStr).trim();
-      if (/^\d{1,2}\s+[A-Za-z]+\s+\d{4}$/.test(s)) {
-        return s;
-      }
-      const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-      if (match) {
-        const year = match[1];
-        const monthIdx = parseInt(match[2], 10) - 1;
-        const day = parseInt(match[3], 10);
-        const monthName = INDONESIAN_MONTHS[monthIdx] || match[2];
-        return day + " " + monthName + " " + year;
-      }
-      const d = new Date(dateStr);
-      if (!isNaN(d.getTime())) {
-        const day = d.getDate();
-        const month = INDONESIAN_MONTHS[d.getMonth()];
-        const year = d.getFullYear();
-        return day + " " + month + " " + year;
-      }
-      return s;
+      return formatIndonesianDateWithDay(dateStr);
     }
 
     function formatDateForInput(dateStr) {
       if (!dateStr) return "";
-      const str = String(dateStr).trim();
+      let str = String(dateStr).trim().replace(/^[a-zA-Z]+,?\s+/, "");
       if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
         return str;
       }
@@ -1287,25 +1336,12 @@ function isGooglePhotosUrl(url) {
         const day = parts[0].padStart(2, "0");
         const monthName = parts[1].toLowerCase();
         const year = parts[2];
-        const monthMap = {
-          "januari": "01", "january": "01", "jan": "01",
-          "februari": "02", "february": "02", "feb": "02",
-          "maret": "03", "march": "03", "mar": "03",
-          "april": "04", "apr": "04",
-          "mei": "05", "may": "05",
-          "juni": "06", "june": "06", "jun": "06",
-          "juli": "07", "july": "07", "jul": "07",
-          "agustus": "08", "august": "08", "agu": "08", "aug": "08",
-          "september": "09", "sep": "09",
-          "oktober": "10", "october": "10", "okt": "10", "oct": "10",
-          "november": "11", "nov": "11",
-          "desember": "12", "december": "12", "des": "12", "dec": "12"
-        };
-        if (monthMap[monthName] && /^\d{4}$/.test(year)) {
-          return year + "-" + monthMap[monthName] + "-" + day;
+        if (INDONESIAN_MONTH_MAP[monthName] !== undefined && /^\d{4}$/.test(year)) {
+          const mm = String(INDONESIAN_MONTH_MAP[monthName] + 1).padStart(2, "0");
+          return year + "-" + mm + "-" + day;
         }
       }
-      const d = new Date(dateStr);
+      const d = new Date(str);
       if (!isNaN(d.getTime())) {
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, "0");
