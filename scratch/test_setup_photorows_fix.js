@@ -54,3 +54,4 @@ if (calcCount(mockSheetPhotosWithPhotos) === 54 && calcCount(mockSheetPhotosEmpt
 }
 
 console.log('🎉 SEMUA PENGUJIAN SETUP & CODE.GS LULUS 100%!');
+
