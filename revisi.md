@@ -1,6 +1,25 @@
 # Catatan Revisi & Audit Sistem (Changelog)
 
-## Versi 4.16.0 - Perbaikan Kendala Pembukaan Acara Lainnya, Sinkronisasi Multi-Event & Eliminasi Deadlock Kartu Skeleton (19 November 2026)
+## Versi 4.17.0 - Pemulihan Akses Website Utama, Resolusi Otomatis Acara Aktif & Penanganan Tautan Tanpa Parameter (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Pemulihan Akses Website & Penanganan Acara Tidak Bisa Diakses**:
+   - **Akar Masalah**:
+     - Saat pengguna atau tamu membuka domain utama website (`https://gallery.runway.my.id/` atau `https://gallery.runway.my.id` tanpa query parameter `?event=...`), website langsung mati total dan menampilkan layar "Halaman Tidak Ditemukan: Tautan galeri tidak menyertakan kode acara yang valid."
+     - Di [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) baris 126–138, skrip inline pre-hydration langsung mengeksekusi `nf.style.display = 'flex'`, menyembunyikan `#heroSection`, `#categoryTabsWrapper`, dan `.gallery-container`, lalu melakukan `return` seketika.
+     - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) baris 592–609, fungsi `initApp()` memeriksa `if (!urlEventId)` lalu memanggil `showEventNotFoundScreen(true)` dan melakukan `return` awal.
+     - Akibatnya, seluruh akses langsung ke website terblokir total dan tidak ada acara yang bisa dibuka.
+   - **Solusi Rekayasa Sistem**:
+     - **Resolusi Otomatis ke Acara Aktif (Seamless Active Event Resolution)**:
+       - Di [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html): Menghapus pemblokiran dini. Jika `targetEventId` kosong di URL, sistem otomatis mengambil ID acara aktif dari `localStorage.getItem("WEDDING_ACTIVE_EVENT_ID") || "andre-fayola-281"` dan melakukan hidrasi tampilan secara instan tanpa kedipan.
+       - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js): Jika `getActiveEventIdFromUrl()` kosong, sistem otomatis menetapkan `urlEventId` ke acara aktif (`localStorage`, `state.events[0]`, atau `"andre-fayola-281"`), mematikan layar 404 (`showEventNotFoundScreen(false)`), dan memperbarui address bar peramban via `history.replaceState` ke `?event={activeId}`.
+       - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) fungsi `syncFromSpreadsheetGViz()`: Menambahkan pelacakan parameter eksplisit (`explicitUrlParam`). Hanya jika pengguna secara sengaja mengetik kode acara yang benar-benar tidak terdaftar di database Google Sheets, barulah layar "Acara Tidak Ditemukan" ditampilkan. Kunjungan ke domain utama akan selalu membuka acara pernikahan yang sedang aktif secara mulus.
+       - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js): Dukungan pencocokan slug alias yang fleksibel (`eId.replace(/-\d+$/, '') === uId.replace(/-\d+$/, '')`) sehingga baik `wilson-felicia` maupun `wilson-felicia-133` dapat diakses langsung tanpa hambatan.
+
+2. **Audit & Verifikasi Pengujian Menyeluruh**:
+   - `scratch/test_homepage_and_event_access.js`: 5 pengujian unit PASS 100% (0 FAIL).
+   - Seluruh 8 test suite (`test_homepage_and_event_access.js`, `test_multi_event_resolution.js`, `test_logo_fallback_isolation.js`, `test_photostage_fallback_fix.js`, `test_empty_state_redesign.js`, `test_photobooth_download_fix.js`, `test_preview_and_download_flow.js`, `test_duplicate_drive_field_removed.js`): 91 PASS, 0 FAIL.
+
 
 ### 1. Perbaikan yang Diperintahkan & Diterapkan:
 1. **Perbaikan Kendala Acara Lainnya Tidak Bisa Terbuka (*Multi-Event Opening & Switching Fix*)**:

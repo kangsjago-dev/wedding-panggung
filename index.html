@@ -124,18 +124,7 @@
           var params = new URLSearchParams(window.location.search);
           var targetEventId = params.get("event") || params.get("e") || "";
           if (!targetEventId) {
-            // Jika diketik manual tanpa ?event=..., sembunyikan hero dan galeri, tampilkan layar tidak ditemukan
-            var nf = document.getElementById("eventNotFoundScreen");
-            if (nf) nf.style.display = "flex";
-            var hero = document.getElementById("heroSection");
-            if (hero) hero.style.display = "none";
-            var catWrap = document.getElementById("categoryTabsWrapper");
-            if (catWrap) catWrap.style.display = "none";
-            var galMain = document.querySelector(".gallery-container");
-            if (galMain) galMain.style.display = "none";
-            var floatBar = document.getElementById("adminActiveFloatingBar");
-            if (floatBar) floatBar.style.display = "none";
-            return;
+            targetEventId = localStorage.getItem("WEDDING_ACTIVE_EVENT_ID") || "andre-fayola-281";
           }
           var cacheKey = "WEDDING_EVENT_CFG_" + targetEventId;
           var saved = localStorage.getItem(cacheKey);

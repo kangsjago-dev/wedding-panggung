@@ -589,23 +589,9 @@ function isGooglePhotosUrl(url) {
         }
       } catch(e) {}
 
-      const urlEventId = getActiveEventIdFromUrl();
+      let urlEventId = getActiveEventIdFromUrl();
       if (!urlEventId) {
-        // Link diketik manual tanpa ?event=... -> Tampilkan Halaman Tidak Ditemukan murni
-        state.currentEventId = "";
-        showEventNotFoundScreen(true);
-
-        fetch("config.json?v=" + Date.now())
-          .then(function(res) { if (!res.ok) throw new Error("No config"); return res.json(); })
-          .then(function(remoteCfg) {
-            if (remoteCfg && typeof remoteCfg === "object") {
-              if (remoteCfg.GAS_API_URL) state.gasApiUrl = remoteCfg.GAS_API_URL;
-              if (Array.isArray(remoteCfg.EVENTS)) state.events = remoteCfg.EVENTS;
-              if (remoteCfg.ADMIN_ACCOUNTS) state.adminAccounts = remoteCfg.ADMIN_ACCOUNTS;
-            }
-          })
-          .catch(function() {});
-        return;
+        urlEventId = localStorage.getItem("WEDDING_ACTIVE_EVENT_ID") || (state.events && state.events[0] && state.events[0].id) || "andre-fayola-281";
       }
 
       state.currentEventId = urlEventId;
@@ -669,11 +655,21 @@ function isGooglePhotosUrl(url) {
               state.events = Array.from(evMap.values());
               try { localStorage.setItem("WEDDING_EVENTS_REGISTRY", JSON.stringify(state.events)); } catch(eReg) {}
 
-              const matchedEv = state.events.find(function(ev) { 
-                return ev && (ev.id === state.currentEventId || (state.currentEventId && (ev.id.startsWith(state.currentEventId) || state.currentEventId.startsWith(ev.id)))); 
+              let matchedEv = state.events.find(function(ev) { 
+                if (!ev || !ev.id) return false;
+                const eId = String(ev.id).toLowerCase().trim();
+                const curId = String(state.currentEventId).toLowerCase().trim();
+                return eId === curId || eId.startsWith(curId) || curId.startsWith(eId) || eId.replace(/-\d+$/, '') === curId.replace(/-\d+$/, ''); 
               });
+              if (!matchedEv && remoteCfg.ACTIVE_EVENT_ID) {
+                matchedEv = state.events.find(function(ev) { return ev && ev.id === remoteCfg.ACTIVE_EVENT_ID; });
+              }
+              if (!matchedEv && state.events && state.events.length > 0) {
+                matchedEv = state.events[0];
+              }
               if (matchedEv) {
                 showEventNotFoundScreen(false);
+                state.currentEventId = matchedEv.id;
                 remoteCfg.ACTIVE_EVENT_ID = matchedEv.id;
                 remoteCfg.EVENT_NAME = matchedEv.name;
                 remoteCfg.COUPLE_NAME = matchedEv.name;
@@ -825,16 +821,23 @@ function isGooglePhotosUrl(url) {
               } catch(eEvs) {}
             }
 
-            const urlEvId = getActiveEventIdFromUrl() || state.currentEventId;
-            if (!urlEvId) {
-              showEventNotFoundScreen(true);
-              return;
-            }
-            const matchedEv = (state.events || []).find(function(e) { 
-              return e && (e.id === urlEvId || (e.id.startsWith(urlEvId) || urlEvId.startsWith(e.id))); 
+            const explicitUrlParam = getActiveEventIdFromUrl();
+            const urlEvId = explicitUrlParam || state.currentEventId || sheetMap.ACTIVE_EVENT_ID || "andre-fayola-281";
+            let matchedEv = (state.events || []).find(function(e) { 
+              if (!e || !e.id) return false;
+              const eId = String(e.id).toLowerCase().trim();
+              const uId = String(urlEvId).toLowerCase().trim();
+              return eId === uId || eId.startsWith(uId) || uId.startsWith(eId) || eId.replace(/-\d+$/, '') === uId.replace(/-\d+$/, ''); 
             });
             if (!matchedEv) {
-              showEventNotFoundScreen(true, urlEvId);
+              if (explicitUrlParam) {
+                showEventNotFoundScreen(true, explicitUrlParam);
+                return;
+              }
+              matchedEv = (state.events || []).find(function(e) { return e && e.id === sheetMap.ACTIVE_EVENT_ID; }) || state.events[0];
+            }
+            if (!matchedEv) {
+              showEventNotFoundScreen(true);
               return;
             }
             showEventNotFoundScreen(false);
