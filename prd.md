@@ -1,6 +1,6 @@
 # PRD - Wedding Photo Gallery & Live Slideshow Platform
 **Sistem**: Multi-Event Wedding Gallery with ERP Master Data Architecture  
-**Versi**: v4.20.0-PROD  
+**Versi**: v4.21.0-PROD  
 **Arsitektur Database**: Google Sheets ERP Master Table + Google Drive Live Photo Catalog  
 **Terakhir Diperbarui**: 19 November 2026
 
@@ -50,10 +50,10 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
 ### 2.4 Realtime Murni Tanpa Hardcode (Anti-Fallback)
 - Seluruh data dibaca secara dinamis dari database tanpa data mockup.
 
-### 2.5 Proteksi Halaman Tidak Ditemukan untuk URL Manual (v4.5.0)
+### 2.5 Proteksi Halaman Tidak Ditemukan untuk URL Manual
 - Mengetik link manual tanpa parameter event (`https://gallery.runway.my.id/`) menampilkan layar khusus **Halaman Tidak Ditemukan / Acara Tidak Ditemukan** (`#eventNotFoundScreen`).
-- Galeri foto, banner sambutan, dan identitas pengantin disembunyikan total guna mencegah kebocoran data antar event dan menjaga privasi masing-masing pasangan.
-- Tersedia tombol "Masuk Panel Admin" agar administrator tetap dapat mengelola atau membuka tautan home acara masing-masing.
+- Galeri foto, banner sambutan, identitas pengantin, tab filter kategori ("Semua Foto"), dan grup tombol aksi bawah (share, refresh, gembok admin) disembunyikan total guna mencegah kebocoran data antar event dan menjaga privasi masing-masing pasangan.
+- Tampilan dirancang bersih dan minimalis tanpa frame kaku serta tanpa tombol masuk panel admin bagi pengunjung publik.
 
 ### 2.6 Kustom Logo / Monogram Acara (v4.5.0)
 - Logo atau monogram pernikahan (`#heroLogoContainer`) ditampilkan tepat di atas divider dan nama pasangan pengantin sesuai layout kartu mewah.
@@ -178,4 +178,15 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
   - Akses langsung ke root domain murni (`https://gallery.runway.my.id/`) tanpa menyertakan parameter acara (`?event=...` atau `?e=...`) diwajibkan menampilkan layar notifikasi **"Halaman Tidak Ditemukan"** (`#eventNotFoundScreen`).
   - Menghapus seluruh mekanisme auto-fallback (ke `localStorage`, `ACTIVE_EVENT_ID`, `andre-fayola-281`, atau `state.events[0]`) yang sebelumnya secara otomatis memuat acara pengantin pada URL root.
   - Seluruh elemen galeri (nama pasangan pengantin, banner sambutan, logo monogram, filter kategori, kartu foto, dan footer) disembunyikan seketika untuk melindungi kerahasiaan dan privasi masing-masing pasangan pengantin.
-  - Tombol **"Masuk Panel Admin"** tetap disediakan di dalam kartu notifikasi tersebut agar administrator tetap dapat melakukan login untuk mengelola atau mengambil tautan acara spesifik dari database Google Sheets ERP.
+
+### 2.21 Redesain Layar 'Halaman Tidak Ditemukan': Tampilan Minimal Frameless, Eliminasi Tombol Admin & Isolasi Kontrol Galeri (v4.21.0)
+- **Tampilan Minimal Frameless**:
+  - Menghilangkan `border`, `box-shadow`, dan `background: #FFFFFF` kaku pada `.event-not-found-card` di [css/style.css](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/css/style.css). Wadah notifikasi menyatu bersih dengan latar belakang halaman.
+- **Penghapusan Kalimat Contoh Tautan**:
+  - Menghapus teks `"atau buka link khusus acara (contoh: ?event=nama-acara)."` dari [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) dan [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js).
+  - Teks deskripsi tersisa hanya arahan ramah: *"Tautan galeri tidak menyertakan kode acara yang valid.<br>Silakan periksa kembali tautan undangan Anda."*
+- **Penghapusan Tombol Masuk Panel Admin**:
+  - Tombol *"Masuk Panel Admin"* di dalam kartu `#eventNotFoundScreen` dihapus sepenuhnya dari [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) agar pengunjung publik pada URL root tidak memiliki akses tombol admin.
+- **Penyembunyian Menyeluruh Bilah Filter Bawah & Grup Kontrol Aksi (Share, Refresh, Gembok Admin)**:
+  - Memperbaiki selektor penyembunyian pada hidrasi awal [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) dan fungsi `showEventNotFoundScreen()` di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) untuk secara akurat menargetkan `#gallerySection` (`.filter-wrapper`) dan `#adminActiveFloatingBar`.
+  - Memasang aturan CSS fail-safe `#eventNotFoundScreen:not([style*="display: none"]) ~ #gallerySection` sehingga tab "Semua Foto" dan ikon aksi bawah terjamin 100% tersembunyi tanpa risiko keterlambatan eksekusi JavaScript.

@@ -90,14 +90,8 @@
       <h2 class="event-not-found-title" id="eventNotFoundTitle">Halaman Tidak Ditemukan</h2>
       <p class="event-not-found-desc" id="eventNotFoundDesc">
         Tautan galeri tidak menyertakan kode acara yang valid.<br>
-        Silakan periksa kembali tautan undangan Anda atau buka link khusus acara (contoh: <code>?event=nama-acara</code>).
+        Silakan periksa kembali tautan undangan Anda.
       </p>
-      <div style="display: flex; justify-content: center; gap: 10px;">
-        <button type="button" class="btn btn-gold" onclick="openAdminModal()" style="font-size: 0.85rem; padding: 10px 22px; display: inline-flex; align-items: center; gap: 6px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-          <span>Masuk Panel Admin</span>
-        </button>
-      </div>
     </div>
   </div>
 
@@ -126,16 +120,16 @@
           if (!targetEventId) {
             var nf = document.getElementById("eventNotFoundScreen");
             var hr = document.getElementById("heroSection");
-            var catWrap = document.getElementById("categoryTabsWrapper");
+            var filterWrap = document.getElementById("gallerySection") || document.querySelector(".filter-wrapper");
             var galMain = document.querySelector(".gallery-container");
-            var filterBar = document.querySelector(".filter-bar");
             var footer = document.querySelector(".footer");
+            var floatBar = document.getElementById("adminActiveFloatingBar");
             if (nf) nf.style.display = "flex";
             if (hr) hr.style.display = "none";
-            if (catWrap) catWrap.style.display = "none";
+            if (filterWrap) filterWrap.style.display = "none";
             if (galMain) galMain.style.display = "none";
-            if (filterBar) filterBar.style.display = "none";
             if (footer) footer.style.display = "none";
+            if (floatBar) floatBar.style.display = "none";
             return;
           }
           var cacheKey = "WEDDING_EVENT_CFG_" + targetEventId;

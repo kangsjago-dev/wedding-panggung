@@ -487,18 +487,16 @@ function isGooglePhotosUrl(url) {
     function showEventNotFoundScreen(show, invalidId) {
       const nfScreen = document.getElementById("eventNotFoundScreen");
       const hero = document.getElementById("heroSection");
-      const catWrap = document.getElementById("categoryTabsWrapper");
+      const filterWrap = document.getElementById("gallerySection") || document.querySelector(".filter-wrapper");
       const galMain = document.querySelector(".gallery-container");
-      const filterBar = document.querySelector(".filter-bar");
       const footer = document.querySelector(".footer");
       const floatBar = document.getElementById("adminActiveFloatingBar");
 
       if (show) {
         if (nfScreen) nfScreen.style.display = "flex";
         if (hero) hero.style.display = "none";
-        if (catWrap) catWrap.style.display = "none";
+        if (filterWrap) filterWrap.style.display = "none";
         if (galMain) galMain.style.display = "none";
-        if (filterBar) filterBar.style.display = "none";
         if (footer) footer.style.display = "none";
         if (floatBar) floatBar.style.display = "none";
 
@@ -509,14 +507,13 @@ function isGooglePhotosUrl(url) {
           if (descEl) descEl.innerHTML = "Kode acara <code>" + escapeHtml(invalidId) + "</code> tidak terdaftar.<br>Silakan periksa kembali tautan undangan pernikahan Anda.";
         } else {
           if (titleEl) titleEl.innerText = "Halaman Tidak Ditemukan";
-          if (descEl) descEl.innerHTML = "Tautan galeri tidak menyertakan kode acara yang valid.<br>Silakan periksa kembali tautan undangan Anda atau buka link khusus acara (contoh: <code>?event=nama-acara</code>).";
+          if (descEl) descEl.innerHTML = "Tautan galeri tidak menyertakan kode acara yang valid.<br>Silakan periksa kembali tautan undangan Anda.";
         }
       } else {
         if (nfScreen) nfScreen.style.display = "none";
         if (hero) hero.style.display = "";
-        if (catWrap) catWrap.style.display = "";
+        if (filterWrap) filterWrap.style.display = "";
         if (galMain) galMain.style.display = "";
-        if (filterBar) filterBar.style.display = "";
         if (footer) footer.style.display = "";
       }
     }

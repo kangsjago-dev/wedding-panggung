@@ -89,15 +89,22 @@
     }
 
     .event-not-found-card {
-      background: #FFFFFF;
-      border: 1px solid rgba(197, 168, 128, 0.25);
-      border-radius: 20px;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.05);
-      max-width: 480px;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      max-width: 520px;
       width: 100%;
       text-align: center;
-      padding: 44px 28px;
+      padding: 24px 16px;
       animation: fadeInUp 0.5s ease;
+    }
+
+    /* CSS Fail-Safe: Saat Layar Not-Found Aktif, Sembunyikan Mutlak Seluruh Filter Bar, Aksi & Dock Admin */
+    #eventNotFoundScreen:not([style*="display: none"]) ~ #gallerySection,
+    #eventNotFoundScreen:not([style*="display: none"]) ~ .filter-wrapper,
+    #eventNotFoundScreen:not([style*="display: none"]) ~ #adminActiveFloatingBar {
+      display: none !important;
     }
 
     .event-not-found-icon-box {
