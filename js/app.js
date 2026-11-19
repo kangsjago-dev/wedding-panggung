@@ -1174,12 +1174,18 @@ function isGooglePhotosUrl(url) {
           if (activeEv.driveFolderId) response.config.DRIVE_FOLDER_ID = activeEv.driveFolderId;
           if (activeEv.photoboothUrl) response.config.PHOTOBOOTH_URL = activeEv.photoboothUrl;
           if (activeEv.frameImageUrl) response.config.FRAME_IMAGE_URL = activeEv.frameImageUrl;
+          response.config.EVENT_LOGO_URL = activeEv.logoUrl || activeEv.EVENT_LOGO_URL || "";
+          response.config.logoUrl = response.config.EVENT_LOGO_URL;
           if (Array.isArray(activeEv.customCategories) && activeEv.customCategories.length > 0) {
             response.config.CUSTOM_CATEGORIES = activeEv.customCategories;
             state.customCategories = activeEv.customCategories;
           }
         }
         state.activeConfig = Object.assign({}, state.activeConfig, response.config);
+        if (activeEv) {
+          state.activeConfig.EVENT_LOGO_URL = activeEv.logoUrl || activeEv.EVENT_LOGO_URL || "";
+          state.activeConfig.logoUrl = state.activeConfig.EVENT_LOGO_URL;
+        }
         if (state.activeConfig.ALL_PHOTOS_LABEL) {
           state.allPhotosLabel = state.activeConfig.ALL_PHOTOS_LABEL;
         }

@@ -549,6 +549,8 @@ function readEventsFromSheet(ss) {
     var pbCol = header.indexOf('Photobooth_Vendor_URL');
     var catCol = header.indexOf('Kategori_JSON');
     var frameCol = header.indexOf('Bingkai_URL');
+    var logoCol = header.indexOf('Logo_Acara');
+    if (logoCol === -1) logoCol = header.indexOf('EVENT_LOGO_URL');
     var statusCol = header.indexOf('Status');
 
     var events = [];
@@ -577,6 +579,8 @@ function readEventsFromSheet(ss) {
         photoboothUrl: pbCol >= 0 ? String(row[pbCol] || '').trim() : '',
         customCategories: Array.isArray(cats) ? cats : [],
         frameImageUrl: frameCol >= 0 ? String(row[frameCol] || '').trim() : '',
+        logoUrl: logoCol >= 0 ? String(row[logoCol] || '').trim() : '',
+        EVENT_LOGO_URL: logoCol >= 0 ? String(row[logoCol] || '').trim() : '',
         status: statusCol >= 0 ? String(row[statusCol] || 'Aktif').trim() : 'Aktif',
         subtitle: 'The Wedding Gallery & Precious Memories',
         welcomeMessage: 'Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.',
@@ -603,7 +607,7 @@ function syncEventsToSheet(ss, eventsList) {
     }
 
     var headers = [
-      ['ID_Event', 'Nama_Acara', 'Tanggal_Acara', 'Venue_Lokasi', 'Tautan_Home_Event', 'Google_Drive_Folder_ID', 'Photobooth_Vendor_URL', 'Kategori_JSON', 'Bingkai_URL', 'Status']
+      ['ID_Event', 'Nama_Acara', 'Tanggal_Acara', 'Venue_Lokasi', 'Tautan_Home_Event', 'Google_Drive_Folder_ID', 'Photobooth_Vendor_URL', 'Kategori_JSON', 'Bingkai_URL', 'Logo_Acara', 'Status']
     ];
 
     sheet.clear();
@@ -633,6 +637,7 @@ function syncEventsToSheet(ss, eventsList) {
         ev.photoboothUrl || '',
         catStr,
         ev.frameImageUrl || '',
+        ev.logoUrl || ev.EVENT_LOGO_URL || '',
         ev.status || 'Aktif'
       ]);
     }
@@ -923,6 +928,8 @@ function getGalleryData(targetEventId) {
       safeConfig.DRIVE_FOLDER_ID = currentEvent.driveFolderId || "";
       safeConfig.PHOTOBOOTH_URL = currentEvent.photoboothUrl || "";
       safeConfig.FRAME_IMAGE_URL = currentEvent.frameImageUrl || safeConfig.FRAME_IMAGE_URL;
+      safeConfig.EVENT_LOGO_URL = currentEvent.logoUrl || currentEvent.EVENT_LOGO_URL || "";
+      safeConfig.logoUrl = safeConfig.EVENT_LOGO_URL;
 
       // Isolasi Kategori Tiap Event: Gunakan kategori milik event aktif
       if (Array.isArray(currentEvent.customCategories) && currentEvent.customCategories.length > 0) {
@@ -1982,7 +1989,24 @@ function saveAdminSettings(pin, updatedConfig) {
     }
 
     if (updatedConfig.EVENT_LOGO_URL !== undefined) {
-      props.setProperty("EVENT_LOGO_URL", String(updatedConfig.EVENT_LOGO_URL).trim());
+      var cleanLogo = String(updatedConfig.EVENT_LOGO_URL).trim();
+      props.setProperty("EVENT_LOGO_URL", cleanLogo);
+      try {
+        var existingEventsStr = props.getProperty("EVENTS") || WEDDING_CONFIG.EVENTS;
+        var existingEvents = JSON.parse(existingEventsStr);
+        if (Array.isArray(existingEvents)) {
+          var activeEvId = updatedConfig.ACTIVE_EVENT_ID || props.getProperty("ACTIVE_EVENT_ID") || "";
+          for (var evI = 0; evI < existingEvents.length; evI++) {
+            if (existingEvents[evI].id === activeEvId || existingEvents.length === 1) {
+              existingEvents[evI].logoUrl = cleanLogo;
+              existingEvents[evI].EVENT_LOGO_URL = cleanLogo;
+            }
+          }
+          var updatedEventsStr = JSON.stringify(existingEvents);
+          props.setProperty("EVENTS", updatedEventsStr);
+          updatedConfig.EVENTS = updatedEventsStr;
+        }
+      } catch (eEvLogo) {}
     }
 
     if (updatedConfig.WELCOME_MESSAGE !== undefined && String(updatedConfig.WELCOME_MESSAGE).trim()) {

@@ -105,7 +105,7 @@
   <header class="hero" id="heroSection">
     <!-- Logo Acara / Monogram (Dapat diatur via link Google Drive dari Admin) -->
     <div id="heroLogoContainer" class="hero-logo-container" style="display: none;">
-      <img id="heroLogoImg" src="" alt="Logo Acara / Monogram" class="hero-logo-img" onerror="this.parentElement.style.display='none'">
+      <img id="heroLogoImg" src="" alt="Logo Acara / Monogram" class="hero-logo-img" onerror="this.src=''; this.parentElement.style.display='none';">
     </div>
 
     <div class="hero-ornament">
@@ -145,15 +145,20 @@
             if (n) document.getElementById("coupleName").textContent = n;
             if (c.SUBTITLE) document.getElementById("subtitle").textContent = c.SUBTITLE;
             var lUrl = c.EVENT_LOGO_URL || c.LOGO_URL || c.logoUrl;
+            var img = document.getElementById("heroLogoImg");
+            var cont = document.getElementById("heroLogoContainer");
             if (lUrl && String(lUrl).trim()) {
               var cleanL = String(lUrl).trim();
               var m = cleanL.match(/\/d\/([a-zA-Z0-9_\-]+)/) || cleanL.match(/id=([a-zA-Z0-9_\-]+)/);
               var normL = (m && m[1]) ? ("https://lh3.googleusercontent.com/d/" + m[1] + "=w800") : cleanL;
-              var img = document.getElementById("heroLogoImg");
-              var cont = document.getElementById("heroLogoContainer");
               if (img && cont) {
                 img.src = normL;
                 cont.style.display = "flex";
+              }
+            } else {
+              if (img && cont) {
+                img.src = "";
+                cont.style.display = "none";
               }
             }
             if (c.EVENT_DATE) {

@@ -1,6 +1,6 @@
 # PRD - Wedding Photo Gallery & Live Slideshow Platform
 **Sistem**: Multi-Event Wedding Gallery with ERP Master Data Architecture  
-**Versi**: v4.1.0-PROD  
+**Versi**: v4.15.0-PROD  
 **Arsitektur Database**: Google Sheets ERP Master Table + Google Drive Live Photo Catalog  
 **Terakhir Diperbarui**: 19 November 2026
 
@@ -9,7 +9,7 @@
 ## 1. Ringkasan Eksekutif & Struktur ERP
 Platform Galeri Foto Pernikahan & Slideshow Interaktif mendukung Multi-Event terisolasi penuh dengan arsitektur **ERP Master Data Spreadsheet** pada Google Sheets (`133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20`).
 
-### 1.1 Tabel Master ERP: `Daftar_Acara` (10 Kolom Terstruktur)
+### 1.1 Tabel Master ERP: `Daftar_Acara` (11 Kolom Terstruktur)
 Setiap baris mewakili 1 event independen dengan properti lengkap:
 1. `ID_Event`: ID unik berbasis slug (contoh: `andre-fayola-281`, `wilson-felicia-133`)
 2. `Nama_Acara`: Nama pasangan pengantin / judul acara
@@ -20,7 +20,8 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
 7. `Photobooth_Vendor_URL`: Tautan khusus vendor photobooth (Fotoshare, Google Photos, dll.)
 8. `Kategori_JSON`: Array JSON kategori kustom beserta link folder masing-masing
 9. `Bingkai_URL`: Tautan file bingkai PNG transparan download otomatis
-10. `Status`: Status acara (`Aktif`, `Selesai`, `Draft`)
+10. `Logo_Acara`: Tautan berkas Google Drive monogram/logo spesifik acara (opsional)
+11. `Status`: Status acara (`Aktif`, `Selesai`, `Draft`)
 
 ### 1.2 Tabel Pendukung ERP di Google Spreadsheet
 - **`Pengaturan`**: Parameter sistem global, endpoint Apps Script, interval refresh, durasi badge baru.

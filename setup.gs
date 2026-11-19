@@ -163,8 +163,8 @@ function setupTargetSpreadsheetDatabase() {
     sheetEvents = ss.insertSheet("Daftar_Acara", 2);
   }
   if (sheetEvents.getLastRow() === 0) {
-    var eventHeaders = [["ID_Event", "Nama_Acara", "Tanggal_Acara", "Venue_Lokasi", "Tautan_Home_Event", "Google_Drive_Folder_ID", "Photobooth_Vendor_URL", "Kategori_JSON", "Bingkai_URL", "Status"]];
-    sheetEvents.getRange(1, 1, 1, 10).setValues(eventHeaders)
+    var eventHeaders = [["ID_Event", "Nama_Acara", "Tanggal_Acara", "Venue_Lokasi", "Tautan_Home_Event", "Google_Drive_Folder_ID", "Photobooth_Vendor_URL", "Kategori_JSON", "Bingkai_URL", "Logo_Acara", "Status"]];
+    sheetEvents.getRange(1, 1, 1, 11).setValues(eventHeaders)
       .setBackground("#C5A880")
       .setFontColor("#FFFFFF")
       .setFontWeight("bold")
@@ -180,7 +180,8 @@ function setupTargetSpreadsheetDatabase() {
   sheetEvents.setColumnWidth(7, 300);
   sheetEvents.setColumnWidth(8, 300);
   sheetEvents.setColumnWidth(9, 260);
-  sheetEvents.setColumnWidth(10, 100);
+  sheetEvents.setColumnWidth(10, 260);
+  sheetEvents.setColumnWidth(11, 100);
   Logger.log("✅ Sheet 'Daftar_Acara' siap.");
 
   // --------------------------------------------------------------------------

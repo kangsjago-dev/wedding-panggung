@@ -1,5 +1,41 @@
 # Catatan Revisi & Audit Sistem (Changelog)
 
+## Versi 4.15.0 - Perbaikan Fallback Logo Gambar Terlampir, Isolasi Logo Tiap Acara & Audit 3x Eliminasi Total Fallback Realtime Database (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Perbaikan Fallback pada Logo Gambar Terlampir (Isolasi Logo & Eliminasi Total Bocoran Fallback)**:
+   - **Akar Masalah**:
+     - Pada tangkapan layar pengguna (`media_1795082850705_34fdd86a.png`), halaman acara "Andre & Fayola" menampilkan logo vendor/organizer "RUNWAY Entertainment & Organizer" tepat di atas divider hati dan nama pengantin.
+     - Hal ini terjadi karena parameter `EVENT_LOGO_URL` tersimpan secara global di sheet `Pengaturan` Google Spreadsheet database.
+     - Saat `getGalleryData()` dipanggil di `code.gs`, `safeConfig.EVENT_LOGO_URL` tidak dioverride oleh `currentEvent.logoUrl`, sehingga mengembalikan logo global Runway sebagai fallback untuk acara mana pun yang belum memiliki monogram/logo sendiri.
+     - Di `js/app.js`, `handleGalleryResponse()` menimpa konfigurasi lokal dengan `response.config` server tanpa memproteksi `EVENT_LOGO_URL`, dan pada saat penyimpanan admin (`handleAdminSaveConfig()`), URL logo tersebut sempat tersimpan ke dalam objek acara `andre-fayola-281` di baris `EVENTS`.
+     - Di `index.html`, elemen `#heroLogoContainer` dan skrip pre-hydration tidak melakukan pembersihan eksplisit saat `lUrl` kosong, serta `#heroLogoImg` tidak mereset sumber gambar saat terjadi error muat.
+   - **Solusi Rekayasa Sistem**:
+     - **Pembersihan Database Realtime**: Mengirim pembaruan resmi via `saveAdminSettings` ke Google Spreadsheet Database, mengosongkan nilai `EVENT_LOGO_URL` global di sheet `Pengaturan`, serta mengosongkan `logoUrl` pada event `andre-fayola-281`.
+     - **Isolasi Logo Tiap Acara (Multi-Event Logo Isolation)**:
+       - Di [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs): Fungsi `getGalleryData()` kini menetapkan `safeConfig.EVENT_LOGO_URL = currentEvent.logoUrl || currentEvent.EVENT_LOGO_URL || ""` (bebas dari fallback logo global).
+       - Di [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs): Menambahkan pembacaan dan penulisan kolom `Logo_Acara` pada sheet `Daftar_Acara` di fungsi `readEventsFromSheet()` dan `syncEventsToSheet()`.
+       - Di [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/setup.gs): Memperbarui `eventHeaders` menjadi 11 kolom dengan kolom `Logo_Acara`.
+       - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js): Memproteksi `handleGalleryResponse()`, `syncFromSpreadsheetGViz()`, dan `handleEventSelectChange()` agar `EVENT_LOGO_URL` dan `logoUrl` murni terisolasi 100% pada `activeEv.logoUrl` (jika event tidak memiliki logo, nilai wajib `""` dan kontainer disembunyikan total).
+       - Di [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html): Skrip pre-hydration seketika menyembunyikan `#heroLogoContainer` dan mengosongkan `img.src` jika event aktif tidak memiliki logo.
+     - **Fallback Gambar Rusak yang Bersih (Graceful Image Error Handling)**:
+       - Atribut `#heroLogoImg` diperbarui menjadi `onerror="this.src=''; this.parentElement.style.display='none';"` sehingga jika logo Google Drive/URL mengalami kendala jaringan atau berkas dihapus, kontainer otomatis lenyap tanpa memicu ikon gambar rusak (*broken image placeholder*).
+
+2. **Audit 3x Menyeluruh & Eliminasi Total Fallback Hardcode pada Semua Menu (100% Realtime Database Murni)**:
+   - **Putaran 1 (Frontend `index.html` & `js/app.js`)**:
+     - Memastikan seluruh menu navigasi, modal pengaturan admin, dan modal share QR code beroperasi murni dinamis berdasarkan data event aktif di Google Spreadsheet.
+     - Validasi seluruh 35 handler interaktif HTML aktif dan valid.
+   - **Putaran 2 (Serverless APIs `api/*.js`)**:
+     - Memastikan seluruh endpoint serverless (`api/drive-folder.js`, `api/fotoshare.js`, `api/google-photos.js`, `api/kingphotobooth.js`, dan `api/download-proxy.js`) bebas dari nilai default statis atau fallback logo.
+   - **Putaran 3 (Backend Google Apps Script `code.gs` & `setup.gs`)**:
+     - Sinkronisasi ERP multi-event 11 kolom (`Logo_Acara`) ke sheet `Daftar_Acara`.
+     - Menjamin `getGalleryData()` tidak lagi mewariskan parameter konfigurasi lintas acara.
+
+3. **Verifikasi Mandiri & Integritas Pengujian Otomatis**:
+   - `scratch/test_logo_fallback_isolation.js`: 18 pengujian unit PASS (0 FAIL).
+   - Seluruh 6 test suite otomatis (`test_empty_state_redesign.js`, `verify_sorting_and_fallbacks.js`, `test_uncompressed_download.js`, `test_preview_and_download_flow.js`, `verify_qr_logo_no_border.js`, `test_logo_fallback_isolation.js`): 79 PASS, 0 FAIL.
+   - Kompilasi syntax: `js/app.js`, `code.gs`, `setup.gs`, `api/*.js` lulus validasi (Code 0).
+
 ## Versi 4.14.0 - Perbaikan Fallback Photostage (Mode Panggung) & Audit 3x Eliminasi Total Fallback Realtime Database (19 November 2026)
 
 ### 1. Perbaikan yang Diperintahkan & Diterapkan:
