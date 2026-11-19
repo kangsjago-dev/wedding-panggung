@@ -129,6 +129,20 @@ function isGooglePhotosUrl(url) {
         localStorage.removeItem("WEDDING_CAT_COUNT_" + categoryName);
       } catch (e) {}
 
+      // Jika kategori yang sedang aktif disinkronkan, segera bersihkan grid dari foto lama
+      if (state.activeCategory === categoryName) {
+        state.filteredPhotos = [];
+        const grid = document.getElementById("photosGrid");
+        if (grid) {
+          grid.innerHTML = `
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          `;
+        }
+      }
+
       // Robust check apakah kategori yang disinkronkan adalah kategori spesial Photobooth
       const isPbCat = (categoryName.toLowerCase().includes("photobooth")) ||
         (Array.isArray(state.customCategories) && state.customCategories.some(function(c) {
@@ -2179,17 +2193,10 @@ function isGooglePhotosUrl(url) {
       }
 
       function fallbackDrive() {
-
-
-        let matched = state.allPhotos.filter(function(p) {
-          if (p.category && p.category.toLowerCase() === cat.toLowerCase()) return true;
-          if (p.name && p.name.toLowerCase().includes(cat.toLowerCase())) return true;
-          if (driveFolderId && p.customFolderId === driveFolderId) return true;
-          return false;
-        });
-        state.categoryPhotosMap[cat] = matched;
+        // Hilangkan fallback hardcode: kembalikan array kosong jika folder kategori belum ada foto
+        state.categoryPhotosMap[cat] = [];
         state.categoryPhotosUrlMap[cat] = driveKey;
-        if (callback) callback(matched);
+        if (callback) callback([]);
       }
 
       // 1. Coba lewat API endpoint /api/drive-folder (Vercel / Node) dengan timeout 6 detik
@@ -2220,9 +2227,9 @@ function isGooglePhotosUrl(url) {
         })
         .catch(function() {
           if (timeoutId) clearTimeout(timeoutId);
-          // 2. Coba lewat GAS Backend getCategoryPhotos
+          // 2. Coba lewat GAS Backend getCategoryPhotos secara realtime
           callBackend("getCategoryPhotos", { folderId: driveFolderId, category: cat }, function(res) {
-            if (res && res.success && Array.isArray(res.photos) && res.photos.length > 0) {
+            if (res && res.success && Array.isArray(res.photos)) {
               state.categoryPhotosMap[cat] = res.photos;
               state.categoryPhotosUrlMap[cat] = driveKey;
               try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(res.photos.length)); } catch (e) {}
@@ -2332,9 +2339,12 @@ function isGooglePhotosUrl(url) {
         }
       }
 
+      // Bersihkan foto kategori lama seketika dari memori & DOM agar gambar sebelumnya tidak bocor
+      state.filteredPhotos = [];
+      showGridSkeleton();
+
       // 2. Jika tautan Google Photos (album bersama atau photos.app.goo.gl)
       if (isGooglePhotosUrl(targetUrl)) {
-        showGridSkeleton();
         fetchGooglePhotos(category, targetUrl, function(photos) {
           state.categoryPhotosUrlMap[category] = targetUrl;
           updateCategoryPillCount(category, photos.length);
@@ -2348,7 +2358,6 @@ function isGooglePhotosUrl(url) {
 
       // 3b. Jika tautan eksternal kingphotobooth
       if (targetUrl && (targetUrl.includes("kingphotobooth.co") || targetUrl.includes("kingphoto"))) {
-        showGridSkeleton();
         fetchKingPhotoboothPhotos(category, targetUrl, function(photos) {
           state.categoryPhotosUrlMap[category] = targetUrl;
           updateCategoryPillCount(category, photos.length);
@@ -2362,7 +2371,6 @@ function isGooglePhotosUrl(url) {
 
       // 3. Jika tautan eksternal fotoshare
       if (targetUrl && targetUrl.includes("fotoshare.co")) {
-        showGridSkeleton();
         fetchFotosharePhotos(category, targetUrl, function(photos) {
           state.categoryPhotosUrlMap[category] = targetUrl;
           updateCategoryPillCount(category, photos.length);
@@ -2376,7 +2384,6 @@ function isGooglePhotosUrl(url) {
 
       // 4. Jika tautan folder Google Drive
       if (driveFolderId) {
-        showGridSkeleton();
         fetchDriveCategoryPhotos(category, driveFolderId, function(photos) {
           state.categoryPhotosUrlMap[category] = "drive:" + driveFolderId;
           updateCategoryPillCount(category, photos.length);
@@ -2391,7 +2398,6 @@ function isGooglePhotosUrl(url) {
       // 4b. Jika kategori Photobooth (mendukung segala variasi URL kustom)
       if (isPbCat) {
         const pbLink = targetUrl || state.activeConfig.PHOTOBOOTH_URL || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
-        showGridSkeleton();
         if (isGooglePhotosUrl(pbLink)) {
           fetchGooglePhotos(category, pbLink, function(photos) {
             state.categoryPhotosUrlMap[category] = pbLink;
@@ -2436,12 +2442,9 @@ function isGooglePhotosUrl(url) {
         return;
       }
 
-      // 5. Filter ketat: Sesuaikan target link dan kategori sendiri, JANGAN ambil foto dari kategori lain
+      // 5. Filter ketat: Jika tanpa link eksternal, hanya cocokkan label kategori secara eksak (tanpa fallback hardcode)
       let matched = state.allPhotos.filter(function(p) {
-        if (p.category && p.category.toLowerCase() === category.toLowerCase()) return true;
-        if (p.name && p.name.toLowerCase().includes(category.toLowerCase())) return true;
-        if (p.rawName && p.rawName.toLowerCase().includes(category.toLowerCase())) return true;
-        return false;
+        return p.category && p.category.toLowerCase() === category.toLowerCase();
       });
 
       state.filteredPhotos = matched;
@@ -3068,6 +3071,23 @@ function isGooglePhotosUrl(url) {
       state.customCategories = list;
       state.activeConfig.CUSTOM_CATEGORIES = list;
       state.lastLocalCategoryEditTime = Date.now();
+
+      // Invalidate cache foto seketika saat URL kategori diubah oleh admin agar tidak memunculkan gambar sebelumnya
+      if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
+      if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
+      list.forEach(function(c) {
+        if (!c) return;
+        const cName = String(c.name || "").trim();
+        const cUrl = String(c.url || "").trim();
+        const driveId = extractDriveFolderId(cUrl);
+        const effectiveKey = driveId ? ("drive:" + driveId) : cUrl;
+        if (state.categoryPhotosUrlMap[cName] && state.categoryPhotosUrlMap[cName] !== effectiveKey && state.categoryPhotosUrlMap[cName] !== cUrl) {
+          delete state.categoryPhotosMap[cName];
+          delete state.categoryPhotosUrlMap[cName];
+          try { localStorage.removeItem("WEDDING_CAT_COUNT_" + cName); } catch(e) {}
+        }
+      });
+
       const pb = list.find(c => c && (c.isPhotobooth || c.id === 'special_photobooth'));
       if (pb) {
         state.activeConfig.PHOTOBOOTH_URL = pb.url;
@@ -3516,6 +3536,92 @@ function isGooglePhotosUrl(url) {
       return cleanStr;
     }
 
+    function generateBrandedQrCode(targetUrl, logoUrl, callback) {
+      const baseQrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=600x600&ecc=H&margin=12&data=" + encodeURIComponent(targetUrl);
+      if (!logoUrl) {
+        if (callback) callback(baseQrUrl);
+        return;
+      }
+
+      const normLogo = normalizeDriveImageUrl(logoUrl);
+
+      loadSafeCanvasImage(baseQrUrl, function(qrImg) {
+        loadSafeCanvasImage(normLogo, function(logoImg) {
+          try {
+            const size = 600;
+            const canvas = document.createElement("canvas");
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext("2d");
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+
+            // 1. Gambar QR Code dasar
+            ctx.drawImage(qrImg, 0, 0, size, size);
+
+            // 2. Dimensi badge tengah (~24% dari QR agar scanning ecc=H 100% sempurna)
+            const badgeSize = Math.round(size * 0.24); // 144px
+            const bx = Math.round((size - badgeSize) / 2);
+            const by = Math.round((size - badgeSize) / 2);
+            const radius = 18;
+
+            // 3. Area solid putih di belakang logo ("Logo jadikan solid putih pada area transparant")
+            ctx.save();
+            ctx.beginPath();
+            if (typeof ctx.roundRect === "function") {
+              ctx.roundRect(bx, by, badgeSize, badgeSize, radius);
+            } else {
+              const r = radius;
+              ctx.moveTo(bx + r, by);
+              ctx.lineTo(bx + badgeSize - r, by);
+              ctx.quadraticCurveTo(bx + badgeSize, by, bx + badgeSize, by + r);
+              ctx.lineTo(bx + badgeSize, by + badgeSize - r);
+              ctx.quadraticCurveTo(bx + badgeSize, by + badgeSize, bx + badgeSize - r, by + badgeSize);
+              ctx.lineTo(bx + r, by + badgeSize);
+              ctx.quadraticCurveTo(bx, by + badgeSize, bx, by + badgeSize - r);
+              ctx.lineTo(bx, by + r);
+              ctx.quadraticCurveTo(bx, by, bx + r, by);
+              ctx.closePath();
+            }
+
+            // Fill solid white
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fill();
+
+            // Border halus untuk mempertegas batas QR code dan monogram logo
+            ctx.strokeStyle = "rgba(197, 168, 128, 0.45)";
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            ctx.restore();
+
+            // 4. Gambar logo monogram di tengah area putih solid
+            const pad = 12;
+            const maxW = badgeSize - (pad * 2);
+            const maxH = badgeSize - (pad * 2);
+            const lw = logoImg.naturalWidth || logoImg.width || 100;
+            const lh = logoImg.naturalHeight || logoImg.height || 100;
+            const scale = Math.min(maxW / lw, maxH / lh);
+            const dw = Math.round(lw * scale);
+            const dh = Math.round(lh * scale);
+            const dx = Math.round(bx + (badgeSize - dw) / 2);
+            const dy = Math.round(by + (badgeSize - dh) / 2);
+
+            ctx.drawImage(logoImg, dx, dy, dw, dh);
+
+            const brandedUrl = canvas.toDataURL("image/png");
+            if (callback) callback(brandedUrl);
+          } catch (eCanvas) {
+            console.warn("QR logo composition error:", eCanvas);
+            if (callback) callback(baseQrUrl);
+          }
+        }, function() {
+          if (callback) callback(baseQrUrl);
+        });
+      }, function() {
+        if (callback) callback(baseQrUrl);
+      });
+    }
+
     function openShareModal() {
       const modal = document.getElementById("shareQrModal");
       if (!modal) return;
@@ -3556,10 +3662,23 @@ function isGooglePhotosUrl(url) {
       const urlInput = document.getElementById("shareUrlInput");
       if (urlInput) urlInput.value = fullUrl;
 
-      // Buat QR Code resolusi tinggi menggunakan QR API
+      // Ambil logo acara / monogram dari konfigurasi event aktif
+      const activeLogo = (state.activeConfig.EVENT_LOGO_URL || state.activeConfig.LOGO_URL || state.activeConfig.logoUrl || "").trim();
       const qrImg = document.getElementById("shareQrImg");
+
+      // Tampilkan QR Code awal secara instan (resolusi tinggi ecc=H untuk toleransi logo)
+      const baseQrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=600x600&ecc=H&margin=12&data=" + encodeURIComponent(fullUrl);
       if (qrImg) {
-        qrImg.src = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&data=" + encodeURIComponent(fullUrl);
+        qrImg.src = baseQrUrl;
+      }
+
+      // Jika ada logo acara / monogram, gabungkan logo di tengah dengan background solid putih
+      if (activeLogo && qrImg) {
+        generateBrandedQrCode(fullUrl, activeLogo, function(brandedDataUrl) {
+          if (brandedDataUrl && qrImg && modal.classList.contains("active")) {
+            qrImg.src = brandedDataUrl;
+          }
+        });
       }
 
       modal.classList.add("active");
@@ -3624,7 +3743,19 @@ function isGooglePhotosUrl(url) {
       if (!qrImg || !qrImg.src) return;
       const eventName = (state.activeConfig.EVENT_NAME || "Wedding").replace(/[^a-zA-Z0-9]/g, "_");
       
-      // Unduh langsung gambar QR
+      // Jika data URI langsung dari canvas komposit QR dengan logo
+      if (qrImg.src.startsWith("data:")) {
+        const a = document.createElement("a");
+        a.href = qrImg.src;
+        a.download = "QR_Galeri_" + eventName + ".png";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast("✓ Gambar QR Code dengan Logo berhasil diunduh!");
+        return;
+      }
+
+      // Unduh langsung gambar QR eksternal
       fetch(qrImg.src)
         .then(res => res.blob())
         .then(blob => {

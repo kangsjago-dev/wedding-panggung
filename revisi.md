@@ -1,5 +1,34 @@
 # Catatan Revisi & Audit Sistem (Changelog)
 
+## Versi 4.6.0 - Penghapusan Fallback Foto Kategori & QR Code Branded Berlogo Monogram (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Penghapusan Fallback Hardcode pada Kategori Foto ("Muncul gambar sebelumnya baru berubah")**:
+   - **Akar Masalah Sebelumnya**:
+     - Pada fungsi `fetchDriveCategoryPhotos`, terdapat fungsi `fallbackDrive` yang menyaring foto dari `state.allPhotos` jika endpoint pemanggilan Drive membutuhkan waktu respon atau gagal. Hal ini menyebabkan foto dari kategori atau event sebelumnya tampil terlebih dahulu sebelum foto baru dimuat.
+     - Pada saat perpindahan tab kategori atau penggantian link di admin, `state.filteredPhotos` tidak dikosongkan seketika, sehingga foto kategori lama tetap tertinggal di layar sebelum pemanggilan data baru selesai.
+   - **Solusi Rekayasa Sistem**:
+     - `fallbackDrive` dibersihkan total dari pengambilan foto `state.allPhotos`. Jika folder kategori belum memiliki foto atau sedang dimuat, sistem mengembalikan array kosong `[]` dan menampilkan pesan ramah tanpa pernah menampilkan foto dari kategori lain.
+     - Pada `applyCategoryFilter`, sistem seketika mengosongkan `state.filteredPhotos = []` dan langsung menampilkan shimmer skeleton animasi (`showGridSkeleton()`) begitu kategori atau link baru dipilih. Foto kategori lama langsung dibersihkan seketika tanpa ada kebocoran foto lama.
+     - Pada fungsi `onCategoryRowInput` dan `handleSaveAllSettings`, sistem langsung menghapus cache foto lama (`state.categoryPhotosMap` & `state.categoryPhotosUrlMap`) saat admin mengubah tautan kategori.
+     - Penyaringan kategori internal tanpa tautan eksternal kini secara ketat hanya mencocokkan nama kategori eksak tanpa fuzzy matching nama berkas.
+
+2. **QR Share dengan Logo Monogram di Tengah Berlatar Belakang Putih Solid**:
+   - **Akar Kebutuhan**:
+     - Pengguna menginginkan QR code pada modal Bagikan & QR Code (`#shareQrModal`) memiliki logo acara/monogram di bagian tengahnya.
+     - Logo monogram dengan area transparan (format PNG) harus memiliki latar belakang putih solid agar modul hitam-putih QR code di belakangnya tidak menembus garis monogram, sehingga QR code tetap 100% mudah discan oleh kamera ponsel mana pun.
+   - **Solusi Rekayasa Sistem**:
+     - Mengembangkan fungsi komposit kanvas `generateBrandedQrCode(targetUrl, logoUrl, callback)` menggunakan standar internasional QR Code dengan koreksi galat tingkat tinggi (**`ecc=H`** / toleransi kerusakan hingga 30%).
+     - Mengambil logo acara secara dinamis dari pengaturan event aktif (`EVENT_LOGO_URL` / `logoUrl` pada menu "Logo Acara / Monogram").
+     - Menggambar badge berbentuk persegi bersudut melengkung (*rounded rectangle*) dengan warna latar belakang **putih solid (`#FFFFFF`)** dan garis tepi lembut berdimensi 24% dari ukuran QR code di titik pusat `(x, y)`.
+     - Menggambar logo monogram di atas bidang putih solid tersebut dengan penyesuaian proporsi aspek rasio otomatis.
+     - Memperbarui fungsi `downloadQrCodeImage()` agar mendukung pengunduhan instan berkas PNG beresolusi tinggi hasil komposit logo monogram tersebut.
+
+3. **Audit Integritas Kode & Verifikasi Mandiri**:
+   - `js/app.js`: Syntax Valid (`node -c` PASSED - Code 0).
+   - `scratch/verify_qr_and_category.js`: Seluruh 6 pengujian unit tervalidasi lolos 100% (penghapusan fallback hardcode, pembersihan filteredPhotos seketika, pembersihan cache input baris kategori, penggunaan ecc=H, latar belakang putih solid monogram, dan pengunduhan data URI).
+   - Seluruh 36 menu & event handlers interaktif HTML berfungsi normal.
+
 ## Versi 4.5.0 - Proteksi Halaman Kosong / Tidak Ditemukan & Kustom Logo Monogram Acara (19 November 2026)
 
 ### 1. Perbaikan yang Diperintahkan & Diterapkan:
