@@ -1,5 +1,70 @@
 # Catatan Revisi & Audit Sistem (Changelog)
 
+## Versi 4.12.0 - Eliminasi Duplikasi Bidang Folder Google Drive pada Tab Admin (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Penghapusan Duplikasi Bidang Folder Google Drive (Tab 1 vs Tab 2)**:
+   - **Akar Masalah**:
+     - Pada modal Pengaturan Admin Tab 1 (Acara & Event), terdapat bidang input duplikat `📁 Folder Google Drive (Kategori 'Semua Foto' Event Ini)` (`#cfgEventDriveFolderId`).
+     - Pengaturan folder Google Drive untuk kategori utama "Semua Foto" event aktif sebenarnya telah memiliki wadah terpadu dan lebih lengkap pada Tab 2 (Foto & Kategori) via `#cfgDriveFolderId` lengkap dengan tombol sinkronisasi instan (`#btnSyncDrivePhotos`) dan pengelola kategori kustom.
+     - Keberadaan bidang yang sama di Tab 1 membingungkan administrator dan memicu inkonsistensi input.
+   - **Solusi Rekayasa Sistem**:
+     - Menghapus blok elemen input `#cfgEventDriveFolderId` beserta label dan teks bantuannya dari Tab 1 di [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html).
+     - Menyederhanakan Tab 1 agar fokus murni pada Informasi Dasar Acara (Nama Pasangan, Logo Monogram, Tanggal Kalender, Venue, Subjudul, Pesan Sambutan, dan Pesan Penutup Footer).
+     - Menjadikan Tab 2 (Foto & Kategori) sebagai **satu-satunya pusat kendali resmi** (*single source of truth*) untuk folder Google Drive event aktif (`#cfgDriveFolderId`) dan seluruh tautan kategori foto di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js).
+     - Memperbarui fungsi `handleEventDriveFolderInput`, `populateConfigToUI`, dan `handleSaveAllSettings` sehingga murni mengelola elemen `#cfgDriveFolderId` tanpa dependensi ke elemen usang.
+
+2. **Audit Menyeluruh Sistem & Integritas Pengujian Otomatis**:
+   - `scratch/test_duplicate_drive_field_removed.js`: 6 pengujian PASS 100% (0 FAIL).
+   - `scratch/test_photobooth_download_fix.js`: 15 pengujian PASS 100% (0 FAIL).
+   - `scratch/test_uncompressed_download.js`: 6 pengujian PASS 100% (0 FAIL).
+   - `scratch/test_preview_and_download_flow.js`: 14 pengujian PASS 100% (0 FAIL).
+   - `scratch/verify_qr_logo_no_border.js`: 11 pengujian PASS 100% (0 FAIL).
+   - `scratch/verify_sorting_and_fallbacks.js`: 24 pengujian PASS 100% (0 FAIL).
+   - `scratch/audit_all_menu_handlers.js`: 34 fungsi interaktif HTML aktif dan valid.
+   - Sintaks `index.html`, `js/app.js`, `code.gs`, dan seluruh `api/*.js`: Bebas error syntax (Code 0).
+
+## Versi 4.11.0 - Perbaikan Unduh Foto Photobooth pada Perangkat/HP & Eliminasi Total Fallback Realtime Database (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Perbaikan Masalah Unduh Photobooth pada Perangkat/HP ("Status Berhasil Namun Tidak Ada File")**:
+   - **Akar Masalah Sistemik**:
+     - Pada fungsi `executeDirectPhotoDownload` dan `downloadCurrentPhotoWithFrame`, pengunduhan berkas Photobooth dan foto asli sebelumnya langsung mengeksekusi `triggerDirectLinkDownload(proxyUrl, fileName)` yang membuat elemen `<a href="/api/download-proxy?..." download="...">` dan memicu `.click()`.
+     - Pada peramban perangkat seluler (Android Chrome, iOS Safari, Samsung Internet, Webview), pemanggilan terprogram `.click()` pada elemen tautan dengan URL server eksternal (`/api/download-proxy?...`) diblokir oleh peramban sebagai navigasi latar belakang tidak terpercaya (*untrusted background navigation / popup block*). Pada iOS Safari, atribut `download` diabaikan secara ketat pada URL HTTP remote dan hanya didukung pada `blob:` atau `data:` URL.
+     - Lebih parah lagi, widget pengunduhan dan toast notifikasi (`updateDownloadWidget(100, "✓ Berhasil Disimpan!", ...)` dan `showToast(...)`) dipanggil secara sinkronis seketika pada baris berikutnya tanpa menunggu apakah berkas fisik telah benar-benar diterima oleh peramban HP. Akibatnya, antarmuka melaporkan "✓ Berhasil Disimpan!" padahal berkas fisik tidak pernah mendarat di penyimpanan memori perangkat/HP.
+   - **Solusi Rekayasa Sistem**:
+     - Mengubah arsitektur pengunduhan pada `executeDirectPhotoDownload` di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) menjadi *Asynchronous Physical Blob Streaming*:
+       1. Menampilkan progres dinamis riil pada widget (20%: "Mengunduh Berkas Asli...").
+       2. Melakukan `fetch(proxyUrl)` untuk mengalirkan berkas master biner ke memori peramban HP.
+       3. Mengonversi respons menjadi `res.blob()` dan memvalidasi `blob.size > 0` (65%: "Menerima Berkas Asli...").
+       4. Menghitung dan menampilkan ukuran berkas riil menggunakan helper `formatFileSize(bytes)` (misal: "1.82 MB").
+       5. Menyimpan berkas fisik ke perangkat melalui `saveBlobToDevice(blob, fileName)` menggunakan `URL.createObjectURL(blob)` lokal yang didukung penuh oleh seluruh peramban seluler (termasuk iOS Safari dengan penanganan `_blank` terisolasi).
+       6. **HANYA setelah berkas fisik berhasil disimpan**, widget pengunduhan memperbarui status ke 100% ("✓ Berhasil Disimpan!") beserta label ukuran berkas aslinya.
+     - Pada `downloadCurrentPhotoWithFrame`, percabangan Photobooth (`if (isPhotobooth || !frameUrl)`) didelegasikan langsung ke `executeDirectPhotoDownload(photo)`, mengeliminasi duplikasi kode `triggerDirectLinkDownload` yang cacat.
+     - Pada blok penanganan kesalahan (`.catch`), jika unduhan gagal karena koneksi terputus, widget secara jujur menampilkan status kesalahan `0% ⚠️ Gagal Mengunduh`, menjamin sistem tidak akan pernah lagi memberikan status berhasil palsu (*false positive*).
+
+2. **Audit 3x Menyeluruh & Eliminasi Total Fallback (100% Realtime Database Murni)**:
+   - **Putaran 1 (Frontend `js/app.js`)**:
+     - Mengosongkan registry fallback `GLOBAL_CONFIG.EVENTS = []` (sebelumnya memuat data statis Andre & Fayola serta Wilson & Felicia).
+     - Mengosongkan `GLOBAL_CONFIG.ACTIVE_EVENT_ID = ""` dan inisialisasi `state.currentEventId = ""` agar penentuan event murni berasal dari parameter URL atau database Google Sheets.
+     - Mengosongkan seluruh konstanta teks dan folder pada `GLOBAL_CONFIG`.
+   - **Putaran 2 (API Serverless `api/*.js`)**:
+     - Seluruh endpoint API serverless (`download-proxy.js`, `drive-folder.js`, `fotoshare.js`, `google-photos.js`, `kingphotobooth.js`) tervalidasi 100% beroperasi berdasarkan parameter masukan dinamis tanpa hardcode.
+   - **Putaran 3 (Backend Google Apps Script `code.gs`)**:
+     - Mengosongkan konstanta fallback master `WEDDING_CONFIG` (`EVENT_NAME`, `EVENT_DATE`, `EVENT_VENUE`, `CUSTOM_CATEGORIES: '[]'`, `EVENTS: '[]'`, `ACTIVE_EVENT_ID: ""`, dll.).
+     - Menghapus array fallback event statis pada fungsi `getActiveEventConfig`.
+     - Menghapus fallback PIN default `"111111"` pada `getAdminUsersList`.
+     - Menghapus fallback ID event statis `"andre-fayola-281"` pada `readConfigFromSpreadsheet` dan `updateConfig`.
+
+3. **Verifikasi Mandiri & Integritas Pengujian Otomatis**:
+   - `scratch/test_photobooth_download_fix.js`: 15 pengujian PASS 100% (0 FAIL).
+   - `scratch/test_uncompressed_download.js`: 6 pengujian PASS 100% (0 FAIL).
+   - `scratch/test_preview_and_download_flow.js`: 14 pengujian PASS 100% (0 FAIL).
+   - `scratch/verify_qr_logo_no_border.js`: 11 pengujian PASS 100% (0 FAIL).
+   - `scratch/verify_sorting_and_fallbacks.js`: 24 pengujian PASS 100% (0 FAIL).
+   - `scratch/audit_all_menu_handlers.js`: 34 fungsi interaktif HTML aktif dan valid.
+   - Kompilasi `js/app.js`, `code.gs`, `setup.gs`, dan `api/*.js`: Bebas error syntax (Code 0).
+
 ## Versi 4.10.0 - Download Foto Ukuran Asli Tanpa Kompresi & Audit Mendalam Realtime Database (19 November 2026)
 
 ### 1. Perbaikan yang Diperintahkan & Diterapkan:

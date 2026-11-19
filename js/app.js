@@ -382,64 +382,13 @@ function isGooglePhotosUrl(url) {
       WELCOME_MESSAGE: "",
       FOOTER_MESSAGE: "",
       ALL_PHOTOS_LABEL: "Semua Foto",
-      ACTIVE_EVENT_ID: "andre-fayola-281",
-      EVENTS: [
-        {
-          id: "andre-fayola-281",
-          name: "Andre & Fayola",
-          date: "22 November 2026",
-          venue: "UPPERHILLS CONVENTION HALLS",
-          subtitle: "The Wedding Gallery & Precious Memories",
-          welcomeMessage: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
-          footerMessage: "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
-          allPhotosLabel: "Semua Foto",
-          driveFolderId: "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
-          frameImageUrl: "https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk",
-          customCategories: [
-            {
-              name: "Photobooth",
-              url: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
-              enabled: true
-            },
-            {
-              name: "Wedding",
-              url: "https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI",
-              enabled: true
-            }
-          ],
-          coverSettings: {
-            enabled: false,
-            style: "romantic-collage",
-            heading: "The Wedding Celebration",
-            subheading: "A Journey of Two Hearts Joined as One",
-            quote: "Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda.",
-            photos: []
-          }
-        },
-        {
-          id: "wilson-felicia-133",
-          name: "Wilson & Felicia",
-          date: "16 November 2026",
-          venue: "UpperHills Convention Hall, Makassar",
-          homeUrl: "https://gallery.runway.my.id/?event=wilson-felicia-133",
-          driveFolderId: "https://drive.google.com/drive/folders/1GGB77clCMYBIg17J0ECr2eVbD02ZeInW",
-          photoboothUrl: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
-          frameImageUrl: "",
-          customCategories: [
-            {
-              name: "Photobooth",
-              url: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
-              enabled: true,
-              isPhotobooth: true
-            }
-          ],
-          status: "Aktif"
-        }
-      ],
+      ACTIVE_EVENT_ID: "",
+      EVENTS: [],
       ADMIN_ACCOUNTS: [],
       CUSTOM_CATEGORIES: [],
       DRIVE_FOLDER_ID: "",
       FRAME_IMAGE_URL: "",
+      EVENT_LOGO_URL: "",
       SPREADSHEET_ID: "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20",
       SPREADSHEET_URL: "https://docs.google.com/spreadsheets/d/133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20/edit",
       DEFAULT_ADMIN_PIN: "",
@@ -459,7 +408,7 @@ function isGooglePhotosUrl(url) {
       filteredPhotos: [],
       categories: ["Semua Foto"],
       allPhotosLabel: "Semua Foto",
-      currentEventId: "andre-fayola-281",
+      currentEventId: "",
       events: [],
       coverSettings: {
         enabled: false,
@@ -2849,11 +2798,8 @@ function isGooglePhotosUrl(url) {
       const cleanVal = (val || "").trim();
       state.activeConfig.DRIVE_FOLDER_ID = cleanVal;
 
-      const inp1 = document.getElementById("cfgEventDriveFolderId");
-      if (inp1 && inp1.value !== cleanVal) inp1.value = cleanVal;
-
-      const inp2 = document.getElementById("cfgDriveFolderId");
-      if (inp2 && inp2.value !== cleanVal) inp2.value = cleanVal;
+      const inp = document.getElementById("cfgDriveFolderId");
+      if (inp && inp.value !== cleanVal) inp.value = cleanVal;
 
       const curEv = (state.events || []).find(function(e) { return e && e.id === state.currentEventId; });
       if (curEv) {
@@ -3948,8 +3894,6 @@ function isGooglePhotosUrl(url) {
       if (cfgFooterEl) cfgFooterEl.value = cfg.FOOTER_MESSAGE || "";
       const cfgDriveEl = document.getElementById("cfgDriveFolderId");
       if (cfgDriveEl) cfgDriveEl.value = cfg.DRIVE_FOLDER_ID || "";
-      const cfgEventDriveEl = document.getElementById("cfgEventDriveFolderId");
-      if (cfgEventDriveEl) cfgEventDriveEl.value = cfg.DRIVE_FOLDER_ID || "";
       const cfgFrameEl = document.getElementById("cfgFrameImageUrl");
       if (cfgFrameEl) cfgFrameEl.value = cfg.FRAME_IMAGE_URL || "";
     }
@@ -4319,7 +4263,7 @@ function isGooglePhotosUrl(url) {
       const alertBox = document.getElementById("saveAlertBox");
 
       const newApiUrl = (document.getElementById("cfgGasApiUrl")?.value || "").trim();
-      const driveFolderInput = (document.getElementById("cfgDriveFolderId")?.value || document.getElementById("cfgEventDriveFolderId")?.value || state.activeConfig.DRIVE_FOLDER_ID || "").trim();
+      const driveFolderInput = (document.getElementById("cfgDriveFolderId")?.value || state.activeConfig.DRIVE_FOLDER_ID || "").trim();
       const eventNameInput = (document.getElementById("cfgCoupleName")?.value || "").trim();
       const eventDateInput = (document.getElementById("cfgEventDate")?.value || "").trim();
       const eventVenueInput = (document.getElementById("cfgEventVenue")?.value || "").trim();
@@ -4723,15 +4667,8 @@ function isGooglePhotosUrl(url) {
 
       // 1. Jika berkas Photobooth atau tanpa bingkai: unduh langsung tanpa proses canvas
       if (isPhotobooth || !frameUrl) {
-        const isVideo = Boolean(photo.isVideo);
-        const rawUrl = photo.downloadUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || "";
-        const fileName = generateUniqueFileName(photo.rawName || photo.name, isVideo ? "video" : "original", isVideo ? ".mp4" : ".jpg");
-        if (rawUrl) {
-          const proxyUrl = "/api/download-proxy?url=" + encodeURIComponent(rawUrl) + "&filename=" + encodeURIComponent(fileName);
-          triggerDirectLinkDownload(proxyUrl, fileName);
-          showToast("✓ Foto asli berhasil diunduh ke perangkat!");
-          return;
-        }
+        executeDirectPhotoDownload(photo);
+        return;
       }
 
       // 2. Jika foto berbingkai SUDAH di-precomposite saat membuka lightbox:
@@ -5128,6 +5065,13 @@ function isGooglePhotosUrl(url) {
       });
     }
 
+    function formatFileSize(bytes) {
+      if (!bytes || bytes <= 0) return "";
+      if (bytes < 1024) return bytes + " B";
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+      return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+    }
+
     function executeDirectPhotoDownload(photo, onDone) {
       if (!photo) { if (onDone) onDone(); return; }
       const isVideo = Boolean(photo.isVideo);
@@ -5147,30 +5091,84 @@ function isGooglePhotosUrl(url) {
       const ext = isVideo ? ".mp4" : ".jpg";
       const fileName = generateUniqueFileName(photo.rawName || photo.name, isVideo ? "video" : "original", ext);
 
-      if (rawUrl) {
-        const proxyUrl = "/api/download-proxy?url=" + encodeURIComponent(rawUrl) + "&filename=" + encodeURIComponent(fileName);
-        triggerDirectLinkDownload(proxyUrl, fileName);
-        showToast("✓ Memulai penyimpanan berkas asli ukuran penuh ke perangkat...");
-        updateDownloadWidget(100, "✓ Berhasil Disimpan!", photo.name || "Foto", true);
+      if (!rawUrl) {
+        showToast("⚠️ Tautan berkas tidak ditemukan");
+        updateDownloadWidget(0, "⚠️ Gagal Mengunduh", "Tautan berkas tidak tersedia", true);
         if (onDone) onDone();
         return;
       }
-      if (onDone) onDone();
+
+      updateDownloadWidget(20, isVideo ? "Mengunduh Video Asli..." : "Mengunduh Foto Asli...", (photo.name || "Foto") + " • Mengambil dari server...", false);
+      showToast(isVideo ? "⏳ Mengunduh video asli kualitas penuh..." : "⏳ Mengunduh foto asli kualitas penuh...");
+
+      const proxyUrl = "/api/download-proxy?url=" + encodeURIComponent(rawUrl) + "&filename=" + encodeURIComponent(fileName);
+
+      // Ambil berkas fisik (Blob) ke memori perangkat sebelum menyimpan
+      fetch(proxyUrl)
+        .then(function(res) {
+          if (!res.ok) throw new Error("Proxy HTTP " + res.status);
+          updateDownloadWidget(65, "Menerima Berkas Asli...", (photo.name || "Foto") + " • Menyiapkan penyimpanan...", false);
+          return res.blob();
+        })
+        .then(function(blob) {
+          if (!blob || blob.size === 0) throw new Error("Berkas kosong diterima");
+          const sizeText = formatFileSize(blob.size);
+          updateDownloadWidget(88, "Menyimpan ke Memori Perangkat...", (photo.name || "Foto") + (sizeText ? (" • " + sizeText) : ""), false);
+
+          saveBlobToDevice(blob, fileName);
+
+          updateDownloadWidget(100, "✓ Berhasil Disimpan!", (photo.name || "Foto") + (sizeText ? (" (" + sizeText + ")") : ""), true);
+          showToast(isVideo ? "✓ Video asli berhasil disimpan ke perangkat!" : "✓ Foto asli berhasil disimpan ke perangkat!");
+          if (onDone) onDone();
+        })
+        .catch(function(err) {
+          console.warn("Proxy download error, mencoba direct fetch:", err);
+          // Fallback direct fetch jika proxy terhambat
+          fetch(rawUrl)
+            .then(function(res) {
+              if (!res.ok) throw new Error("Direct HTTP " + res.status);
+              return res.blob();
+            })
+            .then(function(blob) {
+              if (!blob || blob.size === 0) throw new Error("Berkas kosong dari direct fetch");
+              const sizeText = formatFileSize(blob.size);
+              saveBlobToDevice(blob, fileName);
+              updateDownloadWidget(100, "✓ Berhasil Disimpan!", (photo.name || "Foto") + (sizeText ? (" (" + sizeText + ")") : ""), true);
+              showToast(isVideo ? "✓ Video asli berhasil disimpan ke perangkat!" : "✓ Foto asli berhasil disimpan ke perangkat!");
+              if (onDone) onDone();
+            })
+            .catch(function(finalErr) {
+              console.error("Gagal mengunduh berkas fisik:", finalErr);
+              triggerDirectLinkDownload(proxyUrl, fileName);
+              updateDownloadWidget(0, "⚠️ Gagal Mengunduh Otomatis", "Membuka tautan unduhan via browser...", true);
+              showToast("⚠️ Mengalihkan unduhan ke browser...");
+              if (onDone) onDone();
+            });
+        });
     }
 
     function saveBlobToDevice(blob, fileName) {
+      if (!blob) return;
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.style.display = "none";
       a.href = blobUrl;
       a.download = fileName;
-      a.target = "_self";
+      a.rel = "noopener";
+      if (isIOS) {
+        a.target = "_blank";
+      }
       document.body.appendChild(a);
-      a.click();
+      try {
+        a.click();
+      } catch (e) {
+        window.open(blobUrl, "_blank");
+      }
       setTimeout(function() {
         if (a.parentNode) a.parentNode.removeChild(a);
         URL.revokeObjectURL(blobUrl);
-      }, 30000);
+      }, 45000);
     }
 
     function triggerDirectLinkDownload(url, fileName) {
@@ -5610,12 +5608,12 @@ function isGooglePhotosUrl(url) {
           Boolean(photo.isPhotobooth) ||
           (photo.category && photo.category.toLowerCase().includes("photobooth")) ||
           (state.activeCategory && state.activeCategory.toLowerCase().includes("photobooth")) ||
-          (photo.downloadUrl && (photo.downloadUrl.includes("kingphotobooth.co") || photo.downloadUrl.includes("fotoshare.co") || photo.downloadUrl.includes("photos.google.com"))) ||
-          (photo.previewUrl && (photo.previewUrl.includes("kingphotobooth.co") || photo.previewUrl.includes("fotoshare.co") || photo.previewUrl.includes("photos.google.com")))
+          (photo.downloadUrl && (photo.downloadUrl.includes("kingphotobooth.co") || photo.downloadUrl.includes("fotoshare.co") || photo.downloadUrl.includes("photos.google.com") || photo.downloadUrl.includes("googleusercontent.com/pw/") || photo.downloadUrl.includes("photos.app.goo.gl"))) ||
+          (photo.previewUrl && (photo.previewUrl.includes("kingphotobooth.co") || photo.previewUrl.includes("fotoshare.co") || photo.previewUrl.includes("photos.google.com") || photo.previewUrl.includes("googleusercontent.com/pw/") || photo.previewUrl.includes("photos.app.goo.gl")))
         );
 
         if (isPhotobooth) {
-          if (btnLabel) btnLabel.innerText = "⬇️ Unduh Foto Asli (Ukuran Penuh)";
+          if (btnLabel) btnLabel.innerText = photo.isVideo ? "⬇️ Unduh Video Asli (Ukuran Penuh)" : "⬇️ Unduh Foto Asli (Ukuran Penuh)";
           if (btn) {
             btn.onclick = function() {
               executeDirectPhotoDownload(photo);
