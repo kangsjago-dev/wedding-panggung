@@ -30,10 +30,12 @@ check("css/style.css memiliki styling lengkap untuk .empty-gallery-card", () => 
   assert(css.includes(".empty-gallery-btn-source"), "Harus ada class .empty-gallery-btn-source");
 });
 
-check("js/app.js menggunakan komponen .empty-gallery-card berestetika mewah", () => {
+check("js/app.js menggunakan komponen .empty-gallery-card dan MENGHILANGKAN badge Kategori Photostage", () => {
   assert(appJs.includes('class="empty-gallery-card"'), "Harus merender .empty-gallery-card");
   assert(appJs.includes('class="empty-gallery-icon-wrap"'), "Harus merender .empty-gallery-icon-wrap");
-  assert(appJs.includes('class="empty-gallery-badge"'), "Harus merender .empty-gallery-badge");
+  const emptySlice = appJs.slice(appJs.indexOf("class=\"empty-gallery-card\""), appJs.indexOf("class=\"empty-gallery-card\"") + 1500);
+  assert(!emptySlice.includes("Kategori &bull;"), "Tulisan Kategori &bull; atau Kategori • Photostage harus dihilangkan dari notifikasi");
+  assert(!emptySlice.includes("class=\"empty-gallery-badge\""), "Badge Kategori harus dihilangkan dari notifikasi kosong");
 });
 
 check("js/app.js BEBAS dari raw emoticon 🖼️ dan 🔄 pada tampilan kosong", () => {

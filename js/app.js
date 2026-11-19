@@ -983,7 +983,7 @@ function isGooglePhotosUrl(url) {
         } catch(e) {}
       }
       if (!pin || pin === "123") {
-        pin = state.activeConfig.ADMIN_PIN || "111111";
+        pin = state.activeConfig.ADMIN_PIN || "";
       }
       return pin;
     }
@@ -2437,12 +2437,9 @@ function isGooglePhotosUrl(url) {
                 <path d="M19 13v.01" stroke-width="2.2"></path>
               </svg>
             </div>
-            <div class="empty-gallery-badge">
-              <span>Kategori &bull; ${escapeHtml(activeCat)}</span>
-            </div>
             <h3 class="empty-gallery-title">Momen Indah Sedang Disiapkan</h3>
             <p class="empty-gallery-desc">
-              Foto kenangan untuk kategori <strong>&ldquo;${escapeHtml(activeCat)}&rdquo;</strong> belum tersedia saat ini. Momen hangat kebersamaan akan otomatis tampil di sini begitu selesai diunggah atau disinkronkan.
+              Foto kenangan belum tersedia saat ini. Momen hangat kebersamaan akan otomatis tampil di sini begitu selesai diunggah atau disinkronkan.
             </p>
             <div class="empty-gallery-actions">
               <button type="button" class="empty-gallery-btn-refresh" onclick="syncSingleCategory('${escapeHtml(activeCat)}')">
@@ -2616,7 +2613,7 @@ function isGooglePhotosUrl(url) {
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<span>Masuk</span>`;
         state.isAdminLoggedIn = true;
-        state.adminPin = (user && user.pin) ? String(user.pin).trim() : (user && user.password ? String(user.password).trim() : "111111");
+        state.adminPin = (user && user.pin) ? String(user.pin).trim() : (user && user.password ? String(user.password).trim() : "");
         try {
           sessionStorage.setItem("WEDDING_ADMIN_PIN", password);
           localStorage.setItem("WEDDING_ADMIN_PIN", password);
@@ -5695,15 +5692,36 @@ function isGooglePhotosUrl(url) {
        STAGE SLIDESHOW LOGIC (MODE PANGGUNG)
        ========================================================================== */
     function openSlideshow(startIndex) {
-      if (state.filteredPhotos.length === 0) return;
+      let photos = state.filteredPhotos;
+      if (!photos || photos.length === 0) {
+        // Fallback: jika kategori saat ini kosong, putar dari seluruh foto event (state.allPhotos)
+        if (state.allPhotos && state.allPhotos.length > 0) {
+          state.filteredPhotos = state.allPhotos.slice();
+          photos = state.filteredPhotos;
+        } else {
+          showToast("Belum ada foto yang tersedia untuk Mode Panggung.", "warning");
+          return;
+        }
+      }
+
       state.currentSlideIndex = startIndex || 0;
+      if (state.currentSlideIndex >= photos.length || state.currentSlideIndex < 0) {
+        state.currentSlideIndex = 0;
+      }
 
       const overlay = document.getElementById("slideshowOverlay");
+      if (!overlay) return;
       overlay.classList.add("active");
       document.body.style.overflow = "hidden";
 
       if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(function() {});
+      }
+
+      // Pastikan durasi interval mengikuti database realtime
+      const dbInterval = parseInt(state.activeConfig.SLIDESHOW_INTERVAL_SEC, 10);
+      if (dbInterval && dbInterval > 0) {
+        state.intervalMs = dbInterval * 1000;
       }
 
       state.isSlideshowPlaying = true;
@@ -5714,7 +5732,7 @@ function isGooglePhotosUrl(url) {
 
     function closeSlideshow() {
       const overlay = document.getElementById("slideshowOverlay");
-      overlay.classList.remove("active");
+      if (overlay) overlay.classList.remove("active");
       document.body.style.overflow = "";
 
       if (document.exitFullscreen && document.fullscreenElement) {
@@ -5726,24 +5744,58 @@ function isGooglePhotosUrl(url) {
     }
 
     function showSlide(index) {
+      if (!state.filteredPhotos || state.filteredPhotos.length === 0) {
+        if (state.allPhotos && state.allPhotos.length > 0) {
+          state.filteredPhotos = state.allPhotos.slice();
+        } else {
+          return;
+        }
+      }
+
       const photo = state.filteredPhotos[index];
       if (!photo) return;
 
+      // Metadata realtime dari activeConfig (Single Source of Truth)
+      const eventName = state.activeConfig.EVENT_NAME || state.activeConfig.COUPLE_NAME || "Wedding Gallery";
+      const coupleEl = document.getElementById("slideshowCouple");
+      if (coupleEl && coupleEl.innerText !== eventName) {
+        coupleEl.innerText = eventName;
+      }
+
       const eventDate = state.activeConfig.EVENT_DATE || "";
       const eventVenue = state.activeConfig.EVENT_VENUE || "";
-      const infoParts = [eventDate, eventVenue, photo.category].filter(Boolean);
-      document.getElementById("slideshowCategory").innerText = infoParts.join(" • ");
+      const photoCat = photo.category || state.activeCategory || "";
+      const infoParts = [eventDate, eventVenue, photoCat].filter(Boolean);
+      const catEl = document.getElementById("slideshowCategory");
+      if (catEl) {
+        catEl.innerText = infoParts.join(" • ");
+      }
 
       const imgA = document.getElementById("slideshowImgA");
       const imgB = document.getElementById("slideshowImgB");
+      if (!imgA || !imgB) return;
+
+      // Ambil resolusi tajam maksimal untuk layar proyeksi panggung
+      const sharpUrl = getSharpPreviewUrl(photo) || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || "";
+
+      // Fallback bertingkat jika foto tajam gagal dimuat (onerror)
+      const targetImg = state.activeSlideTarget === 'A' ? imgB : imgA;
+      targetImg.onerror = function() {
+        this.onerror = null;
+        if (photo.previewUrl && this.src !== photo.previewUrl) {
+          this.src = photo.previewUrl;
+        } else if (photo.thumbnailUrl && this.src !== photo.thumbnailUrl) {
+          this.src = photo.thumbnailUrl;
+        }
+      };
 
       if (state.activeSlideTarget === 'A') {
-        imgB.src = photo.highResUrl || photo.thumbnailUrl;
+        imgB.src = sharpUrl;
         imgB.classList.add("visible");
         imgA.classList.remove("visible");
         state.activeSlideTarget = 'B';
       } else {
-        imgA.src = photo.highResUrl || photo.thumbnailUrl;
+        imgA.src = sharpUrl;
         imgA.classList.add("visible");
         imgB.classList.remove("visible");
         state.activeSlideTarget = 'A';
@@ -5753,11 +5805,13 @@ function isGooglePhotosUrl(url) {
     }
 
     function nextSlide() {
+      if (!state.filteredPhotos || state.filteredPhotos.length === 0) return;
       state.currentSlideIndex = (state.currentSlideIndex + 1) % state.filteredPhotos.length;
       showSlide(state.currentSlideIndex);
     }
 
     function prevSlide() {
+      if (!state.filteredPhotos || state.filteredPhotos.length === 0) return;
       state.currentSlideIndex = (state.currentSlideIndex - 1 + state.filteredPhotos.length) % state.filteredPhotos.length;
       showSlide(state.currentSlideIndex);
     }
@@ -5922,12 +5976,12 @@ function isGooglePhotosUrl(url) {
           SUBTITLE: state.activeConfig.SUBTITLE || GLOBAL_CONFIG.SUBTITLE || "",
           WELCOME_MESSAGE: state.activeConfig.WELCOME_MESSAGE || GLOBAL_CONFIG.WELCOME_MESSAGE || "",
           DRIVE_FOLDER_ID: state.activeConfig.DRIVE_FOLDER_ID || GLOBAL_CONFIG.DRIVE_FOLDER_ID || "",
-          SLIDESHOW_INTERVAL_SEC: 4,
+          SLIDESHOW_INTERVAL_SEC: parseInt(state.activeConfig.SLIDESHOW_INTERVAL_SEC, 10) || 4,
           FRAME_IMAGE_URL: state.activeConfig.FRAME_IMAGE_URL || GLOBAL_CONFIG.FRAME_IMAGE_URL || "",
           SPREADSHEET_ID: state.activeConfig.SPREADSHEET_ID || GLOBAL_CONFIG.SPREADSHEET_ID || "",
           SPREADSHEET_URL: state.activeConfig.SPREADSHEET_URL || GLOBAL_CONFIG.SPREADSHEET_URL || ""
         },
-        categories: ["Semua Foto"],
+        categories: [state.allPhotosLabel || "Semua Foto"],
         photos: []
       }, false);
     }

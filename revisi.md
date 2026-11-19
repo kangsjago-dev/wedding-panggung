@@ -1,5 +1,44 @@
 # Catatan Revisi & Audit Sistem (Changelog)
 
+## Versi 4.14.0 - Perbaikan Fallback Photostage (Mode Panggung) & Audit 3x Eliminasi Total Fallback Realtime Database (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Perbaikan Fallback pada Photostage (Mode Panggung Layar Penuh)**:
+   - **Akar Masalah**:
+     - Pada `openSlideshow(startIndex)` di `js/app.js`, jika pengguna membuka Mode Panggung saat kategori aktif belum memiliki foto (`state.filteredPhotos.length === 0`), fungsi langsung melakukan `return` secara diam-diam tanpa umpan balik dan tanpa memutar foto event yang ada.
+     - Pada `showSlide(index)`, elemen gambar (`slideshowImgA` dan `slideshowImgB`) langsung mengambil URL mentah `photo.highResUrl || photo.thumbnailUrl` tanpa melalui fungsi `getSharpPreviewUrl(photo)`. Akibatnya, pada foto Photobooth (Fotoshare, Kingphotobooth, Google Photos), resolusi gambar tidak tajam atau berisiko gagal muat.
+     - Tidak adanya penangan kegagalan (`onerror`) pada gambar photostage. Jika koneksi tersendat saat gambar beresolusi tinggi dimuat di layar panggung, gambar menampilkan ikon rusak (*broken image*).
+     - Teks watermark pasangan (`#slideshowCouple`) dan info kategori (`#slideshowCategory`) berpotensi statis atau tidak tersinkronisasi jika data konfigurasi diubah di database secara realtime.
+   - **Solusi Rekayasa Sistem**:
+     - **Graceful Photo Fallback pada `openSlideshow`**: Jika `state.filteredPhotos` kosong (misalnya pengguna sedang berada di kategori kosong), sistem otomatis mengambil foto dari koleksi master event aktif (`state.allPhotos`). Jika seluruh foto event memang belum ada, sistem menampilkan toast peringatan elegan (*"Belum ada foto yang tersedia untuk Mode Panggung."*).
+     - **Resolusi Tajam Maksimal (`getSharpPreviewUrl`)**: Pada `showSlide(index)`, gambar photostage wajib diproses via `getSharpPreviewUrl(photo)` untuk memastikan tampilan di layar proyektor panggung sejernih kristal (*crystal clear high-resolution*).
+     - **Cascading Image Fallback (`onerror`)**: Memasang penangan kegagalan bertingkat pada `#slideshowImgA` dan `#slideshowImgB`: jika berkas resolusi tinggi gagal termuat, otomatis beralih ke `photo.previewUrl`, lalu ke `photo.thumbnailUrl`.
+     - **Sinkronisasi Metadata Realtime**: Memperbarui teks `#slideshowCouple` dan `#slideshowCategory` secara langsung dari `state.activeConfig` pada setiap pergantian slide foto.
+     - **Akses Cepat Mode Panggung**: Menambahkan tombol pemicu Mode Panggung (`.lightbox-action-btn`) pada bilah atas Lightbox modal agar operator acara dapat langsung beralih ke tayangan layar penuh dari foto yang sedang dilihat.
+
+2. **Penghapusan Tulisan 'Kategori • Photostage' pada Notifikasi Kategori Tanpa Foto**:
+   - **Akar Masalah**:
+     - Pada kartu notifikasi kategori kosong (`.empty-gallery-card`), sebelumnya terdapat pill badge `<div class="empty-gallery-badge"><span>Kategori &bull; ${escapeHtml(activeCat)}</span></div>` serta teks deskripsi yang menyebutkan nama kategori secara eksplisit. Ketika kategori yang dibuka adalah "Photostage" (atau kategori lainnya yang belum memiliki foto), antarmuka menampilkan label kaku `"Kategori • Photostage"` yang membingungkan pengunjung.
+   - **Solusi Rekayasa Sistem**:
+     - Menghapus badge `<div class="empty-gallery-badge">` secara total dari template `renderPhotoGrid` di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js).
+     - Menyederhanakan teks deskripsi menjadi narasi murni yang hangat: *"Foto kenangan belum tersedia saat ini. Momen hangat kebersamaan akan otomatis tampil di sini begitu selesai diunggah atau disinkronkan."*, bebas dari teks repetitif atau label kategori yang canggung.
+
+3. **Audit 3x Menyeluruh & Eliminasi Total Fallback Hardcode pada Semua Menu (100% Realtime Database Murni)**:
+   - **Putaran 1 (Frontend `js/app.js` & `index.html`)**:
+     - Menghapus sisa fallback hardcode PIN `"111111"` pada fungsi otentikasi login admin [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) baris 986 dan 2619. Otentikasi dan PIN murni 100% dibaca dari database Google Sheets sheet `Pengguna_Admin` atau `Pengaturan`.
+     - Menyelaraskan `loadFallbackData` agar durasi slideshow dan label kategori dinamis dari `state.activeConfig`.
+   - **Putaran 2 (Serverless APIs `api/*.js`)**:
+     - Audit seluruh endpoint serverless: `api/drive-folder.js`, `api/fotoshare.js`, `api/google-photos.js`, `api/kingphotobooth.js`, dan `api/download-proxy.js`. Seluruh endpoint beroperasi 100% dinamis berdasarkan parameter request tanpa hardcoded fallback IDs.
+   - **Putaran 3 (Backend Google Apps Script `code.gs` & `setup.gs`)**:
+     - Menghapus parameter usang `WEDDING_FOLDER_URL` ("Tautan Folder Google Drive Kategori Wedding Panggung") dari `code.gs` dan `setup.gs`.
+     - Membersihkan seluruh hardcoded ID dan data dummy sample (`andre-fayola-281`, `wilson-felicia-133`, `1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5`, `1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI`, `usr_superadmin / 111111`) dari fungsi inisialisasi `setupDatabaseSpreadsheet` di [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) dan [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/setup.gs).
+     - Menerapkan prinsip *Safe Non-Destructive Migration*: fungsi inisialisasi spreadsheet tidak lagi melakukan `.clear()` pada sheet `Pengaturan`, `Pengguna_Admin`, `Daftar_Acara`, atau `Daftar_Foto`. Data riil pengguna di database dijamin 100% aman dan tidak akan tertimpa dummy saat inisialisasi/migrasi dijalankan ulang.
+     - Menghapus auto-create akun dummy `usr_superadmin` di `getAdminUsersList` [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs).
+
+3. **Verifikasi Mandiri & Integritas Pengujian Otomatis**:
+   - `scratch/test_photostage_fallback_fix.js`: Pengujian komprehensif logika photostage, fallback onerror, dan eliminasi hardcode database.
+   - Seluruh test suite sebelumnya tetap lolos 100% (Green Pass).
+
 ## Versi 4.13.0 - Redesain Tampilan & Tipografi Elegan Kategori Tanpa Foto (19 November 2026)
 
 ### 1. Perbaikan yang Diperintahkan & Diterapkan:

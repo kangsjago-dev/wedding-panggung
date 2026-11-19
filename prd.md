@@ -139,3 +139,17 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
   - Judul bernuansa puitis: *"Momen Indah Sedang Disiapkan"* menggunakan font serif *Cormorant Garamond*.
   - Narasi ramah dan puitis yang menjelaskan foto sedang dipersiapkan oleh fotografer.
   - Tombol aksi terpadu: *Segarkan Kategori Ini* dan *Buka Album Sumber* dengan SVG icon inline.
+
+### 2.16 Perbaikan Fallback Photostage (Mode Panggung) & Audit 3x Eliminasi Total Hardcode Database (v4.14.0)
+- **Graceful Fallback & Ketahanan Photostage (Mode Panggung Layar Penuh)**:
+  - Pada `openSlideshow(startIndex)`, jika kategori yang sedang dilihat kosong (`state.filteredPhotos.length === 0`), sistem secara cerdas dan anggun beralih memutar seluruh foto aktif acara (`state.allPhotos`), sehingga proyeksi layar panggung tidak pernah terhenti atau macet. Jika seluruh foto event belum ada, sistem menampilkan toast peringatan elegan.
+  - Pada `showSlide(index)`, seluruh gambar diproses melalui `getSharpPreviewUrl(photo)` untuk memastikan proyeksi layar lebar panggung beresolusi maksimal (Google Drive, Fotoshare, Kingphotobooth, Google Photos).
+  - Dilengkapi penangan kegagalan bertingkat (`onerror` fallback) pada elemen slide panggung (`#slideshowImgA` dan `#slideshowImgB`): jika resolusi tinggi gagal termuat, otomatis beralih ke `photo.previewUrl`, lalu ke `photo.thumbnailUrl`, menghilangkan risiko tampilan ikon gambar rusak (*broken image*).
+  - Teks watermark pasangan (`#slideshowCouple`) dan info kategori/tanggal/venue (`#slideshowCategory`) tersinkronisasi murni dari `state.activeConfig` secara dinamis pada setiap transisi slide.
+  - Menambahkan tombol aksi pemicu Mode Panggung (`.lightbox-action-btn`) pada bilah atas Lightbox modal untuk kemudahan aktivasi langsung dari foto aktif.
+  - **Eliminasi Label Kaku 'Kategori • Photostage'**: Menghapus pill badge `.empty-gallery-badge` dan teks penyebutan kategori pada notifikasi kategori tanpa foto, menyajikan narasi hangat yang bersih dan profesional.
+- **Audit 3x Eliminasi Total Hardcode Database (Murni Realtime 100%)**:
+  - **Frontend (`js/app.js`)**: Menghapus sisa fallback hardcode PIN `"111111"` pada fungsi otentikasi login admin (baris 986 dan 2619). Otentikasi dan PIN murni 100% membaca database Google Sheets.
+  - **Serverless API (`api/*.js`)**: Seluruh endpoint terverifikasi bebas hardcode ID dan beroperasi 100% dinamis.
+  - **Backend GAS (`code.gs` & `setup.gs`)**: Menghapus parameter usang `WEDDING_FOLDER_URL` ("Tautan Folder Google Drive Kategori Wedding Panggung"), menghapus hardcoded ID folder `1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5` dan `1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI`, menghapus hardcoded event `andre-fayola-281` dan `wilson-felicia-133`, serta menghapus hardcoded admin `usr_superadmin / 111111` dari fungsi inisialisasi database.
+  - **Safe Non-Destructive Migration**: Inisialisasi database pada `code.gs` dan `setup.gs` tidak lagi menghapus (*clear*) sheet yang sudah ada, menjamin seluruh data riil pengguna tidak pernah tertimpa.

@@ -880,7 +880,8 @@
       color: #0F172A;
     }
 
-    .lightbox-close {
+    .lightbox-close,
+    .lightbox-action-btn {
       background: rgba(0, 0, 0, 0.05);
       border: 1px solid rgba(0, 0, 0, 0.1);
       color: #1E293B;
@@ -894,7 +895,8 @@
       transition: all 0.2s;
     }
 
-    .lightbox-close:hover {
+    .lightbox-close:hover,
+    .lightbox-action-btn:hover {
       background: rgba(0, 0, 0, 0.12);
       color: #0F172A;
       transform: scale(1.05);
