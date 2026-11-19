@@ -966,17 +966,38 @@ function getGalleryData(targetEventId) {
       eventsList = [
         {
           id: "andre-fayola-281",
-          name: config.EVENT_NAME || "Andre & Fayola",
-          date: config.EVENT_DATE || "22 November 2026",
-          venue: config.EVENT_VENUE || "UPPERHILLS CONVENTION HALLS",
-          subtitle: config.SUBTITLE || "The Wedding Gallery & Precious Memories",
-          welcomeMessage: config.WELCOME_MESSAGE || "",
-          footerMessage: config.FOOTER_MESSAGE || "",
-          allPhotosLabel: config.ALL_PHOTOS_LABEL || "Semua Foto",
-          driveFolderId: config.DRIVE_FOLDER_ID || "",
-          frameImageUrl: config.FRAME_IMAGE_URL || "",
-          customCategories: typeof config.CUSTOM_CATEGORIES === "string" ? JSON.parse(config.CUSTOM_CATEGORIES) : (config.CUSTOM_CATEGORIES || []),
-          coverSettings: config.COVER_SETTINGS ? (typeof config.COVER_SETTINGS === "string" ? JSON.parse(config.COVER_SETTINGS) : config.COVER_SETTINGS) : null
+          name: "Andre & Fayola",
+          date: "22 November 2026",
+          venue: "UPPERHILLS CONVENTION HALLS",
+          homeUrl: "https://gallery.runway.my.id/?event=andre-fayola-281",
+          subtitle: "The Wedding Gallery & Precious Memories",
+          welcomeMessage: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
+          footerMessage: "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
+          allPhotosLabel: "Semua Foto",
+          driveFolderId: "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
+          photoboothUrl: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
+          frameImageUrl: "",
+          customCategories: [
+            { name: "Photobooth", url: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8", enabled: true, isPhotobooth: true },
+            { name: "Wedding", url: "https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI", enabled: true }
+          ]
+        },
+        {
+          id: "wilson-felicia-133",
+          name: "Wilson & Felicia",
+          date: "16 November 2026",
+          venue: "UpperHills Convention Hall, Makassar",
+          homeUrl: "https://gallery.runway.my.id/?event=wilson-felicia-133",
+          subtitle: "The Wedding Gallery & Precious Memories",
+          welcomeMessage: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
+          footerMessage: "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
+          allPhotosLabel: "Semua Foto",
+          driveFolderId: "1GGB77clCMYBIg17J0ECr2eVbD02ZeInW",
+          photoboothUrl: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
+          frameImageUrl: "",
+          customCategories: [
+            { name: "Photobooth", url: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8", enabled: true, isPhotobooth: true }
+          ]
         }
       ];
     }
@@ -1030,7 +1051,7 @@ function getGalleryData(targetEventId) {
     // Jika folder Google Drive telah diatur, prioritaskan pemindaian langsung dari Google Drive
     if (folderId) {
       var cache = CacheService.getScriptCache();
-      var cacheKey = "drive_gallery_" + folderId;
+      var cacheKey = "drive_gallery_" + selectedEventId + "_" + folderId;
       var cachedJson = cache.get(cacheKey);
       if (cachedJson) {
         try {
@@ -1997,7 +2018,7 @@ function testAndSyncDriveFolder(pin, folderId, allPhotosLabel) {
       return scanResult;
     }
 
-    var updatedGallery = getGalleryData();
+    var updatedGallery = getGalleryData(updatedConfig.ACTIVE_EVENT_ID);
     var targetSs = (typeof ss !== 'undefined' && ss) ? ss : (typeof dbSpreadsheet !== 'undefined' ? dbSpreadsheet : null);
     if (targetSs && updatedGallery && updatedGallery.photos && updatedGallery.photos.length > 0) {
       syncPhotosToSheet(targetSs, updatedGallery.photos);
@@ -2218,7 +2239,7 @@ function saveAdminSettings(pin, updatedConfig) {
       Logger.log("Info write sheet: " + sheetErr.toString());
     }
 
-    var updatedGallery = getGalleryData();
+    var updatedGallery = getGalleryData(updatedConfig.ACTIVE_EVENT_ID);
     var targetSs = (typeof ss !== 'undefined' && ss) ? ss : (typeof dbSpreadsheet !== 'undefined' ? dbSpreadsheet : null);
     if (targetSs && updatedGallery && updatedGallery.photos && updatedGallery.photos.length > 0) {
       syncPhotosToSheet(targetSs, updatedGallery.photos);

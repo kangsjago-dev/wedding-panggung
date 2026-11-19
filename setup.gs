@@ -186,7 +186,7 @@ function setupTargetSpreadsheetDatabase() {
         "16 November 2026",
         "UpperHills Convention Hall, Makassar",
         "https://gallery.runway.my.id/?event=wilson-felicia-133",
-        "https://drive.google.com/drive/folders/1GGB77clCMYBIg17J0ECr2eVbD02ZeInW",
+        "1GGB77clCMYBIg17J0ECr2eVbD02ZeInW",
         "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
         '[{"name":"Photobooth","url":"https://photos.app.goo.gl/QkqewYw4dWfocxfK8","enabled":true,"isPhotobooth":true}]',
         "",

@@ -463,10 +463,24 @@
                 <span>🗑️ Hapus</span>
               </button>
             </div>
-            <div id="eventShareLinkBox" style="margin-top: 8px; font-size: 0.74rem; color: #475569; display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 6px 10px; border-radius: 6px; border: 1px solid #E2E8F0;">
-              <span>Tautan Event: <strong id="activeEventUrlPreview">...</strong></span>
-              <button type="button" class="btn btn-outline" style="font-size: 0.7rem; padding: 2px 8px;" onclick="openActiveEventHome()" title="Buka Halaman Utama Acara Ini">Buka Home</button>
-              <button type="button" class="btn btn-outline" style="font-size: 0.7rem; padding: 2px 8px;" onclick="copyActiveEventUrl()">Salin Link</button>
+            <div id="eventShareLinkBox" style="margin-top: 10px; background: #FFFFFF; padding: 10px 12px; border-radius: 8px; border: 1px solid #CBD5E1;">
+              <div style="font-size: 0.72rem; font-weight: 700; color: #334155; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                <span>🔗 Link Khusus Event Ini (Dedicated Home Link):</span>
+                <span id="activeEventBadgeTag" style="background: #ECFDF5; color: #059669; padding: 2px 8px; border-radius: 4px; font-size: 0.68rem; font-weight: 700; border: 1px solid #A7F3D0;">✓ Terisolasi</span>
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <input type="text" id="activeEventUrlInput" class="admin-input" readonly style="font-size: 0.75rem; background: #F8FAFC; color: #1E293B; font-family: monospace; padding: 6px 10px; font-weight: 600;" onclick="this.select()" title="Klik untuk menyeleksi link event">
+                <button type="button" class="btn btn-outline" style="font-size: 0.74rem; padding: 6px 10px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;" onclick="copyActiveEventUrl()" title="Salin Link Event Khusus Ini">
+                  <span>📋 Salin Link</span>
+                </button>
+                <button type="button" class="btn btn-gold" style="font-size: 0.74rem; padding: 6px 10px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;" onclick="openActiveEventHome()" title="Buka Halaman Utama Acara Ini">
+                  <span>🌐 Buka Home</span>
+                </button>
+              </div>
+              <div style="display: none;" id="activeEventUrlPreview"></div>
+              <div style="font-size: 0.68rem; color: #64748B; margin-top: 6px; line-height: 1.4;">
+                * <strong>1 Link per Event:</strong> Setiap event memiliki halaman home tersendiri sehingga nama pengantin, tanggal, dan foto tidak akan saling bercampur.
+              </div>
             </div>
           </div>
 

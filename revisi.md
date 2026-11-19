@@ -1,5 +1,34 @@
 # Catatan Revisi & Audit Sistem (Changelog)
 
+## Versi 4.2.0 - Dedicated 1-Link-per-Event & Isolasi Home Screen Total (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **1 Link Khusus per Event (Dedicated URL)**:
+   - **Tautan Khusus**: Setiap event memiliki URL independen yang dapat dibagikan dan dibookmark:
+     - Event 1: `https://gallery.runway.my.id/?event=andre-fayola-281`
+     - Event 2: `https://gallery.runway.my.id/?event=wilson-felicia-133`
+     - Event Baru: `https://gallery.runway.my.id/?event={newEventId}`
+   - **Auto-Normalize URL Bar**: Jika seseorang membuka link dasar `https://gallery.runway.my.id/`, sistem secara otomatis menormalisasi address bar browser melalui `history.replaceState` menjadi link lengkap `?event={activeEventId}`, sehingga pengguna tidak pernah membagikan tautan kosong/polos.
+
+2. **Isolasi Penuh Home Screen per Event (Anti-Bercampur)**:
+   - **Identitas Pasangan, Tanggal & Lokasi**: Menampilkan 100% data unik milik event yang dipilih. Nama pasangan, tanggal, subjudul, dan pesan sambutan tidak saling tertimpa atau bercampur.
+   - **Folder Google Drive & Galeri Foto**:
+     - Andre & Fayola: Mengakses folder Google Drive `1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5` (66 foto aktual).
+     - Wilson & Felicia: Mengakses folder Google Drive `1GGB77clCMYBIg17J0ECr2eVbD02ZeInW` (116 foto aktual).
+     - Guard isolasi di `handleGalleryResponse`: Mencegah server cache lama menimpa foto event aktif. Cache lokal disimpan terpisah per event (`WEDDING_EVENT_PHOTOS_{eventId}`).
+   - **Kategori & Vendor Photobooth**: Dibatasi murni pada event aktif.
+
+3. **Perbaikan Tampilan & Sinkronisasi Panel Admin (Fix Bug Screenshot)**:
+   - Mengatasi masalah di mana dropdown pilihan event dan input form tidak sinkron.
+   - Kotak tautan event diperbarui dengan input monospace lengkap, tombol `📋 Salin Link` (copy ke clipboard), dan tombol `🌐 Buka Home` (membuka halaman utama event yang bersangkutan di tab baru).
+   - Saat admin beralih antar event di dropdown, seluruh form, tautan, dan galeri foto langsung berpindah seketika tanpa perlu me-reload halaman.
+
+4. **Audit Integritas Kode**:
+   - `code.gs`: Syntax Valid (`vm.Script` PASSED).
+   - `setup.gs`: Syntax Valid (`vm.Script` PASSED).
+   - `js/app.js`: Syntax Valid (`node -c` PASSED).
+   - Seluruh 36 handler interaktif HTML berfungsi normal.
+
 ## Versi 4.1.0 - Pinned Locked Navigation Tabs & Panduan Eksekusi ERP Google Sheets (19 November 2026)
 
 ### 1. Perbaikan yang Diperintahkan & Diterapkan:
