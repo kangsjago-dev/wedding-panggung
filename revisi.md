@@ -1,5 +1,37 @@
 # Catatan Revisi & Audit Sistem (Changelog)
 
+## Versi 4.19.0 - Perbaikan ReferenceError photoRows is not defined pada Google Apps Script setupTargetSpreadsheetDatabase (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Perbaikan `ReferenceError: photoRows is not defined` pada `setup.gs:257` & `code.gs:460`**:
+   - **Akar Masalah**:
+     - Pada fungsi `setupTargetSpreadsheetDatabase()` di [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/setup.gs) dan [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs), blok pengembalian nilai (*return statement*) sebelumnya memanggil properti `totalPhotos: photoRows.length`.
+     - Karena foto demo dan hardcode sebelumnya telah dibersihkan secara total untuk memastikan sistem 100% realtime membaca database Google Drive/Sheets pengguna, variabel lokal `photoRows` tidak lagi dideklarasikan di dalam fungsi tersebut.
+     - Akibatnya, saat fungsi inisialisasi basis data dijalankan oleh pengguna melalui editor Google Apps Script, sistem melempar eksepsi fatal:
+       ```text
+       Error
+       ReferenceError: photoRows is not defined
+       setupTargetSpreadsheetDatabase @ setup.gs:257
+       ```
+   - **Solusi Rekayasa Sistem**:
+     - Mengubah baris kalkulasi `totalPhotos` di [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/setup.gs) baris 257 dan [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) baris 460 menjadi perhitungan dinamis dan aman terhadap sheet aktual:
+       ```javascript
+       totalPhotos: (sheetPhotos && sheetPhotos.getLastRow() > 1) ? (sheetPhotos.getLastRow() - 1) : 0
+       ```
+     - Perhitungan ini membaca baris riil lembar kerja `Daftar_Foto` tanpa mengasumsikan keberadaan variabel lokal statis apa pun, menghasilkan integer yang akurat (0 jika hanya baris header, atau jumlah riil foto jika data telah terisi).
+
+2. **Penyempurnaan Proteksi Pill Badge Kategori Foto (Anti Tanda Strip `-`)**:
+   - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) pada `renderCategoryTabs()` dan `updateCategoryPillCount()`:
+     - Menambahkan inline `style="${countBadgeText ? '' : 'display: none;'}"` pada elemen `<span class="pill-count">` sehingga badge count yang bernilai kosong atau belum selesai disinkronkan dijamin tersembunyi 100% dan tidak pernah menampilkan strip `-`.
+     - Memperbarui fungsi `updateCategoryPillCount()` agar mengontrol `el.style.display` secara dinamis sesuai jumlah riil foto (`""` jika count > 0, `'none'` jika 0/kosong).
+
+3. **Audit & Verifikasi Pengujian Menyeluruh**:
+   - [scratch/test_setup_photorows_fix.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/scratch/test_setup_photorows_fix.js): 5 pengujian PASS 100% (0 FAIL).
+   - [scratch/test_event_deletion_and_andre_fayola.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/scratch/test_event_deletion_and_andre_fayola.js): 9 pengujian PASS 100% (0 FAIL).
+   - Sintaks `setup.gs`, `code.gs`, dan `js/app.js`: Bebas error syntax (Code 0).
+
+---
+
 ## Versi 4.18.0 - Perbaikan Akses Acara andre-fayola-281 & Implementasi Penghapusan Permanen Acara (19 November 2026)
 
 ### 1. Perbaikan yang Diperintahkan & Diterapkan:

@@ -1711,7 +1711,7 @@ function isGooglePhotosUrl(url) {
 
         pill.innerHTML = `
           <span>${escapeHtml(cat)}</span>
-          <span class="pill-count" id="pill-count-${escapeHtml(cat.replace(/\s+/g, '_'))}">${countBadgeText}</span>
+          <span class="pill-count" id="pill-count-${escapeHtml(cat.replace(/\s+/g, '_'))}" style="${countBadgeText ? '' : 'display: none;'}">${countBadgeText}</span>
         `;
         container.appendChild(pill);
       });
@@ -1719,7 +1719,15 @@ function isGooglePhotosUrl(url) {
 
     function updateCategoryPillCount(cat, count) {
       const el = document.getElementById("pill-count-" + escapeHtml(cat.replace(/\s+/g, '_')));
-      if (el) el.innerText = String(count);
+      if (el) {
+        if (count && count > 0) {
+          el.innerText = String(count);
+          el.style.display = "";
+        } else {
+          el.innerText = "";
+          el.style.display = "none";
+        }
+      }
       try {
         if (count > 0) {
           localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(count));

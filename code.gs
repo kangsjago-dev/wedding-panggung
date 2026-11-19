@@ -457,7 +457,7 @@ function setupTargetSpreadsheetDatabase() {
     message: "Database & seluruh postingan foto berhasil dibuat 100% lengkap pada spreadsheet Anda!",
     spreadsheetUrl: ss.getUrl(),
     spreadsheetId: ss.getId(),
-    totalPhotos: photoRows.length
+    totalPhotos: (sheetPhotos && sheetPhotos.getLastRow() > 1) ? (sheetPhotos.getLastRow() - 1) : 0
   };
 }
 
