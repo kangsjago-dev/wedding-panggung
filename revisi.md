@@ -1,142 +1,82 @@
-# STATUS REVISI SISTEM (revisi.md) - v4.22.0
+# STATUS REVISI SISTEM (revisi.md) - v4.23.0
 ================================================================================
-STATUS: SELESAI DITERAPKAN (MERGED TO MASTER CONTEXT & PRD v4.22.0)
-PERMINTAAN: Galeri Frameless, Hapus Tombol Photobooth & Pembersihan Total Hardcoded Fallback
+STATUS: SELESAI DITERAPKAN (MERGED TO MASTER CONTEXT & PRD v4.23.0)
+PERMINTAAN: Perbaiki event baru dibuat, saat di-refresh tetap loading (skeleton cards shimmer tidak berhenti).
 TANGGAL PENERAPAN: 19 November 2026
-HASIL VERIFIKASI: 5 PENGUJIAN OTOMATIS PASS 100% (0 FAIL)
+HASIL VERIFIKASI: 7 PENGUJIAN OTOMATIS PASS 100% (0 FAIL)
 ================================================================================
 
 ## 1. Ringkasan Eksekusi & Solusi yang Diterapkan:
-1. **Penghapusan Frame pada Foto & Area Foto**:
-   - Di [css/style.css](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/css/style.css):
-     - Mengubah styling `.empty-gallery-card` menjadi `background: transparent; border: none; box-shadow: none; border-radius: 0; padding: 48px 20px;` serta menyembunyikan garis aksen atas `::before`.
-     - Mengubah styling `.photo-card` menjadi `border: none;` sehingga seluruh kartu foto tampil bersih, elegan, dan *edge-to-edge* (borderless).
-2. **Penghapusan Tombol "Buka Foto Photobooth (130 Foto) →"**:
-   - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) pada fungsi `renderPhotoGrid()`:
-     - Menghapus blok logika `switchButtonHtml` dan variabel `${switchButtonHtml}` secara total.
-     - Area foto kosong hanya menyajikan tombol *"Segarkan Kategori Ini"* (dan *"Buka Album Sumber"* jika link eksternal disetel).
-3. **Pembersihan Total Fallback Hardcode (100% Realtime Database Murni)**:
-   - Di [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/config.json):
-     - Mengosongkan seluruh fallback statis di level root:
-       - `FRAME_IMAGE_URL: ""`
-       - `DRIVE_FOLDER_ID: ""`
-       - `DRIVE_FOLDER_URL: ""`
-       - `PHOTOBOOTH_URL: ""`
-       - `WEDDING_FOLDER_URL: ""`
-       - `ACTIVE_EVENT_ID: ""`
-       - `EVENT_NAME: ""`
-       - `EVENT_DATE: ""`
-       - `EVENT_VENUE: ""`
-       - `COUPLE_NAME: ""`
-       - `SUBTITLE: ""`
-       - `WELCOME_MESSAGE: ""`
-       - `FOOTER_MESSAGE: ""`
-       - `CUSTOM_CATEGORIES: []`
-   - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js):
-     - Membatasi `state.activeConfig.FRAME_IMAGE_URL` agar murni hanya mengambil nilai dari `matchedEv.frameImageUrl || ""` tanpa fallback ke parameter frame global.
-4. **Hasil Verifikasi Otomatis**:
-   - Seluruh 5 unit test di [scratch/test_frameless_photo_and_no_fallback.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/scratch/test_frameless_photo_and_no_fallback.js) **PASS 100% (0 Fail)**.
-   - Seluruh 6 unit test di [scratch/test_frameless_not_found.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/scratch/test_frameless_not_found.js) **PASS 100% (0 Fail)**.
+1. **Pembersihan Skeleton Instan di Awal (`initApp`)**:
+   - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) baris 619–635:
+     Pada event baru dibuat yang belum memiliki cache foto di `localStorage`, fungsi `initApp()` seketika memanggil `renderPhotoGrid()` dalam 0 milidetik. Kartu skeleton awal segera digantikan oleh status *"Momen Indah Sedang Disiapkan"* tanpa menunggu request jaringan.
+2. **Pencegahan Abort Prematur di `config.json`**:
+   - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) baris 670:
+     Menghilangkan pemanggilan abort 404 pada pembacaan `config.json` statis sehingga alur inisialisasi selalu mengalir ke `syncFromSpreadsheetGViz()` yang membaca data event baru dari database Google Spreadsheet.
+3. **Fail-Safe Watchdog Timer (3.5 Detik)**:
+   - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) pada `fetchGalleryData()` dan `showGridSkeleton()`:
+     Memasang pengaman otomatis berdurasi 3.5 detik yang langsung menghentikan animasi loading dan merender galeri jika jaringan eksternal/backend mengalami latensi.
+   - Menambahkan `AbortController` 4 detik pada pemanggilan `/api/drive-folder` sehingga otomatis fallback ke Google Apps Script backend jika scraper serverless kosong/tidak merespons.
+4. **Pembersihan Total Skeleton di `handleGalleryResponse()`**:
+   - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) baris 1331–1343:
+     Jika galeri menerima 0 foto (event baru), seluruh elemen `.skeleton-card` dipastikan dihapus dan `renderPhotoGrid()` langsung dipanggil.
+5. **Penyelarasan Backend Google Apps Script (`code.gs`)**:
+   - Di [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) baris 1020–1058:
+     Menjamin bahwa seluruh return data dari `getGalleryData()` (termasuk saat folder kosong atau baru dibuat) selalu menyertakan `events: eventsList` dan `activeEventId: selectedEventId`.
+6. **Hasil Verifikasi Otomatis**:
+   - Seluruh 7 pengujian di [scratch/test_new_event_refresh_fix.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/scratch/test_new_event_refresh_fix.js) **PASS 100% (0 Fail)**.
+   - Seluruh 5 pengujian di [scratch/test_frameless_photo_and_no_fallback.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/scratch/test_frameless_photo_and_no_fallback.js) **PASS 100% (0 Fail)**.
    - Pengecekan sintaks `node --check js/app.js` **Exit Code 0 (Bebas Syntax Error)**.
 
 ## 1. Analisis Akar Masalah (Root Cause Analysis)
 
-Berdasarkan screenshot pengguna (`media_1795100743618_fe0c7552.jpg`) dan audit kode sumber:
-1. **Frame pada Foto / Area Foto**:
-   - Pada tangkapan layar, wadah informasi status kosong galeri (`.empty-gallery-card`) di [css/style.css](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/css/style.css) memiliki frame tebal kaku: `border: 1px solid rgba(197, 168, 128, 0.35);`, `background: radial-gradient(...)`, aksen garis atas `.empty-gallery-card::before`, serta `box-shadow`.
-   - Kartu foto individual (`.photo-card`) juga memiliki `border: 1px solid rgba(197, 168, 128, 0.15);` dan `box-shadow: var(--shadow-soft);`.
-   - Pada [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/config.json) baris 96, terdapat hardcoded watermark bingkai foto `"FRAME_IMAGE_URL": "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing"`.
-   - **Solusi**: 
-     - Hilangkan border, shadow, dan background pada `.empty-gallery-card` agar bersih menyatu dengan latar (*frameless minimal*).
-     - Hilangkan border pada `.photo-card` agar foto tampil *edge-to-edge* modern tanpa garis batas (*borderless*).
-     - Kosongkan hardcoded fallback `FRAME_IMAGE_URL` di `config.json`.
+Berdasarkan investigasi menyeluruh pada alur inisialisasi aplikasi ([index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) dan [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js)), ditemukan penyebab utama mengapa halaman event baru yang baru dibuat tetap terkunci pada animasi loading (kartu skeleton abu-abu bersinar/shimmer tiada henti) saat di-refresh:
 
-2. **Tombol "Buka Foto Photobooth (130 Foto) →"**:
-   - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) baris 2491–2509, fungsi `renderPhotoGrid()` menyuntikkan variabel `switchButtonHtml` yang merender tombol emas:
-     `<button class="empty-gallery-btn-refresh"><span>Buka Foto ${escapeHtml(pbCat.name)} ${pbCount ? '(' + pbCount + ' Foto) ' : ''}&rarr;</span></button>`.
-   - Tombol ini muncul di tengah kartu kosong saat tab Photostage dibuka.
-   - **Solusi**: Hapus variabel dan blok kode `switchButtonHtml` secara total dari [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js).
+1. **HTML Awal Memuat Kartu Skeleton Permanen Tanpa Pembersih Awal untuk Event Baru**:
+   - Pada [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) baris 252–257, `#photosGrid` secara default berisi 6 elemen `<div class="skeleton-card"></div>`.
+   - Pada event lama, fungsi `initApp()` langsung memanggil `renderPhotoGrid()` di baris 628 karena cache foto (`WEDDING_EVENT_PHOTOS_<id>`) sudah ada di `localStorage`, sehingga skeleton hilang dalam 0 milidetik.
+   - Namun pada **event yang baru dibuat**, foto masih 0 (belum ada cache). Akibatnya, `renderPhotoGrid()` **tidak pernah dipanggil** di `initApp()`, sehingga kartu skeleton tetap menggantung di layar sambil menunggu seluruh rangkaian request jaringan (config.json, spreadsheet GViz, API endpoint, GAS) yang memakan waktu lama atau rentan pending.
 
-3. **Fallback Hardcode di File Konfigurasi & Script**:
-   - Di [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/config.json), terdapat sisa parameter fallback statis pada tingkat root:
-     - `"EVENT_NAME": "Andre & Fayola"`
-     - `"EVENT_DATE": "22 November 2026"`
-     - `"EVENT_VENUE": "UPPERHILLS CONVENTION HALLS"`
-     - `"FRAME_IMAGE_URL": "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing"`
-     - `"DRIVE_FOLDER_ID": "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh"`
-     - `"PHOTOBOOTH_URL": "https://photos.app.goo.gl/QkqewYw4dWfocxfK8"`
-     - `"WEDDING_FOLDER_URL": "https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI"`
-     - `"CUSTOM_CATEGORIES": [...]`
-   - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) baris 887:
-     `if (sheetMap.FRAME_IMAGE_URL) state.activeConfig.FRAME_IMAGE_URL = sheetMap.FRAME_IMAGE_URL;` berpotensi mewariskan frame global jika sheet Pengaturan memiliki nilai frame.
-   - **Solusi**:
-     - Kosongkan seluruh string fallback statis di root [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/config.json) menjadi `""` dan `[]`.
-     - Pastikan seluruh parameter acara (nama, tanggal, venue, folder Google Drive, link Photobooth, kategori kustom, dan bingkai) dibaca 100% murni secara realtime dari Google Spreadsheet (sheet `Daftar_Acara` dan `Pengaturan`).
+2. **Abort Prematur & Race Condition pada `fetch("config.json")`**:
+   - Pada [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) baris 664–673:
+     `config.json` merupakan file statis di server yang hanya berisi event default (`andre-fayola-281` dan `wilson-felicia-133`).
+     Jika event baru dibuka pada tab baru / browser baru yang belum membaca sinkronisasi spreadsheet, kode melakukan:
+     `if (!matchedEv) { showEventNotFoundScreen(true, explicitUrl); return; }`
+     Hal ini memutus alur normal sebelum `syncFromSpreadsheetGViz()` sempat mengambil data event dari database Google Spreadsheet!
 
-4. **Batasan Ketat (Strict Boundary)**:
-   - Tidak mengubah logika lain di luar 3 poin yang diminta oleh pengguna.
+3. **`fetchGalleryData()` Menimpa Grid dengan Skeleton Tanpa Batas Waktu Fail-Safe**:
+   - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) baris 1094–1103:
+     Setiap kali `fetchGalleryData()` dipanggil saat foto kosong (`state.allPhotos.length === 0`), `#photosGrid` disetel ulang menjadi 6 kartu skeleton.
+     Jika pemanggilan `/api/drive-folder` atau backend Google Apps Script mengalami latensi, redirect 302, kuota Google Drive, atau folder kosong, tidak ada timer pengaman (*fail-safe timeout*). Akibatnya kartu skeleton terjebak (*deadlock*) dan tidak pernah digantikan oleh kartu status kosong (`.empty-gallery-card`).
+
+4. **Kategori Kustom Memanggil `showGridSkeleton()` yang Mengunci Tampilan**:
+   - Di baris 2350 pada `applyCategoryFilter()`, setiap perpindahan/sinkronisasi kategori non-utama memanggil `showGridSkeleton()`. Jika link Photobooth atau folder belum selesai di-fetch atau memakan waktu hingga belasan detik, skeleton kembali dipasang dan terkunci.
 
 ---
 
-## 2. Rencana Implementasi Bertahap (Step-by-Step Plan)
+## 2. Rencana Solusi & Implementasi (Action Plan)
 
-### Langkah 1: Modifikasi Styling [css/style.css](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/css/style.css)
-1. Pada `.empty-gallery-card`:
-   - Setel `border: none;`
-   - Setel `box-shadow: none;`
-   - Setel `background: transparent;`
-   - Hapus / sembunyikan garis aksen `::before`.
-2. Pada `.photo-card`:
-   - Setel `border: none;`
-   - Setel `border-color` pada hover menjadi transparan / hapus penambahan border.
+### Langkah 1: Resolusi Instan di `initApp()` (Zero Skeleton Stuck)
+- Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) pada blok inisialisasi cache foto:
+  - Jika event terdeteksi aktif (baik dari URL maupun registry lokal) tetapi belum memiliki foto tersimpan (`savedPhotos` kosong / null), **segera panggil `renderPhotoGrid()`** agar kartu skeleton langsung digantikan oleh tampilan bersih *"Momen Indah Sedang Disiapkan"* secara instan tanpa menunggu request jaringan.
 
-### Langkah 2: Pembersihan Tombol Pintas di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js)
-1. Pada fungsi `renderPhotoGrid()`:
-   - Hapus blok evaluasi `switchButtonHtml` (baris 2491–2509).
-   - Hapus `${switchButtonHtml}` dari template `grid.innerHTML`.
-   - Hanya tampilkan tombol *"Segarkan Kategori Ini"* dan *"Buka Album Sumber"* (jika URL sumber tersedia).
-2. Pada fungsi `syncFromSpreadsheetGViz()`:
-   - Pastikan `state.activeConfig.FRAME_IMAGE_URL` terisolasi pada `matchedEv.frameImageUrl || ""` tanpa fallback global.
+### Langkah 2: Jangan Abort di `fetch("config.json")` Sebelum Spreadsheet Sync
+- Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) baris 670:
+  - Hapus pemanggilan `showEventNotFoundScreen(true)` di dalam `config.json`.
+  - Jika event URL belum ditemukan di `config.json`, biarkan alur berlanjut secara elegan ke `syncFromSpreadsheetGViz()` karena event-event baru tersimpan secara realtime di Google Spreadsheet Database.
 
-### Langkah 3: Eliminasi Hardcode Fallback di [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/config.json)
-1. Kosongkan nilai fallback statis root:
-   - `FRAME_IMAGE_URL: ""`
-   - `DRIVE_FOLDER_ID: ""`
-   - `DRIVE_FOLDER_URL: ""`
-   - `PHOTOBOOTH_URL: ""`
-   - `WEDDING_FOLDER_URL: ""`
-   - `CUSTOM_CATEGORIES: []`
-   - `EVENT_NAME: ""`
-   - `EVENT_DATE: ""`
-   - `EVENT_VENUE: ""`
-   - `COUPLE_NAME: ""`
-   - `SUBTITLE: ""`
-   - `WELCOME_MESSAGE: ""`
-   - `FOOTER_MESSAGE: ""`
+### Langkah 3: Tambahkan Fail-Safe Timeout pada `fetchGalleryData()` (Maksimal 3.5 Detik)
+- Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) pada `fetchGalleryData()`:
+  - Pasang timer pengaman (*fail-safe watchdog* 3.5 detik). Jika dalam 3.5 detik backend/API belum selesai mengembalikan data, skeleton card otomatis dihentikan dan `#photosGrid` segera dirender menggunakan `renderPhotoGrid()`.
+  - Pada pemanggilan `/api/drive-folder`, tambahkan `AbortController` dengan timeout 4 detik agar tidak menggantung tanpa batas jika serverless/scraped Google Drive mengalami kendala.
 
----
+### Langkah 4: Pastikan `handleGalleryResponse()` Menjamin Skeleton Hilang 100%
+- Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) pada `handleGalleryResponse()`:
+  - Jika data foto yang diterima kosong (`sortedIncoming.length === 0`), pastikan `state.filteredPhotos = []`, hapus seluruh elemen `.skeleton-card`, dan jalankan `renderPhotoGrid()` secara langsung.
+  - Hentikan animasi putar refresh (`refreshIconSvg.classList.remove("spin")`) di seluruh blok keberhasilan maupun kegagalan.
 
-## 3. Matriks Komparasi Sebelum vs Sesudah
+### Batasan Ketat (Strict Boundaries):
+- TIDAK mengubah struktur database, pin admin, atau fitur-fitur lain yang sudah berjalan normal.
+- Seluruh tampilan tetap frameless & borderless sesuai standar v4.22.0.
 
-| Elemen / Komponen | Kondisi Sebelum Revisi | Rencana Sesudah Revisi |
-| :--- | :--- | :--- |
-| **Frame Kartu Status Kosong** | Kotak putih dengan garis batas emas (`border: 1px solid...`), garis aksen atas, dan bayangan | **Frameless**: Bersih, transparan, tanpa kotak/border batas (*Minimal Aesthetic*) |
-| **Border Kartu Foto (`.photo-card`)** | Memiliki garis batas `border: 1px solid rgba(197, 168, 128, 0.15)` | **Borderless**: Bebas garis batas, foto tampil bersih *edge-to-edge* |
-| **Tombol Photobooth di Layar Kosong**| Muncul tombol `→ Buka Foto Photobooth (130 Foto) →` | **Dihapus Total**: Hanya menyisakan tombol *"Segarkan Kategori Ini"* |
-| **Fallback Root di config.json** | Berisi hardcoded folder Drive, URL Photobooth, URL Frame Google Drive, nama Andre & Fayola | **Dibersihkan**: Berisi string kosong `""`, data 100% realtime diserap dari Spreadsheet ERP |
-
----
-
-## 4. Rencana Verifikasi Otomatis
-- Buat test script [scratch/test_frameless_photo_and_no_fallback.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/scratch/test_frameless_photo_and_no_fallback.js):
-  1. Validasi ketiadaan teks `Buka Foto Photobooth` di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js).
-  2. Validasi `.empty-gallery-card` dan `.photo-card` tidak lagi memiliki `border` di [css/style.css](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/css/style.css).
-  3. Validasi [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/config.json) bebas dari hardcoded fallback (`FRAME_IMAGE_URL: ""`, dsb).
-  4. Jalankan `node --check js/app.js` (Exit Code 0).
-
-================================================================================
-PANDUAN PENGGUNA:
-Rencana revisi di atas telah selesai disusun sesuai SOP ZettBOT.
-Jika Anda sudah menyetujui rencana perbaikan ini, silakan ketik:
-👉 **"OKE TERAPKAN"**
 ================================================================================

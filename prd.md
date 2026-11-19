@@ -1,6 +1,6 @@
 # PRD - Wedding Photo Gallery & Live Slideshow Platform
 **Sistem**: Multi-Event Wedding Gallery with ERP Master Data Architecture  
-**Versi**: v4.22.0-PROD  
+**Versi**: v4.23.0-PROD  
 **Arsitektur Database**: Google Sheets ERP Master Table + Google Drive Live Photo Catalog  
 **Terakhir Diperbarui**: 19 November 2026
 
@@ -200,3 +200,16 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
 - **Pembersihan Total Fallback Hardcode (100% Realtime Database Murni)**:
   - Mengosongkan seluruh parameter fallback root di [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/config.json) (`FRAME_IMAGE_URL: ""`, `DRIVE_FOLDER_ID: ""`, `ACTIVE_EVENT_ID: ""`, `EVENT_NAME: ""`, `PHOTOBOOTH_URL: ""`, `CUSTOM_CATEGORIES: []`).
   - Mengisolasi pembacaan frame per acara di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) murni dari `matchedEv.frameImageUrl`, mencegah pewarisan frame global yang tidak diinginkan.
+
+### 2.23 Resolusi Masalah Refresh Event Baru & Eliminasi Total Infinite Skeleton Loading (v4.23.0)
+- **Pembersihan Skeleton Instan di Awal (`initApp`)**:
+  - Pada event baru yang baru dibuat (di mana cache foto lokal masih kosong/belum ada foto tersimpan), `initApp()` seketika mengeksekusi `renderPhotoGrid()` dalam 0 milidetik.
+  - Kartu skeleton bawaan HTML segera dibersihkan dan digantikan secara langsung oleh status elegan *"Momen Indah Sedang Disiapkan"* tanpa menunggu seluruh rangkaian request jaringan.
+- **Pencegahan Abort Prematur di `config.json`**:
+  - Menghapus pemanggilan `showEventNotFoundScreen(true)` di dalam `fetch("config.json")`.
+  - Jika ID event belum terdaftar di file statis `config.json`, proses inisialisasi dialirkan secara mulus menuju `syncFromSpreadsheetGViz()` untuk membaca database realtime Google Spreadsheet tanpa tertahan notifikasi 404 keliru.
+- **Fail-Safe Watchdog Timer (3.5 Detik)**:
+  - Memasang watchdog timer 3.5 detik pada `fetchGalleryData()` dan `showGridSkeleton()`. Jika proses pembacaan backend Google Apps Script atau vendor eksternal mengalami latensi atau pending jaringan, kartu skeleton otomatis dihentikan dan `#photosGrid` segera dirender menggunakan `renderPhotoGrid()`.
+  - Menambahkan `AbortController` dengan timeout 4 detik pada pemanggilan `/api/drive-folder` sehingga otomatis beralih ke backend GAS jika serverless scrape tidak merespons.
+- **Jaminan Konsistensi Metadata Multi-Event pada Backend Google Apps Script (`code.gs`)**:
+  - Memastikan seluruh cabang pengembalian pada `getGalleryData()` (termasuk folder kosong dan folder baru) selalu menyertakan `events: eventsList` dan `activeEventId: selectedEventId` agar frontend selalu menerima registry acara lengkap.

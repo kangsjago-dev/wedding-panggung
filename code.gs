@@ -1027,7 +1027,9 @@ function getGalleryData(targetEventId) {
           config: safeConfig,
           categories: (driveScan.categories && driveScan.categories.length > 0) ? driveScan.categories : ["Semua Foto"],
           photos: driveScan.photos || [],
-          totalPhotos: driveScan.photos ? driveScan.photos.length : 0
+          totalPhotos: driveScan.photos ? driveScan.photos.length : 0,
+          events: eventsList,
+          activeEventId: selectedEventId
         };
       } else {
         // Jika folder Google Drive kosong atau gagal dipindai, kembalikan galeri kosong tanpa foto sampel
@@ -1038,7 +1040,9 @@ function getGalleryData(targetEventId) {
           config: safeConfig,
           categories: ["Semua Foto"],
           photos: [],
-          totalPhotos: 0
+          totalPhotos: 0,
+          events: eventsList,
+          activeEventId: selectedEventId
         };
       }
     }
@@ -1051,7 +1055,9 @@ function getGalleryData(targetEventId) {
       config: safeConfig,
       categories: ["Semua Foto"],
       photos: [],
-      totalPhotos: 0
+      totalPhotos: 0,
+      events: eventsList,
+      activeEventId: selectedEventId
     };
 
   } catch (error) {

@@ -626,7 +626,17 @@ function isGooglePhotosUrl(url) {
             state.allPhotos = sortPhotosNewestFirst(savedPhotos);
             state.filteredPhotos = state.allPhotos;
             renderPhotoGrid();
+          } else {
+            // Cache foto kosong untuk event ini: segera bersihkan skeleton dan tampilkan status siap seketika
+            state.allPhotos = [];
+            state.filteredPhotos = [];
+            renderPhotoGrid();
           }
+        } else {
+          // Event baru dibuat / belum ada cache foto: bersihkan skeleton dan tampilkan status siap seketika
+          state.allPhotos = [];
+          state.filteredPhotos = [];
+          renderPhotoGrid();
         }
       } catch(e) {}
 
@@ -668,10 +678,10 @@ function isGooglePhotosUrl(url) {
                 return eId === curId || eId.startsWith(curId) || curId.startsWith(eId) || eId.replace(/-\d+$/, '') === curId.replace(/-\d+$/, ''); 
               });
               if (!matchedEv) {
-                showEventNotFoundScreen(true, explicitUrl);
-                return;
-              }
-              if (matchedEv) {
+                // Event baru dibuat mungkin belum ada di config.json statis.
+                // Jangan abort ke 404 di sini; biarkan mengalir ke syncFromSpreadsheetGViz() untuk membaca database live!
+                console.log("Event belum ada di config.json statis, melanjutkan ke sinkronisasi Google Spreadsheet...");
+              } else {
                 showEventNotFoundScreen(false);
                 state.currentEventId = matchedEv.id;
                 remoteCfg.ACTIVE_EVENT_ID = matchedEv.id;
@@ -1091,6 +1101,27 @@ function isGooglePhotosUrl(url) {
       const photosGrid = document.getElementById("photosGrid");
       state.isAutoRefreshing = true;
 
+      // Fail-Safe Watchdog: Cegah skeleton cards tergantung lebih dari 3.5 detik pada event baru
+      let watchdogTimer = null;
+      if (!isSilent) {
+        watchdogTimer = setTimeout(function() {
+          state.isAutoRefreshing = false;
+          const refreshIconWd = document.getElementById("refreshIconSvg");
+          if (refreshIconWd) refreshIconWd.classList.remove("spin");
+          const remainingSkeletons = photosGrid ? photosGrid.querySelectorAll(".skeleton-card") : [];
+          if (remainingSkeletons.length > 0 && (!state.filteredPhotos || state.filteredPhotos.length === 0)) {
+            renderPhotoGrid();
+          }
+        }, 3500);
+      }
+
+      function clearWatchdog() {
+        if (watchdogTimer) {
+          clearTimeout(watchdogTimer);
+          watchdogTimer = null;
+        }
+      }
+
       if (!isSilent && (forceRefresh || state.allPhotos.length === 0)) {
         photosGrid.innerHTML = `
           <div class="skeleton-card"></div>
@@ -1109,13 +1140,25 @@ function isGooglePhotosUrl(url) {
 
       // Prioritas 1: Ambil foto langsung dari Google Drive Folder spesifik event ini via /api/drive-folder
       if (activeFolder) {
-        fetch("/api/drive-folder?folderId=" + encodeURIComponent(activeFolder) + "&category=" + encodeURIComponent(state.allPhotosLabel || "Semua Foto"))
+        const dfController = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        let dfTimeoutId = null;
+        if (dfController) {
+          dfTimeoutId = setTimeout(function() {
+            try { dfController.abort(); } catch(e) {}
+          }, 4000);
+        }
+        const dfOpts = dfController ? { signal: dfController.signal } : {};
+
+        fetch("/api/drive-folder?folderId=" + encodeURIComponent(activeFolder) + "&category=" + encodeURIComponent(state.allPhotosLabel || "Semua Foto"), dfOpts)
           .then(function(res) {
+            if (dfTimeoutId) clearTimeout(dfTimeoutId);
             if (!res.ok) throw new Error("HTTP " + res.status);
             return res.json();
           })
           .then(function(data) {
-            if (data && data.success && Array.isArray(data.photos)) {
+            if (dfTimeoutId) clearTimeout(dfTimeoutId);
+            if (data && data.success && Array.isArray(data.photos) && data.photos.length > 0) {
+              clearWatchdog();
               state.isAutoRefreshing = false;
               if (refreshIcon) refreshIcon.classList.remove("spin");
               handleGalleryResponse({
@@ -1128,17 +1171,21 @@ function isGooglePhotosUrl(url) {
               }, isSilent);
               if (forceRefresh && data.photos.length > 0) showToast("✓ Galeri foto berhasil diperbarui (" + data.photos.length + " foto)!");
             } else {
-              throw new Error("Invalid drive-folder response");
+              // Jika endpoint /api/drive-folder mengembalikan 0 foto (atau serverless scrape kosong), fallback ke Google Apps Script backend
+              throw new Error("Empty or unauthenticated drive-folder API");
             }
           })
           .catch(function() {
-            // Fallback ke backend GAS jika /api/drive-folder belum tersedia
+            if (dfTimeoutId) clearTimeout(dfTimeoutId);
+            // Fallback ke backend GAS jika /api/drive-folder belum tersedia atau kosong
             callBackend("getGalleryData", { eventId: state.currentEventId, folderId: activeFolder }, function(response) {
+              clearWatchdog();
               state.isAutoRefreshing = false;
               if (refreshIcon) refreshIcon.classList.remove("spin");
               handleGalleryResponse(response, isSilent);
               if (forceRefresh) showToast("Galeri foto berhasil diperbarui!");
             }, function(err) {
+              clearWatchdog();
               state.isAutoRefreshing = false;
               if (refreshIcon) refreshIcon.classList.remove("spin");
               console.error("Gagal memuat galeri:", err);
@@ -1147,11 +1194,13 @@ function isGooglePhotosUrl(url) {
           });
       } else {
         callBackend("getGalleryData", { eventId: state.currentEventId }, function(response) {
+          clearWatchdog();
           state.isAutoRefreshing = false;
           if (refreshIcon) refreshIcon.classList.remove("spin");
           handleGalleryResponse(response, isSilent);
           if (forceRefresh) showToast("Galeri foto berhasil diperbarui!");
         }, function(err) {
+          clearWatchdog();
           state.isAutoRefreshing = false;
           if (refreshIcon) refreshIcon.classList.remove("spin");
           console.error("Gagal memuat galeri:", err);
@@ -1289,6 +1338,10 @@ function isGooglePhotosUrl(url) {
           localStorage.setItem("WEDDING_ALL_PHOTOS_COUNT", "0");
         } catch(e) {}
         renderCategoryTabs();
+        const grid = document.getElementById("photosGrid");
+        if (grid && grid.querySelector(".skeleton-card")) {
+          renderPhotoGrid();
+        }
         applyCategoryFilter(state.activeCategory || mainCat);
         return;
       }
@@ -2342,6 +2395,12 @@ function isGooglePhotosUrl(url) {
             <div class="skeleton-card"></div>
             <div class="skeleton-card"></div>
           `;
+          // Watchdog pengaman agar skeleton kategori tidak terkunci jika server eksternal lambat
+          setTimeout(function() {
+            if (grid && grid.querySelector(".skeleton-card") && (!state.filteredPhotos || state.filteredPhotos.length === 0)) {
+              renderPhotoGrid(targetUrl, effectiveCat);
+            }
+          }, 3500);
         }
       }
 
