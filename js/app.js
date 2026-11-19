@@ -2429,17 +2429,36 @@ function isGooglePhotosUrl(url) {
       // Jika foto kosong untuk kategori ini
       if (!state.filteredPhotos || state.filteredPhotos.length === 0) {
         grid.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted); background: #FAF8F5; border-radius: 16px; border: 1px dashed rgba(197, 168, 128, 0.4);">
-            <div style="font-size: 2.4rem; margin-bottom: 12px; opacity: 0.75;">🖼️</div>
-            <p style="font-size: 1.08rem; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">Belum ada foto dalam kategori "${escapeHtml(activeCat)}".</p>
-            <p style="font-size: 0.88rem; opacity: 0.8; max-width: 480px; margin: 0 auto 16px auto;">Foto untuk kategori ini akan tampil di sini begitu selesai diunggah atau disinkronkan.</p>
-            <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-              <button type="button" class="btn btn-outline" style="font-size: 0.8rem; padding: 6px 14px;" onclick="syncSingleCategory('${escapeHtml(activeCat)}')">
-                <span>🔄 Sinkronkan Kategori Ini</span>
+          <div class="empty-gallery-card">
+            <div class="empty-gallery-icon-wrap" aria-hidden="true">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+                <path d="M19 13v.01" stroke-width="2.2"></path>
+              </svg>
+            </div>
+            <div class="empty-gallery-badge">
+              <span>Kategori &bull; ${escapeHtml(activeCat)}</span>
+            </div>
+            <h3 class="empty-gallery-title">Momen Indah Sedang Disiapkan</h3>
+            <p class="empty-gallery-desc">
+              Foto kenangan untuk kategori <strong>&ldquo;${escapeHtml(activeCat)}&rdquo;</strong> belum tersedia saat ini. Momen hangat kebersamaan akan otomatis tampil di sini begitu selesai diunggah atau disinkronkan.
+            </p>
+            <div class="empty-gallery-actions">
+              <button type="button" class="empty-gallery-btn-refresh" onclick="syncSingleCategory('${escapeHtml(activeCat)}')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+                <span>Segarkan Kategori Ini</span>
               </button>
               ${targetUrl ? `
-                <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-gold" style="font-size: 0.8rem; padding: 6px 14px; text-decoration: none;">
-                  <span>Buka Tautan Sumber ↗</span>
+                <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="empty-gallery-btn-source">
+                  <span>Buka Album Sumber</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
                 </a>
               ` : ''}
             </div>
@@ -5900,8 +5919,8 @@ function isGooglePhotosUrl(url) {
           COUPLE_NAME: liveEventName,
           EVENT_DATE: liveEventDate,
           EVENT_VENUE: liveEventVenue,
-          SUBTITLE: "The Wedding Gallery & Precious Memories",
-          WELCOME_MESSAGE: "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
+          SUBTITLE: state.activeConfig.SUBTITLE || GLOBAL_CONFIG.SUBTITLE || "",
+          WELCOME_MESSAGE: state.activeConfig.WELCOME_MESSAGE || GLOBAL_CONFIG.WELCOME_MESSAGE || "",
           DRIVE_FOLDER_ID: state.activeConfig.DRIVE_FOLDER_ID || GLOBAL_CONFIG.DRIVE_FOLDER_ID || "",
           SLIDESHOW_INTERVAL_SEC: 4,
           FRAME_IMAGE_URL: state.activeConfig.FRAME_IMAGE_URL || GLOBAL_CONFIG.FRAME_IMAGE_URL || "",

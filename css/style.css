@@ -2055,3 +2055,134 @@
     .lightbox-nav-btn {
       cursor: pointer;
     }
+
+    /* ==========================================================================
+       EMPTY STATE COMPONENT (LUXURY WEDDING AESTHETIC)
+       ========================================================================== */
+    .empty-gallery-card {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 24px;
+      background: radial-gradient(circle at 50% 25%, #FFFFFF 0%, #FAF8F5 100%);
+      border: 1px solid rgba(197, 168, 128, 0.35);
+      border-radius: 24px;
+      box-shadow: 0 16px 40px -10px rgba(168, 137, 94, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.02);
+      margin: 16px 0 32px 0;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .empty-gallery-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+    }
+
+    .empty-gallery-icon-wrap {
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 16px auto;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FFF9F2 0%, #F5ECE1 100%);
+      border: 1px solid rgba(197, 168, 128, 0.4);
+      box-shadow: 0 8px 24px -4px rgba(197, 168, 128, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold-dark);
+      position: relative;
+    }
+
+    .empty-gallery-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 14px;
+      background: rgba(197, 168, 128, 0.12);
+      border: 1px solid rgba(197, 168, 128, 0.3);
+      border-radius: 9999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--gold-dark);
+      margin-bottom: 12px;
+    }
+
+    .empty-gallery-title {
+      font-family: var(--font-serif);
+      font-size: 1.55rem;
+      font-weight: 600;
+      color: var(--text-main);
+      letter-spacing: 0.02em;
+      margin-bottom: 8px;
+      line-height: 1.35;
+    }
+
+    .empty-gallery-desc {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+      max-width: 480px;
+      margin: 0 auto 24px auto;
+    }
+
+    .empty-gallery-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .empty-gallery-btn-refresh {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 20px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      border-radius: 9999px;
+      border: 1px solid rgba(197, 168, 128, 0.45);
+      background: #FFFFFF;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    }
+
+    .empty-gallery-btn-refresh:hover {
+      background: #FAF8F5;
+      border-color: var(--gold-dark);
+      color: var(--gold-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px -2px rgba(168, 137, 94, 0.15);
+    }
+
+    .empty-gallery-btn-source {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 22px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
+      color: #FFFFFF;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 14px rgba(168, 137, 94, 0.28);
+    }
+
+    .empty-gallery-btn-source:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 22px rgba(168, 137, 94, 0.38);
+      filter: brightness(1.05);
+      color: #FFFFFF;
+    }

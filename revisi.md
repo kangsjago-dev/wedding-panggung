@@ -1,5 +1,35 @@
 # Catatan Revisi & Audit Sistem (Changelog)
 
+## Versi 4.13.0 - Redesain Tampilan & Tipografi Elegan Kategori Tanpa Foto (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Redesain Menyeluruh Antarmuka Kategori Tanpa Foto (Luxury Wedding Empty State)**:
+   - **Akar Masalah**:
+     - Sebelumnya, jika suatu kategori foto masih kosong atau dalam proses kurasi, antarmuka menampilkan kotak sederhana dengan garis putus-putus (*dashed border*), emotikon kamera/frame kartun bawaan OS (`🖼️`), dan kalimat teknis yang kaku (*"Belum ada foto dalam kategori... Foto untuk kategori ini akan tampil di sini begitu selesai diunggah atau disinkronkan."*). Tampilan ini terlihat generik dan kurang selaras dengan estetika mewah galeri pernikahan.
+   - **Solusi Rekayasa Sistem (Anti-AI Human Crafted Aesthetic)**:
+     - **Kartu Mewah (.empty-gallery-card)**: Wadah kartu diperbarui dengan gradien radial ivory hangat (`#FFFFFF` ke `#FAF8F5`), aksen garis batas emas halus (`rgba(197, 168, 128, 0.35)`), *subtle gold halo accent* di bagian atas, sudut membulat modern (`border-radius: 24px;`), serta bayangan lembut berdimensi (*soft shadow*).
+     - **Ikon Vektor SVG Khusus (.empty-gallery-icon-wrap)**: Menggantikan seluruh raw emoji `🖼️` dengan ikon vektor SVG kamera galeri premium beresolusi tajam di dalam wadah lingkaran beraksen emas lembut (*gold pill circle with soft glow*).
+     - **Badge Kategori (.empty-gallery-badge)**: Menampilkan label kategori aktif yang rapi dengan tipografi *uppercase tracking* elegan.
+     - **Tipografi & Narasi Hangat**:
+       - Judul puitis: *"Momen Indah Sedang Disiapkan"* menggunakan tipografi serif klasik (*Cormorant Garamond*).
+       - Narasi ramah dan hangat: *"Foto kenangan untuk kategori “[Nama Kategori]” belum tersedia saat ini. Momen hangat kebersamaan akan otomatis tampil di sini begitu selesai diunggah atau disinkronkan."*
+     - **Tombol Aksi Modern (.empty-gallery-actions)**: Tombol *Segarkan Kategori Ini* dan *Buka Album Sumber* dilengkapi ikon SVG vektor modern (menggantikan emotikon `🔄` dan `↗`) dengan efek hover elevasi yang halus.
+
+2. **Audit Menyeluruh & Eliminasi Total Fallback Realtime**:
+   - Pembersihan string statis subtitle dan welcome message di `loadFallbackData` [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js).
+   - Seluruh data teks, kategori, dan identitas event murni 100% realtime membaca database Google Sheets.
+
+3. **Verifikasi Mandiri & Integritas Pengujian Otomatis**:
+   - `scratch/test_empty_state_redesign.js`: 6 pengujian PASS 100% (0 FAIL).
+   - `scratch/test_duplicate_drive_field_removed.js`: 6 pengujian PASS 100% (0 FAIL).
+   - `scratch/test_photobooth_download_fix.js`: 15 pengujian PASS 100% (0 FAIL).
+   - `scratch/test_uncompressed_download.js`: 6 pengujian PASS 100% (0 FAIL).
+   - `scratch/test_preview_and_download_flow.js`: 14 pengujian PASS 100% (0 FAIL).
+   - `scratch/verify_qr_logo_no_border.js`: 11 pengujian PASS 100% (0 FAIL).
+   - `scratch/verify_sorting_and_fallbacks.js`: 24 pengujian PASS 100% (0 FAIL).
+   - `scratch/audit_all_menu_handlers.js`: 34 fungsi interaktif HTML aktif dan valid.
+   - Sintaks `css/style.css`, `index.html`, `js/app.js`, `code.gs`, dan `api/*.js`: Bebas error syntax (Code 0).
+
 ## Versi 4.12.0 - Eliminasi Duplikasi Bidang Folder Google Drive pada Tab Admin (19 November 2026)
 
 ### 1. Perbaikan yang Diperintahkan & Diterapkan:
