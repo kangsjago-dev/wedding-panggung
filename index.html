@@ -122,9 +122,21 @@
       (function() {
         try {
           var params = new URLSearchParams(window.location.search);
-          var targetEventId = params.get("event") || params.get("e") || "";
+          var targetEventId = (params.get("event") || params.get("e") || "").trim();
           if (!targetEventId) {
-            targetEventId = localStorage.getItem("WEDDING_ACTIVE_EVENT_ID") || "andre-fayola-281";
+            var nf = document.getElementById("eventNotFoundScreen");
+            var hr = document.getElementById("heroSection");
+            var catWrap = document.getElementById("categoryTabsWrapper");
+            var galMain = document.querySelector(".gallery-container");
+            var filterBar = document.querySelector(".filter-bar");
+            var footer = document.querySelector(".footer");
+            if (nf) nf.style.display = "flex";
+            if (hr) hr.style.display = "none";
+            if (catWrap) catWrap.style.display = "none";
+            if (galMain) galMain.style.display = "none";
+            if (filterBar) filterBar.style.display = "none";
+            if (footer) footer.style.display = "none";
+            return;
           }
           var cacheKey = "WEDDING_EVENT_CFG_" + targetEventId;
           var saved = localStorage.getItem(cacheKey);

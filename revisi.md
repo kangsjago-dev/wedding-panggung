@@ -1,4 +1,27 @@
-# Catatan Revisi & Audit Sistem (Changelog)
+# STATUS REVISI SISTEM (revisi.md) - v4.20.0
+================================================================================
+STATUS: SELESAI DITERAPKAN (MERGED TO MASTER CONTEXT & PRD v4.20.0)
+PERMINTAAN: Tampilkan Notifikasi 'Halaman Tidak Ditemukan' Saat Membuka URL Root (gallery.runway.my.id/)
+TANGGAL PENERAPAN: 19 November 2026
+HASIL VERIFIKASI: 6 PENGUJIAN OTOMATIS PASS 100% (0 FAIL)
+================================================================================
+
+## 1. Ringkasan Eksekusi & Solusi yang Diterapkan:
+1. **Pembersihan Auto-Fallback di [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) (baris 121–138)**:
+   - Menghapus fallback `localStorage` dan string default `"andre-fayola-281"`.
+   - Jika URL tidak memiliki parameter `?event=` atau `?e=`, skrip langsung menampilkan `#eventNotFoundScreen` (`display: flex`), menyembunyikan `#heroSection`, dan menghentikan eksekusi awal seketika sehingga tidak terjadi kedipan (*flicker*) nama atau logo acara pengantin manapun.
+2. **Pembersihan Auto-Fallback di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js)**:
+   - `hydrateInitialStateFromStorage()`: Jika `!getActiveEventIdFromUrl()`, sistem langsung memanggil `showEventNotFoundScreen(true)` dan keluar (*return*) tanpa memanipulasi address bar browser via `history.replaceState`.
+   - `fetch("config.json")`: Jika `!getActiveEventIdFromUrl()`, sistem menjamin `showEventNotFoundScreen(true)` tetap aktif dan dilarang mengambil `state.events[0]`.
+   - `syncFromSpreadsheetGViz()`: Jika `!getActiveEventIdFromUrl()`, sistem memanggil `showEventNotFoundScreen(true)` dan tidak memuat acara apapun.
+   - `fetchGalleryData()`: Jika `!getActiveEventIdFromUrl()`, pemanggilan data foto langsung dihentikan dan `showEventNotFoundScreen(true)` diaktifkan.
+3. **Hasil Pengujian**:
+   - Seluruh 6 unit test di [scratch/test_root_url_not_found.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/scratch/test_root_url_not_found.js) **PASS 100% (0 Fail)**.
+   - Pengecekan sintaks `node --check js/app.js` **Exit Code 0 (Bebas Syntax Error)**.
+
+================================================================================
+
+# Catatan Revisi & Audit Sistem Sebelumnya (Changelog)
 
 ## Versi 4.19.0 - Perbaikan ReferenceError photoRows is not defined pada Google Apps Script setupTargetSpreadsheetDatabase (19 November 2026)
 

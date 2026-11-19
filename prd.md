@@ -1,6 +1,6 @@
 # PRD - Wedding Photo Gallery & Live Slideshow Platform
 **Sistem**: Multi-Event Wedding Gallery with ERP Master Data Architecture  
-**Versi**: v4.17.0-PROD  
+**Versi**: v4.20.0-PROD  
 **Arsitektur Database**: Google Sheets ERP Master Table + Google Drive Live Photo Catalog  
 **Terakhir Diperbarui**: 19 November 2026
 
@@ -173,11 +173,9 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
 - **Perpindahan Acara Dinamis & Mulus**:
   - Pemilihan acara via `handleSelectEventChange()` seketika memperbarui `state.activeCategory`, memanggil `renderPhotoGrid()`, memperbarui address bar browser secara dinamis, dan memicu sinkronisasi foto murni acara yang dipilih tanpa kebocoran cache lintas acara.
 
-### 2.19 Pemulihan Akses Domain Utama & Resolusi Otomatis Acara Aktif (v4.17.0)
-- **Akses Mulus Domain Utama Tanpa Pemblokiran**:
-  - Akses langsung ke root domain (`https://gallery.runway.my.id/`) tidak lagi memicu layar kesalahan 404 ("Halaman Tidak Ditemukan").
-  - Sistem di `index.html` dan `js/app.js` secara otomatis mendeteksi ketiadaan parameter URL dan menyelesaikan tujuan ke acara yang sedang aktif (`sheetMap.ACTIVE_EVENT_ID`, `localStorage`, atau `config.json`).
-  - Alamat URL pada peramban secara otomatis diperbarui via `history.replaceState` ke `?event={activeId}` tanpa melakukan reload halaman.
-- **Dukungan Slug Alias & Pelacakan Parameter Eksplisit**:
-  - Skrip `syncFromSpreadsheetGViz()` melacak parameter kueri URL eksplisit. Layar 404 hanya ditampilkan apabila pengguna secara sengaja mengetikkan ID acara yang benar-benar tidak terdaftar di database Google Sheets.
-  - Slug acara mendukung variasi akhiran angka (`wilson-felicia` <-> `wilson-felicia-133`) sehingga tautan undangan pernikahan lama maupun baru tetap dapat diakses dengan sempurna.
+### 2.20 Proteksi Tautan Domain Utama: Notifikasi 'Halaman Tidak Ditemukan' Saat URL Root Diakses Tanpa Parameter Acara (v4.20.0)
+- **Kewajiban Parameter Acara Eksplisit (Strict Event Requirement)**:
+  - Akses langsung ke root domain murni (`https://gallery.runway.my.id/`) tanpa menyertakan parameter acara (`?event=...` atau `?e=...`) diwajibkan menampilkan layar notifikasi **"Halaman Tidak Ditemukan"** (`#eventNotFoundScreen`).
+  - Menghapus seluruh mekanisme auto-fallback (ke `localStorage`, `ACTIVE_EVENT_ID`, `andre-fayola-281`, atau `state.events[0]`) yang sebelumnya secara otomatis memuat acara pengantin pada URL root.
+  - Seluruh elemen galeri (nama pasangan pengantin, banner sambutan, logo monogram, filter kategori, kartu foto, dan footer) disembunyikan seketika untuk melindungi kerahasiaan dan privasi masing-masing pasangan pengantin.
+  - Tombol **"Masuk Panel Admin"** tetap disediakan di dalam kartu notifikasi tersebut agar administrator tetap dapat melakukan login untuk mengelola atau mengambil tautan acara spesifik dari database Google Sheets ERP.

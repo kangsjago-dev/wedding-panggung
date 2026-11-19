@@ -445,7 +445,8 @@ function isGooglePhotosUrl(url) {
     function getActiveEventIdFromUrl() {
       try {
         const params = new URLSearchParams(window.location.search);
-        return params.get("event") || params.get("e") || "";
+        const ev = params.get("event") || params.get("e") || "";
+        return String(ev).trim();
       } catch (e) {
         return "";
       }
@@ -591,7 +592,9 @@ function isGooglePhotosUrl(url) {
 
       let urlEventId = getActiveEventIdFromUrl();
       if (!urlEventId) {
-        urlEventId = localStorage.getItem("WEDDING_ACTIVE_EVENT_ID") || (state.events && state.events[0] && state.events[0].id) || "andre-fayola-281";
+        state.currentEventId = "";
+        showEventNotFoundScreen(true);
+        return;
       }
 
       state.currentEventId = urlEventId;
@@ -655,17 +658,21 @@ function isGooglePhotosUrl(url) {
               state.events = Array.from(evMap.values());
               try { localStorage.setItem("WEDDING_EVENTS_REGISTRY", JSON.stringify(state.events)); } catch(eReg) {}
 
+              const explicitUrl = getActiveEventIdFromUrl();
+              if (!explicitUrl) {
+                showEventNotFoundScreen(true);
+                return;
+              }
+
               let matchedEv = state.events.find(function(ev) { 
                 if (!ev || !ev.id) return false;
                 const eId = String(ev.id).toLowerCase().trim();
-                const curId = String(state.currentEventId).toLowerCase().trim();
+                const curId = String(explicitUrl).toLowerCase().trim();
                 return eId === curId || eId.startsWith(curId) || curId.startsWith(eId) || eId.replace(/-\d+$/, '') === curId.replace(/-\d+$/, ''); 
               });
-              if (!matchedEv && remoteCfg.ACTIVE_EVENT_ID) {
-                matchedEv = state.events.find(function(ev) { return ev && ev.id === remoteCfg.ACTIVE_EVENT_ID; });
-              }
-              if (!matchedEv && state.events && state.events.length > 0) {
-                matchedEv = state.events[0];
+              if (!matchedEv) {
+                showEventNotFoundScreen(true, explicitUrl);
+                return;
               }
               if (matchedEv) {
                 showEventNotFoundScreen(false);
@@ -825,22 +832,18 @@ function isGooglePhotosUrl(url) {
             }
 
             const explicitUrlParam = getActiveEventIdFromUrl();
-            const urlEvId = explicitUrlParam || state.currentEventId || sheetMap.ACTIVE_EVENT_ID || "andre-fayola-281";
+            if (!explicitUrlParam) {
+              showEventNotFoundScreen(true);
+              return;
+            }
             let matchedEv = (state.events || []).find(function(e) { 
               if (!e || !e.id) return false;
               const eId = String(e.id).toLowerCase().trim();
-              const uId = String(urlEvId).toLowerCase().trim();
+              const uId = String(explicitUrlParam).toLowerCase().trim();
               return eId === uId || eId.startsWith(uId) || uId.startsWith(eId) || eId.replace(/-\d+$/, '') === uId.replace(/-\d+$/, ''); 
             });
             if (!matchedEv) {
-              if (explicitUrlParam) {
-                showEventNotFoundScreen(true, explicitUrlParam);
-                return;
-              }
-              matchedEv = (state.events || []).find(function(e) { return e && e.id === sheetMap.ACTIVE_EVENT_ID; }) || state.events[0];
-            }
-            if (!matchedEv) {
-              showEventNotFoundScreen(true);
+              showEventNotFoundScreen(true, explicitUrlParam);
               return;
             }
             showEventNotFoundScreen(false);
@@ -1081,6 +1084,11 @@ function isGooglePhotosUrl(url) {
     }
 
     function fetchGalleryData(forceRefresh, isSilent) {
+      if (!getActiveEventIdFromUrl()) {
+        state.isAutoRefreshing = false;
+        showEventNotFoundScreen(true);
+        return;
+      }
       const photosGrid = document.getElementById("photosGrid");
       state.isAutoRefreshing = true;
 
