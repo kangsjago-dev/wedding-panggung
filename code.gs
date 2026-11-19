@@ -1728,21 +1728,21 @@ function adminLogin(pin, username, password) {
     var users = getAdminUsersList();
     var matchedUser = null;
 
-    // 1. Cek dengan Username & Password
+    // 1. Cek dengan Username & Password (Murni Realtime Database)
     if (inputUser && inputPass) {
       for (var i = 0; i < users.length; i++) {
         var u = users[i];
         var uName = String(u.username || u.name || "").trim().toLowerCase();
         var uPass = String(u.password || u.pin || "").trim();
-        if (uName === inputUser.toLowerCase() && (uPass === inputPass || (inputPass === "123" && u.role === "Super Admin"))) {
+        if (uName === inputUser.toLowerCase() && uPass === inputPass) {
           matchedUser = u;
           break;
         }
       }
     }
 
-    // 2. Fallback: Cek dengan PIN tunggal atau Password
-    if (!matchedUser && (inputPin || inputPass)) {
+    // 2. Cek dengan PIN tunggal jika form inputUser tidak diisi
+    if (!matchedUser && !inputUser && (inputPin || inputPass)) {
       var checkToken = inputPin || inputPass;
       for (var j = 0; j < users.length; j++) {
         var u2 = users[j];
@@ -1751,16 +1751,6 @@ function adminLogin(pin, username, password) {
           break;
         }
       }
-    }
-
-    // 3. Fallback default jika superadmin awal
-    if (!matchedUser && (inputUser.toLowerCase() === "admin" || !inputUser) && (inputPass === "123" || inputPass === "123456" || inputPin === "123" || inputPin === "123456")) {
-      matchedUser = {
-        id: "usr_superadmin",
-        username: "admin",
-        name: "Super Admin",
-        role: "Super Admin"
-      };
     }
 
     if (matchedUser) {
@@ -2364,89 +2354,8 @@ function cleanFileName(fileName) {
 }
 
 /**
- * Demo Photos
+ * Realtime Photo Provider (Bebas dari hardcoded demo photos)
  */
 function getDemoPhotos() {
-  return [
-    {
-      id: "demo-1",
-      name: "Tatapan Penuh Bahagia",
-      category: "Prewedding",
-      thumbnailUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
-      highResUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2000&q=90",
-      downloadUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2400&q=100",
-      date: "15/11/2026 09:30",
-      timestamp: 1731634200000
-    },
-    {
-      id: "demo-2",
-      name: "Janji Suci Akad Nikah",
-      category: "Akad Nikah",
-      thumbnailUrl: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80",
-      highResUrl: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=2000&q=90",
-      downloadUrl: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=2400&q=100",
-      date: "15/11/2026 10:15",
-      timestamp: 1731636900000
-    },
-    {
-      id: "demo-3",
-      name: "Cincin Pengikat Dua Jiwa",
-      category: "Akad Nikah",
-      thumbnailUrl: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=800&q=80",
-      highResUrl: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=2000&q=90",
-      downloadUrl: "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=2400&q=100",
-      date: "15/11/2026 10:45",
-      timestamp: 1731638700000
-    },
-    {
-      id: "demo-4",
-      name: "Bunga Tangan Mempelai",
-      category: "Resepsi",
-      thumbnailUrl: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=800&q=80",
-      highResUrl: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=2000&q=90",
-      downloadUrl: "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=2400&q=100",
-      date: "15/11/2026 12:00",
-      timestamp: 1731643200000
-    },
-    {
-      id: "demo-5",
-      name: "Senyum Bahagia Pelaminan",
-      category: "Resepsi",
-      thumbnailUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
-      highResUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=2000&q=90",
-      downloadUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=2400&q=100",
-      date: "15/11/2026 13:30",
-      timestamp: 1731648600000
-    },
-    {
-      id: "demo-6",
-      name: "Keseruan Bersama Sahabat",
-      category: "Photobooth",
-      thumbnailUrl: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=800&q=80",
-      highResUrl: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=2000&q=90",
-      downloadUrl: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=2400&q=100",
-      date: "15/11/2026 14:10",
-      timestamp: 1731651000000
-    },
-    {
-      id: "demo-7",
-      name: "Dansa Pertama Suami Istri",
-      category: "Resepsi",
-      thumbnailUrl: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=800&q=80",
-      highResUrl: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=2000&q=90",
-      downloadUrl: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=2400&q=100",
-      date: "15/11/2026 15:00",
-      timestamp: 1731654000000
-    },
-    {
-      id: "demo-8",
-      name: "Kisah Kasih Abadi",
-      category: "Prewedding",
-      thumbnailUrl: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=800&q=80",
-      highResUrl: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=2000&q=90",
-      downloadUrl: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=2400&q=100",
-      date: "15/11/2026 16:30",
-      timestamp: 1731659400000
-    }
-  ];
+  return [];
 }

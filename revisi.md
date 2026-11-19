@@ -1,5 +1,31 @@
 # Catatan Revisi & Audit Sistem (Changelog)
 
+## Versi 4.8.0 - Penyempurnaan Logo QR Share Bebas Border & Bidang Pas Objek (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Logo QR Share Tanpa Border (Borderles Logo Emblem)**:
+   - Menghilangkan total garis tepi (*border stroke*) pada badge logo monogram di tengah QR Code (`generateBrandedQrCode` di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js)).
+   - Memastikan logo monogram menyatu elegan dan bersih dengan modul QR Code tanpa garis kotak kaku.
+
+2. **Perapian Bidang Putih Solid Mengikuti Objek Logo (Anti-Terlalu Besar di Atas & Bawah)**:
+   - **Akar Masalah**: Sebelumnya badge putih menggunakan ukuran persegi statis (`144px x 144px`). Pada logo yang memiliki rasio mendatar (*landscape*, seperti logo RUNWAY pada tangkapan layar pengguna), terdapat ruang kosong putih yang sangat besar di sisi atas dan bawah logo.
+   - **Solusi Rekayasa Sistem**:
+     - Sistem kini mendeteksi dimensi piksel non-transparan logo secara otomatis via kanvas prapindai (`getImageData`), memotong ruang kosong bawaan berkas PNG (*transparent bounding box trimming*).
+     - Menghitung dimensi gambar logo proporsional (`dw` & `dh`) dalam batas aman QR Code tingkat koreksi galat tinggi (**`ecc=H`**).
+     - Menghitung dimensi bidang putih solid secara dinamis (`bw = dw + padX*2`, `bh = dh + padY*2`) dengan padding ringkas (`padX: 6px`, `padY: 4px`).
+     - Bidang putih solid kini **pas dan presisi mengikuti bentuk objek logo**, melenyapkan ruang putih kosong berlebih di bagian atas dan bawah, sekaligus menjaga kerapian dan keterbacaan scan kamera 100%.
+
+3. **Audit Menyeluruh & Eliminasi Fallback Hardcode Tambahan di Backend (`code.gs`)**:
+   - Menghapus bypass login `inputPass === "123"` untuk Super Admin di `code.gs`.
+   - Menghapus fallback akun default hardcode `usr_superadmin` di `code.gs`; autentikasi kini 100% bergantung pada pencocokan data realtime di lembar kerja Google Sheets `Pengguna_Admin`.
+   - Menghapus daftar mock demo Unsplash di fungsi `getDemoPhotos()` pada `code.gs` menjadi `return []`.
+
+4. **Verifikasi Mandiri & Integritas Sistem**:
+   - `scratch/verify_qr_logo_no_border.js`: 11 pengujian unit PASS (0 FAIL).
+   - `scratch/verify_sorting_and_fallbacks.js`: 24 pengujian unit PASS (0 FAIL).
+   - `scratch/audit_all_menu_handlers.js`: 34 fungsi interaktif HTML aktif dan valid.
+   - Kompilasi `js/app.js`, `api/*.js`, dan `code.gs`: Syntax valid (Code 0).
+
 ## Versi 4.7.0 - Pengurutan Kronologis Foto Terbaru di Atas & Eliminasi Total Fallback Hardcode Semua Menu (19 November 2026)
 
 ### 1. Perbaikan yang Diperintahkan & Diterapkan:

@@ -3536,54 +3536,77 @@ function isGooglePhotosUrl(url) {
             // 1. Gambar QR Code dasar
             ctx.drawImage(qrImg, 0, 0, size, size);
 
-            // 2. Dimensi badge tengah (~24% dari QR agar scanning ecc=H 100% sempurna)
-            const badgeSize = Math.round(size * 0.24); // 144px
-            const bx = Math.round((size - badgeSize) / 2);
-            const by = Math.round((size - badgeSize) / 2);
-            const radius = 18;
+            // 2. Dapatkan batas objek aktual logo (memotong ruang kosong/transparan bawaan berkas PNG)
+            let sx = 0, sy = 0, sw = logoImg.naturalWidth || logoImg.width || 100, sh = logoImg.naturalHeight || logoImg.height || 100;
+            try {
+              const testCanvas = document.createElement("canvas");
+              testCanvas.width = sw;
+              testCanvas.height = sh;
+              const tCtx = testCanvas.getContext("2d");
+              tCtx.drawImage(logoImg, 0, 0);
+              const imgData = tCtx.getImageData(0, 0, sw, sh).data;
+              let top = -1, bottom = -1, left = -1, right = -1;
+              for (let y = 0; y < sh; y++) {
+                for (let x = 0; x < sw; x++) {
+                  if (imgData[(y * sw + x) * 4 + 3] > 15) {
+                    if (top === -1) top = y;
+                    bottom = y;
+                    if (left === -1 || x < left) left = x;
+                    if (right === -1 || x > right) right = x;
+                  }
+                }
+              }
+              if (top !== -1 && bottom !== -1 && left !== -1 && right !== -1) {
+                sx = left;
+                sy = top;
+                sw = Math.max(1, right - left + 1);
+                sh = Math.max(1, bottom - top + 1);
+              }
+            } catch (eTrim) {
+              // Jika getImageData terhalang CORS, gunakan ukuran dimensi natural
+            }
 
-            // 3. Area solid putih di belakang logo ("Logo jadikan solid putih pada area transparant")
+            // 3. Batas dimensi proporsional aman untuk QR Code ECC=H (maksimal ~22% lebar QR)
+            const maxBadgeDim = Math.round(size * 0.22); // ~132px
+            const scale = Math.min(maxBadgeDim / sw, maxBadgeDim / sh);
+            const dw = Math.round(sw * scale);
+            const dh = Math.round(sh * scale);
+
+            // 4. Bidang putih solid dibuat RAPI dan PAS mengikuti objek logo (tidak terlalu besar, terutama atas & bawah)
+            // Tanpa border (tanpa garis tepi) sesuai instruksi pengguna
+            const padX = 6; // padding horizontal yang rapi
+            const padY = 4; // padding vertikal yang ringkas (merapikan bagian atas dan bawah)
+            const bw = dw + (padX * 2);
+            const bh = dh + (padY * 2);
+            const bx = Math.round((size - bw) / 2);
+            const by = Math.round((size - bh) / 2);
+            const radius = Math.min(8, Math.round(Math.min(bw, bh) * 0.2));
+
+            // Gambar bidang putih solid (TANPA BORDER)
             ctx.save();
             ctx.beginPath();
             if (typeof ctx.roundRect === "function") {
-              ctx.roundRect(bx, by, badgeSize, badgeSize, radius);
+              ctx.roundRect(bx, by, bw, bh, radius);
             } else {
               const r = radius;
               ctx.moveTo(bx + r, by);
-              ctx.lineTo(bx + badgeSize - r, by);
-              ctx.quadraticCurveTo(bx + badgeSize, by, bx + badgeSize, by + r);
-              ctx.lineTo(bx + badgeSize, by + badgeSize - r);
-              ctx.quadraticCurveTo(bx + badgeSize, by + badgeSize, bx + badgeSize - r, by + badgeSize);
-              ctx.lineTo(bx + r, by + badgeSize);
-              ctx.quadraticCurveTo(bx, by + badgeSize, bx, by + badgeSize - r);
+              ctx.lineTo(bx + bw - r, by);
+              ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + r);
+              ctx.lineTo(bx + bw, by + bh - r);
+              ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - r, by + bh);
+              ctx.lineTo(bx + r, by + bh);
+              ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - r);
               ctx.lineTo(bx, by + r);
               ctx.quadraticCurveTo(bx, by, bx + r, by);
               ctx.closePath();
             }
-
-            // Fill solid white
             ctx.fillStyle = "#FFFFFF";
             ctx.fill();
-
-            // Border halus untuk mempertegas batas QR code dan monogram logo
-            ctx.strokeStyle = "rgba(197, 168, 128, 0.45)";
-            ctx.lineWidth = 4;
-            ctx.stroke();
+            // JANGAN GAMBAR BORDER! (Garis tepi dihilangkan total sesuai instruksi)
             ctx.restore();
 
-            // 4. Gambar logo monogram di tengah area putih solid
-            const pad = 12;
-            const maxW = badgeSize - (pad * 2);
-            const maxH = badgeSize - (pad * 2);
-            const lw = logoImg.naturalWidth || logoImg.width || 100;
-            const lh = logoImg.naturalHeight || logoImg.height || 100;
-            const scale = Math.min(maxW / lw, maxH / lh);
-            const dw = Math.round(lw * scale);
-            const dh = Math.round(lh * scale);
-            const dx = Math.round(bx + (badgeSize - dw) / 2);
-            const dy = Math.round(by + (badgeSize - dh) / 2);
-
-            ctx.drawImage(logoImg, dx, dy, dw, dh);
+            // 5. Gambar objek logo tepat di atas bidang putih solid
+            ctx.drawImage(logoImg, sx, sy, sw, sh, bx + padX, by + padY, dw, dh);
 
             const brandedUrl = canvas.toDataURL("image/png");
             if (callback) callback(brandedUrl);
