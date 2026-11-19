@@ -491,6 +491,87 @@ function isGooglePhotosUrl(url) {
     let touchEndX = 0;
     let touchEndY = 0;
 
+    /* ==========================================================================
+       EVENT NOT FOUND & LOGO UTILITIES
+       ========================================================================== */
+    function showEventNotFoundScreen(show, invalidId) {
+      const nfScreen = document.getElementById("eventNotFoundScreen");
+      const hero = document.getElementById("heroSection");
+      const catWrap = document.getElementById("categoryTabsWrapper");
+      const galMain = document.querySelector(".gallery-container");
+      const filterBar = document.querySelector(".filter-bar");
+      const footer = document.querySelector(".footer");
+      const floatBar = document.getElementById("adminActiveFloatingBar");
+
+      if (show) {
+        if (nfScreen) nfScreen.style.display = "flex";
+        if (hero) hero.style.display = "none";
+        if (catWrap) catWrap.style.display = "none";
+        if (galMain) galMain.style.display = "none";
+        if (filterBar) filterBar.style.display = "none";
+        if (footer) footer.style.display = "none";
+        if (floatBar) floatBar.style.display = "none";
+
+        const titleEl = document.getElementById("eventNotFoundTitle");
+        const descEl = document.getElementById("eventNotFoundDesc");
+        if (invalidId) {
+          if (titleEl) titleEl.innerText = "Acara Tidak Ditemukan";
+          if (descEl) descEl.innerHTML = "Kode acara <code>" + escapeHtml(invalidId) + "</code> tidak terdaftar.<br>Silakan periksa kembali tautan undangan pernikahan Anda.";
+        } else {
+          if (titleEl) titleEl.innerText = "Halaman Tidak Ditemukan";
+          if (descEl) descEl.innerHTML = "Tautan galeri tidak menyertakan kode acara yang valid.<br>Silakan periksa kembali tautan undangan Anda atau buka link khusus acara (contoh: <code>?event=nama-acara</code>).";
+        }
+      } else {
+        if (nfScreen) nfScreen.style.display = "none";
+        if (hero) hero.style.display = "";
+        if (catWrap) catWrap.style.display = "";
+        if (galMain) galMain.style.display = "";
+        if (filterBar) filterBar.style.display = "";
+        if (footer) footer.style.display = "";
+      }
+    }
+
+    function updateAdminLogoPreview(url) {
+      const pImg = document.getElementById("adminLogoPreviewImg");
+      const pIcon = document.getElementById("adminLogoPreviewPlaceholder");
+      if (!pImg || !pIcon) return;
+      if (url && String(url).trim()) {
+        const norm = normalizeDriveImageUrl(String(url).trim());
+        pImg.src = norm;
+        pImg.style.display = "block";
+        pIcon.style.display = "none";
+      } else {
+        pImg.src = "";
+        pImg.style.display = "none";
+        pIcon.style.display = "block";
+      }
+    }
+
+    function handleEventLogoInput(val) {
+      const clean = (val || "").trim();
+      state.activeConfig.EVENT_LOGO_URL = clean;
+      state.activeConfig.logoUrl = clean;
+      updateAdminLogoPreview(clean);
+
+      const curEv = (state.events || []).find(function(e) { return e && e.id === state.currentEventId; });
+      if (curEv) {
+        curEv.logoUrl = clean;
+        curEv.EVENT_LOGO_URL = clean;
+      }
+
+      const logoContainer = document.getElementById("heroLogoContainer");
+      const logoImg = document.getElementById("heroLogoImg");
+      if (logoContainer && logoImg) {
+        if (clean) {
+          logoImg.src = normalizeDriveImageUrl(clean);
+          logoContainer.style.display = "flex";
+        } else {
+          logoContainer.style.display = "none";
+          logoImg.src = "";
+        }
+      }
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
       setupTouchSwipe();
 
@@ -520,17 +601,33 @@ function isGooglePhotosUrl(url) {
       } catch(e) {}
 
       const urlEventId = getActiveEventIdFromUrl();
-      const savedActiveEventId = localStorage.getItem("WEDDING_ACTIVE_EVENT_ID");
-      state.currentEventId = urlEventId || savedActiveEventId || GLOBAL_CONFIG.ACTIVE_EVENT_ID || "andre-fayola-281";
+      if (!urlEventId) {
+        // Link diketik manual tanpa ?event=... -> Tampilkan Halaman Tidak Ditemukan murni
+        state.currentEventId = "";
+        showEventNotFoundScreen(true);
 
-      // Pastikan URL di address bar browser selalu mencantumkan link khusus event ini: ?event=...
+        fetch("config.json?v=" + Date.now())
+          .then(function(res) { if (!res.ok) throw new Error("No config"); return res.json(); })
+          .then(function(remoteCfg) {
+            if (remoteCfg && typeof remoteCfg === "object") {
+              if (remoteCfg.GAS_API_URL) state.gasApiUrl = remoteCfg.GAS_API_URL;
+              if (Array.isArray(remoteCfg.EVENTS)) state.events = remoteCfg.EVENTS;
+              if (remoteCfg.ADMIN_ACCOUNTS) state.adminAccounts = remoteCfg.ADMIN_ACCOUNTS;
+            }
+          })
+          .catch(function() {});
+        return;
+      }
+
+      state.currentEventId = urlEventId;
+      showEventNotFoundScreen(false);
+
+      // Pastikan URL di address bar browser tetap rapi dengan tautan khusus event ini
       try {
         const curOrigin = window.location.origin || (window.location.protocol + "//" + window.location.host);
         const curPath = window.location.pathname || "/";
         const fullTargetUrl = curOrigin + curPath + "?event=" + encodeURIComponent(state.currentEventId);
-        if (!urlEventId || urlEventId !== state.currentEventId) {
-          window.history.replaceState({ eventId: state.currentEventId }, "", fullTargetUrl);
-        }
+        window.history.replaceState({ eventId: state.currentEventId }, "", fullTargetUrl);
       } catch(e) {}
 
       // Muat konfigurasi cache khusus untuk event yang sedang aktif
@@ -583,13 +680,20 @@ function isGooglePhotosUrl(url) {
               state.events = Array.from(evMap.values());
               try { localStorage.setItem("WEDDING_EVENTS_REGISTRY", JSON.stringify(state.events)); } catch(eReg) {}
 
-              const matchedEv = state.events.find(function(ev) { return ev.id === state.currentEventId; }) || state.events[0];
+              const matchedEv = state.events.find(function(ev) { return ev && ev.id === state.currentEventId; });
+              if (!matchedEv && state.currentEventId) {
+                showEventNotFoundScreen(true, state.currentEventId);
+                return;
+              }
               if (matchedEv) {
+                showEventNotFoundScreen(false);
                 remoteCfg.ACTIVE_EVENT_ID = matchedEv.id;
                 remoteCfg.EVENT_NAME = matchedEv.name;
                 remoteCfg.COUPLE_NAME = matchedEv.name;
                 remoteCfg.EVENT_DATE = matchedEv.date;
                 remoteCfg.EVENT_VENUE = matchedEv.venue;
+                remoteCfg.EVENT_LOGO_URL = matchedEv.logoUrl || matchedEv.EVENT_LOGO_URL || "";
+                remoteCfg.logoUrl = remoteCfg.EVENT_LOGO_URL;
                 remoteCfg.SUBTITLE = matchedEv.subtitle || remoteCfg.SUBTITLE;
                 remoteCfg.WELCOME_MESSAGE = matchedEv.welcomeMessage || remoteCfg.WELCOME_MESSAGE;
                 remoteCfg.FOOTER_MESSAGE = matchedEv.footerMessage || remoteCfg.FOOTER_MESSAGE;
@@ -735,26 +839,34 @@ function isGooglePhotosUrl(url) {
             }
 
             const urlEvId = getActiveEventIdFromUrl();
-            const targetId = state.currentEventId || urlEvId || sheetMap.ACTIVE_EVENT_ID || (state.events && state.events[0] ? state.events[0].id : "");
-            const matchedEv = (state.events || []).find(function(e) { return e && e.id === targetId; }) || state.events[0];
-            if (matchedEv) {
-              state.currentEventId = matchedEv.id;
-              state.activeConfig.ACTIVE_EVENT_ID = matchedEv.id;
-              state.activeConfig.EVENT_NAME = matchedEv.name || "";
-              state.activeConfig.COUPLE_NAME = matchedEv.name || "";
-              state.activeConfig.EVENT_DATE = matchedEv.date || "";
-              state.activeConfig.EVENT_VENUE = matchedEv.venue || "";
-              state.activeConfig.DRIVE_FOLDER_ID = matchedEv.driveFolderId || "";
-              state.activeConfig.PHOTOBOOTH_URL = matchedEv.photoboothUrl || "";
-              state.activeConfig.FRAME_IMAGE_URL = matchedEv.frameImageUrl || "";
-              const curOrigin = window.location.origin || (window.location.protocol + "//" + window.location.host);
-              const curPath = window.location.pathname || "/";
-              state.activeConfig.HOME_URL = matchedEv.homeUrl || (curOrigin + curPath + "?event=" + encodeURIComponent(matchedEv.id));
+            if (!urlEvId) {
+              showEventNotFoundScreen(true);
+              return;
+            }
+            const matchedEv = (state.events || []).find(function(e) { return e && e.id === urlEvId; });
+            if (!matchedEv) {
+              showEventNotFoundScreen(true, urlEvId);
+              return;
+            }
+            showEventNotFoundScreen(false);
+            state.currentEventId = matchedEv.id;
+            state.activeConfig.ACTIVE_EVENT_ID = matchedEv.id;
+            state.activeConfig.EVENT_NAME = matchedEv.name || "";
+            state.activeConfig.COUPLE_NAME = matchedEv.name || "";
+            state.activeConfig.EVENT_DATE = matchedEv.date || "";
+            state.activeConfig.EVENT_VENUE = matchedEv.venue || "";
+            state.activeConfig.EVENT_LOGO_URL = matchedEv.logoUrl || matchedEv.EVENT_LOGO_URL || "";
+            state.activeConfig.logoUrl = state.activeConfig.EVENT_LOGO_URL;
+            state.activeConfig.DRIVE_FOLDER_ID = matchedEv.driveFolderId || "";
+            state.activeConfig.PHOTOBOOTH_URL = matchedEv.photoboothUrl || "";
+            state.activeConfig.FRAME_IMAGE_URL = matchedEv.frameImageUrl || "";
+            const curOrigin = window.location.origin || (window.location.protocol + "//" + window.location.host);
+            const curPath = window.location.pathname || "/";
+            state.activeConfig.HOME_URL = matchedEv.homeUrl || (curOrigin + curPath + "?event=" + encodeURIComponent(matchedEv.id));
 
-              if (Array.isArray(matchedEv.customCategories) && matchedEv.customCategories.length > 0) {
-                state.activeConfig.CUSTOM_CATEGORIES = matchedEv.customCategories;
-                state.customCategories = matchedEv.customCategories;
-              }
+            if (Array.isArray(matchedEv.customCategories) && matchedEv.customCategories.length > 0) {
+              state.activeConfig.CUSTOM_CATEGORIES = matchedEv.customCategories;
+              state.customCategories = matchedEv.customCategories;
             }
 
             if (!state.currentEventId || !state.activeConfig.EVENT_NAME) {
@@ -1381,6 +1493,23 @@ function isGooglePhotosUrl(url) {
       setNodeTextIfChanged("eventDate", displayDate);
       setNodeTextIfChanged("eventVenue", eventVenue);
       setNodeTextIfChanged("slideshowCategory", displayDate + " • " + eventVenue);
+
+      // Render Logo Acara / Monogram (Google Drive / URL Gambar Langsung)
+      const rawLogo = cfg.EVENT_LOGO_URL || cfg.LOGO_URL || cfg.logoUrl || "";
+      const logoContainer = document.getElementById("heroLogoContainer");
+      const logoImg = document.getElementById("heroLogoImg");
+      if (logoContainer && logoImg) {
+        if (rawLogo && String(rawLogo).trim()) {
+          const normLogo = normalizeDriveImageUrl(String(rawLogo).trim());
+          if (logoImg.src !== normLogo) {
+            logoImg.src = normLogo;
+          }
+          logoContainer.style.display = "flex";
+        } else {
+          logoContainer.style.display = "none";
+          logoImg.src = "";
+        }
+      }
 
       if (cfg.SUBTITLE) {
         setNodeTextIfChanged("subtitle", cfg.SUBTITLE);
@@ -2690,6 +2819,10 @@ function isGooglePhotosUrl(url) {
 
       switchAdminTab("event");
 
+      if (!state.currentEventId && Array.isArray(state.events) && state.events.length > 0) {
+        state.currentEventId = state.events[0].id;
+      }
+
       // Sinkronkan activeConfig dengan event yang sedang dipilih sebelum memuat input form
       const activeEv = (state.events || []).find(function(e) { return e && e.id === state.currentEventId; });
       if (activeEv) {
@@ -2698,6 +2831,8 @@ function isGooglePhotosUrl(url) {
         state.activeConfig.COUPLE_NAME = activeEv.name || state.activeConfig.COUPLE_NAME;
         state.activeConfig.EVENT_DATE = activeEv.date || state.activeConfig.EVENT_DATE;
         state.activeConfig.EVENT_VENUE = activeEv.venue || state.activeConfig.EVENT_VENUE;
+        state.activeConfig.EVENT_LOGO_URL = activeEv.logoUrl || activeEv.EVENT_LOGO_URL || "";
+        state.activeConfig.logoUrl = state.activeConfig.EVENT_LOGO_URL;
         if (activeEv.subtitle) state.activeConfig.SUBTITLE = activeEv.subtitle;
         if (activeEv.welcomeMessage) state.activeConfig.WELCOME_MESSAGE = activeEv.welcomeMessage;
         if (activeEv.footerMessage) state.activeConfig.FOOTER_MESSAGE = activeEv.footerMessage;
@@ -3605,6 +3740,8 @@ function isGooglePhotosUrl(url) {
           COUPLE_NAME: ev.name || "",
           EVENT_DATE: ev.date || "",
           EVENT_VENUE: ev.venue || "",
+          EVENT_LOGO_URL: ev.logoUrl || ev.EVENT_LOGO_URL || "",
+          logoUrl: ev.logoUrl || ev.EVENT_LOGO_URL || "",
           SUBTITLE: ev.subtitle || "The Wedding Gallery & Precious Memories",
           WELCOME_MESSAGE: ev.welcomeMessage || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
           FOOTER_MESSAGE: ev.footerMessage || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
@@ -3615,6 +3752,8 @@ function isGooglePhotosUrl(url) {
           HOME_URL: fullHomeUrl,
           CUSTOM_CATEGORIES: Array.isArray(ev.customCategories) ? ev.customCategories : []
         });
+
+        showEventNotFoundScreen(false);
 
         state.customCategories = Array.isArray(ev.customCategories) ? ev.customCategories : [];
         state.allPhotosLabel = ev.allPhotosLabel || "Semua Foto";
@@ -3673,6 +3812,10 @@ function isGooglePhotosUrl(url) {
       if (cfgDateEl) cfgDateEl.value = formatDateForInput(cfg.EVENT_DATE);
       const cfgVenueEl = document.getElementById("cfgEventVenue");
       if (cfgVenueEl) cfgVenueEl.value = cfg.EVENT_VENUE || "";
+      const cfgLogoEl = document.getElementById("cfgEventLogoUrl");
+      const rawLogo = cfg.EVENT_LOGO_URL || cfg.LOGO_URL || cfg.logoUrl || "";
+      if (cfgLogoEl) cfgLogoEl.value = rawLogo;
+      updateAdminLogoPreview(rawLogo);
       const cfgAllPhotosLabelEl = document.getElementById("cfgMainGalleryLabel") || document.getElementById("cfgAllPhotosLabel");
       if (cfgAllPhotosLabelEl) cfgAllPhotosLabelEl.value = cfg.ALL_PHOTOS_LABEL || "Semua Foto";
       const cfgSubtitleEl = document.getElementById("cfgSubtitle");
@@ -3697,6 +3840,8 @@ function isGooglePhotosUrl(url) {
       document.getElementById("neEventVenue").value = "";
       document.getElementById("neDriveFolderId").value = "";
       document.getElementById("nePhotoboothUrl").value = "";
+      const neLogoEl = document.getElementById("neLogoUrl");
+      if (neLogoEl) neLogoEl.value = "";
       const alertBox = document.getElementById("neAlertBox");
       if (alertBox) { alertBox.style.display = "none"; alertBox.innerText = ""; }
       modal.classList.add("active");
@@ -3717,6 +3862,7 @@ function isGooglePhotosUrl(url) {
       const venue = (document.getElementById("neEventVenue")?.value || "").trim();
       const driveFolder = (document.getElementById("neDriveFolderId")?.value || "").trim();
       const pbUrl = (document.getElementById("nePhotoboothUrl")?.value || "").trim();
+      const logoUrl = (document.getElementById("neLogoUrl")?.value || "").trim();
       const alertBox = document.getElementById("neAlertBox");
 
       if (!name) {
@@ -3771,6 +3917,8 @@ function isGooglePhotosUrl(url) {
         allPhotosLabel: "Semua Foto",
         driveFolderId: driveFolder,
         photoboothUrl: pbUrl,
+        logoUrl: logoUrl,
+        EVENT_LOGO_URL: logoUrl,
         frameImageUrl: "",
         customCategories: initialCats,
         status: "Aktif"
@@ -4065,6 +4213,7 @@ function isGooglePhotosUrl(url) {
       const footerInput = (document.getElementById("cfgFooterMessage")?.value || "").trim();
       const customCategoriesList = getCategoriesFromAdminInputs();
       const frameUrlInput = (document.getElementById("cfgFrameImageUrl")?.value || "").trim();
+      const logoUrlInput = (document.getElementById("cfgEventLogoUrl")?.value || "").trim();
       const newPinInput = (document.getElementById("cfgNewPin")?.value || "").trim();
 
       state.gasApiUrl = newApiUrl;
@@ -4120,6 +4269,8 @@ function isGooglePhotosUrl(url) {
             allPhotosLabel: allPhotosLabelInput,
             driveFolderId: driveFolderInput,
             photoboothUrl: curPbUrl,
+            logoUrl: logoUrlInput,
+            EVENT_LOGO_URL: logoUrlInput,
             frameImageUrl: frameUrlInput,
             customCategories: customCategoriesList
           });
@@ -4146,6 +4297,8 @@ function isGooglePhotosUrl(url) {
         COVER_SETTINGS: coverSettingsPayload,
         EVENTS: JSON.stringify(state.events),
         DRIVE_FOLDER_ID: driveFolderInput,
+        EVENT_LOGO_URL: logoUrlInput,
+        logoUrl: logoUrlInput,
         FRAME_IMAGE_URL: frameUrlInput,
         GAS_API_URL: newApiUrl,
         ADMIN_USERNAME: (state.currentAdminUser ? state.currentAdminUser.username : state.adminUsername) || "admin",

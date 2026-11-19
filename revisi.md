@@ -1,5 +1,32 @@
 # Catatan Revisi & Audit Sistem (Changelog)
 
+## Versi 4.5.0 - Proteksi Halaman Kosong / Tidak Ditemukan & Kustom Logo Monogram Acara (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Proteksi URL Manual `https://gallery.runway.my.id/` (Tampil Halaman Tidak Ditemukan / Kosong)**:
+   - **Akar Masalah Sebelumnya**: Jika pengunjung mengetik URL polos tanpa parameter `?event=...`, sistem sebelumnya otomatis menormalisasi dan memunculkan event default.
+   - **Solusi Rekayasa Sistem**:
+     - Ditambahkan antarmuka mewah `#eventNotFoundScreen` (kartu berbingkai emas, ikon penanda, pesan informatif bahwa tautan memerlukan kode acara, dan tombol login admin).
+     - Pada `index.html`, script *instant hydration* langsung mematikan tampilan hero dan galeri jika parameter `event` kosong, sehingga **tidak ada data pengantin atau foto manapun yang bocor atau berkedip**.
+     - Sistem mendeteksi `getActiveEventIdFromUrl()`: jika kosong atau kode acara tidak terdaftar di database, sistem menampilkan layar "Halaman Tidak Ditemukan". Galeri foto dan identitas pasangan hanya tampil ketika tautan resmi acara (misal: `?event=andre-fayola-281` atau `?event=wilson-felicia-133`) diakses.
+     - Admin tetap dapat masuk ke sistem via tombol "Masuk Panel Admin" untuk memilih event, membuat event, atau membuka link home masing-masing acara.
+
+2. **Kustom Logo / Monogram Acara (Link Google Drive & Posisi Admin)**:
+   - **Tampilan Hero**:
+     - Ditambahkan elemen `#heroLogoContainer` dan `#heroLogoImg` tepat di atas divider dan nama pasangan pengantin (sesuai area yang dilingkari cyan pada foto referensi pengguna).
+     - Ukuran logo dibuat proporsional dan elegan (`max-height: 72px; max-width: 170px;` di PC, `max-height: 58px; max-width: 135px;` di HP), berbayang halus (*drop-shadow*), dan memiliki efek *hover zoom* lembut tanpa merusak tata letak.
+   - **Tata Letak Formulir Admin (Tab 1: Acara & Event)**:
+     - Ditempatkan tepat di bawah Nama Event / Pasangan (`#cfgEventLogoUrl`) lengkap dengan kotak pratinjau gambar realtime (`#adminLogoPreviewBox`).
+     - Mendukung link Google Drive (berbagai format `drive.google.com/file/d/...`, `id=...`, dsb.) yang secara otomatis dikonversi ke gambar resolusi tinggi langsung via `normalizeDriveImageUrl`.
+     - Ditambahkan juga pada modal "Tambah Event Baru" (`#neLogoUrl`) agar setiap event baru dapat langsung memiliki logo sendiri.
+
+3. **Audit Integritas Kode & Verifikasi Mandiri**:
+   - `index.html`: Struktur `#eventNotFoundScreen` dan `#heroLogoContainer` tervalidasi 100%.
+   - `css/style.css`: Aturan `.hero-logo-img` dan `.event-not-found-wrapper` terpasang rapi.
+   - `js/app.js`: Syntax Valid (`node -c` PASSED - Code 0).
+   - `code.gs` & `setup.gs`: Syntax Valid (`vm.Script` PASSED - Code 0).
+   - Seluruh 36 menu & event handlers interaktif HTML berfungsi normal.
+
 ## Versi 4.4.0 - Penambahan Hari di Depan Tanggal Event Halaman Depan (19 November 2026)
 
 ### 1. Perbaikan yang Diperintahkan & Diterapkan:

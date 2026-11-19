@@ -814,6 +814,7 @@ function getEffectiveConfig() {
     ALL_PHOTOS_LABEL: sheetConfig.ALL_PHOTOS_LABEL || props.ALL_PHOTOS_LABEL || WEDDING_CONFIG.ALL_PHOTOS_LABEL || "Semua Foto",
     CUSTOM_CATEGORIES: (sheetConfig.CUSTOM_CATEGORIES && sheetConfig.CUSTOM_CATEGORIES !== "[object Object]") ? sheetConfig.CUSTOM_CATEGORIES : ((props.CUSTOM_CATEGORIES && props.CUSTOM_CATEGORIES !== "[object Object]") ? props.CUSTOM_CATEGORIES : WEDDING_CONFIG.CUSTOM_CATEGORIES),
     PHOTOBOOTH_URL: sheetConfig.PHOTOBOOTH_URL || props.PHOTOBOOTH_URL || WEDDING_CONFIG.PHOTOBOOTH_URL || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+    EVENT_LOGO_URL: sheetConfig.EVENT_LOGO_URL || props.EVENT_LOGO_URL || WEDDING_CONFIG.EVENT_LOGO_URL || "",
 
     // Multi-Event & Custom Cover
     ACTIVE_EVENT_ID: sheetConfig.ACTIVE_EVENT_ID || props.ACTIVE_EVENT_ID || WEDDING_CONFIG.ACTIVE_EVENT_ID || "andre-fayola-281",
@@ -2083,6 +2084,10 @@ function saveAdminSettings(pin, updatedConfig) {
 
     if (updatedConfig.SUBTITLE !== undefined && String(updatedConfig.SUBTITLE).trim()) {
       props.setProperty("SUBTITLE", String(updatedConfig.SUBTITLE).trim());
+    }
+
+    if (updatedConfig.EVENT_LOGO_URL !== undefined) {
+      props.setProperty("EVENT_LOGO_URL", String(updatedConfig.EVENT_LOGO_URL).trim());
     }
 
     if (updatedConfig.WELCOME_MESSAGE !== undefined && String(updatedConfig.WELCOME_MESSAGE).trim()) {

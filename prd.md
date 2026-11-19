@@ -48,3 +48,13 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
 
 ### 2.4 Realtime Murni Tanpa Hardcode (Anti-Fallback)
 - Seluruh data dibaca secara dinamis dari database tanpa data mockup.
+
+### 2.5 Proteksi Halaman Tidak Ditemukan untuk URL Manual (v4.5.0)
+- Mengetik link manual tanpa parameter event (`https://gallery.runway.my.id/`) menampilkan layar khusus **Halaman Tidak Ditemukan / Acara Tidak Ditemukan** (`#eventNotFoundScreen`).
+- Galeri foto, banner sambutan, dan identitas pengantin disembunyikan total guna mencegah kebocoran data antar event dan menjaga privasi masing-masing pasangan.
+- Tersedia tombol "Masuk Panel Admin" agar administrator tetap dapat mengelola atau membuka tautan home acara masing-masing.
+
+### 2.6 Kustom Logo / Monogram Acara (v4.5.0)
+- Logo atau monogram pernikahan (`#heroLogoContainer`) ditampilkan tepat di atas divider dan nama pasangan pengantin sesuai layout kartu mewah.
+- Input logo ditempatkan di Tab 1 Admin (Acara & Event) di bawah nama event (`#cfgEventLogoUrl`) dengan kotak pratinjau live (`#adminLogoPreviewBox`).
+- Mendukung link Google Drive yang otomatis dinormalisasi menjadi direct image view. Ukuran logo dibatasi proporsional (`max-height: 72px;`) agar menarik dan tidak terlalu besar.

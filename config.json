@@ -37,6 +37,7 @@
       "driveFolderId": "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
       "photoboothUrl": "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
       "frameImageUrl": "",
+      "logoUrl": "",
       "customCategories": [
         {
           "name": "Photobooth",
@@ -61,6 +62,7 @@
       "driveFolderId": "1GGB77clCMYBIg17J0ECr2eVbD02ZeInW",
       "photoboothUrl": "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
       "frameImageUrl": "",
+      "logoUrl": "",
       "customCategories": [
         {
           "name": "Photobooth",
@@ -75,6 +77,7 @@
   "EVENT_NAME": "Andre & Fayola",
   "EVENT_DATE": "22 November 2026",
   "EVENT_VENUE": "UPPERHILLS CONVENTION HALLS",
+  "EVENT_LOGO_URL": "",
   "SUBTITLE": "The Wedding Gallery & Precious Memories",
   "WELCOME_MESSAGE": "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
   "FOOTER_MESSAGE": "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
