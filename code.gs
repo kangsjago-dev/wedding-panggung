@@ -1264,6 +1264,14 @@ function scanGooglePhotosAlbum(albumUrl, catName) {
         });
       }
     }
+    // Urutkan foto dari yang paling baru di atas
+    photos.sort(function(a, b) {
+      var tA = a.timestamp || 0;
+      var tB = b.timestamp || 0;
+      if (tB !== tA) return tB - tA;
+      return String(b.name || "").localeCompare(String(a.name || ""), undefined, { numeric: true });
+    });
+
     return {
       success: true,
       category: catName || "Photobooth",
@@ -1346,6 +1354,14 @@ function scanFotoshareAlbum(albumUrl, catName) {
         }
       }
     }
+    // Urutkan foto dari yang paling baru di atas
+    list.sort(function(a, b) {
+      var tA = a.timestamp || 0;
+      var tB = b.timestamp || 0;
+      if (tB !== tA) return tB - tA;
+      return String(b.name || "").localeCompare(String(a.name || ""), undefined, { numeric: true });
+    });
+
     return {
       success: true,
       category: catName || "Photobooth",
@@ -1414,6 +1430,14 @@ function scanKingPhotoboothEvent(eventUrl, catName) {
         shareToken: it.share_token,
         originalWebUrl: origin + "/i/" + (it.share_token || it.id)
       };
+    });
+
+    // Urutkan foto dari yang paling baru di atas
+    photos.sort(function(a, b) {
+      var tA = a.timestamp || 0;
+      var tB = b.timestamp || 0;
+      if (tB !== tA) return tB - tA;
+      return String(b.name || "").localeCompare(String(a.name || ""), undefined, { numeric: true });
     });
 
     return {
@@ -1505,9 +1529,11 @@ function scanDriveFolderDirectly(folderId) {
     }
   }
 
-  // Urutkan foto dari yang paling baru diunggah/diperbarui
+  // Urutkan foto dari yang paling baru diunggah/diperbarui (Newest First)
   scannedPhotos.sort(function(a, b) {
-    return (b.timestamp || 0) - (a.timestamp || 0);
+    var diff = (b.timestamp || 0) - (a.timestamp || 0);
+    if (diff !== 0) return diff;
+    return String(b.name || "").localeCompare(String(a.name || ""), undefined, { numeric: true });
   });
 
   return {

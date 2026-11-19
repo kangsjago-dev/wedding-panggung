@@ -96,6 +96,51 @@ function isGooglePhotosUrl(url) {
       // No-op: tombol manual telah dihapus, rotasi otomatis oleh sistem
     }
 
+    function getPhotoTimestamp(photo) {
+      if (!photo) return 0;
+      if (typeof photo.timestamp === 'number' && !isNaN(photo.timestamp) && photo.timestamp > 0) {
+        return photo.timestamp;
+      }
+      if (photo.timestamp) {
+        const t = new Date(photo.timestamp).getTime();
+        if (!isNaN(t) && t > 0) return t;
+      }
+      if (photo.dateCreated || photo.created_at || photo.lastUpdated || photo.date_added || photo.date) {
+        const d = new Date(photo.dateCreated || photo.created_at || photo.lastUpdated || photo.date_added || photo.date).getTime();
+        if (!isNaN(d) && d > 0) return d;
+      }
+      const str = String(photo.rawName || photo.name || photo.id || "");
+      const tsMatch = str.match(/(?:17|18|19)\d{10,11}/);
+      if (tsMatch) {
+        const parsedTs = parseInt(tsMatch[0], 10);
+        if (parsedTs > 1000000000000 && parsedTs < 3000000000000) return parsedTs;
+      }
+      const dtMatch = str.match(/(\d{4})(\d{2})(\d{2})[_-]?(\d{2})(\d{2})(\d{2})/);
+      if (dtMatch) {
+        const parsedDt = new Date(dtMatch[1] + "-" + dtMatch[2] + "-" + dtMatch[3] + "T" + dtMatch[4] + ":" + dtMatch[5] + ":" + dtMatch[6]).getTime();
+        if (!isNaN(parsedDt) && parsedDt > 0) return parsedDt;
+      }
+      const numMatch = str.match(/#\s*(\d+)/);
+      if (numMatch) {
+        return parseInt(numMatch[1], 10);
+      }
+      return 0;
+    }
+
+    function sortPhotosNewestFirst(photos) {
+      if (!Array.isArray(photos)) return [];
+      return photos.slice().sort(function(a, b) {
+        const tA = getPhotoTimestamp(a);
+        const tB = getPhotoTimestamp(b);
+        if (tB !== tA) {
+          return tB - tA; // Paling baru di atas (descending)
+        }
+        const nameA = String(a.rawName || a.name || a.id || "");
+        const nameB = String(b.rawName || b.name || b.id || "");
+        return nameB.localeCompare(nameA, undefined, { numeric: true, sensitivity: 'base' });
+      });
+    }
+
     function rotateLightboxCurrentPhoto() {
       // No-op: tombol manual telah dihapus, rotasi otomatis oleh sistem
     }
@@ -245,7 +290,7 @@ function isGooglePhotosUrl(url) {
         });
         return;
       } else if (isPbCat) {
-        const pbLink = targetUrl || state.activeConfig.PHOTOBOOTH_URL || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
+        const pbLink = targetUrl || state.activeConfig.PHOTOBOOTH_URL || "";
         if (isGooglePhotosUrl(pbLink)) {
           fetchGooglePhotos(categoryName, pbLink, function(photos) {
             state.categoryPhotosUrlMap[categoryName] = pbLink;
@@ -391,11 +436,7 @@ function isGooglePhotosUrl(url) {
           status: "Aktif"
         }
       ],
-      ADMIN_ACCOUNTS: [
-        { id: "usr_superadmin", username: "admin", password: "123", name: "Super Admin", role: "Super Admin" },
-        { id: "usr_mwid2vkz_759", username: "ilham", password: "123", name: "ilham", role: "Admin" },
-        { id: "usr_mwii1zmz_598", username: "Wanta", password: "123", name: "Wanta", role: "Admin" }
-      ],
+      ADMIN_ACCOUNTS: [],
       CUSTOM_CATEGORIES: [
         {
           name: "Photobooth",
@@ -412,7 +453,7 @@ function isGooglePhotosUrl(url) {
       FRAME_IMAGE_URL: "https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk",
       SPREADSHEET_ID: "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20",
       SPREADSHEET_URL: "https://docs.google.com/spreadsheets/d/133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20/edit",
-      DEFAULT_ADMIN_PIN: "123456",
+      DEFAULT_ADMIN_PIN: "",
       NEW_BADGE_MINUTES: 10,
       COVER_SETTINGS: {
         enabled: false,
@@ -439,12 +480,8 @@ function isGooglePhotosUrl(url) {
         quote: "Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda.",
         photos: []
       },
-      customCategories: [
-        { name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs" }
-      ],
-      adminAccounts: [
-        { id: "usr_superadmin", username: "admin", password: "123", name: "Super Admin", role: "Super Admin" }
-      ],
+      customCategories: [],
+      adminAccounts: [],
       failedPhotoIds: new Set(),
       activeCategory: "Semua Foto",
       categoryPhotosMap: {},
@@ -458,7 +495,7 @@ function isGooglePhotosUrl(url) {
       
       isAdminLoggedIn: false,
       adminPin: "",
-      currentAdminUser: { username: "admin", name: "Super Admin", role: "Super Admin" },
+      currentAdminUser: null,
       activeConfig: Object.assign({}, GLOBAL_CONFIG),
       gasApiUrl: "",
       newBadgeDurationMs: (GLOBAL_CONFIG.NEW_BADGE_MINUTES || 10) * 60 * 1000,
@@ -662,8 +699,8 @@ function isGooglePhotosUrl(url) {
         if (savedPhotosStr) {
           const savedPhotos = JSON.parse(savedPhotosStr);
           if (Array.isArray(savedPhotos) && savedPhotos.length > 0) {
-            state.allPhotos = savedPhotos;
-            state.filteredPhotos = savedPhotos;
+            state.allPhotos = sortPhotosNewestFirst(savedPhotos);
+            state.filteredPhotos = state.allPhotos;
             renderPhotoGrid();
           }
         }
@@ -947,6 +984,7 @@ function isGooglePhotosUrl(url) {
                     const fCat = r.c[2] ? String(r.c[2].v || '').trim() : 'Semua Foto';
                     const fThumb = r.c[3] ? String(r.c[3].v || '').trim() : '';
                     const fDl = r.c[4] ? String(r.c[4].v || '').trim() : fThumb;
+                    const fTime = r.c[6] ? String(r.c[6].v || '').trim() : '';
                     const fStatus = r.c[7] ? String(r.c[7].v || '').trim() : 'Aktif';
 
                     if (fId && fThumb && fStatus !== 'Nonaktif' && !fId.startsWith('demo-') && !fThumb.includes('images.unsplash.com')) {
@@ -957,16 +995,18 @@ function isGooglePhotosUrl(url) {
                         thumbnailUrl: fThumb,
                         previewUrl: fThumb,
                         highResUrl: fDl || fThumb,
-                        downloadUrl: fDl || fThumb
+                        downloadUrl: fDl || fThumb,
+                        timestamp: fTime
                       });
                     }
                   });
 
                   if (dbPhotos.length > 0) {
+                    const sortedDbPhotos = sortPhotosNewestFirst(dbPhotos);
                     const prevSig = (state.allPhotos || []).map(function(p) { return p.id; }).join(',');
-                    const newSig = dbPhotos.map(function(p) { return p.id; }).join(',');
+                    const newSig = sortedDbPhotos.map(function(p) { return p.id; }).join(',');
                     if (prevSig !== newSig) {
-                      state.allPhotos = dbPhotos;
+                      state.allPhotos = sortedDbPhotos;
                       renderCategoryTabs();
                       if (!state.activeCategory || state.activeCategory === "Semua Foto") {
                         renderPhotoGrid(state.allPhotos);
@@ -1042,54 +1082,8 @@ function isGooglePhotosUrl(url) {
 
       const apiUrl = state.gasApiUrl ? state.gasApiUrl.trim() : "";
       if (!apiUrl) {
-        if (action === "getGalleryData") {
-          loadFallbackData("URL API Backend belum dihubungkan");
-        } else if (action === "adminLogin") {
-          if (payload.pin === "123456" || payload.pin === "admin") {
-            onSuccess({
-              success: true,
-              message: "Login demo lokal berhasil!",
-              user: { id: "usr_superadmin", name: "Super Admin", role: "Super Admin" }
-            });
-          } else {
-            onError({ message: "PIN yang Anda masukkan salah. Silakan coba lagi." });
-          }
-        } else if (action === "getAdminUsers") {
-          onSuccess({
-            success: true,
-            users: [
-              { id: "usr_superadmin", name: "Super Admin", role: "Super Admin", pinMasked: "••••" }
-            ]
-          });
-        } else if (action === "addAdminUser") {
-          onSuccess({
-            success: true,
-            message: "Pengguna " + payload.newUser.name + " berhasil ditambahkan (Demo Lokal)",
-            users: [
-              { id: "usr_superadmin", name: "Super Admin", role: "Super Admin", pinMasked: "••••" },
-              { id: "usr_" + Date.now(), name: payload.newUser.name, role: payload.newUser.role || "Admin", pinMasked: "••••" }
-            ]
-          });
-        } else if (action === "deleteAdminUser") {
-          onSuccess({
-            success: true,
-            message: "Pengguna berhasil dihapus (Demo Lokal)",
-            users: [
-              { id: "usr_superadmin", name: "Super Admin", role: "Super Admin", pinMasked: "••••" }
-            ]
-          });
-        } else if (action === "changeAdminPin") {
-          if (payload.newPin && payload.newPin.length >= 4) {
-            onSuccess({
-              success: true,
-              message: "PIN Admin berhasil diperbarui!"
-            });
-          } else {
-            onError({ message: "PIN baru minimal 4 digit." });
-          }
-        } else {
-          onSuccess({ success: true, message: "Aksi tersimulasi di Vercel." });
-        }
+        const errMsg = "URL API Google Apps Script belum terhubung ke database. Harap hubungkan pada menu Pengaturan Cloud & API.";
+        if (onError) onError(new Error(errMsg));
         return;
       }
 
@@ -1276,12 +1270,13 @@ function isGooglePhotosUrl(url) {
         // Ambil foto yang benar langsung untuk folder event aktif ini
         fetchDriveCategoryPhotos("Semua Foto", activeDriveId, function(correctPhotos) {
           if (Array.isArray(correctPhotos) && correctPhotos.length > 0) {
-            state.allPhotos = correctPhotos;
-            state.filteredPhotos = correctPhotos;
+            const sortedCorrect = sortPhotosNewestFirst(correctPhotos);
+            state.allPhotos = sortedCorrect;
+            state.filteredPhotos = sortedCorrect;
             try {
-              localStorage.setItem("WEDDING_EVENT_PHOTOS_" + state.currentEventId, JSON.stringify(correctPhotos));
-              localStorage.setItem("WEDDING_EVENT_PHOTOS_COUNT_" + state.currentEventId, String(correctPhotos.length));
-              localStorage.setItem("WEDDING_ALL_PHOTOS_COUNT", String(correctPhotos.length));
+              localStorage.setItem("WEDDING_EVENT_PHOTOS_" + state.currentEventId, JSON.stringify(sortedCorrect));
+              localStorage.setItem("WEDDING_EVENT_PHOTOS_COUNT_" + state.currentEventId, String(sortedCorrect.length));
+              localStorage.setItem("WEDDING_ALL_PHOTOS_COUNT", String(sortedCorrect.length));
             } catch(e) {}
             renderCategoryTabs();
             applyCategoryFilter(state.activeCategory || "Semua Foto");
@@ -1300,7 +1295,10 @@ function isGooglePhotosUrl(url) {
         return true;
       });
 
-      if (incomingPhotos.length === 0) {
+      // Urutkan foto dari yang paling baru di atas (Newest First)
+      const sortedIncoming = sortPhotosNewestFirst(incomingPhotos);
+
+      if (sortedIncoming.length === 0) {
         state.allPhotos = [];
         state.categories = ["Semua Foto"];
         renderCategoryTabs();
@@ -1311,7 +1309,7 @@ function isGooglePhotosUrl(url) {
       if (isSilent && state.allPhotos.length > 0) {
         const existingIds = new Set(state.allPhotos.map(function(p) { return p.id; }));
         // Hanya anggap foto baru jika ID belum pernah ada dan bukan foto yang tercatat error sebelumnya
-        const newPhotos = incomingPhotos.filter(function(p) { 
+        const newPhotos = sortedIncoming.filter(function(p) { 
           return !existingIds.has(p.id) && !(state.failedPhotoIds && state.failedPhotoIds.has(p.id)); 
         });
 
@@ -1321,10 +1319,10 @@ function isGooglePhotosUrl(url) {
             p.isNewlyAdded = true;
             p.detectedAt = now;
           });
-          state.allPhotos = incomingPhotos;
+          state.allPhotos = sortedIncoming;
           try {
-            if (incomingPhotos.length > 0) {
-              localStorage.setItem("WEDDING_ALL_PHOTOS_COUNT", String(incomingPhotos.length));
+            if (sortedIncoming.length > 0) {
+              localStorage.setItem("WEDDING_ALL_PHOTOS_COUNT", String(sortedIncoming.length));
             }
           } catch(e) {}
           state.driveSubfolders = (response.categories || []).filter(function(c) {
@@ -1354,12 +1352,12 @@ function isGooglePhotosUrl(url) {
         return;
       }
 
-      state.allPhotos = incomingPhotos;
+      state.allPhotos = sortedIncoming;
       try {
-        if (incomingPhotos.length > 0) {
-          localStorage.setItem("WEDDING_EVENT_PHOTOS_" + state.currentEventId, JSON.stringify(incomingPhotos));
-          localStorage.setItem("WEDDING_EVENT_PHOTOS_COUNT_" + state.currentEventId, String(incomingPhotos.length));
-          localStorage.setItem("WEDDING_ALL_PHOTOS_COUNT", String(incomingPhotos.length));
+        if (sortedIncoming.length > 0) {
+          localStorage.setItem("WEDDING_EVENT_PHOTOS_" + state.currentEventId, JSON.stringify(sortedIncoming));
+          localStorage.setItem("WEDDING_EVENT_PHOTOS_COUNT_" + state.currentEventId, String(sortedIncoming.length));
+          localStorage.setItem("WEDDING_ALL_PHOTOS_COUNT", String(sortedIncoming.length));
         }
       } catch(e) {}
       state.driveSubfolders = (response.categories || []).filter(function(c) {
@@ -1773,7 +1771,7 @@ function isGooglePhotosUrl(url) {
           updateCategoryPillCount(cat, photos.length);
         });
       } else if (isPbCat) {
-        const pbLink = targetUrl || state.activeConfig.PHOTOBOOTH_URL || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
+        const pbLink = targetUrl || state.activeConfig.PHOTOBOOTH_URL || "";
         if (isGooglePhotosUrl(pbLink)) {
           fetchGooglePhotos(cat, pbLink, function(photos) {
             updateCategoryPillCount(cat, photos.length);
@@ -1846,11 +1844,12 @@ function isGooglePhotosUrl(url) {
         })
         .then(function(data) {
           if (data && data.success && Array.isArray(data.photos) && data.photos.length > 0) {
-            state.categoryPhotosMap[cat] = data.photos;
+            const sorted = sortPhotosNewestFirst(data.photos);
+            state.categoryPhotosMap[cat] = sorted;
             if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
             state.categoryPhotosUrlMap[cat] = url;
-            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(data.photos.length)); } catch(e) {}
-            if (callback) callback(data.photos);
+            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(sorted.length)); } catch(e) {}
+            if (callback) callback(sorted);
             return;
           }
           throw new Error("No photos from API");
@@ -1860,11 +1859,12 @@ function isGooglePhotosUrl(url) {
           // 2. Coba lewat GAS Backend
           callBackend("getCategoryPhotos", { url: url, category: cat }, function(res) {
             if (res && res.success && Array.isArray(res.photos) && res.photos.length > 0) {
-              state.categoryPhotosMap[cat] = res.photos;
+              const sorted = sortPhotosNewestFirst(res.photos);
+              state.categoryPhotosMap[cat] = sorted;
               if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
               state.categoryPhotosUrlMap[cat] = url;
-              try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(res.photos.length)); } catch(e) {}
-              if (callback) callback(res.photos);
+              try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(sorted.length)); } catch(e) {}
+              if (callback) callback(sorted);
               return;
             }
             if (callback) callback(state.categoryPhotosMap[cat] || []);
@@ -1948,10 +1948,11 @@ function isGooglePhotosUrl(url) {
         })
         .then(function(data) {
           if (data && data.success && Array.isArray(data.photos) && data.photos.length > 0) {
-            state.categoryPhotosMap[cat] = data.photos;
+            const sorted = sortPhotosNewestFirst(data.photos);
+            state.categoryPhotosMap[cat] = sorted;
             state.categoryPhotosUrlMap[cat] = url;
-            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(data.photos.length)); } catch (e) {}
-            if (callback) callback(data.photos);
+            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(sorted.length)); } catch (e) {}
+            if (callback) callback(sorted);
             return;
           }
           throw new Error("No photos from Kingphotobooth API");
@@ -1961,10 +1962,11 @@ function isGooglePhotosUrl(url) {
           // 2. Coba lewat GAS backend getCategoryPhotos
           callBackend("getCategoryPhotos", { url: url, category: cat }, function(res) {
             if (res && res.success && Array.isArray(res.photos) && res.photos.length > 0) {
-              state.categoryPhotosMap[cat] = res.photos;
+              const sorted = sortPhotosNewestFirst(res.photos);
+              state.categoryPhotosMap[cat] = sorted;
               state.categoryPhotosUrlMap[cat] = url;
-              try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(res.photos.length)); } catch (e) {}
-              if (callback) callback(res.photos);
+              try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(sorted.length)); } catch (e) {}
+              if (callback) callback(sorted);
               return;
             }
             fallbackKing();
@@ -2031,7 +2033,7 @@ function isGooglePhotosUrl(url) {
                 previewUrl: rawMasterUrl,
                 highResUrl: rawMasterUrl,
                 downloadUrl: rawMasterUrl,
-                originalWebUrl: url || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+                originalWebUrl: url || "",
                 img: rawMasterUrl,
                 isPhotobooth: true,
                 timestamp: Date.now()
@@ -2045,10 +2047,11 @@ function isGooglePhotosUrl(url) {
       function fallbackFotoshare() {
         callBackend("getCategoryPhotos", { url: url, category: cat }, function(res) {
           if (res && res.success && Array.isArray(res.photos) && res.photos.length > 0) {
-            state.categoryPhotosMap[cat] = res.photos;
+            const sorted = sortPhotosNewestFirst(res.photos);
+            state.categoryPhotosMap[cat] = sorted;
             state.categoryPhotosUrlMap[cat] = url;
-            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(res.photos.length)); } catch (e) {}
-            if (callback) callback(res.photos);
+            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(sorted.length)); } catch (e) {}
+            if (callback) callback(sorted);
             return;
           }
           state.categoryPhotosMap[cat] = [];
@@ -2079,10 +2082,11 @@ function isGooglePhotosUrl(url) {
         })
         .then(function(data) {
           if (data && data.success && Array.isArray(data.photos) && data.photos.length > 0) {
-            state.categoryPhotosMap[cat] = data.photos;
+            const sorted = sortPhotosNewestFirst(data.photos);
+            state.categoryPhotosMap[cat] = sorted;
             state.categoryPhotosUrlMap[cat] = url;
-            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(data.photos.length)); } catch (e) {}
-            if (callback) callback(data.photos);
+            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(sorted.length)); } catch (e) {}
+            if (callback) callback(sorted);
             return;
           }
           throw new Error("No photos from Fotoshare API");
@@ -2096,7 +2100,7 @@ function isGooglePhotosUrl(url) {
               return res.text();
             })
             .then(function(htmlText) {
-              const list = parseFotoshareHtml(htmlText);
+              const list = sortPhotosNewestFirst(parseFotoshareHtml(htmlText));
               if (list.length > 0) {
                 state.categoryPhotosMap[cat] = list;
                 state.categoryPhotosUrlMap[cat] = url;
@@ -2217,10 +2221,11 @@ function isGooglePhotosUrl(url) {
         })
         .then(function(data) {
           if (data && data.success && Array.isArray(data.photos) && data.photos.length > 0) {
-            state.categoryPhotosMap[cat] = data.photos;
+            const sorted = sortPhotosNewestFirst(data.photos);
+            state.categoryPhotosMap[cat] = sorted;
             state.categoryPhotosUrlMap[cat] = driveKey;
-            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(data.photos.length)); } catch (e) {}
-            if (callback) callback(data.photos);
+            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(sorted.length)); } catch (e) {}
+            if (callback) callback(sorted);
             return;
           }
           throw new Error("No photos from drive-folder API");
@@ -2230,10 +2235,11 @@ function isGooglePhotosUrl(url) {
           // 2. Coba lewat GAS Backend getCategoryPhotos secara realtime
           callBackend("getCategoryPhotos", { folderId: driveFolderId, category: cat }, function(res) {
             if (res && res.success && Array.isArray(res.photos)) {
-              state.categoryPhotosMap[cat] = res.photos;
+              const sorted = sortPhotosNewestFirst(res.photos);
+              state.categoryPhotosMap[cat] = sorted;
               state.categoryPhotosUrlMap[cat] = driveKey;
-              try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(res.photos.length)); } catch (e) {}
-              if (callback) callback(res.photos);
+              try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(sorted.length)); } catch (e) {}
+              if (callback) callback(sorted);
             } else {
               fallbackDrive();
             }
@@ -2300,7 +2306,7 @@ function isGooglePhotosUrl(url) {
         const pbInput = document.getElementById("pbUrlInput");
         targetUrl = (pbInput && pbInput.value) 
           ? pbInput.value.trim() 
-          : (state.activeConfig.PHOTOBOOTH_URL || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs");
+          : (state.activeConfig.PHOTOBOOTH_URL || "");
       }
 
       if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
@@ -2320,7 +2326,7 @@ function isGooglePhotosUrl(url) {
       // Jika cache foto kategori sudah ada dan cocok dengan targetUrl, gunakan langsung
       if (state.categoryPhotosMap[category] && state.categoryPhotosMap[category].length > 0) {
         if (!effectiveTargetKey || cachedUrl === effectiveTargetKey || cachedUrl === targetUrl) {
-          state.filteredPhotos = state.categoryPhotosMap[category];
+          state.filteredPhotos = sortPhotosNewestFirst(state.categoryPhotosMap[category]);
           renderPhotoGrid(targetUrl, category);
           return;
         }
@@ -2397,7 +2403,7 @@ function isGooglePhotosUrl(url) {
 
       // 4b. Jika kategori Photobooth (mendukung segala variasi URL kustom)
       if (isPbCat) {
-        const pbLink = targetUrl || state.activeConfig.PHOTOBOOTH_URL || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs";
+        const pbLink = targetUrl || state.activeConfig.PHOTOBOOTH_URL || "";
         if (isGooglePhotosUrl(pbLink)) {
           fetchGooglePhotos(category, pbLink, function(photos) {
             state.categoryPhotosUrlMap[category] = pbLink;
@@ -2447,13 +2453,18 @@ function isGooglePhotosUrl(url) {
         return p.category && p.category.toLowerCase() === category.toLowerCase();
       });
 
-      state.filteredPhotos = matched;
+      state.filteredPhotos = sortPhotosNewestFirst(matched);
       renderPhotoGrid(targetUrl, category);
     }
 
     function renderPhotoGrid(targetUrl, categoryName) {
       const grid = document.getElementById("photosGrid");
       if (!grid) return;
+
+      // Pastikan seluruh foto diurutkan berdasarkan waktu terbaru di paling atas
+      if (Array.isArray(state.filteredPhotos) && state.filteredPhotos.length > 0) {
+        state.filteredPhotos = sortPhotosNewestFirst(state.filteredPhotos);
+      }
 
       const activeCat = categoryName || state.activeCategory;
       const isPhotobooth = (activeCat.toLowerCase().includes("photobooth") || (targetUrl && targetUrl.includes("fotoshare.co")));
@@ -2665,48 +2676,22 @@ function isGooglePhotosUrl(url) {
       }
 
       callBackend("adminLogin", { username: username, password: password, pin: password }, function(res) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<span>Masuk</span>`;
         if (res && res.success) {
           onLoginSuccess(res.user);
         } else {
-          // Fallback lokal akun admin
-          const accounts = state.adminAccounts || [
-            { id: "usr_superadmin", username: "admin", password: "123", name: "Super Admin", role: "Super Admin" }
-          ];
-          const matched = accounts.find(function(a) {
-            const uMatch = (a.username && a.username.toLowerCase() === username.toLowerCase()) || (a.name && a.name.toLowerCase() === username.toLowerCase());
-            const pMatch = a.password === password || password === "123" || password === "123456";
-            return uMatch && pMatch;
-          });
-          if (matched) {
-            onLoginSuccess(matched);
-          } else {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = `<span>Masuk</span>`;
-            if (alertBox) {
-              alertBox.innerText = (res && res.message) ? res.message : "Username atau Password tidak sesuai. Silakan coba kembali.";
-              alertBox.style.display = "block";
-            }
+          if (alertBox) {
+            alertBox.innerText = (res && res.message) ? res.message : "Username atau Password tidak sesuai. Silakan coba kembali.";
+            alertBox.style.display = "block";
           }
         }
       }, function(err) {
-        // Fallback offline jika sambungan internet/backend lambat
-        const accounts = state.adminAccounts || [
-          { id: "usr_superadmin", username: "admin", password: "123", name: "Super Admin", role: "Super Admin" }
-        ];
-        const matched = accounts.find(function(a) {
-          const uMatch = (a.username && a.username.toLowerCase() === username.toLowerCase()) || (a.name && a.name.toLowerCase() === username.toLowerCase());
-          const pMatch = a.password === password || password === "123" || password === "123456";
-          return uMatch && pMatch;
-        });
-        if (matched) {
-          onLoginSuccess(matched);
-        } else {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = `<span>Masuk</span>`;
-          if (alertBox) {
-            alertBox.innerText = "Username atau Password tidak sesuai. Silakan coba kembali.";
-            alertBox.style.display = "block";
-          }
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<span>Masuk</span>`;
+        if (alertBox) {
+          alertBox.innerText = (err && err.message) ? err.message : "Gagal terhubung ke database. Periksa koneksi internet Anda.";
+          alertBox.style.display = "block";
         }
       });
     }
@@ -2895,10 +2880,8 @@ function isGooglePhotosUrl(url) {
       container.innerHTML = "";
 
       let categories = state.customCategories;
-      if (!Array.isArray(categories) || categories.length === 0) {
-        categories = GLOBAL_CONFIG.CUSTOM_CATEGORIES || [
-          { name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", enabled: true }
-        ];
+      if (!Array.isArray(categories)) {
+        categories = [];
       }
 
       // 1. Setting Kategori Galeri Utama ("Semua Foto") Khusus Event Aktif + Input Tautan Google Drive Berdampingan
@@ -2941,7 +2924,7 @@ function isGooglePhotosUrl(url) {
       });
       const currentConfigPbUrl = state.activeConfig.PHOTOBOOTH_URL || "";
       if (!pbItem) {
-        pbItem = { id: "special_photobooth", isPhotobooth: true, name: "Photobooth", url: currentConfigPbUrl || "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", enabled: true };
+        pbItem = { id: "special_photobooth", isPhotobooth: true, name: "Photobooth", url: currentConfigPbUrl, enabled: true };
       } else {
         pbItem.isPhotobooth = true;
         pbItem.id = "special_photobooth";
@@ -3235,16 +3218,10 @@ function isGooglePhotosUrl(url) {
           state.adminUsers = res.users;
           renderAdminUsersList(res.users);
         } else {
-          const defaultList = [
-            { id: "usr_superadmin", name: (state.currentAdminUser ? state.currentAdminUser.name : "Super Admin"), role: "Super Admin", pinMasked: "••••" }
-          ];
-          renderAdminUsersList(defaultList);
+          renderAdminUsersList(state.adminUsers || []);
         }
       }, function() {
-        const defaultList = [
-          { id: "usr_superadmin", name: (state.currentAdminUser ? state.currentAdminUser.name : "Super Admin"), role: "Super Admin", pinMasked: "••••" }
-        ];
-        renderAdminUsersList(defaultList);
+        renderAdminUsersList(state.adminUsers || []);
       });
     }
 
@@ -3900,8 +3877,9 @@ function isGooglePhotosUrl(url) {
           if (cachedPhotosStr) {
             const cachedPhotos = JSON.parse(cachedPhotosStr);
             if (Array.isArray(cachedPhotos) && cachedPhotos.length > 0) {
-              state.allPhotos = cachedPhotos;
-              state.filteredPhotos = cachedPhotos;
+              const sortedCached = sortPhotosNewestFirst(cachedPhotos);
+              state.allPhotos = sortedCached;
+              state.filteredPhotos = sortedCached;
               renderPhotoGrid();
             }
           }
@@ -4203,21 +4181,14 @@ function isGooglePhotosUrl(url) {
        ========================================================================== */
     function loadAdminUsers() {
       callBackend("getAdminUsers", { pin: getEffectiveAdminPin() }, function(res) {
-        if (res && res.success && res.users) {
+        if (res && res.success && Array.isArray(res.users)) {
           state.adminAccounts = res.users;
           renderAdminUsersList(res.users);
         } else {
-          // Render fallback lokal akun
-          const accounts = state.adminAccounts || [
-            { id: "usr_superadmin", username: "admin", name: "Super Admin", role: "Super Admin" }
-          ];
-          renderAdminUsersList(accounts);
+          renderAdminUsersList(state.adminAccounts || []);
         }
       }, function() {
-        const accounts = state.adminAccounts || [
-          { id: "usr_superadmin", username: "admin", name: "Super Admin", role: "Super Admin" }
-        ];
-        renderAdminUsersList(accounts);
+        renderAdminUsersList(state.adminAccounts || []);
       });
     }
 

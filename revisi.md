@@ -1,5 +1,40 @@
 # Catatan Revisi & Audit Sistem (Changelog)
 
+## Versi 4.7.0 - Pengurutan Kronologis Foto Terbaru di Atas & Eliminasi Total Fallback Hardcode Semua Menu (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Pengurutan Waktu Terbaru di Paling Atas (Newest First Across All Photos, Categories & Events)**:
+   - **Cakupan Menyeluruh**: Seluruh foto pada semua kategori (Semua Foto, Photobooth, Akad, Resepsi, Kategori Kustom), semua event, slideshow, dan lightbox diurutkan secara kronologis dengan foto yang paling baru diambil/diunggah berada di posisi teratas.
+   - **Komparator Terpadu (`sortPhotosNewestFirst` & `getPhotoTimestamp`)**:
+     - Membaca dan mem-parsing timestamp numerik, ISO date string, field `dateCreated`, `lastUpdated`, `date_added`, dan penanda waktu internal kamera.
+     - Mengekstrak pola waktu dari penamaan file (contoh: epoch timestamp `17...`, format ISO `YYYYMMDD_HHMMSS`, atau nomor sekuensial `#1`, `#2`).
+     - Jika timestamp identik atau berasal dari kamera yang sama tanpa metadata tanggal, sistem menerapkan natural descending alphanumeric sort (`b.name.localeCompare(a.name, undefined, { numeric: true })`) sehingga file dengan urutan sequence terbaru/tertinggi (misal `DSC_0099.JPG` vs `DSC_0001.JPG`) otomatis berada di paling atas.
+   - **Backend & API Endpoints**:
+     - `api/drive-folder.js`: Mengurutkan foto Google Drive berdasarkan waktu modifikasi/pembuatan terbaru di atas.
+     - `api/fotoshare.js`: Mengurutkan foto Photobooth Fotoshare berdasarkan waktu `date_added` terbaru di atas.
+     - `api/google-photos.js`: Mengurutkan foto album Google Photos terbaru di atas.
+     - `api/kingphotobooth.js`: Mengurutkan foto & video Kingphotobooth berdasarkan waktu terbaru di atas.
+     - `code.gs`: Fungsi `scanDriveFolderPhotos`, `scanGooglePhotosAlbum`, `scanFotoshareAlbum`, dan `scanKingPhotoboothEvent` telah disematkan pengurutan kronologis menurun.
+
+2. **Audit dan Eliminasi Total Fallback Hardcode pada Semua Menu (100% Realtime Database)**:
+   - **API Endpoints**:
+     - Dihapus seluruh hardcoded ID/URL fallback (seperti ID folder Drive default `"1GGB77clCMYBIg17J0ECr2eVbD02ZeInW"`, album Fotoshare `"ZJGYCfWbttuEG8Q67ocZs"`, dan album Kingphotobooth `"23d0e80056ae8f2fbb5d116f"`). Seluruh endpoint kini wajib menerima parameter target dinamis dari konfigurasi database.
+   - **Manajemen Akun & Autentikasi Admin**:
+     - Dihapus objek mock fallback akun admin (`usr_superadmin / password: 123 / pin: 123456`) dari `DEFAULT_CONFIG` dan `state`.
+     - Validasi login admin kini 100% menghubungi backend Google Apps Script / Google Sheets (`Akun_Admin`).
+     - Tampilan daftar admin di panel admin (`loadAdminUsers`) tidak lagi menampilkan akun tiruan jika pemanggilan gagal; sistem murni merender akun aktual dari database.
+   - **Manajemen Kategori Foto & Photobooth**:
+     - Menghapus fallback hardcoded tautan Fotoshare pada baris konfigurasi admin dan fungsi rendering.
+     - Input tautan kategori murni memuat data dari konfigurasi event aktif di spreadsheet.
+   - **Instant Hydration & Event Switching**:
+     - Cache lokal disortir `sortPhotosNewestFirst` seketika saat halaman pertama kali dimuat dan saat beralih event.
+     - Fungsi `renderPhotoGrid` menggaransi foto disortir waktu terbaru sebelum elemen DOM dibuat.
+
+3. **Hasil Audit & Verifikasi Pengujian Mandiri**:
+   - `scratch/verify_sorting_and_fallbacks.js`: 24 pengujian PASS 100% (0 FAIL).
+   - `scratch/audit_all_menu_handlers.js`: 34 fungsi interaktif HTML aktif dan valid.
+   - Kompilasi `js/app.js`, `api/*.js`, dan `code.gs`: Syntax valid (Code 0).
+
 ## Versi 4.6.0 - Penghapusan Fallback Foto Kategori & QR Code Branded Berlogo Monogram (19 November 2026)
 
 ### 1. Perbaikan yang Diperintahkan & Diterapkan:

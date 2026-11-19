@@ -1,6 +1,10 @@
 export default async function handler(req, res) {
-  const targetUrl = req.query.url || "https://photos.google.com/share/AF1QipMagPm7xWB2YANajDr3hx-J4WKyhOgIQ41jUjqQnxv5LSy6392pyWC5hOfsQoz1mA?key=c1BLMDNyRGw4bEJyUWo5b1Y0eFlmTy14X1pESEdR";
+  const targetUrl = req.query.url;
   const category = req.query.category || "Photobooth";
+
+  if (!targetUrl) {
+    return res.status(400).json({ success: false, message: "Parameter url Google Photos wajib disertakan." });
+  }
 
   try {
     const response = await fetch(targetUrl, {
@@ -37,10 +41,19 @@ export default async function handler(req, res) {
           highResUrl: base + "=w2400-h1800",
           downloadUrl: base + "=d",
           category: category,
-          isPhotobooth: true
+          isPhotobooth: true,
+          timestamp: Date.now() - (matches.length - count) * 1000
         });
       }
     }
+
+    // Urutkan foto paling baru di atas
+    photos.sort(function(a, b) {
+      const tA = a.timestamp || 0;
+      const tB = b.timestamp || 0;
+      if (tB !== tA) return tB - tA;
+      return String(b.name || "").localeCompare(String(a.name || ""), undefined, { numeric: true });
+    });
 
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");

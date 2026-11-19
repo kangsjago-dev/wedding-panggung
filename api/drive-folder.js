@@ -1,6 +1,10 @@
 export default async function handler(req, res) {
-  const folderTarget = req.query.folderId || req.query.url || "1GGB77clCMYBIg17J0ECr2eVbD02ZeInW";
-  const category = req.query.category || "Wedding";
+  const folderTarget = req.query.folderId || req.query.url;
+  const category = req.query.category || "Semua Foto";
+
+  if (!folderTarget) {
+    return res.status(400).json({ success: false, message: "Parameter folderId atau url Google Drive wajib disertakan." });
+  }
 
   let cleanId = String(folderTarget).trim();
   const match = cleanId.match(/folders\/([a-zA-Z0-9_\-]+)/);
@@ -78,6 +82,14 @@ export default async function handler(req, res) {
         }
       }
     }
+
+    // Urutkan foto berdasarkan waktu paling baru di atas (Newest First)
+    photos.sort(function(a, b) {
+      const tA = a.timestamp || 0;
+      const tB = b.timestamp || 0;
+      if (tB !== tA) return tB - tA;
+      return String(b.name || "").localeCompare(String(a.name || ""), undefined, { numeric: true });
+    });
 
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");

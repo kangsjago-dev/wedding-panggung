@@ -1,6 +1,10 @@
 export default async function handler(req, res) {
-  const targetUrl = req.query.url || "https://x1.kingphotobooth.co/e/23d0e80056ae8f2fbb5d116f";
+  const targetUrl = req.query.url;
   const category = req.query.category || "Photobooth";
+
+  if (!targetUrl) {
+    return res.status(400).json({ success: false, message: "Parameter url Kingphotobooth wajib disertakan." });
+  }
 
   try {
     const urlObj = new URL(targetUrl);
@@ -57,8 +61,17 @@ export default async function handler(req, res) {
         isKing: true,
         isPhotobooth: true,
         shareToken: it.share_token,
-        originalWebUrl: origin + "/i/" + (it.share_token || it.id)
+        originalWebUrl: origin + "/i/" + (it.share_token || it.id),
+        timestamp: it.timestamp || it.created_at || (Date.now() - idx * 1000)
       };
+    });
+
+    // Urutkan foto berdasarkan waktu paling baru di atas (Newest First)
+    photos.sort(function(a, b) {
+      const tA = a.timestamp || 0;
+      const tB = b.timestamp || 0;
+      if (tB !== tA) return tB - tA;
+      return String(b.name || "").localeCompare(String(a.name || ""), undefined, { numeric: true });
     });
 
     res.setHeader("Access-Control-Allow-Origin", "*");
