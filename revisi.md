@@ -1,5 +1,42 @@
 # Catatan Revisi & Audit Sistem (Changelog)
 
+## Versi 4.18.0 - Perbaikan Akses Acara andre-fayola-281 & Implementasi Penghapusan Permanen Acara (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Perbaikan Akses & Tampilan Acara `andre-fayola-281`**:
+   - **Akar Masalah**:
+     - Tautan `https://gallery.runway.my.id/?event=wilson-felicia-133` terbuka dengan sangat baik karena memiliki 66 foto pada folder Photostage.
+     - Sebaliknya, tautan `https://gallery.runway.my.id/?event=andre-fayola-281` mengalami error/stuck pada skeleton loading karena:
+       1. Folder Google Drive untuk Photostage Andre & Fayola (`1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh`) masih kosong (0 foto), sedangkan 130 foto mereka berada di Photobooth (`https://photos.app.goo.gl/QkqewYw4dWfocxfK8`).
+       2. Pada saat acara Andre & Fayola dimuat, `state.activeCategory` tetap berada pada nilai default `"Semua Foto"`. Padahal label tab utama acara ini adalah `"Photostage"`. Akibatnya, kedua tab (`Photostage` dan `Photobooth`) tidak memiliki kelas `.active` (tidak ada tab aktif yang terseleksi).
+       3. Di `applyCategoryFilter()`, jika `category` bernilai undefined atau tidak cocok, terjadi potensi `TypeError: Cannot read properties of undefined (reading 'toLowerCase')`.
+       4. Di `renderCategoryTabs()`, saat hitungan badge masih kosong, elemen `<span class="pill-count"></span>` tetap dirender dan karena CSS `padding: 1px 7px; background: ...;` tampil sebagai tanda strip `-` yang tidak rapi.
+   - **Solusi Rekayasa Sistem**:
+     - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) pada `initApp()`, `syncFromSpreadsheetGViz()`, dan `handleGalleryResponse()`: Menyelaraskan `state.activeCategory = state.allPhotosLabel` seketika saat event aktif terdeteksi. Untuk `andre-fayola-281`, tab `Photostage` langsung aktif secara otomatis.
+     - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) pada `renderCategoryTabs()`: Menambahkan logika evaluasi `isTabActive` yang toleran terhadap alias label utama sehingga tab utama selalu terpilih dengan kelas `.active`.
+     - Di [css/style.css](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/css/style.css): Menambahkan aturan `.filter-pill .pill-count:empty { display: none; }` agar badge hitungan yang kosong disembunyikan secara bersih dan tidak menampilkan strip `-`.
+     - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) pada `applyCategoryFilter()`: Memproteksi parameter dengan `effectiveCat = String(category || state.activeCategory || state.allPhotosLabel || "Semua Foto").trim()` untuk mencegah segala bentuk TypeError.
+     - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) pada `renderPhotoGrid()`: Jika tab Photostage kosong namun terdapat foto pada kategori lain (seperti Photobooth yang berisi 130 foto), sistem menampilkan tombol pintas emas elegan `"Buka Foto Photobooth (130 Foto) →"` di kartu informasi kosong, sehingga pengunjung dapat langsung menikmati foto yang tersedia.
+
+2. **Implementasi Penghapusan Permanen Acara (*Persistent Event Deletion*)**:
+   - **Akar Masalah**:
+     - Fungsi `handleDeleteCurrentEvent()` sebelumnya hanya memfilter array `state.events` di memori RAM sesi lokal saja tanpa pernah memanggil backend API.
+     - Tidak ada pembaruan ke Google Spreadsheet (sheet `Pengaturan` baris `EVENTS` dan sheet `Daftar_Acara`).
+     - `WEDDING_EVENTS_REGISTRY` di `localStorage` tidak diperbarui dan cache konfigurasi event lama tidak dihapus.
+     - Akibatnya, saat halaman di-refresh atau sinkronisasi background GViz berjalan (setiap 20 detik), acara yang telah dihapus di-fetch kembali dari spreadsheet dan **muncul kembali** seketika!
+     - Di [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) backend Google Apps Script belum memiliki fungsi router maupun controller untuk `deleteEvent`.
+   - **Solusi Rekayasa Sistem**:
+     - Di [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs): Menambahkan fungsi `deleteEvent(adminPin, targetEventId)` lengkap dengan verifikasi PIN admin, validasi batas minimal 1 acara, filter array `EVENTS`, pembaruan sheet `Pengaturan`, pembaruan master ERP sheet `Daftar_Acara` via `syncEventsToSheet`, penghapusan baris foto terkait di `Daftar_Foto`, pencatatan ke `Log_Aktivitas`, dan pembersihan cache script. Serta mendaftarkan rute `deleteEvent` pada `handleApiRequest()`.
+     - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) pada `callBackend`: Mendaftarkan rute pemanggilan `deleteEvent`.
+     - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) pada `handleDeleteCurrentEvent()`: Mengimplementasikan pemanggilan backend riil dengan mekanisme fallback otomatis ke `saveAdminSettings` (menyimpan daftar `EVENTS` dan `ACTIVE_EVENT_ID` yang baru) apabila deployment GAS pengguna masih menggunakan build lama. Membersihkan `localStorage` (`WEDDING_EVENTS_REGISTRY`, `WEDDING_EVENT_CFG_{id}`, `WEDDING_EVENT_PHOTOS_{id}`), berpindah ke acara yang tersisa via `handleSelectEventChange()`, dan memperbarui dropdown admin secara instan.
+     - Di [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/config.json): Membersihkan entri duplikat acara legacy `wilson-felicia` sehingga daftar acara resmi hanya menyisakan `andre-fayola-281` dan `wilson-felicia-133`.
+
+3. **Audit & Verifikasi Pengujian Menyeluruh**:
+   - `scratch/test_event_deletion_and_andre_fayola.js`: 9 pengujian PASS 100% (0 FAIL).
+   - Seluruh test regression (`test_duplicate_drive_field_removed.js`, `test_empty_state_redesign.js`, `test_photostage_fallback_fix.js`, `test_uncompressed_download.js`): Semua PASS 100%.
+
+---
+
 ## Versi 4.17.0 - Pemulihan Akses Website Utama, Resolusi Otomatis Acara Aktif & Penanganan Tautan Tanpa Parameter (19 November 2026)
 
 ### 1. Perbaikan yang Diperintahkan & Diterapkan:

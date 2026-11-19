@@ -69,27 +69,6 @@
         }
       ],
       "status": "Aktif"
-    },
-    {
-      "id": "wilson-felicia",
-      "name": "Wilson & Felicia",
-      "date": "16 November 2026",
-      "venue": "UpperHills Convention Hall, Makassar",
-      "homeUrl": "https://gallery.runway.my.id/?event=wilson-felicia",
-      "driveFolderId": "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
-      "allPhotosLabel": "Photostage",
-      "photoboothUrl": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
-      "frameImageUrl": "",
-      "logoUrl": "",
-      "customCategories": [
-        {
-          "name": "Photobooth",
-          "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
-          "enabled": true,
-          "isPhotobooth": true
-        }
-      ],
-      "status": "Aktif"
     }
   ],
   "EVENT_NAME": "Andre & Fayola",

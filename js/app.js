@@ -688,14 +688,17 @@ function isGooglePhotosUrl(url) {
                   remoteCfg.CUSTOM_CATEGORIES = matchedEv.customCategories;
                 }
                 remoteCfg.COVER_SETTINGS = matchedEv.coverSettings;
+
+                state.allPhotosLabel = matchedEv.allPhotosLabel || "Semua Foto";
+                state.activeCategory = state.allPhotosLabel;
               }
             }
             if (remoteCfg.ADMIN_ACCOUNTS) {
               state.adminAccounts = remoteCfg.ADMIN_ACCOUNTS;
             }
 
-            // Lindungi kategori tersimpan lokal dari Google Sheet agar tidak terjadi flicker/tab hantu
-            const savedCatsStr = localStorage.getItem("WEDDING_SAVED_CUSTOM_CATEGORIES");
+            // Lindungi kategori tersimpan lokal khusus event ini
+            const savedCatsStr = localStorage.getItem("WEDDING_SAVED_CUSTOM_CATEGORIES_" + state.currentEventId);
             if (savedCatsStr) {
               try {
                 const parsedCats = JSON.parse(savedCatsStr);
@@ -861,6 +864,14 @@ function isGooglePhotosUrl(url) {
               state.customCategories = matchedEv.customCategories;
             }
 
+            if (matchedEv.allPhotosLabel) {
+              state.activeConfig.ALL_PHOTOS_LABEL = matchedEv.allPhotosLabel;
+              state.allPhotosLabel = matchedEv.allPhotosLabel;
+            }
+            if (!state.activeCategory || state.activeCategory === "Semua Foto" || state.activeCategory === "Photostage") {
+              state.activeCategory = state.allPhotosLabel || "Semua Foto";
+            }
+
             if (!state.currentEventId || !state.activeConfig.EVENT_NAME) {
               if (sheetMap.EVENT_DATE) state.activeConfig.EVENT_DATE = sheetMap.EVENT_DATE;
               if (sheetMap.EVENT_VENUE) state.activeConfig.EVENT_VENUE = sheetMap.EVENT_VENUE;
@@ -1009,6 +1020,8 @@ function isGooglePhotosUrl(url) {
           google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).addAdminUser(payload.pin, payload.newUser);
         } else if (action === "deleteAdminUser") {
           google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).deleteAdminUser(payload.pin, payload.targetUserId);
+        } else if (action === "deleteEvent") {
+          google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).deleteEvent(payload.pin, payload.targetEventId);
         } else if (action === "getImageBase64") {
           google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).getImageBase64(payload.fileId);
         } else if (action === "changeAdminPin") {
@@ -1191,6 +1204,9 @@ function isGooglePhotosUrl(url) {
         }
         if (state.activeConfig.ALL_PHOTOS_LABEL) {
           state.allPhotosLabel = state.activeConfig.ALL_PHOTOS_LABEL;
+          if (!state.activeCategory || state.activeCategory === "Semua Foto" || state.activeCategory === "Photostage") {
+            state.activeCategory = state.allPhotosLabel;
+          }
         }
         if (state.activeConfig.COVER_SETTINGS) {
           try {
@@ -1684,8 +1700,12 @@ function isGooglePhotosUrl(url) {
           }
         }
 
+        const activeCatLower = (state.activeCategory || "").trim().toLowerCase();
+        const isTabActive = (cat.toLowerCase() === activeCatLower) ||
+          (isMain && (activeCatLower === "semua foto" || activeCatLower === mainLabel.toLowerCase()));
+
         const pill = document.createElement("button");
-        pill.className = "filter-pill " + (cat === state.activeCategory ? "active" : "");
+        pill.className = "filter-pill " + (isTabActive ? "active" : "");
         pill.setAttribute("data-category", cat);
         pill.onclick = function() { selectCategory(cat, targetUrl); };
 
@@ -2237,19 +2257,20 @@ function isGooglePhotosUrl(url) {
     }
 
     function applyCategoryFilter(category, targetUrl, isSilent) {
+      const effectiveCat = String(category || state.activeCategory || state.allPhotosLabel || "Semua Foto").trim();
       const mainLabel = state.allPhotosLabel || "Semua Foto";
-      const isMain = (category === mainLabel || category === "Semua Foto");
+      const isMain = (effectiveCat.toLowerCase() === mainLabel.toLowerCase() || effectiveCat.toLowerCase() === "semua foto");
 
       if (isMain) {
         state.filteredPhotos = state.allPhotos;
-        renderPhotoGrid(targetUrl, category);
+        renderPhotoGrid(targetUrl, effectiveCat);
         return;
       }
 
       // Robust check apakah kategori ini merupakan kategori spesial Photobooth
-      const isPbCat = (category.toLowerCase().includes("photobooth")) ||
+      const isPbCat = (effectiveCat.toLowerCase().includes("photobooth")) ||
         (Array.isArray(state.customCategories) && state.customCategories.some(function(c) {
-          return c && (c.isPhotobooth || c.id === "special_photobooth") && String(c.name || "").trim().toLowerCase() === category.toLowerCase();
+          return c && (c.isPhotobooth || c.id === "special_photobooth") && String(c.name || "").trim().toLowerCase() === effectiveCat.toLowerCase();
         }));
 
       // Pastikan targetUrl selalu di-resolve dari customCategories jika tidak dioper
@@ -2257,7 +2278,7 @@ function isGooglePhotosUrl(url) {
         const matchedCat = state.customCategories.find(function(c) {
           if (!c) return false;
           const cName = String(c.name || "").trim().toLowerCase();
-          if (cName === category.toLowerCase()) return true;
+          if (cName === effectiveCat.toLowerCase()) return true;
           if (isPbCat && (c.isPhotobooth || c.id === "special_photobooth")) return true;
           return false;
         });
@@ -2276,22 +2297,22 @@ function isGooglePhotosUrl(url) {
       if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
       if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
 
-      const cachedUrl = state.categoryPhotosUrlMap[category];
+      const cachedUrl = state.categoryPhotosUrlMap[effectiveCat];
       const driveFolderId = extractDriveFolderId(targetUrl);
       const effectiveTargetKey = driveFolderId ? ("drive:" + driveFolderId) : targetUrl;
 
       // 1. Jika sudah ada cache foto kategori: cek ketat apakah URL berubah
       if (effectiveTargetKey && cachedUrl && cachedUrl !== effectiveTargetKey && cachedUrl !== targetUrl) {
         // Tautan telah diganti! Hapus cache lama agar foto dimuat dari tautan baru
-        delete state.categoryPhotosMap[category];
-        delete state.categoryPhotosUrlMap[category];
+        delete state.categoryPhotosMap[effectiveCat];
+        delete state.categoryPhotosUrlMap[effectiveCat];
       }
 
       // Jika cache foto kategori sudah ada dan cocok dengan targetUrl, gunakan langsung
-      if (state.categoryPhotosMap[category] && state.categoryPhotosMap[category].length > 0) {
+      if (state.categoryPhotosMap[effectiveCat] && state.categoryPhotosMap[effectiveCat].length > 0) {
         if (!effectiveTargetKey || cachedUrl === effectiveTargetKey || cachedUrl === targetUrl) {
-          state.filteredPhotos = sortPhotosNewestFirst(state.categoryPhotosMap[category]);
-          renderPhotoGrid(targetUrl, category);
+          state.filteredPhotos = sortPhotosNewestFirst(state.categoryPhotosMap[effectiveCat]);
+          renderPhotoGrid(targetUrl, effectiveCat);
           return;
         }
       }
@@ -2315,12 +2336,12 @@ function isGooglePhotosUrl(url) {
 
       // 2. Jika tautan Google Photos (album bersama atau photos.app.goo.gl)
       if (isGooglePhotosUrl(targetUrl)) {
-        fetchGooglePhotos(category, targetUrl, function(photos) {
-          state.categoryPhotosUrlMap[category] = targetUrl;
-          updateCategoryPillCount(category, photos.length);
-          if (state.activeCategory === category) {
+        fetchGooglePhotos(effectiveCat, targetUrl, function(photos) {
+          state.categoryPhotosUrlMap[effectiveCat] = targetUrl;
+          updateCategoryPillCount(effectiveCat, photos.length);
+          if (state.activeCategory === effectiveCat) {
             state.filteredPhotos = photos;
-            renderPhotoGrid(targetUrl, category);
+            renderPhotoGrid(targetUrl, effectiveCat);
           }
         });
         return;
@@ -2328,12 +2349,12 @@ function isGooglePhotosUrl(url) {
 
       // 3b. Jika tautan eksternal kingphotobooth
       if (targetUrl && (targetUrl.includes("kingphotobooth.co") || targetUrl.includes("kingphoto"))) {
-        fetchKingPhotoboothPhotos(category, targetUrl, function(photos) {
-          state.categoryPhotosUrlMap[category] = targetUrl;
-          updateCategoryPillCount(category, photos.length);
-          if (state.activeCategory === category) {
+        fetchKingPhotoboothPhotos(effectiveCat, targetUrl, function(photos) {
+          state.categoryPhotosUrlMap[effectiveCat] = targetUrl;
+          updateCategoryPillCount(effectiveCat, photos.length);
+          if (state.activeCategory === effectiveCat) {
             state.filteredPhotos = photos;
-            renderPhotoGrid(targetUrl, category);
+            renderPhotoGrid(targetUrl, effectiveCat);
           }
         });
         return;
@@ -2341,12 +2362,12 @@ function isGooglePhotosUrl(url) {
 
       // 3. Jika tautan eksternal fotoshare
       if (targetUrl && targetUrl.includes("fotoshare.co")) {
-        fetchFotosharePhotos(category, targetUrl, function(photos) {
-          state.categoryPhotosUrlMap[category] = targetUrl;
-          updateCategoryPillCount(category, photos.length);
-          if (state.activeCategory === category) {
+        fetchFotosharePhotos(effectiveCat, targetUrl, function(photos) {
+          state.categoryPhotosUrlMap[effectiveCat] = targetUrl;
+          updateCategoryPillCount(effectiveCat, photos.length);
+          if (state.activeCategory === effectiveCat) {
             state.filteredPhotos = photos;
-            renderPhotoGrid(targetUrl, category);
+            renderPhotoGrid(targetUrl, effectiveCat);
           }
         });
         return;
@@ -2354,12 +2375,12 @@ function isGooglePhotosUrl(url) {
 
       // 4. Jika tautan folder Google Drive
       if (driveFolderId) {
-        fetchDriveCategoryPhotos(category, driveFolderId, function(photos) {
-          state.categoryPhotosUrlMap[category] = "drive:" + driveFolderId;
-          updateCategoryPillCount(category, photos.length);
-          if (state.activeCategory === category) {
+        fetchDriveCategoryPhotos(effectiveCat, driveFolderId, function(photos) {
+          state.categoryPhotosUrlMap[effectiveCat] = "drive:" + driveFolderId;
+          updateCategoryPillCount(effectiveCat, photos.length);
+          if (state.activeCategory === effectiveCat) {
             state.filteredPhotos = photos;
-            renderPhotoGrid(targetUrl, category);
+            renderPhotoGrid(targetUrl, effectiveCat);
           }
         });
         return;
@@ -2369,44 +2390,44 @@ function isGooglePhotosUrl(url) {
       if (isPbCat) {
         const pbLink = targetUrl || state.activeConfig.PHOTOBOOTH_URL || "";
         if (isGooglePhotosUrl(pbLink)) {
-          fetchGooglePhotos(category, pbLink, function(photos) {
-            state.categoryPhotosUrlMap[category] = pbLink;
-            updateCategoryPillCount(category, photos.length);
-            if (state.activeCategory === category) {
+          fetchGooglePhotos(effectiveCat, pbLink, function(photos) {
+            state.categoryPhotosUrlMap[effectiveCat] = pbLink;
+            updateCategoryPillCount(effectiveCat, photos.length);
+            if (state.activeCategory === effectiveCat) {
               state.filteredPhotos = photos;
-              renderPhotoGrid(pbLink, category);
+              renderPhotoGrid(pbLink, effectiveCat);
             }
           });
           return;
         }
         if (extractDriveFolderId(pbLink)) {
-          fetchDriveCategoryPhotos(category, extractDriveFolderId(pbLink), function(photos) {
-            state.categoryPhotosUrlMap[category] = "drive:" + extractDriveFolderId(pbLink);
-            updateCategoryPillCount(category, photos.length);
-            if (state.activeCategory === category) {
+          fetchDriveCategoryPhotos(effectiveCat, extractDriveFolderId(pbLink), function(photos) {
+            state.categoryPhotosUrlMap[effectiveCat] = "drive:" + extractDriveFolderId(pbLink);
+            updateCategoryPillCount(effectiveCat, photos.length);
+            if (state.activeCategory === effectiveCat) {
               state.filteredPhotos = photos;
-              renderPhotoGrid(pbLink, category);
+              renderPhotoGrid(pbLink, effectiveCat);
             }
           });
           return;
         }
         if (pbLink.includes("kingphotobooth.co") || pbLink.includes("kingphoto")) {
-          fetchKingPhotoboothPhotos(category, pbLink, function(photos) {
-            state.categoryPhotosUrlMap[category] = pbLink;
-            updateCategoryPillCount(category, photos.length);
-            if (state.activeCategory === category) {
+          fetchKingPhotoboothPhotos(effectiveCat, pbLink, function(photos) {
+            state.categoryPhotosUrlMap[effectiveCat] = pbLink;
+            updateCategoryPillCount(effectiveCat, photos.length);
+            if (state.activeCategory === effectiveCat) {
               state.filteredPhotos = photos;
-              renderPhotoGrid(pbLink, category);
+              renderPhotoGrid(pbLink, effectiveCat);
             }
           });
           return;
         }
-        fetchFotosharePhotos(category, pbLink, function(photos) {
-          state.categoryPhotosUrlMap[category] = pbLink;
-          updateCategoryPillCount(category, photos.length);
-          if (state.activeCategory === category) {
+        fetchFotosharePhotos(effectiveCat, pbLink, function(photos) {
+          state.categoryPhotosUrlMap[effectiveCat] = pbLink;
+          updateCategoryPillCount(effectiveCat, photos.length);
+          if (state.activeCategory === effectiveCat) {
             state.filteredPhotos = photos;
-            renderPhotoGrid(pbLink, category);
+            renderPhotoGrid(pbLink, effectiveCat);
           }
         });
         return;
@@ -2414,11 +2435,11 @@ function isGooglePhotosUrl(url) {
 
       // 5. Filter ketat: Jika tanpa link eksternal, hanya cocokkan label kategori secara eksak (tanpa fallback hardcode)
       let matched = state.allPhotos.filter(function(p) {
-        return p.category && p.category.toLowerCase() === category.toLowerCase();
+        return p.category && p.category.toLowerCase() === effectiveCat.toLowerCase();
       });
 
       state.filteredPhotos = sortPhotosNewestFirst(matched);
-      renderPhotoGrid(targetUrl, category);
+      renderPhotoGrid(targetUrl, effectiveCat);
     }
 
     function renderPhotoGrid(targetUrl, categoryName) {
@@ -2454,6 +2475,26 @@ function isGooglePhotosUrl(url) {
 
       // Jika foto kosong untuk kategori ini
       if (!state.filteredPhotos || state.filteredPhotos.length === 0) {
+        let switchButtonHtml = "";
+        const mainLabel = state.allPhotosLabel || "Semua Foto";
+        const isMainTab = (activeCat.toLowerCase() === mainLabel.toLowerCase() || activeCat.toLowerCase() === "semua foto");
+        if (isMainTab && Array.isArray(state.customCategories)) {
+          const pbCat = state.customCategories.find(function(c) {
+            return c && c.enabled !== false && c.name && c.name.toLowerCase() !== mainLabel.toLowerCase();
+          });
+          if (pbCat && pbCat.name) {
+            const pbCount = (state.categoryPhotosMap && state.categoryPhotosMap[pbCat.name] && state.categoryPhotosMap[pbCat.name].length) || "";
+            switchButtonHtml = `
+              <button type="button" class="empty-gallery-btn-refresh" style="background: var(--gold-dark); color: #FFFFFF; border-color: var(--gold-dark); font-weight: 600;" onclick="selectCategory('${escapeHtml(pbCat.name)}', '${escapeHtml(pbCat.url || '')}')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+                <span>Buka Foto ${escapeHtml(pbCat.name)} ${pbCount ? '(' + pbCount + ' Foto) ' : ''}&rarr;</span>
+              </button>
+            `;
+          }
+        }
+
         grid.innerHTML = `
           <div class="empty-gallery-card">
             <div class="empty-gallery-icon-wrap" aria-hidden="true">
@@ -2474,6 +2515,7 @@ function isGooglePhotosUrl(url) {
                 </svg>
                 <span>Segarkan Kategori Ini</span>
               </button>
+              ${switchButtonHtml}
               ${targetUrl ? `
                 <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="empty-gallery-btn-source">
                   <span>Buka Album Sumber</span>
@@ -4082,18 +4124,115 @@ function isGooglePhotosUrl(url) {
 
     function handleDeleteCurrentEvent() {
       if (!Array.isArray(state.events) || state.events.length <= 1) {
-        showToast("⚠️ Tidak dapat menghapus event karena hanya ada 1 event tersisa.");
+        showToast("⚠️ Tidak dapat menghapus event karena hanya ada 1 event tersisa.", "warning");
         return;
       }
 
-      if (!confirm("Yakin ingin menghapus event '" + (state.activeConfig.EVENT_NAME || state.currentEventId) + "'?")) return;
-
       const deleteId = state.currentEventId;
-      state.events = state.events.filter(function(e) { return e.id !== deleteId; });
-      const nextEvent = state.events[0];
-      handleSelectEventChange(nextEvent.id);
-      renderAdminEventsManager();
-      showToast("✓ Event berhasil dihapus.");
+      const curEv = (state.events || []).find(function(e) { return e && e.id === deleteId; }) || {};
+      const eventName = curEv.name || state.activeConfig.EVENT_NAME || deleteId;
+
+      if (!confirm("Yakin ingin menghapus permanen event '" + eventName + "' dari sistem dan database? Seluruh konfigurasi event ini akan dihapus.")) return;
+
+      const deleteBtn = document.getElementById("btnDeleteCurrentEvent");
+      if (deleteBtn) {
+        deleteBtn.disabled = true;
+        deleteBtn.innerHTML = "<span>⏳ Menghapus...</span>";
+      }
+
+      showToast("⏳ Sedang menghapus event '" + eventName + "' dari database...", "info");
+
+      const pin = getEffectiveAdminPin();
+      const updatedEvents = state.events.filter(function(e) { return e && e.id !== deleteId; });
+      const nextEvent = updatedEvents[0];
+      const nextId = (nextEvent && nextEvent.id) || "";
+
+      function finalizeEventDeletion(resEvents, resActiveId) {
+        const finalEvents = (Array.isArray(resEvents) && resEvents.length > 0) ? resEvents : updatedEvents;
+        state.events = finalEvents;
+        const targetNextId = resActiveId || nextId || (finalEvents[0] && finalEvents[0].id) || "";
+
+        try {
+          localStorage.setItem("WEDDING_EVENTS_REGISTRY", JSON.stringify(finalEvents));
+          localStorage.removeItem("WEDDING_EVENT_CFG_" + deleteId);
+          localStorage.removeItem("WEDDING_EVENT_PHOTOS_" + deleteId);
+          localStorage.removeItem("WEDDING_EVENT_PHOTOS_COUNT_" + deleteId);
+        } catch(e) {}
+
+        if (targetNextId) {
+          handleSelectEventChange(targetNextId);
+        }
+        renderAdminEventsManager();
+
+        if (deleteBtn) {
+          deleteBtn.disabled = false;
+          deleteBtn.innerHTML = "<span>🗑️ Hapus</span>";
+        }
+        showToast("✓ Event '" + eventName + "' berhasil dihapus permanen dari sistem.");
+      }
+
+      // 1. Coba panggil action deleteEvent ke backend
+      callBackend("deleteEvent", { pin: pin, targetEventId: deleteId }, function(res) {
+        if (res && res.success) {
+          finalizeEventDeletion(res.events, res.activeEventId);
+        } else if (res && res.message && res.message.includes("Aksi tidak dikenali")) {
+          // Fallback ke saveAdminSettings jika GAS deployment sedang versi lama
+          callBackend("saveAdminSettings", {
+            pin: pin,
+            config: {
+              ACTIVE_EVENT_ID: nextId,
+              EVENTS: JSON.stringify(updatedEvents)
+            }
+          }, function(saveRes) {
+            if (saveRes && saveRes.success) {
+              finalizeEventDeletion(updatedEvents, nextId);
+            } else {
+              if (deleteBtn) {
+                deleteBtn.disabled = false;
+                deleteBtn.innerHTML = "<span>🗑️ Hapus</span>";
+              }
+              showToast("⚠️ Gagal menghapus event: " + ((saveRes && saveRes.message) || "Terjadi kesalahan."), "error");
+            }
+          }, function(saveErr) {
+            if (deleteBtn) {
+              deleteBtn.disabled = false;
+              deleteBtn.innerHTML = "<span>🗑️ Hapus</span>";
+            }
+            showToast("⚠️ Gagal menyimpan pembaruan ke database: " + saveErr.message, "error");
+          });
+        } else {
+          if (deleteBtn) {
+            deleteBtn.disabled = false;
+            deleteBtn.innerHTML = "<span>🗑️ Hapus</span>";
+          }
+          showToast("⚠️ Gagal menghapus event: " + ((res && res.message) || "Terjadi kesalahan."), "error");
+        }
+      }, function(err) {
+        // Fallback jika callBackend error: coba via saveAdminSettings
+        callBackend("saveAdminSettings", {
+          pin: pin,
+          config: {
+            ACTIVE_EVENT_ID: nextId,
+            EVENTS: JSON.stringify(updatedEvents)
+          }
+        }, function(saveRes) {
+          if (saveRes && saveRes.success) {
+            finalizeEventDeletion(updatedEvents, nextId);
+          } else {
+            if (deleteBtn) {
+              deleteBtn.disabled = false;
+              deleteBtn.innerHTML = "<span>🗑️ Hapus</span>";
+            }
+            showToast("⚠️ Gagal menghapus event: " + err.message, "error");
+          }
+        }, function() {
+          if (deleteBtn) {
+            deleteBtn.disabled = false;
+            deleteBtn.innerHTML = "<span>🗑️ Hapus</span>";
+          }
+          showToast("⚠️ Gagal menghubungi server backend: " + err.message, "error");
+        });
+      });
     }
 
     function copyActiveEventUrl() {

@@ -857,6 +857,8 @@ function handleApiRequest(e) {
       return addAdminUser(params.pin, params.newUser);
     } else if (action === "deleteAdminUser") {
       return deleteAdminUser(params.pin, params.targetUserId);
+    } else if (action === "deleteEvent") {
+      return deleteEvent(params.pin, params.targetEventId || params.eventId);
     } else if (action === "changeAdminPin") {
       return changeAdminPin(params.pin, params.newPin);
     } else if (action === "getFolderPhotos" || action === "getCategoryPhotos") {
@@ -1802,6 +1804,116 @@ function deleteAdminUser(currentPin, targetUserId) {
     success: true,
     message: "Pengguna '" + deletedUser.name + "' berhasil dihapus.",
     users: getSafeUsersList(users)
+  };
+}
+
+/**
+ * Menghapus Event Pernikahan Secara Permanen dari Database Spreadsheet & ScriptProperties
+ */
+function deleteEvent(adminPin, targetEventId) {
+  var loginResult = adminLogin(adminPin);
+  if (!loginResult.success) {
+    return { success: false, message: "Akses ditolak: PIN otorisasi salah." };
+  }
+
+  if (!targetEventId || typeof targetEventId !== "string" || !targetEventId.trim()) {
+    return { success: false, message: "ID event yang akan dihapus tidak valid." };
+  }
+  var cleanTargetId = targetEventId.trim();
+
+  var props = PropertiesService.getScriptProperties();
+  var ss = getDatabaseSpreadsheet();
+
+  // 1. Baca daftar events saat ini
+  var eventsList = [];
+  if (ss) {
+    eventsList = readEventsFromSheet(ss);
+  }
+  if (!Array.isArray(eventsList) || eventsList.length === 0) {
+    try {
+      var rawEvs = props.getProperty("EVENTS") || WEDDING_CONFIG.EVENTS;
+      eventsList = typeof rawEvs === "string" ? JSON.parse(rawEvs) : (rawEvs || []);
+    } catch (e) {
+      eventsList = [];
+    }
+  }
+
+  if (!Array.isArray(eventsList) || eventsList.length <= 1) {
+    return { success: false, message: "Tidak dapat menghapus event karena hanya ada 1 event tersisa dalam sistem." };
+  }
+
+  var found = false;
+  var targetName = cleanTargetId;
+  var remainingEvents = [];
+
+  for (var i = 0; i < eventsList.length; i++) {
+    var ev = eventsList[i];
+    if (ev && ev.id === cleanTargetId) {
+      found = true;
+      targetName = ev.name || cleanTargetId;
+    } else if (ev && ev.id) {
+      remainingEvents.push(ev);
+    }
+  }
+
+  if (!found) {
+    return { success: false, message: "Event dengan ID '" + cleanTargetId + "' tidak ditemukan dalam database." };
+  }
+
+  // Tentukan event aktif baru jika event yang dihapus adalah event yang sedang aktif
+  var currentActiveId = props.getProperty("ACTIVE_EVENT_ID") || "";
+  var newActiveId = currentActiveId;
+  if (currentActiveId === cleanTargetId || !remainingEvents.some(function(e) { return e.id === currentActiveId; })) {
+    newActiveId = remainingEvents[0].id;
+  }
+
+  var updatedEventsJson = JSON.stringify(remainingEvents);
+
+  // 2. Simpan ke ScriptProperties
+  props.setProperty("EVENTS", updatedEventsJson);
+  props.setProperty("ACTIVE_EVENT_ID", newActiveId);
+
+  // 3. Simpan ke Google Spreadsheet
+  if (ss) {
+    // A. Update sheet Pengaturan
+    writeConfigToSheet(ss, {
+      EVENTS: updatedEventsJson,
+      ACTIVE_EVENT_ID: newActiveId
+    });
+
+    // B. Update sheet Daftar_Acara (ERP Master Table)
+    syncEventsToSheet(ss, remainingEvents);
+
+    // C. Hapus baris di sheet Daftar_Foto jika terdapat foto milik event ini
+    try {
+      var photoSheet = ss.getSheetByName("Daftar_Foto");
+      if (photoSheet) {
+        var pData = photoSheet.getDataRange().getValues();
+        for (var pRow = pData.length - 1; pRow >= 1; pRow--) {
+          var rowEventId = String(pData[pRow][0] || "");
+          if (rowEventId.indexOf(cleanTargetId) !== -1) {
+            photoSheet.deleteRow(pRow + 1);
+          }
+        }
+      }
+    } catch (ePDel) {}
+
+    // D. Catat aktivitas admin
+    logActivityToSheet(ss, "Hapus Event", "Event '" + targetName + "' (" + cleanTargetId + ") berhasil dihapus secara permanen oleh " + loginResult.user.name, loginResult.user.name);
+  }
+
+  // 4. Bersihkan Cache Script
+  try {
+    var cache = CacheService.getScriptCache();
+    cache.remove("drive_gallery_" + cleanTargetId);
+  } catch (eCache) {}
+
+  return {
+    success: true,
+    message: "Event '" + targetName + "' berhasil dihapus secara permanen dari sistem.",
+    deletedEventId: cleanTargetId,
+    activeEventId: newActiveId,
+    events: remainingEvents
   };
 }
 

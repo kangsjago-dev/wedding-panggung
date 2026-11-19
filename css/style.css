@@ -564,6 +564,10 @@
       border-radius: 9999px;
     }
 
+    .filter-pill .pill-count:empty {
+      display: none;
+    }
+
     .filter-pill.active .pill-count {
       background: rgba(255, 255, 255, 0.25);
     }
