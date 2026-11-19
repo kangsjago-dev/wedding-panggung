@@ -18,11 +18,11 @@ export default async function handler(req, res) {
     fileUrl = fileUrl.replace(/\?.*$/, "");
   }
 
-  // Normalisasi Google Drive link atau ID agar mengunduh image kualitas master tanpa CORS blocking
+  // Normalisasi Google Drive link atau ID agar mengunduh berkas master asli 100% tanpa kompresi
   const driveMatch = fileUrl.match(/(?:\/d\/|id=)([a-zA-Z0-9_-]{25,})/);
   if (fileUrl.includes("drive.google.com") || fileUrl.includes("docs.google.com") || (driveMatch && !fileUrl.startsWith("http"))) {
     const fileId = driveMatch ? driveMatch[1] : fileUrl.trim();
-    fileUrl = `https://lh3.googleusercontent.com/d/${fileId}=w3200`;
+    fileUrl = `https://drive.usercontent.google.com/download?id=${fileId}&export=download`;
   }
 
   try {

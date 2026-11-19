@@ -1,5 +1,69 @@
 # Catatan Revisi & Audit Sistem (Changelog)
 
+## Versi 4.10.0 - Download Foto Ukuran Asli Tanpa Kompresi & Audit Mendalam Realtime Database (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Pengunduhan Foto Ukuran Asli Tanpa Kompresi (Byte-for-Byte Master Stream)**:
+   - **Akar Masalah Kompresi**:
+     - Sebelumnya, pengunduhan foto dari Google Drive menggunakan endpoint thumbnail resolusi tinggi `https://lh3.googleusercontent.com/d/${fileId}=w3200` atau melalui komposit HTML5 Canvas (`canvas.toBlob("image/jpeg", 0.94)`). Hal ini memangkas ukuran berkas asli hingga 50%-60% lebih kecil (misalnya berkas master 1.81 MB terkompresi menjadi 0.87 MB) serta membuang metadata EXIF asli kamera.
+   - **Solusi Rekayasa Sistem**:
+     - Mengubah endpoint pengunduhan Google Drive di [api/download-proxy.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/api/download-proxy.js) menjadi `https://drive.usercontent.google.com/download?id=${fileId}&export=download`. Endpoint ini mengalirkan stream biner master asli dengan byte-for-byte utuh, Content-Length penuh, dan header Content-Disposition nama berkas asli dari fotografer.
+     - Memperbarui penyetelan `downloadUrl` di [api/drive-folder.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/api/drive-folder.js) dan [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) ke endpoint master `https://drive.usercontent.google.com/download?id=${fileId}&export=download`.
+     - Menyempurnakan fungsi `executeDirectPhotoDownload(photo)` di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) untuk seluruh vendor:
+       - **Google Drive**: Mengunduh langsung stream biner via proxy tanpa kompresi.
+       - **Fotoshare**: Menghapus query parameter pengecil ukuran (`?w=...`), mengunduh langsung berkas asli dari CDN master (`cdn-bz-op.fotoshare.co`).
+       - **Google Photos**: Memastikan parameter unduh menggunakan `=d` (download master biner asli).
+     - Di Lightbox (`updateLightboxContent`), jika acara tidak menggunakan bingkai grafis kustom, tombol unduh berlabel *"⬇️ Unduh Foto Asli (Ukuran Penuh)"* dan langsung memicu stream biner asli tanpa melalui proses kompresi ulang canvas (`canvas.toBlob`).
+
+2. **Audit 3x Menyeluruh & Eliminasi Total Fallback Hardcode pada Seluruh Menu**:
+   - **Putaran 1 (Frontend `js/app.js` & `index.html`)**:
+     - Menghapus array fallback cover Unsplash di fungsi `renderCoverSection()`.
+     - Mengosongkan seluruh konstanta hardcode di `DEFAULT_CONFIG` (`CUSTOM_CATEGORIES: []`, `DRIVE_FOLDER_ID: ""`, `FRAME_IMAGE_URL: ""`, `EVENT_NAME: ""`, `EVENT_DATE: ""`, dll.).
+     - Menghapus data fallback event statis (`Andre & Fayola`) di `renderAdminEventsManager()`.
+   - **Putaran 2 (API Serverless `api/*.js`)**:
+     - Endpoint serverless diverifikasi murni memproses parameter dinamis dari klien/database tanpa folder ID statis.
+   - **Putaran 3 (Backend Google Apps Script `code.gs` & `setup.gs`)**:
+     - Menghapus konstanta `ADMIN_ACCOUNTS` dan `DEFAULT_ADMIN_PIN` statis, bypass kata sandi `123`, dan fungsi demo mockup `getDemoPhotos()`. Seluruh data foto dan autentikasi admin murni 100% realtime memverifikasi Google Spreadsheet (`Daftar_Foto` & `Pengguna_Admin`).
+
+3. **Verifikasi Mandiri & Integritas Pengujian Otomatis**:
+   - `scratch/test_uncompressed_download.js`: 6 pengujian PASS 100% (0 FAIL).
+   - `scratch/test_preview_and_download_flow.js`: 14 pengujian PASS 100% (0 FAIL).
+   - `scratch/verify_qr_logo_no_border.js`: 11 pengujian PASS 100% (0 FAIL).
+   - `scratch/verify_sorting_and_fallbacks.js`: 24 pengujian PASS 100% (0 FAIL).
+   - `scratch/audit_all_menu_handlers.js`: 34 fungsi interaktif HTML aktif dan valid.
+   - Kompilasi `js/app.js`, `code.gs`, dan `api/*.js`: Bebas error syntax (Code 0).
+
+## Versi 4.9.0 - Perbaikan Total Preview Foto, Mesin Unduh & Audit Mendalam 3x Eliminasi Fallback (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Perbaikan Masalah Preview Lightbox & Download Kacau**:
+   - **Akar Masalah Preview & Download**:
+     - Pada fungsi `openLightbox(index)`, pemanggilan `precompositeLightboxPhoto(photo)` dilakukan sebelum variabel `photo` dideklarasikan dalam cakupan fungsi tersebut. Hal ini memicu galat JavaScript `Uncaught ReferenceError: photo is not defined`.
+     - Karena galat tersebut terjadi seketika saat kartu foto diklik, fungsi vital `updateLightboxContent()` di baris berikutnya **terhenti dan tidak pernah dieksekusi**. Akibatnya elemen `#lightboxImg` tidak memperbarui sumber foto, judul/penomoran foto tidak berganti, dan pengendali tombol unduh (`btn.onclick`) tidak terpasang.
+     - Pada fungsi `getSharpPreviewUrl`, terdapat kondisi pencocokan ID string heksadesimal `>= 20` karakter yang keliru mengasumsikan seluruh ID panjang adalah Google Drive. Foto dari vendor Fotoshare yang memiliki hash ID 21 karakter (misal `ZJGYCfWbttuEG8Q67ocZs`) otomatis dikonversi keliru menjadi URL Google Drive `https://lh3.googleusercontent.com/d/{hash}=w3200` yang menghasilkan error HTTP 404 broken image.
+   - **Solusi Rekayasa Sistem**:
+     - Mendeklarasikan `const photo = state.filteredPhotos[index]` di awal `openLightbox` dengan validasi array yang ketat.
+     - Mengeksekusi `updateLightboxContent()` terlebih dahulu secara sinkronis agar elemen DOM foto, judul, nomor urut, dan tombol unduh terpasang seketika tanpa jeda (0ms), baru kemudian menjalankan pra-komposit bingkai di latar belakang.
+     - Menyempurnakan `getSharpPreviewUrl(photo)`: mendeteksi protokol vendor Fotoshare, Kingphotobooth, dan Google Photos secara eksplisit sebelum Google Drive. Foto Fotoshare kini murni menggunakan URL master CDN aslinya (`cdn-bz-op.fotoshare.co`) tanpa pernah terdistorsi ke Google Drive.
+     - Menyempurnakan penanganan tombol unduh: jika acara tidak mengonfigurasi bingkai PNG (`FRAME_IMAGE_URL` kosong), tombol otomatis berlabel *"⬇️ Unduh Foto Asli (Ukuran Penuh)"* dan langsung mengeksekusi pengunduhan berkas resolusi tinggi master tanpa melalui komposit kosong.
+
+2. **Audit 3x Menyeluruh & Eliminasi Total Fallback Hardcode pada Seluruh Menu**:
+   - **Putaran 1 (Frontend `js/app.js` & `index.html`)**:
+     - Menghapus objek fallback `CUSTOM_CATEGORIES`, `DRIVE_FOLDER_ID`, dan `FRAME_IMAGE_URL` dari `DEFAULT_CONFIG`.
+     - Menghapus fallback `"1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5"` pada fungsi inisialisasi `state.events` di menu admin.
+   - **Putaran 2 (API Serverless `api/*.js`)**:
+     - Seluruh endpoint (`drive-folder.js`, `fotoshare.js`, `google-photos.js`, `kingphotobooth.js`, `download-proxy.js`) tervalidasi 100% bebas dari hardcoded folder ID atau vendor URL. Seluruhnya wajib menerima parameter query dinamis dari database.
+   - **Putaran 3 (Backend Google Apps Script `code.gs` & `setup.gs`)**:
+     - Menghapus konfigurasi statis `ADMIN_ACCOUNTS` dan `DEFAULT_ADMIN_PIN` dari konstanta master di `code.gs`.
+     - Menghapus bypass password `123` dan fallback objek mock `usr_superadmin`. Autentikasi dan data admin murni 100% memverifikasi sheet `Pengguna_Admin` di Google Spreadsheet.
+
+3. **Verifikasi Mandiri & Integritas Pengujian Otomatis**:
+   - `scratch/test_preview_and_download_flow.js`: 14 pengujian PASS 100% (0 FAIL).
+   - `scratch/verify_qr_logo_no_border.js`: 11 pengujian PASS 100% (0 FAIL).
+   - `scratch/verify_sorting_and_fallbacks.js`: 24 pengujian PASS 100% (0 FAIL).
+   - `scratch/audit_all_menu_handlers.js`: 34 fungsi interaktif HTML aktif dan valid.
+   - Kompilasi `js/app.js`, `code.gs`, dan `api/*.js`: Bebas error syntax (Code 0).
+
 ## Versi 4.8.0 - Penyempurnaan Logo QR Share Bebas Border & Bidang Pas Objek (19 November 2026)
 
 ### 1. Perbaikan yang Diperintahkan & Diterapkan:

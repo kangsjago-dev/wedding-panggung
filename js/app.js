@@ -437,20 +437,9 @@ function isGooglePhotosUrl(url) {
         }
       ],
       ADMIN_ACCOUNTS: [],
-      CUSTOM_CATEGORIES: [
-        {
-          name: "Photobooth",
-          url: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
-          enabled: true
-        },
-        {
-          name: "Wedding",
-          url: "https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI",
-          enabled: true
-        }
-      ],
-      DRIVE_FOLDER_ID: "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
-      FRAME_IMAGE_URL: "https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk",
+      CUSTOM_CATEGORIES: [],
+      DRIVE_FOLDER_ID: "",
+      FRAME_IMAGE_URL: "",
       SPREADSHEET_ID: "133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20",
       SPREADSHEET_URL: "https://docs.google.com/spreadsheets/d/133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20/edit",
       DEFAULT_ADMIN_PIN: "",
@@ -3368,13 +3357,10 @@ function isGooglePhotosUrl(url) {
         }).filter(Boolean);
       }
 
-      // Jika belum ada foto sama sekali, gunakan gambar bertema pernikahan lembut
+      // Jika belum ada foto cover dari database atau galeri, sembunyikan container cover (bebas fallback hardcode)
       if (photoList.length === 0) {
-        photoList = [
-          "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80",
-          "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
-          "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=800&q=80"
-        ];
+        container.style.display = "none";
+        return;
       }
 
       let layoutHtml = "";
@@ -3794,15 +3780,19 @@ function isGooglePhotosUrl(url) {
       } catch(e) {}
 
       if (!Array.isArray(state.events) || state.events.length === 0) {
-        state.events = [
-          {
-            id: state.currentEventId || "andre-fayola-281",
-            name: state.activeConfig.EVENT_NAME || "Andre & Fayola",
-            date: state.activeConfig.EVENT_DATE || "22 November 2026",
-            venue: state.activeConfig.EVENT_VENUE || "UPPERHILLS CONVENTION HALLS",
-            driveFolderId: state.activeConfig.DRIVE_FOLDER_ID || "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5"
-          }
-        ];
+        if (state.currentEventId) {
+          state.events = [
+            {
+              id: state.currentEventId,
+              name: state.activeConfig.EVENT_NAME || state.currentEventId,
+              date: state.activeConfig.EVENT_DATE || "",
+              venue: state.activeConfig.EVENT_VENUE || "",
+              driveFolderId: state.activeConfig.DRIVE_FOLDER_ID || ""
+            }
+          ];
+        } else {
+          state.events = [];
+        }
       }
 
       // Pastikan event aktif saat ini selalu ada dalam daftar options
@@ -5139,14 +5129,29 @@ function isGooglePhotosUrl(url) {
     }
 
     function executeDirectPhotoDownload(photo, onDone) {
+      if (!photo) { if (onDone) onDone(); return; }
       const isVideo = Boolean(photo.isVideo);
       let rawUrl = photo.downloadUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || "";
-      const fileName = generateUniqueFileName(photo.rawName || photo.name, isVideo ? "video" : "original", isVideo ? ".mp4" : ".jpg");
+
+      // Jika Google Drive: pastikan mengunduh berkas MASTER ASLI 100% tanpa kompresi
+      const driveMatch = String(rawUrl).match(/(?:\/d\/|id=)([a-zA-Z0-9_\-]{25,})/) ||
+                         (photo.id && /^[a-zA-Z0-9_\-]{25,}$/.test(photo.id) ? [null, photo.id] : null);
+      if (driveMatch && driveMatch[1]) {
+        rawUrl = "https://drive.usercontent.google.com/download?id=" + driveMatch[1] + "&export=download";
+      } else if (rawUrl && rawUrl.includes("fotoshare.co")) {
+        rawUrl = rawUrl.replace(/\?.*$/, "");
+      } else if (rawUrl && rawUrl.includes("googleusercontent.com/pw/")) {
+        rawUrl = rawUrl.replace(/=[^/]*$/, "") + "=d";
+      }
+
+      const ext = isVideo ? ".mp4" : ".jpg";
+      const fileName = generateUniqueFileName(photo.rawName || photo.name, isVideo ? "video" : "original", ext);
 
       if (rawUrl) {
         const proxyUrl = "/api/download-proxy?url=" + encodeURIComponent(rawUrl) + "&filename=" + encodeURIComponent(fileName);
         triggerDirectLinkDownload(proxyUrl, fileName);
-        showToast("✓ Foto asli berhasil diunduh!");
+        showToast("✓ Memulai penyimpanan berkas asli ukuran penuh ke perangkat...");
+        updateDownloadWidget(100, "✓ Berhasil Disimpan!", photo.name || "Foto", true);
         if (onDone) onDone();
         return;
       }
@@ -5220,24 +5225,38 @@ function isGooglePhotosUrl(url) {
        ========================================================================== */
     function getSharpPreviewUrl(photo) {
       if (!photo) return "";
-      // 1. Jika video kingphotobooth
+      // 1. Jika video (kingphotobooth atau video lainnya)
       if (photo.isVideo && photo.videoUrl) return photo.videoUrl;
-      // 2. Jika foto kingphotobooth
-      if (photo.isKing && photo.previewUrl) return photo.previewUrl;
+      
+      // 2. Jika Kingphotobooth
+      if ((photo.isKing || (photo.previewUrl && photo.previewUrl.includes("kingphotobooth.co"))) && photo.previewUrl) {
+        return photo.previewUrl;
+      }
 
-      // 3. Jika Google Drive file ID: gunakan lh3 w3200 resolusi penuh tanpa kompresi buram
-      const raw = photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || photo.id || "";
-      const match = String(raw).match(/\/d\/([a-zA-Z0-9_\-]+)/) || 
-                    String(raw).match(/id=([a-zA-Z0-9_\-]+)/) || 
-                    (photo.id && /^[a-zA-Z0-9_\-]{20,}$/.test(photo.id) ? [null, photo.id] : null);
-      if (match && match[1]) {
-        return "https://lh3.googleusercontent.com/d/" + match[1] + "=w3200";
+      // 3. Jika Fotoshare: gunakan URL master resolusi tinggi asli (tanpa parameter resize)
+      if (photo.previewUrl && photo.previewUrl.includes("fotoshare.co")) {
+        return photo.previewUrl.replace(/\?.*$/, "");
+      }
+      if (photo.downloadUrl && photo.downloadUrl.includes("fotoshare.co")) {
+        return photo.downloadUrl.replace(/\?.*$/, "");
       }
 
       // 4. Jika Google Photos: gunakan w3200 resolusi tajam
       if (photo.previewUrl && photo.previewUrl.includes("googleusercontent.com/pw/")) {
         const base = photo.previewUrl.replace(/=[^/]*$/, "");
         return base + "=w3200";
+      }
+
+      // 5. Jika Google Drive: gunakan lh3 w3200 resolusi penuh asli
+      const raw = photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || "";
+      const isDrive = raw.includes("drive.google.com") || raw.includes("docs.google.com") || raw.includes("googleusercontent.com/d/") || (!raw.startsWith("http") && photo.id && /^[a-zA-Z0-9_\-]{25,}$/.test(photo.id));
+      if (isDrive) {
+        const match = String(raw).match(/\/d\/([a-zA-Z0-9_\-]+)/) || 
+                      String(raw).match(/id=([a-zA-Z0-9_\-]+)/) || 
+                      (photo.id && /^[a-zA-Z0-9_\-]{25,}$/.test(photo.id) ? [null, photo.id] : null);
+        if (match && match[1]) {
+          return "https://lh3.googleusercontent.com/d/" + match[1] + "=w3200";
+        }
       }
 
       return photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || "";
@@ -5485,19 +5504,20 @@ function isGooglePhotosUrl(url) {
     }
 
     function openLightbox(index) {
-      if (!state.filteredPhotos[index]) return;
+      if (!Array.isArray(state.filteredPhotos) || !state.filteredPhotos[index]) return;
       state.currentLightboxIndex = index;
+      const photo = state.filteredPhotos[index];
 
       const modal = document.getElementById("lightbox");
-      modal.classList.add("active");
+      if (modal) modal.classList.add("active");
       document.body.style.overflow = "hidden";
 
       setupLightboxBackdropClick();
       initLightboxZoomEvents();
       resetLightboxZoom();
       resetDownloadButton();
-      precompositeLightboxPhoto(photo);
       updateLightboxContent();
+      precompositeLightboxPhoto(photo);
     }
 
     function closeLightbox() {
@@ -5516,6 +5536,7 @@ function isGooglePhotosUrl(url) {
     }
 
     function navigateLightbox(direction) {
+      if (!Array.isArray(state.filteredPhotos) || state.filteredPhotos.length === 0) return;
       let newIndex = state.currentLightboxIndex + direction;
       if (newIndex < 0) {
         newIndex = state.filteredPhotos.length - 1;
@@ -5525,6 +5546,8 @@ function isGooglePhotosUrl(url) {
       state.currentLightboxIndex = newIndex;
       resetLightboxZoom();
       updateLightboxContent();
+      const currentPhoto = state.filteredPhotos[newIndex];
+      if (currentPhoto) precompositeLightboxPhoto(currentPhoto);
     }
 
     function updateLightboxContent() {
@@ -5595,38 +5618,42 @@ function isGooglePhotosUrl(url) {
           if (btnLabel) btnLabel.innerText = "⬇️ Unduh Foto Asli (Ukuran Penuh)";
           if (btn) {
             btn.onclick = function() {
-              const ext = Boolean(photo.isVideo) ? ".mp4" : ".jpg";
-              let rawUrl = photo.downloadUrl || photo.videoUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || photo.img;
-              if (!rawUrl && photo.id) {
-                rawUrl = "https://lh3.googleusercontent.com/d/" + photo.id + "=w3200";
-              }
-              if (rawUrl) {
-                if (rawUrl.includes("fotoshare.co")) rawUrl = rawUrl.replace(/\?.*$/, "");
-                const fileName = generateUniqueFileName(photo.rawName || photo.name || (photo.isVideo ? "video-photobooth" : "foto-asli"), "", ext);
-                const proxyUrl = "/api/download-proxy?url=" + encodeURIComponent(rawUrl) + "&filename=" + encodeURIComponent(fileName);
-                triggerDirectLinkDownload(proxyUrl, fileName);
-                showToast("✓ Memulai penyimpanan berkas asli ke perangkat...");
-                updateDownloadWidget(100, "✓ Berhasil Disimpan!", photo.name || "Foto", true);
-              } else {
-                queuePhotoDownload(photo);
-              }
+              executeDirectPhotoDownload(photo);
             };
           }
         } else {
-          // Semua kategori momen lainnya mengikuti settingan kategori utama (berbingkai)
-          if (btnLabel) btnLabel.innerText = "✨ Simpan Kenangan Berbingkai";
-          prepareLightboxFramedBlob(photo);
-          if (btn) {
-            btn.onclick = function() {
-              if (state.currentPreparedFramedBlobPhotoId === photo.id && state.currentPreparedFramedBlob) {
-                const fileName = generateUniqueFileName(photo.rawName || photo.name, "berbingkai", ".jpg");
-                saveBlobToDevice(state.currentPreparedFramedBlob, fileName);
-                showToast("✓ Foto berbingkai berhasil tersimpan ke perangkat!");
-                updateDownloadWidget(100, "✓ Berhasil Disimpan!", photo.name || "Foto", true);
-              } else {
-                queuePhotoDownload(photo);
-              }
-            };
+          // Semua kategori momen lainnya mengikuti settingan kategori utama (berbingkai jika frame dikonfigurasi)
+          const rawFrameConfig = state.activeConfig.FRAME_IMAGE_URL ? state.activeConfig.FRAME_IMAGE_URL.trim() : "";
+          const frameUrl = normalizeDriveImageUrl(rawFrameConfig);
+          const hasFrame = Boolean(frameUrl);
+
+          if (hasFrame) {
+            if (btnLabel) btnLabel.innerText = "✨ Simpan Kenangan Berbingkai";
+            prepareLightboxFramedBlob(photo);
+            if (btn) {
+              btn.onclick = function() {
+                if (state.currentPreparedFramedBlobPhotoId === photo.id && state.currentPreparedFramedBlob) {
+                  const fileName = generateUniqueFileName(photo.rawName || photo.name, "berbingkai", ".jpg");
+                  saveBlobToDevice(state.currentPreparedFramedBlob, fileName);
+                  showToast("✓ Foto berbingkai berhasil tersimpan ke perangkat!");
+                  updateDownloadWidget(100, "✓ Berhasil Disimpan!", photo.name || "Foto", true);
+                } else if (state.precompositedPhotoId === photo.id && state.precompositedBlob) {
+                  const fileName = generateUniqueFileName(photo.rawName || photo.name, "berbingkai", ".jpg");
+                  saveBlobToDevice(state.precompositedBlob, fileName);
+                  showToast("✓ Foto berbingkai berhasil tersimpan ke perangkat!");
+                  updateDownloadWidget(100, "✓ Berhasil Disimpan!", photo.name || "Foto", true);
+                } else {
+                  queuePhotoDownload(photo);
+                }
+              };
+            }
+          } else {
+            if (btnLabel) btnLabel.innerText = "⬇️ Unduh Foto Asli (Ukuran Penuh)";
+            if (btn) {
+              btn.onclick = function() {
+                executeDirectPhotoDownload(photo);
+              };
+            }
           }
         }
       }
@@ -5634,7 +5661,8 @@ function isGooglePhotosUrl(url) {
 
     function handleCurrentLightboxDownload() {
       const photo = state.filteredPhotos[state.currentLightboxIndex];
-      if (photo) queuePhotoDownload(photo);
+      if (!photo) return;
+      downloadCurrentPhotoWithFrame();
     }
 
     function downloadPhotoboothOriginal(photo) {

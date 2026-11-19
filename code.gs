@@ -39,13 +39,13 @@ const WEDDING_CONFIG = {
   ACTIVE_EVENT_ID: "andre-fayola-281",
   EVENTS: '[{"id":"andre-fayola-281","name":"Andre & Fayola","date":"22 November 2026","venue":"UPPERHILLS CONVENTION HALLS","subtitle":"The Wedding Gallery & Precious Memories","welcomeMessage":"Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.","footerMessage":"Diabadikan dengan cinta\\nTerima kasih atas doa restunya.","allPhotosLabel":"Semua Foto","driveFolderId":"1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5","frameImageUrl":"https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk","customCategories":[{"name":"Photobooth","url":"https://photos.app.goo.gl/QkqewYw4dWfocxfK8","enabled":true},{"name":"Wedding","url":"https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI","enabled":true}],"coverSettings":{"enabled":false,"style":"romantic-collage","heading":"The Wedding Celebration","subheading":"A Journey of Two Hearts Joined as One","quote":"Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda.","photos":[]}}]',
 
-  // Akun Admin (Username & Password)
-  ADMIN_ACCOUNTS: '[{"id":"usr_superadmin","username":"admin","password":"123","name":"Super Admin","role":"Super Admin"}]',
+  // Akun Admin (Murni Realtime Database Sheet Pengguna_Admin)
+  ADMIN_ACCOUNTS: '[]',
 
   // Konfigurasi Teknis (Dapat dikelola admin via web & spreadsheet)
-  DRIVE_FOLDER_ID: "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
+  DRIVE_FOLDER_ID: "",
   DEFAULT_ADMIN_USERNAME: "admin",
-  DEFAULT_ADMIN_PIN: "123456",
+  DEFAULT_ADMIN_PIN: "",
   SLIDESHOW_INTERVAL_SEC: 4,
   AUTO_REFRESH_INTERVAL_SEC: 20,
   FRAME_IMAGE_URL: "https://drive.google.com/file/d/1NlfwT5wYk-Bt1eBIPA0e3_JJ4hJnnguj/view?usp=drivesdk",
@@ -1521,7 +1521,7 @@ function scanDriveFolderDirectly(folderId) {
           category: subCategory,
           thumbnailUrl: "https://drive.google.com/thumbnail?id=" + sfId + "&sz=w1000",
           highResUrl: "https://drive.google.com/thumbnail?id=" + sfId + "&sz=w2500",
-          downloadUrl: "https://drive.google.com/uc?export=download&id=" + sfId,
+          downloadUrl: "https://drive.usercontent.google.com/download?id=" + sfId + "&export=download",
           sizeBytes: sf.getSize(),
           timestamp: sfTimestamp
         });
