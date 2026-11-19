@@ -1,5 +1,34 @@
 # Catatan Revisi & Audit Sistem (Changelog)
 
+## Versi 4.3.0 - Kategori Semua Foto per Event & Perbaikan Kunci Tab Menu Admin (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Kategori "Semua Foto" Diberikan untuk Masing-Masing Event (Tiap Event A utk Link A, Event B utk Link B)**:
+   - **Tautan Folder Google Drive Mandiri**: Kategori "Semua Foto" kini memiliki input tautan / folder ID tersendiri untuk setiap event.
+     - Event A (Andre & Fayola): Folder Google Drive `1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5` (66 foto).
+     - Event B (Wilson & Felicia): Folder Google Drive `1GGB77clCMYBIg17J0ECr2eVbD02ZeInW` (116 foto).
+     - Event Baru: Mendapat input folder Google Drive mandiri saat dibuat maupun saat diedit.
+   - **Input di Dua Tab Sekaligus**:
+     - Ditambahkan di **Tab 1: Acara & Event** (`#cfgEventDriveFolderId`) agar langsung terlihat saat mengelola event.
+     - Diberi keterangan jelas di **Tab 2: Foto & Kategori** (`#cfgDriveFolderId`) dengan badge nama event aktif.
+     - Kedua input tersinkronisasi otomatis secara realtime (`handleEventDriveFolderInput`).
+   - **Prioritas Fetch Langsung (`fetchGalleryData`)**:
+     - Sistem langsung memindai folder Google Drive spesifik event aktif melalui `/api/drive-folder`. Foto untuk Event A dan Event B terisolasi penuh dan tidak akan pernah tertukar atau saling menimpa.
+
+2. **Perbaikan Tab Menu Admin (Anti-Ikut Naik & Mudah Dijangkau Saat Scroll)**:
+   - **Akar Masalah**: Pada perangkat mobile, tinggi modal yang melebihi viewport menyebabkan seluruh jendela overlay ter-scroll ke atas sehingga header dan bilah tab menu ikut naik dan menghilang keluar layar.
+   - **Solusi Rekayasa CSS & JS**:
+     - **Kunci Viewport Body**: Saat modal admin dibuka, scroll halaman background dikunci total (`document.body.style.overflow = "hidden"`).
+     - **Full Viewport Shell di Mobile**: Pada layar HP (`max-width: 640px`), modal card diposisikan fullscreen presisi (`width: 100vw; height: 100dvh; border-radius: 0;`), di mana header dan `.admin-tabs-sticky-wrapper` terkunci permanen di atas (`flex-shrink: 0; position: sticky; top: 0; z-index: 50;`).
+     - **Scroll Terisolasi**: Hanya `.admin-card-body` (konten formulir) yang ter-scroll ke bawah (`flex: 1; overflow-y: auto; overscroll-behavior: contain;`).
+     - **Navigasi Tab 1-Baris Mudah Dijangkau**: Tab menu menggunakan alur horizontal touch-swipe (`flex-wrap: nowrap; overflow-x: auto;`) sehingga 4 tombol tab (`💍 Acara & Event`, `🖼️ Foto & Kategori`, `👥 Akun Admin`, `☁️ Cloud & API`) selalu berada di tempatnya, tidak pernah naik atau hilang, dan dapat dijangkau seketika dengan 1 ketukan.
+
+3. **Audit Integritas Kode**:
+   - `code.gs`: Syntax Valid (`vm.Script` PASSED).
+   - `setup.gs`: Syntax Valid (`vm.Script` PASSED).
+   - `js/app.js`: Syntax Valid (`node -c` PASSED).
+   - Seluruh 36 menu & event handlers interaktif HTML berfungsi normal 100%.
+
 ## Versi 4.2.0 - Dedicated 1-Link-per-Event & Isolasi Home Screen Total (19 November 2026)
 
 ### 1. Perbaikan yang Diperintahkan & Diterapkan:

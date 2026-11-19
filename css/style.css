@@ -1136,15 +1136,18 @@
 
     /* Konsistensi Posisi & Header Modal Pengaturan Admin (Anti Naik-Turun Antar-Tab) */
     #adminSettingsModal {
-      align-items: flex-start;
-      padding-top: clamp(16px, 3.5vh, 36px);
-      padding-bottom: 20px;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(12px, 2.5vh, 24px) 16px;
+      overflow: hidden;
     }
 
     #adminSettingsModal .admin-card {
-      height: min(88vh, 800px);
+      height: min(88vh, 820px);
+      max-height: 88vh;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
 
     #adminSettingsModal .admin-card-header {
@@ -1164,8 +1167,10 @@
       padding: 20px 24px;
       overflow-y: auto;
       overflow-x: hidden;
-      flex: 1;
+      flex: 1 1 auto;
       box-sizing: border-box;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
     }
 
     .admin-field-group {
@@ -1206,16 +1211,16 @@
       line-height: 1.4;
     }
 
-    /* Pinned & Locked Navigation Tabs Wrapper (Tidak Tertutup Saat Scroll) */
+    /* Pinned & Locked Navigation Tabs Wrapper (Terkunci Permanen, Tidak Ikut Naik Saat Scroll) */
     .admin-tabs-sticky-wrapper {
       position: sticky;
       top: 0;
-      z-index: 25;
+      z-index: 45;
       background: #FFFFFF;
-      padding: 12px 24px 8px 24px;
-      border-bottom: 1px solid #F1F5F9;
+      padding: 10px 24px;
+      border-bottom: 1px solid #E2E8F0;
       flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
     }
 
     .admin-tabs-sticky-wrapper .admin-tabs-nav {
@@ -1224,25 +1229,39 @@
 
     .admin-tabs-nav {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
       gap: 6px;
       background: #F8FAFC;
       border: 1px solid #E2E8F0;
-      padding: 6px;
-      border-radius: 14px;
-      margin-bottom: 20px;
+      padding: 5px;
+      border-radius: 12px;
+      margin-bottom: 0;
+      scrollbar-width: none;
+    }
+    .admin-tabs-nav::-webkit-scrollbar {
+      display: none;
     }
 
     .admin-tab-btn {
-      flex: 1 1 auto;
-      min-width: 100px;
+      flex: 1 0 auto;
+      min-width: max-content;
       white-space: nowrap;
-      padding: 9px 12px;
-      border-radius: 10px;
-      font-size: 0.82rem;
+      padding: 8px 14px;
+      border-radius: 9px;
+      font-size: 0.8rem;
       font-weight: 600;
       color: #64748B;
       background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
       border: 1px solid transparent;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -1522,13 +1541,64 @@
     }
 
     @media (max-width: 640px) {
+      #adminSettingsModal {
+        padding: 0 !important;
+        align-items: stretch !important;
+        justify-content: stretch !important;
+        overflow: hidden !important;
+      }
+      #adminSettingsModal .admin-card {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: 100dvh !important;
+        height: 100vh !important;
+        max-height: 100dvh !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+      }
+      #adminSettingsModal .admin-card-header {
+        padding: 12px 16px;
+        flex-shrink: 0;
+      }
       .admin-tabs-sticky-wrapper {
-        padding: 8px 12px 6px 12px;
+        padding: 8px 12px;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: #FFFFFF;
+        border-bottom: 1px solid #E2E8F0;
+        flex-shrink: 0;
+      }
+      .admin-tabs-nav {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 6px;
+        padding: 4px;
+        border-radius: 10px;
+        scrollbar-width: none;
       }
       .admin-tab-btn {
-        min-width: 70px;
-        padding: 7px 6px;
-        font-size: 0.72rem;
+        flex: 0 0 auto;
+        min-width: max-content;
+        padding: 8px 12px;
+        font-size: 0.74rem;
+      }
+      .admin-card-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        padding: 16px;
+      }
+      .admin-card-footer {
+        padding: 12px 16px;
+        flex-shrink: 0;
       }
       .download-progress-widget {
         top: 72px;

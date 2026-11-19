@@ -500,6 +500,15 @@
           </div>
 
           <div class="admin-field-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <label class="admin-label" for="cfgEventDriveFolderId" style="margin-bottom: 0;">📁 Folder Google Drive (Kategori 'Semua Foto' Event Ini)</label>
+              <span id="activeEventDriveBadge" style="font-size: 0.7rem; color: var(--gold-dark); font-weight: 600;">Link Khusus Event</span>
+            </div>
+            <input type="text" id="cfgEventDriveFolderId" class="admin-input" placeholder="Tautan / ID Folder Google Drive untuk kategori Semua Foto event ini" oninput="handleEventDriveFolderInput(this.value)">
+            <div class="admin-help-text">Setiap event mempunyai link Google Drive tersendiri untuk kategori "Semua Foto". Foto event ini tidak akan tercampur dengan event lain.</div>
+          </div>
+
+          <div class="admin-field-group">
             <label class="admin-label" for="cfgSubtitle">Subjudul Galeri</label>
             <input type="text" id="cfgSubtitle" class="admin-input" placeholder="Contoh: The Wedding Gallery & Precious Memories">
           </div>
