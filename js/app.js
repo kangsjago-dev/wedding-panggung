@@ -622,7 +622,7 @@ function isGooglePhotosUrl(url) {
       // Muat konfigurasi cache khusus untuk event yang sedang aktif
       try {
         const cacheKey = "WEDDING_EVENT_CFG_" + state.currentEventId;
-        let savedCfgStr = localStorage.getItem(cacheKey) || localStorage.getItem("WEDDING_ACTIVE_EVENT_CFG");
+        let savedCfgStr = localStorage.getItem(cacheKey);
         if (savedCfgStr) {
           const savedCfg = JSON.parse(savedCfgStr);
           state.activeConfig = Object.assign({}, GLOBAL_CONFIG, savedCfg);
@@ -669,11 +669,9 @@ function isGooglePhotosUrl(url) {
               state.events = Array.from(evMap.values());
               try { localStorage.setItem("WEDDING_EVENTS_REGISTRY", JSON.stringify(state.events)); } catch(eReg) {}
 
-              const matchedEv = state.events.find(function(ev) { return ev && ev.id === state.currentEventId; });
-              if (!matchedEv && state.currentEventId) {
-                showEventNotFoundScreen(true, state.currentEventId);
-                return;
-              }
+              const matchedEv = state.events.find(function(ev) { 
+                return ev && (ev.id === state.currentEventId || (state.currentEventId && (ev.id.startsWith(state.currentEventId) || state.currentEventId.startsWith(ev.id)))); 
+              });
               if (matchedEv) {
                 showEventNotFoundScreen(false);
                 remoteCfg.ACTIVE_EVENT_ID = matchedEv.id;
@@ -827,12 +825,14 @@ function isGooglePhotosUrl(url) {
               } catch(eEvs) {}
             }
 
-            const urlEvId = getActiveEventIdFromUrl();
+            const urlEvId = getActiveEventIdFromUrl() || state.currentEventId;
             if (!urlEvId) {
               showEventNotFoundScreen(true);
               return;
             }
-            const matchedEv = (state.events || []).find(function(e) { return e && e.id === urlEvId; });
+            const matchedEv = (state.events || []).find(function(e) { 
+              return e && (e.id === urlEvId || (e.id.startsWith(urlEvId) || urlEvId.startsWith(e.id))); 
+            });
             if (!matchedEv) {
               showEventNotFoundScreen(true, urlEvId);
               return;
@@ -1092,7 +1092,7 @@ function isGooglePhotosUrl(url) {
             return res.json();
           })
           .then(function(data) {
-            if (data && data.success && Array.isArray(data.photos) && data.photos.length > 0) {
+            if (data && data.success && Array.isArray(data.photos)) {
               state.isAutoRefreshing = false;
               if (refreshIcon) refreshIcon.classList.remove("spin");
               handleGalleryResponse({
@@ -1103,9 +1103,9 @@ function isGooglePhotosUrl(url) {
                 photos: data.photos,
                 categories: [state.allPhotosLabel || "Semua Foto"]
               }, isSilent);
-              if (forceRefresh) showToast("✓ Galeri foto berhasil diperbarui (" + data.photos.length + " foto)!");
+              if (forceRefresh && data.photos.length > 0) showToast("✓ Galeri foto berhasil diperbarui (" + data.photos.length + " foto)!");
             } else {
-              throw new Error("Folder kosong");
+              throw new Error("Invalid drive-folder response");
             }
           })
           .catch(function() {
@@ -1212,7 +1212,8 @@ function isGooglePhotosUrl(url) {
       if (activeDriveId && respDriveId && activeDriveId !== respDriveId) {
         // Backend mengembalikan foto dari folder berbeda (misal cache server lama atau beda event)
         // Ambil foto yang benar langsung untuk folder event aktif ini
-        fetchDriveCategoryPhotos("Semua Foto", activeDriveId, function(correctPhotos) {
+        const catLabel = state.allPhotosLabel || "Semua Foto";
+        fetchDriveCategoryPhotos(catLabel, activeDriveId, function(correctPhotos) {
           if (Array.isArray(correctPhotos) && correctPhotos.length > 0) {
             const sortedCorrect = sortPhotosNewestFirst(correctPhotos);
             state.allPhotos = sortedCorrect;
@@ -1223,7 +1224,17 @@ function isGooglePhotosUrl(url) {
               localStorage.setItem("WEDDING_ALL_PHOTOS_COUNT", String(sortedCorrect.length));
             } catch(e) {}
             renderCategoryTabs();
-            applyCategoryFilter(state.activeCategory || "Semua Foto");
+            applyCategoryFilter(state.activeCategory || catLabel);
+          } else {
+            state.allPhotos = [];
+            state.filteredPhotos = [];
+            try {
+              localStorage.setItem("WEDDING_EVENT_PHOTOS_" + state.currentEventId, "[]");
+              localStorage.setItem("WEDDING_EVENT_PHOTOS_COUNT_" + state.currentEventId, "0");
+              localStorage.setItem("WEDDING_ALL_PHOTOS_COUNT", "0");
+            } catch(e) {}
+            renderCategoryTabs();
+            applyCategoryFilter(state.activeCategory || catLabel);
           }
         });
         return;
@@ -1244,9 +1255,15 @@ function isGooglePhotosUrl(url) {
 
       if (sortedIncoming.length === 0) {
         state.allPhotos = [];
-        state.categories = ["Semua Foto"];
+        state.filteredPhotos = [];
+        const mainCat = state.allPhotosLabel || "Semua Foto";
+        try {
+          localStorage.setItem("WEDDING_EVENT_PHOTOS_" + state.currentEventId, "[]");
+          localStorage.setItem("WEDDING_EVENT_PHOTOS_COUNT_" + state.currentEventId, "0");
+          localStorage.setItem("WEDDING_ALL_PHOTOS_COUNT", "0");
+        } catch(e) {}
         renderCategoryTabs();
-        applyCategoryFilter("Semua Foto");
+        applyCategoryFilter(state.activeCategory || mainCat);
         return;
       }
 
@@ -2164,7 +2181,7 @@ function isGooglePhotosUrl(url) {
           return res.json();
         })
         .then(function(data) {
-          if (data && data.success && Array.isArray(data.photos) && data.photos.length > 0) {
+          if (data && data.success && Array.isArray(data.photos)) {
             const sorted = sortPhotosNewestFirst(data.photos);
             state.categoryPhotosMap[cat] = sorted;
             state.categoryPhotosUrlMap[cat] = driveKey;
@@ -2410,8 +2427,8 @@ function isGooglePhotosUrl(url) {
         state.filteredPhotos = sortPhotosNewestFirst(state.filteredPhotos);
       }
 
-      const activeCat = categoryName || state.activeCategory;
-      const isPhotobooth = (activeCat.toLowerCase().includes("photobooth") || (targetUrl && targetUrl.includes("fotoshare.co")));
+      const activeCat = String(categoryName || state.activeCategory || state.allPhotosLabel || "Semua Foto");
+      const isPhotobooth = (activeCat.toLowerCase().includes("photobooth") || (typeof targetUrl === 'string' && targetUrl.includes("fotoshare.co")));
 
       // Optimasi Anti-Flicker: Jika foto yang ditampilkan di grid sudah sama persis, jangan hapus & buat ulang DOM!
       if (Array.isArray(state.filteredPhotos) && state.filteredPhotos.length > 0) {
@@ -3810,7 +3827,9 @@ function isGooglePhotosUrl(url) {
       const select = document.getElementById("adminEventSelect");
       if (select) select.value = selectedId;
 
-      let ev = (state.events || []).find(function(e) { return e && e.id === selectedId; });
+      let ev = (state.events || []).find(function(e) { 
+        return e && (e.id === selectedId || (selectedId && (e.id.startsWith(selectedId) || selectedId.startsWith(e.id)))); 
+      });
       if (!ev) {
         try {
           const cachedStr = localStorage.getItem("WEDDING_EVENT_CFG_" + selectedId);
@@ -3821,10 +3840,10 @@ function isGooglePhotosUrl(url) {
       if (ev) {
         const curOrigin = window.location.origin || (window.location.protocol + "//" + window.location.host);
         const curPath = window.location.pathname || "/";
-        const fullHomeUrl = curOrigin + curPath + "?event=" + encodeURIComponent(selectedId);
+        const fullHomeUrl = curOrigin + curPath + "?event=" + encodeURIComponent(ev.id || selectedId);
 
         state.activeConfig = Object.assign({}, state.activeConfig, {
-          ACTIVE_EVENT_ID: selectedId,
+          ACTIVE_EVENT_ID: ev.id || selectedId,
           EVENT_NAME: ev.name || "",
           COUPLE_NAME: ev.name || "",
           EVENT_DATE: ev.date || "",
@@ -3846,6 +3865,7 @@ function isGooglePhotosUrl(url) {
 
         state.customCategories = Array.isArray(ev.customCategories) ? ev.customCategories : [];
         state.allPhotosLabel = ev.allPhotosLabel || "Semua Foto";
+        state.activeCategory = state.allPhotosLabel;
 
         // Bersihkan state foto dan segera muat cache khusus event ini (Anti-Bercampur)
         state.allPhotos = [];
@@ -3861,10 +3881,10 @@ function isGooglePhotosUrl(url) {
               const sortedCached = sortPhotosNewestFirst(cachedPhotos);
               state.allPhotos = sortedCached;
               state.filteredPhotos = sortedCached;
-              renderPhotoGrid();
             }
           }
         } catch(ePh) {}
+        renderPhotoGrid();
 
         // Perbarui input form admin seketika
         populateAdminInputsForActiveEvent(state.activeConfig);
@@ -3886,7 +3906,6 @@ function isGooglePhotosUrl(url) {
         try {
           localStorage.setItem("WEDDING_ACTIVE_EVENT_ID", selectedId);
           localStorage.setItem("WEDDING_EVENT_CFG_" + selectedId, JSON.stringify(state.activeConfig));
-          localStorage.setItem("WEDDING_ACTIVE_EVENT_CFG", JSON.stringify(state.activeConfig));
         } catch(e) {}
 
         // Ambil data foto murni untuk event yang dipilih

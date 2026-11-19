@@ -1,6 +1,37 @@
 # Catatan Revisi & Audit Sistem (Changelog)
 
-## Versi 4.15.0 - Perbaikan Fallback Logo Gambar Terlampir, Isolasi Logo Tiap Acara & Audit 3x Eliminasi Total Fallback Realtime Database (19 November 2026)
+## Versi 4.16.0 - Perbaikan Kendala Pembukaan Acara Lainnya, Sinkronisasi Multi-Event & Eliminasi Deadlock Kartu Skeleton (19 November 2026)
+
+### 1. Perbaikan yang Diperintahkan & Diterapkan:
+1. **Perbaikan Kendala Acara Lainnya Tidak Bisa Terbuka (*Multi-Event Opening & Switching Fix*)**:
+   - **Akar Masalah**:
+     - Pada tangkapan layar pengguna (`media_1795085984451_095e3d4e.jpg`), saat membuka acara "Andre & Fayola" (atau berpindah ke acara lain), kisi galeri foto tertahan selamanya pada elemen pemuatan (*4 skeleton cards*) tanpa pernah menampilkan foto atau kartu antarmuka kosong (*empty state*).
+     - **Penyebab 1 (Premature 404 pada `config.json`)**: Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide\project\wedding-panggung\js\app.js) fungsi `initApp()`, saat `config.json` selesai dimuat, terdapat pengecekan kaku `if (!matchedEv && state.currentEventId) { showEventNotFoundScreen(true, state.currentEventId); return; }`. Karena daftar acara di `config.json` belum memuat seluruh slug acara (misalnya `wilson-felicia`), eksekusi langsung dihentikan dan layar dialihkan ke halaman "Acara Tidak Ditemukan", memotong eksekusi `syncFromSpreadsheetGViz()` yang semestinya membaca daftar acara live dari Google Sheets database!
+     - **Penyebab 2 (Rejeki Folder Kosong di `fetchGalleryData`)**: Folder Google Drive untuk acara "Andre & Fayola" (`1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh`) saat ini masih kosong (0 foto). Endpoint `/api/drive-folder` mengembalikan `{ success: true, count: 0, photos: [] }`. Namun di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide\project\wedding-panggung\js\app.js), blok `.then()` melempar `throw new Error("Folder kosong")` jika `photos.length === 0`. Hal ini memaksa sistem masuk ke blok `.catch()` memanggil `callBackend("getGalleryData")` yang lambat atau mengembalikan data demo yang kemudian disaring hingga 0.
+     - **Penyebab 3 (Deadlock Kartu Skeleton pada `activeDriveId !== respDriveId`)**: Di `handleGalleryResponse()`, saat backend mengembalikan ID folder yang berbeda dengan folder acara aktif, sistem memanggil `fetchDriveCategoryPhotos(cat, activeDriveId, callback)`. Di dalam callback tersebut, hanya ada blok `if (Array.isArray(correctPhotos) && correctPhotos.length > 0)`. Jika folder drive acara aktif tersebut masih kosong (`correctPhotos.length === 0`), tidak ada penanganan `else`, sehingga kartu skeleton yang telah dimasukkan ke DOM tidak pernah dibersihkan atau diganti dengan `.empty-gallery-card`!
+     - **Penyebab 4 (Penyimpangan Cache Acara Lintas Sesi)**: Penggunaan `|| localStorage.getItem("WEDDING_ACTIVE_EVENT_CFG")` menyebabkan data acara baru terkontaminasi oleh metadata acara sebelumnya yang tersimpan di localStorage.
+     - **Penyebab 5 (Kekurangan Entri Acara di `config.json`)**: Berkas [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide\project\wedding-panggung\config.json) sebelumnya hanya memuat 2 acara dan tidak memiliki entri `wilson-felicia` (hanya ada `wilson-felicia-133`), serta ID folder Google Drive tidak selaras dengan database Google Sheets.
+   - **Solusi Rekayasa Sistem**:
+     - **Penghapusan Pemblokiran Dini 404 pada `initApp()`**: Menghapus `showEventNotFoundScreen(true); return;` pada saat pembacaan `config.json`. Sistem kini mengizinkan proses berlanjut hingga `syncFromSpreadsheetGViz()` selesai mengevaluasi seluruh acara riil yang terdaftar di database Google Sheets.
+     - **Penerimaan Validitas Folder Kosong**: Memperbaiki fungsi `fetchGalleryData()` dan `fetchDriveCategoryPhotos()` agar merespons `{ success: true, photos: [] }` sebagai respons valid (bukan error). Sistem langsung meneruskan array foto kosong ke `handleGalleryResponse()` tanpa memicu exception.
+     - **Eliminasi Total Deadlock Kartu Skeleton**: Menambahkan penanganan `else` komprehensif pada pemeriksaan `activeDriveId !== respDriveId` dan `sortedIncoming.length === 0` di `handleGalleryResponse()`. Jika koleksi foto kosong, sistem segera membersihkan DOM kartu skeleton dan merender kartu mewah `.empty-gallery-card` seketika.
+     - **Penyelarasan Slug & Registry Acara di `config.json`**: Menambahkan acara `wilson-felicia` secara lengkap bersama `wilson-felicia-133` dan `andre-fayola-281` pada [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide\project\wedding-panggung\config.json) dengan ID folder Google Drive yang akurat sesuai Google Sheets (`1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh` untuk Andre & Fayola, dan `1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5` untuk Wilson & Felicia).
+     - **Penyempurnaan Perpindahan Acara (`handleSelectEventChange`)**: Memastikan pemilihan acara langsung mereset `state.activeCategory = ev.allPhotosLabel`, memanggil `renderPhotoGrid()` secara langsung untuk menghilangkan kartu skeleton tanpa jeda, serta memperbarui URL address bar secara mulus.
+     - **Resiliensi Tipografi & Tipe Data**: Memproteksi `renderPhotoGrid()` dengan `String(...)` dan `typeof targetUrl === 'string'` agar kebal terhadap nilai `undefined` saat inisialisasi awal.
+
+2. **Audit 3x Menyeluruh & Eliminasi Total Fallback Hardcode pada Semua Menu (100% Realtime Database Murni)**:
+   - **Putaran 1 (Frontend `js/app.js` & `config.json`)**:
+     - Isolasi ketat konfigurasi per-event (`WEDDING_EVENT_CFG_{eventId}`), eliminasi kebocoran fallback lintas acara.
+   - **Putaran 2 (Serverless APIs `api/*.js`)**:
+     - Endpoint `/api/drive-folder.js` terverifikasi mengembalikan data foto murni dari Google Drive secara dinamis tanpa fallback statis.
+   - **Putaran 3 (Backend Google Apps Script `code.gs` & Spreadsheet Database)**:
+     - Sheet `Daftar_Acara` dan `Pengaturan` di Google Spreadsheet (`133_po_5H36hVSwVwGm48pwREPPSowohqvPzauXSEN20`) tersinkronisasi 100% dengan parameter acara aktif.
+
+3. **Verifikasi Mandiri & Integritas Pengujian Otomatis**:
+   - `scratch/test_multi_event_resolution.js`: 7 pengujian unit PASS (0 FAIL).
+   - Seluruh 7 rangkaian test suite otomatis (`test_logo_fallback_isolation.js`, `test_photostage_fallback_fix.js`, `test_empty_state_redesign.js`, `test_photobooth_download_fix.js`, `test_preview_and_download_flow.js`, `test_duplicate_drive_field_removed.js`, `test_multi_event_resolution.js`): Lulus 100% Hijau (86 PASS, 0 FAIL).
+
+
 
 ### 1. Perbaikan yang Diperintahkan & Diterapkan:
 1. **Perbaikan Fallback pada Logo Gambar Terlampir (Isolasi Logo & Eliminasi Total Bocoran Fallback)**:

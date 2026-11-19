@@ -1,6 +1,6 @@
 # PRD - Wedding Photo Gallery & Live Slideshow Platform
 **Sistem**: Multi-Event Wedding Gallery with ERP Master Data Architecture  
-**Versi**: v4.15.0-PROD  
+**Versi**: v4.16.0-PROD  
 **Arsitektur Database**: Google Sheets ERP Master Table + Google Drive Live Photo Catalog  
 **Terakhir Diperbarui**: 19 November 2026
 
@@ -154,3 +154,21 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
   - **Serverless API (`api/*.js`)**: Seluruh endpoint terverifikasi bebas hardcode ID dan beroperasi 100% dinamis.
   - **Backend GAS (`code.gs` & `setup.gs`)**: Menghapus parameter usang `WEDDING_FOLDER_URL` ("Tautan Folder Google Drive Kategori Wedding Panggung"), menghapus hardcoded ID folder `1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5` dan `1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI`, menghapus hardcoded event `andre-fayola-281` dan `wilson-felicia-133`, serta menghapus hardcoded admin `usr_superadmin / 111111` dari fungsi inisialisasi database.
   - **Safe Non-Destructive Migration**: Inisialisasi database pada `code.gs` dan `setup.gs` tidak lagi menghapus (*clear*) sheet yang sudah ada, menjamin seluruh data riil pengguna tidak pernah tertimpa.
+
+### 2.17 Isolasi Logo Monogram Acara & Penanganan Gambar Rusak (v4.15.0)
+- **Isolasi Monogram/Logo Tiap Acara (Multi-Event Logo Isolation)**:
+  - Setiap acara memiliki kolom monogram sendiri (`Logo_Acara`) pada tabel `Daftar_Acara` di Google Spreadsheet.
+  - Jika suatu acara tidak memiliki monogram/logo, kontainer `#heroLogoContainer` disembunyikan secara bersih tanpa mewarisi logo global vendor Runway.
+  - Atribut `#heroLogoImg` dilengkapi penanganan kegagalan otomatis (`onerror`) untuk menyembunyikan kontainer jika URL logo tidak dapat diakses, mencegah ikon gambar rusak.
+
+### 2.18 Perbaikan Kendala Pembukaan Acara Lainnya & Eliminasi Deadlock Kartu Skeleton (v4.16.0)
+- **Resolusi Dini Tanpa Pemblokiran 404**:
+  - Mengeliminasi penghentian dini (*early abort*) pada pembacaan `config.json` di `initApp()`, menjamin proses inisialisasi terus berjalan menuju `syncFromSpreadsheetGViz()` yang membaca data acara live dari Google Sheets database.
+- **Penerimaan Respons Folder Kosong Secara Anggun**:
+  - Endpoint `/api/drive-folder` yang mengembalikan array foto kosong (`photos: []`) diterima sebagai status sukses yang valid tanpa memicu pengecualian `throw new Error("Folder kosong")`.
+- **Eliminasi Total Deadlock Kartu Skeleton**:
+  - Menyediakan blok `else` pada pemeriksaan folder `activeDriveId !== respDriveId` dan penyaringan foto `sortedIncoming.length === 0` di `handleGalleryResponse()`. DOM kartu skeleton selalu dibersihkan dan digantikan secara seketika oleh kartu mewah `.empty-gallery-card`.
+- **Penyelarasan Multi-Event Registry**:
+  - Menyelaraskan seluruh entri acara (`andre-fayola-281`, `wilson-felicia-133`, `wilson-felicia`) di `config.json` lengkap dengan ID folder Google Drive yang akurat sesuai Google Sheets.
+- **Perpindahan Acara Dinamis & Mulus**:
+  - Pemilihan acara via `handleSelectEventChange()` seketika memperbarui `state.activeCategory`, memanggil `renderPhotoGrid()`, memperbarui address bar browser secara dinamis, dan memicu sinkronisasi foto murni acara yang dipilih tanpa kebocoran cache lintas acara.

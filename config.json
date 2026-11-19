@@ -1,6 +1,6 @@
 {
   "ACTIVE_EVENT_ID": "andre-fayola-281",
-  "ALL_PHOTOS_LABEL": "Semua Foto",
+  "ALL_PHOTOS_LABEL": "Photostage",
   "ADMIN_ACCOUNTS": [
     {
       "id": "usr_superadmin",
@@ -34,7 +34,8 @@
       "date": "22 November 2026",
       "venue": "UPPERHILLS CONVENTION HALLS",
       "homeUrl": "https://gallery.runway.my.id/?event=andre-fayola-281",
-      "driveFolderId": "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
+      "driveFolderId": "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh",
+      "allPhotosLabel": "Photostage",
       "photoboothUrl": "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
       "frameImageUrl": "",
       "logoUrl": "",
@@ -44,11 +45,6 @@
           "url": "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
           "enabled": true,
           "isPhotobooth": true
-        },
-        {
-          "name": "Wedding",
-          "url": "https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI",
-          "enabled": true
         }
       ],
       "status": "Aktif"
@@ -59,14 +55,36 @@
       "date": "16 November 2026",
       "venue": "UpperHills Convention Hall, Makassar",
       "homeUrl": "https://gallery.runway.my.id/?event=wilson-felicia-133",
-      "driveFolderId": "1GGB77clCMYBIg17J0ECr2eVbD02ZeInW",
-      "photoboothUrl": "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
+      "driveFolderId": "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
+      "allPhotosLabel": "Photostage",
+      "photoboothUrl": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
       "frameImageUrl": "",
       "logoUrl": "",
       "customCategories": [
         {
           "name": "Photobooth",
-          "url": "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
+          "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+          "enabled": true,
+          "isPhotobooth": true
+        }
+      ],
+      "status": "Aktif"
+    },
+    {
+      "id": "wilson-felicia",
+      "name": "Wilson & Felicia",
+      "date": "16 November 2026",
+      "venue": "UpperHills Convention Hall, Makassar",
+      "homeUrl": "https://gallery.runway.my.id/?event=wilson-felicia",
+      "driveFolderId": "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
+      "allPhotosLabel": "Photostage",
+      "photoboothUrl": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
+      "frameImageUrl": "",
+      "logoUrl": "",
+      "customCategories": [
+        {
+          "name": "Photobooth",
+          "url": "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
           "enabled": true,
           "isPhotobooth": true
         }
@@ -94,8 +112,8 @@
       "enabled": true
     }
   ],
-  "DRIVE_FOLDER_ID": "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
-  "DRIVE_FOLDER_URL": "https://drive.google.com/drive/folders/1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
+  "DRIVE_FOLDER_ID": "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh",
+  "DRIVE_FOLDER_URL": "https://drive.google.com/drive/folders/1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh",
   "FRAME_IMAGE_URL": "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NEIeRNa-/view?usp=sharing",
   "PHOTOBOOTH_URL": "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
   "WEDDING_FOLDER_URL": "https://drive.google.com/drive/folders/1G2yIKIEe9SPsLcoMVFDNwHybzvyAfqBI",
