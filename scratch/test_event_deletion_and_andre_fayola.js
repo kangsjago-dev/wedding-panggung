@@ -86,3 +86,4 @@ if (passed === total) {
   console.error("❌ ADA TEST GAGAL!");
   process.exit(1);
 }
+
