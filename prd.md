@@ -1,6 +1,6 @@
 # PRD - Wedding Photo Gallery & Live Slideshow Platform
 **Sistem**: Multi-Event Wedding Gallery with ERP Master Data Architecture  
-**Versi**: v4.26.0-PROD  
+**Versi**: v4.27.0-PROD  
 **Arsitektur Database**: Google Sheets ERP Master Table + Google Drive Live Photo Catalog  
 **Terakhir Diperbarui**: 21 November 2026
 
@@ -246,3 +246,18 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
   - Memastikan antarmuka dropdown dan kartu hero tidak pernah menampilkan teks mentah formula Google Sheets.
 - **Pembersihan Parameter `EVENTS` pada Sheet 'Pengaturan'**:
   - Menyelaraskan sheet `Pengaturan` baris `EVENTS` melalui [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) dan [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/setup.gs) sehingga selalu mencerminkan tepat 3 event resmi yang ada di sheet `Daftar_Acara` tanpa baris duplikat usang.
+
+### 2.27 Perbaikan Off-by-One Parsing GViz & Jaminan Konsistensi 3 Event Antar Browser (v4.27.0)
+- **Akar Masalah "2 Event vs 3 Event"**:
+  - Google Visualization API (GViz) merespons metadata kolom di `table.cols`, sedangkan seluruh baris di `table.rows` murni baris data (index 0 adalah `andre-fayola-281`).
+  - Sebelumnya, perulangan pembacaan dimulai dari `r = 1` karena berasumsi baris ke-0 adalah nama header, sehingga event baris 0 (`andre-fayola-281`) selalu terlewat dan dibuang di browser yang berhasil melakukan sinkronisasi GViz.
+- **Deteksi Header Dinamis & Loop Tanpa Kehilangan Data**:
+  - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js), membaca nama kolom langsung dari `aParsed.table.cols`.
+  - Memeriksa apakah `rows[0]` berisi teks header (`ID_Event`); jika bukan header melainkan data event, `startRow` diatur ke `0`.
+  - Menjamin seluruh 3 event (`andre-fayola-281`, `wilson-felicia-133`, `tommy-natasha-594`) selalu diekstrak 100% utuh di seluruh browser tanpa terkecualikan.
+- **Kanonikalisasi Tanggal & Fallback Tommy & Natasha**:
+  - Menetapkan tanggal Tommy & Natasha `"Rabu, 25 November 2026"` secara otomatis jika nilai tanggal dari Google Sheets kosong (`null`), sehingga tidak pernah lagi tampil tanpa tanggal.
+  - Memperbarui [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) dan [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/setup.gs) dengan integrasi `defaultCanonicalEvents` yang menjamin 3 event kanonikal selalu dipertahankan.
+- **Pembersihan Residual Storage di Dropdown Admin**:
+  - `renderAdminEventsManager()` secara otomatis menyapu residual key `WEDDING_EVENT_CFG_EVT-...` dan `WEDDING_EVENT_CFG_wilson-felicia` dari `localStorage` browser.
+  - Dropdown admin dijamin selalu menampilkan tepat 3 pilihan event resmi dengan format tanggal elegan.
