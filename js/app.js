@@ -823,10 +823,21 @@ function isGooglePhotosUrl(url) {
             // Resolusi Multi-Event dari Sheet Pengaturan & Daftar_Acara
             if (sheetMap.EVENTS && !sheetMap.EVENTS.includes("[object Object]")) {
               try {
-                const parsedEvs = JSON.parse(sheetMap.EVENTS);
+                let parsedEvs = JSON.parse(sheetMap.EVENTS);
                 if (Array.isArray(parsedEvs) && parsedEvs.length > 0) {
+                  const hasCanonicalWilson = parsedEvs.some(function(e) { return e && e.id === "wilson-felicia-133"; });
+                  parsedEvs = parsedEvs.filter(function(e) {
+                    if (!e || !e.id) return false;
+                    if (String(e.id).startsWith("EVT-")) return false;
+                    if (hasCanonicalWilson && e.id === "wilson-felicia") return false;
+                    return true;
+                  }).map(function(e) {
+                    if (e && e.date) e.date = normalizeSheetDate(e.date);
+                    return e;
+                  });
+
                   const evMap = new Map();
-                  (state.events || []).forEach(function(e) { if (e && e.id) evMap.set(e.id, e); });
+                  (state.events || []).forEach(function(e) { if (e && e.id && !String(e.id).startsWith("EVT-")) evMap.set(e.id, e); });
                   parsedEvs.forEach(function(e) {
                     if (e && e.id) {
                       const prev = evMap.get(e.id) || {};
@@ -838,7 +849,7 @@ function isGooglePhotosUrl(url) {
               } catch(eEvs) {}
             }
 
-            // Sinkronkan juga pembacaan realtime dari sheet 'Daftar_Acara'
+            // Sinkronkan juga pembacaan realtime dari sheet 'Daftar_Acara' (Master Single Source of Truth)
             try {
               fetch("https://docs.google.com/spreadsheets/d/" + sid + "/gviz/tq?tqx=out:json&sheet=Daftar_Acara&t=" + Date.now())
                 .then(function(ar) { return ar.text(); })
@@ -871,10 +882,11 @@ function isGooglePhotosUrl(url) {
                             parsedCats = typeof rowCells[catIdx].v === 'string' ? JSON.parse(rowCells[catIdx].v) : rowCells[catIdx].v;
                           } catch(e) { parsedCats = []; }
                         }
+                        const cleanDate = rowCells[dateIdx] ? normalizeSheetDate(rowCells[dateIdx]) : '';
                         sheetEvs.push({
                           id: evId,
                           name: rowCells[nameIdx] ? String(rowCells[nameIdx].v || '').trim() : evId,
-                          date: rowCells[dateIdx] ? String(rowCells[dateIdx].v || '').trim() : '',
+                          date: cleanDate,
                           venue: rowCells[venueIdx] ? String(rowCells[venueIdx].v || '').trim() : '',
                           homeUrl: rowCells[urlIdx] ? String(rowCells[urlIdx].v || '').trim() : '',
                           driveFolderId: rowCells[driveIdx] ? String(rowCells[driveIdx].v || '').trim() : '',
@@ -886,14 +898,21 @@ function isGooglePhotosUrl(url) {
                         });
                       }
                       if (sheetEvs.length > 0) {
-                        const evMap = new Map();
-                        (state.events || []).forEach(function(e) { if (e && e.id) evMap.set(e.id, e); });
-                        sheetEvs.forEach(function(e) {
-                          const prev = evMap.get(e.id) || {};
-                          evMap.set(e.id, Object.assign({}, prev, e));
-                        });
-                        state.events = Array.from(evMap.values());
-                        try { localStorage.setItem("WEDDING_EVENTS_REGISTRY", JSON.stringify(state.events)); } catch(e) {}
+                        // Sheet 'Daftar_Acara' adalah Master Table ERP Resmi (Single Source of Truth)
+                        state.events = sheetEvs;
+                        try {
+                          localStorage.setItem("WEDDING_EVENTS_REGISTRY", JSON.stringify(sheetEvs));
+                          const validIds = new Set(sheetEvs.map(function(ev) { return ev.id; }));
+                          for (let lk = localStorage.length - 1; lk >= 0; lk--) {
+                            const keyName = localStorage.key(lk);
+                            if (keyName && keyName.startsWith("WEDDING_EVENT_CFG_")) {
+                              const eId = keyName.replace("WEDDING_EVENT_CFG_", "");
+                              if (!validIds.has(eId)) {
+                                localStorage.removeItem(keyName);
+                              }
+                            }
+                          }
+                        } catch(eStorage) {}
                         renderAdminEventsManager();
                       }
                     }
@@ -1512,6 +1531,18 @@ function isGooglePhotosUrl(url) {
       if (!dateStr) return "";
       let s = String(dateStr).trim();
 
+      // Format Google Visualization API Date: Date(YYYY,M,D) misal: Date(2026,10,16)
+      const gvizMatch = s.match(/^Date\((\d+),\s*(\d+),\s*(\d+)(?:,\s*\d+)?(?:,\s*\d+)?(?:,\s*\d+)?\)$/i);
+      if (gvizMatch) {
+        const y = parseInt(gvizMatch[1], 10);
+        const m = parseInt(gvizMatch[2], 10); // 0-based in GViz (10 = November)
+        const d = parseInt(gvizMatch[3], 10);
+        const dateObj = new Date(y, m, d);
+        const dayName = INDONESIAN_DAYS[dateObj.getDay()];
+        const monthName = INDONESIAN_MONTHS[m] || "";
+        return dayName + ", " + d + " " + monthName + " " + y;
+      }
+
       // Jika sudah memiliki nama hari di depannya (misal: "Minggu, 22 November 2026"), lepaskan dulu untuk evaluasi konsisten
       for (let i = 0; i < INDONESIAN_DAYS.length; i++) {
         const dayName = INDONESIAN_DAYS[i];
@@ -1564,9 +1595,25 @@ function isGooglePhotosUrl(url) {
       return formatIndonesianDateWithDay(dateStr);
     }
 
+    function normalizeSheetDate(cell) {
+      if (!cell) return "";
+      if (typeof cell === "object" && cell !== null) {
+        if (cell.f) return formatIndonesianDateWithDay(cell.f);
+        if (cell.v !== undefined && cell.v !== null) return formatIndonesianDateWithDay(cell.v);
+      }
+      return formatIndonesianDateWithDay(cell);
+    }
+
     function formatDateForInput(dateStr) {
       if (!dateStr) return "";
       let str = String(dateStr).trim().replace(/^[a-zA-Z]+,?\s+/, "");
+      const gvizMatch = str.match(/^Date\((\d+),\s*(\d+),\s*(\d+)/i);
+      if (gvizMatch) {
+        const yyyy = gvizMatch[1];
+        const mm = String(parseInt(gvizMatch[2], 10) + 1).padStart(2, "0");
+        const dd = String(gvizMatch[3]).padStart(2, "0");
+        return yyyy + "-" + mm + "-" + dd;
+      }
       if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
         return str;
       }
@@ -3923,22 +3970,40 @@ function isGooglePhotosUrl(url) {
       const select = document.getElementById("adminEventSelect");
       if (!select) return;
 
-      // Pastikan registry memuat event dari localStorage jika ada
+      // Pastikan registry memuat event dari localStorage jika ada, lalu sanitasi dari phantom/duplicate event
       try {
         const savedRegistry = localStorage.getItem("WEDDING_EVENTS_REGISTRY");
         if (savedRegistry) {
-          const parsed = JSON.parse(savedRegistry);
+          let parsed = JSON.parse(savedRegistry);
           if (Array.isArray(parsed) && parsed.length > 0) {
+            const hasCanonicalWilson = parsed.some(function(e) { return e && e.id === "wilson-felicia-133"; });
+            parsed = parsed.filter(function(e) {
+              if (!e || !e.id) return false;
+              if (String(e.id).startsWith("EVT-")) return false; // Hapus event phantom
+              if (hasCanonicalWilson && e.id === "wilson-felicia") return false; // Hapus duplicate slug lama
+              return true;
+            });
             const evMap = new Map();
-            (state.events || []).forEach(function(e) { if (e && e.id) evMap.set(e.id, e); });
+            (state.events || []).forEach(function(e) { if (e && e.id && !String(e.id).startsWith("EVT-")) evMap.set(e.id, e); });
             parsed.forEach(function(e) { if (e && e.id && !evMap.has(e.id)) evMap.set(e.id, e); });
             state.events = Array.from(evMap.values());
           }
         }
       } catch(e) {}
 
+      // Sanitasi final daftar acara:
+      // 1. Singkirkan event liar dengan ID "EVT-"
+      // 2. Jika ada wilson-felicia-133, singkirkan slug lama wilson-felicia
+      const hasWilsonCanonical = (state.events || []).some(function(e) { return e && e.id === "wilson-felicia-133"; });
+      state.events = (state.events || []).filter(function(e) {
+        if (!e || !e.id) return false;
+        if (String(e.id).startsWith("EVT-")) return false;
+        if (hasWilsonCanonical && e.id === "wilson-felicia") return false;
+        return true;
+      });
+
       if (!Array.isArray(state.events) || state.events.length === 0) {
-        if (state.currentEventId) {
+        if (state.currentEventId && !String(state.currentEventId).startsWith("EVT-")) {
           state.events = [
             {
               id: state.currentEventId,
@@ -3953,8 +4018,8 @@ function isGooglePhotosUrl(url) {
         }
       }
 
-      // Pastikan event aktif saat ini selalu ada dalam daftar options
-      if (state.currentEventId && !state.events.some(function(e) { return e && e.id === state.currentEventId; })) {
+      // Pastikan event aktif saat ini selalu ada dalam daftar options jika valid
+      if (state.currentEventId && !String(state.currentEventId).startsWith("EVT-") && !state.events.some(function(e) { return e && e.id === state.currentEventId; })) {
         const curOrigin = window.location.origin || (window.location.protocol + "//" + window.location.host);
         const curPath = window.location.pathname || "/";
         state.events.push({
@@ -3974,7 +4039,8 @@ function isGooglePhotosUrl(url) {
         if (!ev || !ev.id) return;
         const opt = document.createElement("option");
         opt.value = ev.id;
-        opt.innerText = (ev.name || ev.id) + (ev.date ? (" (" + ev.date + ")") : "");
+        const formattedDate = ev.date ? normalizeSheetDate(ev.date) : "";
+        opt.innerText = (ev.name || ev.id) + (formattedDate ? (" (" + formattedDate + ")") : "");
         if (ev.id === state.currentEventId) opt.selected = true;
         select.appendChild(opt);
       });

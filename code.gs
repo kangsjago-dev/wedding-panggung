@@ -706,6 +706,23 @@ function syncEventsToSheet(ss, eventsList) {
     sheet.setColumnWidth(10, 260);
     sheet.setColumnWidth(11, 100);
 
+    // Sinkronkan juga ke sheet 'Pengaturan' baris EVENTS agar selalu selaras 100%
+    try {
+      var sheetSettings = ss.getSheetByName("Pengaturan");
+      if (sheetSettings) {
+        var sData = sheetSettings.getDataRange().getValues();
+        var cleanEventsJson = JSON.stringify(eventsList);
+        for (var sr = 1; sr < sData.length; sr++) {
+          if (String(sData[sr][0]).trim() === "EVENTS") {
+            sheetSettings.getRange(sr + 1, 2).setValue(cleanEventsJson);
+            break;
+          }
+        }
+      }
+    } catch(eSett) {
+      Logger.log("Info update Pengaturan EVENTS: " + eSett.toString());
+    }
+
     SpreadsheetApp.flush();
   } catch (e) {
     Logger.log('Gagal sinkronisasi Daftar_Acara: ' + e.toString());

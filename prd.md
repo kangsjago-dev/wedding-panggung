@@ -1,8 +1,8 @@
 # PRD - Wedding Photo Gallery & Live Slideshow Platform
 **Sistem**: Multi-Event Wedding Gallery with ERP Master Data Architecture  
-**Versi**: v4.25.0-PROD  
+**Versi**: v4.26.0-PROD  
 **Arsitektur Database**: Google Sheets ERP Master Table + Google Drive Live Photo Catalog  
-**Terakhir Diperbarui**: 20 November 2026
+**Terakhir Diperbarui**: 21 November 2026
 
 ---
 
@@ -236,3 +236,13 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
   - Pada penambahan event baru (`handleAddNewEvent`), selain menyimpan konfigurasi global, frontend langsung memicu `callBackend("addEvent", ...)` untuk append baris ke sheet `Daftar_Acara`.
   - Pada `syncFromSpreadsheetGViz()`, menambahkan pembacaan berkala dari `sheet=Daftar_Acara` sehingga penambahan atau perubahan baris event yang dilakukan langsung di Google Sheets secara realtime otomatis terbaca dan tersinkronisasi ke aplikasi web.
   - Menambahkan tombol *"📊 Sinkronkan ke Sheets"* pada antarmuka admin Tab Acara di [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) yang memanggil `triggerSyncDaftarAcara()`.
+
+### 2.26 Penyelarasan Total Master ERP 'Daftar_Acara' & Eliminasi Format Cacat Date(...) (v4.26.0)
+- **Sheet 'Daftar_Acara' Sebagai Single Source of Truth Absolut**:
+  - Menyempurnakan rekonsiliasi data pada `syncFromSpreadsheetGViz()` di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) sehingga saat membaca sheet `Daftar_Acara`, `state.events` ditimpa murni dengan daftar event yang resmi terdaftar.
+  - Mengeliminasi seluruh event asing atau phantom event (`EVT-...`) dan slug lama yang duplikat (`wilson-felicia` tanpa `-133`) dari memori dan `localStorage`.
+- **Parser Cerdas Tanggal Google Sheets GViz (`normalizeSheetDate`)**:
+  - Mengonversi format serialisasi mentah Google Sheets `Date(YYYY,MM,DD)` (contoh: `Date(2026,10,16)`) menjadi format standar bahasa Indonesia dengan nama hari (`"Senin, 16 November 2026"`).
+  - Memastikan antarmuka dropdown dan kartu hero tidak pernah menampilkan teks mentah formula Google Sheets.
+- **Pembersihan Parameter `EVENTS` pada Sheet 'Pengaturan'**:
+  - Menyelaraskan sheet `Pengaturan` baris `EVENTS` melalui [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) dan [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/setup.gs) sehingga selalu mencerminkan tepat 3 event resmi yang ada di sheet `Daftar_Acara` tanpa baris duplikat usang.
