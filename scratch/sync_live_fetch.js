@@ -22,7 +22,7 @@ const cleanEvents = [
     photoboothUrl: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
     customCategories: [{ name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", enabled: true, isPhotobooth: true }],
     frameImageUrl: "",
-    logoUrl: "",
+    logoUrl: "https://drive.google.com/file/d/1tsZZc6y_0xiCVWunfPiEN_eQdAsjJP_B/view?usp=drivesdk",
     status: "Aktif"
   },
   {
@@ -43,27 +43,25 @@ const cleanEvents = [
 const gasUrl = "https://script.google.com/macros/s/AKfycbzGgpibRzZboG9vNrTyxzko5mGkW6LfabNYfBxm2v6c-gO9O_iKLqMocxCZ5GVdiM1l/exec";
 
 async function run() {
-  const pinsToTry = ["111111", "123456", "121212", "888888"];
-  for (let pin of pinsToTry) {
-    console.log(`Trying pin: ${pin}...`);
-    try {
-      const res = await fetch(gasUrl, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({
-          action: "saveAdminSettings",
-          pin: pin,
-          settings: {
-            EVENTS: JSON.stringify(cleanEvents)
-          }
-        })
-      });
-      const text = await res.text();
-      console.log(`Result with ${pin}:`, text.slice(0, 300));
-      if (text.includes('"success":true')) break;
-    } catch(e) {
-      console.error("Error:", e);
-    }
+  console.log("Calling saveAdminSettings with cleanEvents and EVENT_LOGO_URL...");
+  try {
+    const res = await fetch(gasUrl, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        action: "saveAdminSettings",
+        pin: "111111",
+        settings: {
+          EVENTS: JSON.stringify(cleanEvents),
+          EVENT_LOGO_URL: "https://drive.google.com/file/d/1tsZZc6y_0xiCVWunfPiEN_eQdAsjJP_B/view?usp=drivesdk",
+          logoUrl: "https://drive.google.com/file/d/1tsZZc6y_0xiCVWunfPiEN_eQdAsjJP_B/view?usp=drivesdk"
+        }
+      })
+    });
+    const text = await res.text();
+    console.log("Result saveAdminSettings:", text.slice(0, 300));
+  } catch(e) {
+    console.error("Error:", e);
   }
 }
 

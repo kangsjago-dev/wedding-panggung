@@ -1,6 +1,6 @@
 # PRD - Wedding Photo Gallery & Live Slideshow Platform
 **Sistem**: Multi-Event Wedding Gallery with ERP Master Data Architecture  
-**Versi**: v4.27.0-PROD  
+**Versi**: v4.28.0-PROD  
 **Arsitektur Database**: Google Sheets ERP Master Table + Google Drive Live Photo Catalog  
 **Terakhir Diperbarui**: 21 November 2026
 
@@ -261,3 +261,15 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
 - **Pembersihan Residual Storage di Dropdown Admin**:
   - `renderAdminEventsManager()` secara otomatis menyapu residual key `WEDDING_EVENT_CFG_EVT-...` dan `WEDDING_EVENT_CFG_wilson-felicia` dari `localStorage` browser.
   - Dropdown admin dijamin selalu menampilkan tepat 3 pilihan event resmi dengan format tanggal elegan.
+
+### 2.28 Persistensi Permanen Logo Acara / Monogram & Proteksi Anti-Wipeout (v4.28.0)
+- **Akar Masalah Form Logo Kosong Saat Login**:
+  - Tautan logo tersimpan di sheet `Pengaturan`, namun kolom `Logo_Acara` di sheet `Daftar_Acara` bernilai kosong (`null`).
+  - Pada saat memuat ulang halaman / inisialisasi login, pembacaan `Daftar_Acara` mengekstrak string kosong `""` dan menimpa variabel `state.activeConfig.EVENT_LOGO_URL` dan `state.events[i].logoUrl`.
+  - Elemen input `#cfgEventLogoUrl` juga belum dipetakan di `populateConfigToUI()`.
+- **Proteksi Bertingkat Anti-Wipeout di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js)**:
+  - Pada `syncFromSpreadsheetGViz()`, jika sel logo di `Daftar_Acara` kosong, sistem otomatis mempertahankan logo yang ada dari `existingEv.logoUrl`, `sheetMap.EVENT_LOGO_URL`, atau `state.activeConfig.EVENT_LOGO_URL`.
+  - Pada `populateConfigToUI()`, elemen `#cfgEventLogoUrl` dan thumbnail pratinjau (`updateAdminLogoPreview()`) otomatis diisi.
+  - Pada `openAdminSettingsModal()` dan `populateAdminInputsForActiveEvent()`, nilai logo aktif dipertahankan sehingga kotak input formulir terisi permanen dengan URL logo yang tersimpan.
+- **Sinkronisasi Database Penuh**:
+  - Sheet `Pengaturan` baris `EVENTS` dan sheet `Daftar_Acara` disinkronkan langsung via API backend sehingga tautan logo resmi tersimpan permanen di cloud database.

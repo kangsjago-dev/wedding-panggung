@@ -822,7 +822,8 @@ function syncAllEventsToSheet() {
       photoboothUrl: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
       customCategories: [{ name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", enabled: true, isPhotobooth: true }],
       frameImageUrl: "",
-      logoUrl: "",
+      logoUrl: "https://drive.google.com/file/d/1tsZZc6y_0xiCVWunfPiEN_eQdAsjJP_B/view?usp=drivesdk",
+      EVENT_LOGO_URL: "https://drive.google.com/file/d/1tsZZc6y_0xiCVWunfPiEN_eQdAsjJP_B/view?usp=drivesdk",
       status: "Aktif"
     },
     {

@@ -51,7 +51,7 @@ function populateDaftarAcara() {
       "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
       JSON.stringify([{ name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", enabled: true, isPhotobooth: true }]),
       "",
-      "",
+      "https://drive.google.com/file/d/1tsZZc6y_0xiCVWunfPiEN_eQdAsjJP_B/view?usp=drivesdk",
       "Aktif"
     ],
     [
@@ -108,7 +108,7 @@ function populateDaftarAcara() {
           photoboothUrl: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
           customCategories: [{ name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", enabled: true, isPhotobooth: true }],
           frameImageUrl: "",
-          logoUrl: "",
+          logoUrl: "https://drive.google.com/file/d/1tsZZc6y_0xiCVWunfPiEN_eQdAsjJP_B/view?usp=drivesdk",
           status: "Aktif"
         },
         {

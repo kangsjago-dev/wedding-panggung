@@ -895,6 +895,17 @@ function isGooglePhotosUrl(url) {
                           else if (evId === "wilson-felicia-133") cleanDate = "16 November 2026";
                           else if (evId === "tommy-natasha-594") cleanDate = "Rabu, 25 November 2026";
                         }
+                        let cleanLogo = rowCells[logoIdx] ? String(rowCells[logoIdx].v || '').trim() : '';
+                        if (!cleanLogo) {
+                          const existingEv = (state.events || []).find(function(e) { return e && e.id === evId; });
+                          if (existingEv) cleanLogo = existingEv.logoUrl || existingEv.EVENT_LOGO_URL || '';
+                          if (!cleanLogo && sheetMap && (evId === state.currentEventId || evId === sheetMap.ACTIVE_EVENT_ID || !sheetMap.ACTIVE_EVENT_ID)) {
+                            cleanLogo = sheetMap.EVENT_LOGO_URL || sheetMap.logoUrl || '';
+                          }
+                          if (!cleanLogo && state.activeConfig && (evId === state.currentEventId || !state.currentEventId)) {
+                            cleanLogo = state.activeConfig.EVENT_LOGO_URL || state.activeConfig.logoUrl || '';
+                          }
+                        }
                         sheetEvs.push({
                           id: evId,
                           name: rowCells[nameIdx] ? String(rowCells[nameIdx].v || '').trim() : evId,
@@ -905,7 +916,8 @@ function isGooglePhotosUrl(url) {
                           photoboothUrl: rowCells[pbIdx] ? String(rowCells[pbIdx].v || '').trim() : '',
                           customCategories: Array.isArray(parsedCats) ? parsedCats : [],
                           frameImageUrl: rowCells[frameIdx] ? String(rowCells[frameIdx].v || '').trim() : '',
-                          logoUrl: rowCells[logoIdx] ? String(rowCells[logoIdx].v || '').trim() : '',
+                          logoUrl: cleanLogo,
+                          EVENT_LOGO_URL: cleanLogo,
                           status: rowCells[statusIdx] ? String(rowCells[statusIdx].v || 'Aktif').trim() : 'Aktif'
                         });
                       }
@@ -954,7 +966,7 @@ function isGooglePhotosUrl(url) {
             state.activeConfig.COUPLE_NAME = matchedEv.name || "";
             state.activeConfig.EVENT_DATE = matchedEv.date || "";
             state.activeConfig.EVENT_VENUE = matchedEv.venue || "";
-            state.activeConfig.EVENT_LOGO_URL = matchedEv.logoUrl || matchedEv.EVENT_LOGO_URL || "";
+            state.activeConfig.EVENT_LOGO_URL = matchedEv.logoUrl || matchedEv.EVENT_LOGO_URL || state.activeConfig.EVENT_LOGO_URL || (sheetMap && (sheetMap.EVENT_LOGO_URL || sheetMap.logoUrl)) || "";
             state.activeConfig.logoUrl = state.activeConfig.EVENT_LOGO_URL;
             state.activeConfig.DRIVE_FOLDER_ID = matchedEv.driveFolderId || "";
             state.activeConfig.PHOTOBOOTH_URL = matchedEv.photoboothUrl || "";
@@ -1758,6 +1770,11 @@ function isGooglePhotosUrl(url) {
 
       // Input form admin: HANYA perbarui jika modal admin SEDANG TIDAK DIBUKA (mencegah teks tertimpa saat admin mengetik)
       if (!isModalActive) {
+        const cfgLogoEl = document.getElementById("cfgEventLogoUrl");
+        const curLogo = cfg.EVENT_LOGO_URL || cfg.LOGO_URL || cfg.logoUrl || "";
+        if (cfgLogoEl) cfgLogoEl.value = curLogo;
+        updateAdminLogoPreview(curLogo);
+
         const cfgFrameEl = document.getElementById("cfgFrameImageUrl");
         if (cfgFrameEl) cfgFrameEl.value = cfg.FRAME_IMAGE_URL || "";
         const cfgCoupleEl = document.getElementById("cfgCoupleName");
@@ -3028,7 +3045,7 @@ function isGooglePhotosUrl(url) {
         state.activeConfig.COUPLE_NAME = activeEv.name || state.activeConfig.COUPLE_NAME;
         state.activeConfig.EVENT_DATE = activeEv.date || state.activeConfig.EVENT_DATE;
         state.activeConfig.EVENT_VENUE = activeEv.venue || state.activeConfig.EVENT_VENUE;
-        state.activeConfig.EVENT_LOGO_URL = activeEv.logoUrl || activeEv.EVENT_LOGO_URL || "";
+        state.activeConfig.EVENT_LOGO_URL = activeEv.logoUrl || activeEv.EVENT_LOGO_URL || state.activeConfig.EVENT_LOGO_URL || GLOBAL_CONFIG.EVENT_LOGO_URL || "";
         state.activeConfig.logoUrl = state.activeConfig.EVENT_LOGO_URL;
         if (activeEv.subtitle) state.activeConfig.SUBTITLE = activeEv.subtitle;
         if (activeEv.welcomeMessage) state.activeConfig.WELCOME_MESSAGE = activeEv.welcomeMessage;
@@ -4187,7 +4204,7 @@ function isGooglePhotosUrl(url) {
       const cfgVenueEl = document.getElementById("cfgEventVenue");
       if (cfgVenueEl) cfgVenueEl.value = cfg.EVENT_VENUE || "";
       const cfgLogoEl = document.getElementById("cfgEventLogoUrl");
-      const rawLogo = cfg.EVENT_LOGO_URL || cfg.LOGO_URL || cfg.logoUrl || "";
+      const rawLogo = cfg.EVENT_LOGO_URL || cfg.LOGO_URL || cfg.logoUrl || (state.activeConfig && (state.activeConfig.EVENT_LOGO_URL || state.activeConfig.logoUrl)) || "";
       if (cfgLogoEl) cfgLogoEl.value = rawLogo;
       updateAdminLogoPreview(rawLogo);
       const cfgAllPhotosLabelEl = document.getElementById("cfgMainGalleryLabel") || document.getElementById("cfgAllPhotosLabel");
