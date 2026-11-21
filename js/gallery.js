@@ -36,6 +36,13 @@
 
       // Jika foto kosong untuk kategori ini
       if (!state.filteredPhotos || state.filteredPhotos.length === 0) {
+        const isUrlMissing = !targetUrl || !String(targetUrl).trim();
+        const emptyBadgeText = isUrlMissing ? `Momen Kenangan • ${escapeHtml(activeCat)}` : `Dokumentasi Acara • ${escapeHtml(activeCat)}`;
+        const emptyTitleText = isUrlMissing ? "Foto Belum Tersedia" : "Momen Sedang Dipersiapkan";
+        const emptyDescText = isUrlMissing 
+          ? `Tautan album untuk kategori <strong>${escapeHtml(activeCat)}</strong> belum ditautkan oleh penyelenggara acara. Foto momen kenangan indah akan otomatis tampil begitu tautan dokumentasi diperbarui.`
+          : `Foto kenangan untuk kategori <strong>${escapeHtml(activeCat)}</strong> sedang dalam proses dokumentasi. Silakan periksa kembali beberapa saat lagi.`;
+
         grid.innerHTML = `
           <div class="empty-gallery-card">
             <div class="empty-gallery-icon-wrap" aria-hidden="true">
@@ -45,16 +52,17 @@
                 <path d="M19 13v.01" stroke-width="2.2"></path>
               </svg>
             </div>
-            <h3 class="empty-gallery-title">Momen Indah Sedang Disiapkan</h3>
+            <div class="empty-gallery-badge">${emptyBadgeText}</div>
+            <h3 class="empty-gallery-title">${emptyTitleText}</h3>
             <p class="empty-gallery-desc">
-              Foto kenangan belum tersedia saat ini. Momen hangat kebersamaan akan otomatis tampil di sini begitu selesai diunggah atau disinkronkan.
+              ${emptyDescText}
             </p>
             <div class="empty-gallery-actions">
               <button type="button" class="empty-gallery-btn-refresh" onclick="syncSingleCategory('${escapeHtml(activeCat)}')">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
                 </svg>
-                <span>Segarkan Kategori Ini</span>
+                <span>Segarkan Galeri</span>
               </button>
               ${targetUrl ? `
                 <a href="${escapeHtml(targetUrl)}" target="_blank" rel="noopener noreferrer" class="empty-gallery-btn-source">
@@ -570,7 +578,8 @@
     }
 
     /* ==========================================================================
-       MULTI-EVENT ADMIN MANAGEMENT FUNCTIONS
+       DOWNLOAD PROGRESS WIDGET & QUEUE MANAGER
+       ========================================================================== */
 
     function dismissDownloadWidget() {
       const widget = document.getElementById("downloadProgressWidget");
@@ -1460,7 +1469,9 @@
 
       const vid = document.getElementById("lightboxVideo");
       if (vid) {
-        vid.pause();
+        if (typeof vid.pause === "function") {
+          try { vid.pause(); } catch(e) {}
+        }
         vid.src = "";
         vid.style.display = "none";
       }
@@ -1514,7 +1525,9 @@
         if (video) {
           video.style.display = "block";
           video.src = photo.videoUrl || photo.previewUrl || sharpUrl;
-          video.play().catch(function(){});
+          if (typeof video.play === "function") {
+            try { video.play().catch(function(){}); } catch(e) {}
+          }
         }
         if (btnLabel) btnLabel.innerText = "⬇️ Unduh Video Asli Photobooth";
         if (btn) {
@@ -1524,7 +1537,9 @@
         }
       } else {
         if (video) {
-          video.pause();
+          if (typeof video.pause === "function") {
+            try { video.pause(); } catch(e) {}
+          }
           video.style.display = "none";
           video.src = "";
         }
@@ -1925,5 +1940,40 @@
           } catch (e) {}
         }, function() {});
       }, function() {});
+    }
+
+    // Explicit Global Window Bindings untuk Modul Gallery & Lightbox
+    if (typeof window !== "undefined") {
+      window.renderPhotoGrid = renderPhotoGrid;
+      window.renderWeddingCoverShowcase = renderWeddingCoverShowcase;
+      window.startCoverCarouselAutoPlay = startCoverCarouselAutoPlay;
+      window.switchCoverCarouselSlide = switchCoverCarouselSlide;
+      window.scrollToGallerySection = scrollToGallerySection;
+      window.openShareModal = openShareModal;
+      window.closeShareModal = closeShareModal;
+      window.copyShareUrl = copyShareUrl;
+      window.shareViaWhatsApp = shareViaWhatsApp;
+      window.shareViaWebShare = shareViaWebShare;
+      window.downloadQrCodeImage = downloadQrCodeImage;
+      window.openLightbox = openLightbox;
+      window.closeLightbox = closeLightbox;
+      window.navigateLightbox = navigateLightbox;
+      window.updateLightboxContent = updateLightboxContent;
+      window.handleCurrentLightboxDownload = handleCurrentLightboxDownload;
+      window.startSlideshowFromCurrent = startSlideshowFromCurrent;
+      window.openSlideshow = openSlideshow;
+      window.closeSlideshow = closeSlideshow;
+      window.togglePlayPause = togglePlayPause;
+      window.nextSlide = nextSlide;
+      window.prevSlide = prevSlide;
+      window.zoomLightbox = zoomLightbox;
+      window.resetLightboxZoom = resetLightboxZoom;
+      window.applyLightboxZoom = applyLightboxZoom;
+      window.initLightboxZoomEvents = initLightboxZoomEvents;
+      window.setupLightboxBackdropClick = setupLightboxBackdropClick;
+      window.queuePhotoDownload = queuePhotoDownload;
+      window.executeDirectPhotoDownload = executeDirectPhotoDownload;
+      window.saveBlobToDevice = saveBlobToDevice;
+      window.dismissDownloadWidget = dismissDownloadWidget;
     }
 

@@ -1514,219 +1514,270 @@
       const saveBtn = document.getElementById("btnSaveSettings");
       const alertBox = document.getElementById("saveAlertBox");
 
-      const newApiUrl = (document.getElementById("cfgGasApiUrl")?.value || "").trim();
-      const driveFolderInput = (document.getElementById("cfgDriveFolderId")?.value || state.activeConfig.DRIVE_FOLDER_ID || "").trim();
-      const eventNameInput = (document.getElementById("cfgCoupleName")?.value || "").trim();
-      const eventDateInput = (document.getElementById("cfgEventDate")?.value || "").trim();
-      const eventVenueInput = (document.getElementById("cfgEventVenue")?.value || "").trim();
-      const subtitleInput = (document.getElementById("cfgSubtitle")?.value || "").trim();
-      const welcomeInput = (document.getElementById("cfgWelcomeMessage")?.value || "").trim();
-      const footerInput = (document.getElementById("cfgFooterMessage")?.value || "").trim();
-      const customCategoriesList = getCategoriesFromAdminInputs();
-      const frameUrlInput = (document.getElementById("cfgFrameImageUrl")?.value || "").trim();
-      const logoUrlInput = (document.getElementById("cfgEventLogoUrl")?.value || "").trim();
-      const newPinInput = (document.getElementById("cfgNewPin")?.value || "").trim();
-
-      state.gasApiUrl = newApiUrl;
-      if (newApiUrl) {
-        localStorage.setItem("WEDDING_GAS_API_URL", newApiUrl);
+      // Immediate Visual Reaction: Nonaktifkan tombol seketika dan tampilkan spinner
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `
+          <svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+            <path d="M12 2a10 10 0 0 1 10 10"></path>
+          </svg>
+          <span>Menyimpan Pengaturan...</span>
+        `;
       }
+      if (alertBox) alertBox.style.display = "none";
 
-      // Format tanggal ke format bahasa Indonesia untuk display dan penyimpanan
-      const formattedDate = eventDateInput ? formatIndonesianDate(eventDateInput) : (state.activeConfig.EVENT_DATE || "");
-      const finalEventName = eventNameInput || state.activeConfig.EVENT_NAME || "";
+      try {
+        const newApiUrl = (document.getElementById("cfgGasApiUrl")?.value || "").trim();
+        const driveFolderInput = (document.getElementById("cfgDriveFolderId")?.value || state.activeConfig.DRIVE_FOLDER_ID || "").trim();
+        const eventNameInput = (document.getElementById("cfgCoupleName")?.value || "").trim();
+        const eventDateInput = (document.getElementById("cfgEventDate")?.value || "").trim();
+        const eventVenueInput = (document.getElementById("cfgEventVenue")?.value || "").trim();
+        const subtitleInput = (document.getElementById("cfgSubtitle")?.value || "").trim();
+        const welcomeInput = (document.getElementById("cfgWelcomeMessage")?.value || "").trim();
+        const footerInput = (document.getElementById("cfgFooterMessage")?.value || "").trim();
+        const customCategoriesList = getCategoriesFromAdminInputs();
+        const frameUrlInput = (document.getElementById("cfgFrameImageUrl")?.value || "").trim();
+        const logoUrlInput = (document.getElementById("cfgEventLogoUrl")?.value || "").trim();
+        const newPinInput = (document.getElementById("cfgNewPin")?.value || "").trim();
 
-      const allPhotosLabelInput = (document.getElementById("cfgMainGalleryLabel")?.value || document.getElementById("cfgAllPhotosLabel")?.value || state.allPhotosLabel || "").trim() || "Semua Foto";
-      const coverEnabledInput = document.getElementById("cfgCoverEnabled") ? document.getElementById("cfgCoverEnabled").checked : true;
-      const coverStyleInput = (document.getElementById("cfgCoverStyle")?.value || "romantic-collage");
-      const coverHeadingInput = (document.getElementById("cfgCoverHeading")?.value || "").trim();
-      const coverSubheadingInput = (document.getElementById("cfgCoverSubheading")?.value || "").trim();
-      const coverQuoteInput = (document.getElementById("cfgCoverQuote")?.value || "").trim();
-      const coverPhotosInput = getCoverPhotosFromAdminInputs();
+        if (newApiUrl) {
+          state.gasApiUrl = newApiUrl;
+          try { localStorage.setItem("WEDDING_GAS_API_URL", newApiUrl); } catch(e) {}
+        } else if (!state.gasApiUrl) {
+          state.gasApiUrl = (typeof GLOBAL_CONFIG !== "undefined" && GLOBAL_CONFIG.GAS_API_URL) || localStorage.getItem("WEDDING_GAS_API_URL") || "";
+        }
 
-      const coverSettingsPayload = {
-        enabled: coverEnabledInput,
-        style: coverStyleInput,
-        heading: coverHeadingInput || ("The Wedding of " + finalEventName),
-        subheading: coverSubheadingInput || "A Celebration of Love, Laughter & Happily Ever After",
-        quote: coverQuoteInput || "Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda.",
-        photos: coverPhotosInput
-      };
+        // Format tanggal ke format bahasa Indonesia untuk display dan penyimpanan
+        const formattedDate = eventDateInput ? formatIndonesianDate(eventDateInput) : (state.activeConfig.EVENT_DATE || "");
+        const finalEventName = eventNameInput || state.activeConfig.EVENT_NAME || "";
 
-      state.allPhotosLabel = allPhotosLabelInput;
-      state.coverSettings = coverSettingsPayload;
+        const allPhotosLabelInput = (document.getElementById("cfgMainGalleryLabel")?.value || document.getElementById("cfgAllPhotosLabel")?.value || state.allPhotosLabel || "").trim() || "Semua Foto";
+        const coverEnabledInput = document.getElementById("cfgCoverEnabled") ? document.getElementById("cfgCoverEnabled").checked : true;
+        const coverStyleInput = (document.getElementById("cfgCoverStyle")?.value || "romantic-collage");
+        const coverHeadingInput = (document.getElementById("cfgCoverHeading")?.value || "").trim();
+        const coverSubheadingInput = (document.getElementById("cfgCoverSubheading")?.value || "").trim();
+        const coverQuoteInput = (document.getElementById("cfgCoverQuote")?.value || "").trim();
+        const coverPhotosInput = getCoverPhotosFromAdminInputs();
 
-      // Perbarui data event aktif di daftar events secara terisolasi
-      if (Array.isArray(state.events)) {
-        const evIdx = state.events.findIndex(function(e) { return e.id === state.currentEventId; });
-        if (evIdx >= 0) {
-          const curPbItem = customCategoriesList.find(function(c) {
-            return c && (c.isPhotobooth === true || c.id === "special_photobooth" || String(c.name || "").trim().toLowerCase().includes("photobooth"));
+        const coverSettingsPayload = {
+          enabled: coverEnabledInput,
+          style: coverStyleInput,
+          heading: coverHeadingInput || ("The Wedding of " + finalEventName),
+          subheading: coverSubheadingInput || "A Celebration of Love, Laughter & Happily Ever After",
+          quote: coverQuoteInput || "Di setiap langkah dan senyuman, terukir kisah cinta abadi yang kami rayakan bersama Anda.",
+          photos: coverPhotosInput
+        };
+
+        state.allPhotosLabel = allPhotosLabelInput;
+        state.coverSettings = coverSettingsPayload;
+
+        // Perbarui data event aktif di daftar events secara terisolasi
+        if (Array.isArray(state.events)) {
+          const evIdx = state.events.findIndex(function(e) { return e.id === state.currentEventId; });
+          if (evIdx >= 0) {
+            const curPbItem = customCategoriesList.find(function(c) {
+              return c && (c.isPhotobooth === true || c.id === "special_photobooth" || String(c.name || "").trim().toLowerCase().includes("photobooth"));
+            });
+            const curPbUrl = curPbItem ? String(curPbItem.url || "").trim() : "";
+
+            const curOrigin = window.location.origin || (window.location.protocol + "//" + window.location.host);
+            const curPath = window.location.pathname || "/";
+            const homeUrl = curOrigin + curPath + "?event=" + encodeURIComponent(state.currentEventId);
+
+            state.events[evIdx] = Object.assign({}, state.events[evIdx], {
+              name: finalEventName,
+              date: formattedDate,
+              venue: eventVenueInput || "",
+              homeUrl: homeUrl,
+              subtitle: subtitleInput || "",
+              welcomeMessage: welcomeInput || "",
+              footerMessage: footerInput || "",
+              allPhotosLabel: allPhotosLabelInput,
+              driveFolderId: driveFolderInput,
+              photoboothUrl: curPbUrl,
+              logoUrl: logoUrlInput,
+              EVENT_LOGO_URL: logoUrlInput,
+              frameImageUrl: frameUrlInput,
+              customCategories: customCategoriesList
+            });
+          }
+        }
+
+        const pbItem = customCategoriesList.find(function(c) {
+          return c && (c.isPhotobooth === true || c.id === "special_photobooth" || String(c.name || "").trim().toLowerCase().includes("photobooth"));
+        });
+        const pbUrlVal = pbItem ? String(pbItem.url || "").trim() : (state.activeConfig.PHOTOBOOTH_URL || "");
+
+        const curEvObject = (Array.isArray(state.events) ? state.events.find(function(e) { return e && e.id === state.currentEventId; }) : null) || {};
+
+        const payload = {
+          ACTIVE_EVENT_ID: state.currentEventId,
+          EVENT_NAME: finalEventName,
+          COUPLE_NAME: finalEventName,
+          EVENT_DATE: formattedDate,
+          EVENT_VENUE: eventVenueInput || state.activeConfig.EVENT_VENUE || "",
+          SUBTITLE: subtitleInput || state.activeConfig.SUBTITLE || "The Wedding Gallery & Precious Memories",
+          WELCOME_MESSAGE: welcomeInput || state.activeConfig.WELCOME_MESSAGE || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
+          FOOTER_MESSAGE: footerInput || state.activeConfig.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
+          ALL_PHOTOS_LABEL: allPhotosLabelInput,
+          CUSTOM_CATEGORIES: JSON.stringify(customCategoriesList),
+          PHOTOBOOTH_URL: pbUrlVal,
+          COVER_SETTINGS: coverSettingsPayload,
+          EVENTS: JSON.stringify(state.events),
+          DRIVE_FOLDER_ID: driveFolderInput,
+          EVENT_LOGO_URL: logoUrlInput,
+          logoUrl: logoUrlInput,
+          FRAME_IMAGE_URL: frameUrlInput,
+          GAS_API_URL: newApiUrl,
+          ADMIN_USERNAME: (state.currentAdminUser ? state.currentAdminUser.username : state.adminUsername) || "admin",
+          NEW_PIN: newPinInput,
+          event: curEvObject
+        };
+
+        state.activeConfig = Object.assign({}, state.activeConfig, payload);
+        state.customCategories = customCategoriesList;
+
+        // Hapus cache foto untuk kategori yang tautannya berubah
+        if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
+        if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
+        customCategoriesList.forEach(function(c) {
+          const cName = String(c.name || "").trim();
+          const cUrl = String(c.url || "").trim();
+          if (state.categoryPhotosUrlMap[cName] !== cUrl) {
+            delete state.categoryPhotosMap[cName];
+            delete state.categoryPhotosUrlMap[cName];
+            try { localStorage.removeItem("WEDDING_CAT_COUNT_" + (state.currentEventId || "default") + "_" + cName); } catch(e) {}
+          }
+        });
+        // Selalu invalidate Photobooth jika URL diperbarui
+        if (pbUrlVal && state.categoryPhotosUrlMap["Photobooth"] !== pbUrlVal) {
+          delete state.categoryPhotosMap["Photobooth"];
+          delete state.categoryPhotosUrlMap["Photobooth"];
+          try { localStorage.removeItem("WEDDING_CAT_COUNT_" + (state.currentEventId || "default") + "_Photobooth"); } catch(e) {}
+        }
+        state.lastLocalCategoryEditTime = Date.now();
+
+        try {
+          localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(customCategoriesList));
+          if (pbUrlVal) localStorage.setItem("WEDDING_PHOTOBOOTH_URL", pbUrlVal);
+          localStorage.setItem("WEDDING_SAVED_CONFIG", JSON.stringify(state.activeConfig));
+          localStorage.setItem("WEDDING_EVENTS_REGISTRY", JSON.stringify(state.events));
+          localStorage.setItem("WEDDING_EVENT_CFG_" + state.currentEventId, JSON.stringify(state.activeConfig));
+        } catch (e) {}
+
+        // Langsung perbarui tampilan visual seketika (Instant UI Update)
+        populateConfigToUI(state.activeConfig);
+        renderCategoryTabs();
+
+        // Langsung muat ulang foto kategori aktif seketika tanpa perlu refresh halaman
+        if (state.activeCategory && state.activeCategory !== "Semua Foto") {
+          const curCat = customCategoriesList.find(function(c) {
+            return String((c && c.name) || "").trim().toLowerCase() === state.activeCategory.toLowerCase();
           });
-          const curPbUrl = curPbItem ? String(curPbItem.url || "").trim() : "";
+          if (curCat) {
+            applyCategoryFilter(curCat.name, curCat.url);
+          } else {
+            applyCategoryFilter(state.activeCategory);
+          }
+        }
 
-          const curOrigin = window.location.origin || (window.location.protocol + "//" + window.location.host);
-          const curPath = window.location.pathname || "/";
-          const homeUrl = curOrigin + curPath + "?event=" + encodeURIComponent(state.currentEventId);
-
-          state.events[evIdx] = Object.assign({}, state.events[evIdx], {
+        if (state.gasApiUrl) {
+          // Kirim pembaruan ke Google Apps Script (menyimpan ke Pengaturan & Daftar_Acara secara terisolasi)
+          const curEvToSync = {
+            id: state.currentEventId,
             name: finalEventName,
             date: formattedDate,
             venue: eventVenueInput || "",
-            homeUrl: homeUrl,
-            subtitle: subtitleInput || "",
-            welcomeMessage: welcomeInput || "",
-            footerMessage: footerInput || "",
-            allPhotosLabel: allPhotosLabelInput,
+            homeUrl: (window.location.origin || "") + (window.location.pathname || "/") + "?event=" + encodeURIComponent(state.currentEventId),
             driveFolderId: driveFolderInput,
-            photoboothUrl: curPbUrl,
+            photoboothUrl: pbUrlVal,
+            customCategories: customCategoriesList,
             logoUrl: logoUrlInput,
             EVENT_LOGO_URL: logoUrlInput,
             frameImageUrl: frameUrlInput,
-            customCategories: customCategoriesList
+            status: "Aktif"
+          };
+
+          callBackend("saveAdminSettings", { pin: getEffectiveAdminPin(), config: Object.assign({}, payload, { event: curEvToSync }) }, function(res) {
+            if (saveBtn) {
+              saveBtn.disabled = false;
+              saveBtn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Simpan Perubahan</span>
+              `;
+            }
+            if (payload.NEW_PIN) {
+              state.adminPin = payload.NEW_PIN;
+              try {
+                sessionStorage.setItem("WEDDING_ADMIN_PIN", payload.NEW_PIN);
+                localStorage.setItem("WEDDING_ADMIN_PIN", payload.NEW_PIN);
+              } catch(e) {}
+              const newPinEl = document.getElementById("cfgNewPin");
+              if (newPinEl) newPinEl.value = "";
+            }
+            if (res && res.galleryData && res.galleryData.config) {
+              res.galleryData.config = Object.assign({}, res.galleryData.config, payload);
+              handleGalleryResponse(res.galleryData, false);
+            }
+            if (res && !res.success) {
+              showToast("⚠️ " + (res.message || "Gagal menyimpan ke Google Spreadsheet. Pengaturan disimpan di browser."));
+            } else {
+              showToast("✓ Pengaturan & Kustomisasi Acara berhasil disimpan!");
+            }
+            closeAdminSettingsModal();
+          }, function(err) {
+            if (saveBtn) {
+              saveBtn.disabled = false;
+              saveBtn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Simpan Perubahan</span>
+              `;
+            }
+            showToast("✓ Pengaturan berhasil disimpan di browser!");
+            closeAdminSettingsModal();
           });
-        }
-      }
 
-      const pbItem = customCategoriesList.find(function(c) {
-        return c && (c.isPhotobooth === true || c.id === "special_photobooth" || String(c.name || "").trim().toLowerCase().includes("photobooth"));
-      });
-      const pbUrlVal = pbItem ? String(pbItem.url || "").trim() : (state.activeConfig.PHOTOBOOTH_URL || "");
-
-      const curEvObject = (Array.isArray(state.events) ? state.events.find(function(e) { return e && e.id === state.currentEventId; }) : null) || {};
-
-      const payload = {
-        ACTIVE_EVENT_ID: state.currentEventId,
-        EVENT_NAME: finalEventName,
-        COUPLE_NAME: finalEventName,
-        EVENT_DATE: formattedDate,
-        EVENT_VENUE: eventVenueInput || state.activeConfig.EVENT_VENUE || "",
-        SUBTITLE: subtitleInput || state.activeConfig.SUBTITLE || "The Wedding Gallery & Precious Memories",
-        WELCOME_MESSAGE: welcomeInput || state.activeConfig.WELCOME_MESSAGE || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
-        FOOTER_MESSAGE: footerInput || state.activeConfig.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
-        ALL_PHOTOS_LABEL: allPhotosLabelInput,
-        CUSTOM_CATEGORIES: JSON.stringify(customCategoriesList),
-        PHOTOBOOTH_URL: pbUrlVal,
-        COVER_SETTINGS: coverSettingsPayload,
-        EVENTS: JSON.stringify(state.events),
-        DRIVE_FOLDER_ID: driveFolderInput,
-        EVENT_LOGO_URL: logoUrlInput,
-        logoUrl: logoUrlInput,
-        FRAME_IMAGE_URL: frameUrlInput,
-        GAS_API_URL: newApiUrl,
-        ADMIN_USERNAME: (state.currentAdminUser ? state.currentAdminUser.username : state.adminUsername) || "admin",
-        NEW_PIN: newPinInput,
-        event: curEvObject
-      };
-
-      state.activeConfig = Object.assign({}, state.activeConfig, payload);
-      state.customCategories = customCategoriesList;
-
-      // Hapus cache foto untuk kategori yang tautannya berubah
-      if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
-      if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
-      customCategoriesList.forEach(function(c) {
-        const cName = String(c.name || "").trim();
-        const cUrl = String(c.url || "").trim();
-        if (state.categoryPhotosUrlMap[cName] !== cUrl) {
-          delete state.categoryPhotosMap[cName];
-          delete state.categoryPhotosUrlMap[cName];
-          try { localStorage.removeItem("WEDDING_CAT_COUNT_" + cName); } catch(e) {}
-        }
-      });
-      // Selalu invalidate Photobooth jika URL diperbarui
-      if (pbUrlVal && state.categoryPhotosUrlMap["Photobooth"] !== pbUrlVal) {
-        delete state.categoryPhotosMap["Photobooth"];
-        delete state.categoryPhotosUrlMap["Photobooth"];
-        try { localStorage.removeItem("WEDDING_CAT_COUNT_Photobooth"); } catch(e) {}
-      }
-      state.lastLocalCategoryEditTime = Date.now();
-
-      try {
-        localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(customCategoriesList));
-        if (pbUrlVal) localStorage.setItem("WEDDING_PHOTOBOOTH_URL", pbUrlVal);
-        localStorage.setItem("WEDDING_SAVED_CONFIG", JSON.stringify(state.activeConfig));
-        localStorage.setItem("WEDDING_EVENTS_REGISTRY", JSON.stringify(state.events));
-        localStorage.setItem("WEDDING_EVENT_CFG_" + state.currentEventId, JSON.stringify(state.activeConfig));
-      } catch (e) {}
-
-      // Langsung perbarui tampilan visual seketika (Instant UI Update)
-      populateConfigToUI(state.activeConfig);
-      renderCategoryTabs();
-
-      // Langsung muat ulang foto kategori aktif seketika tanpa perlu refresh halaman
-      if (state.activeCategory && state.activeCategory !== "Semua Foto") {
-        const curCat = customCategoriesList.find(function(c) {
-          return String((c && c.name) || "").trim().toLowerCase() === state.activeCategory.toLowerCase();
-        });
-        if (curCat) {
-          applyCategoryFilter(curCat.name, curCat.url);
+          // Pastikan baris event ini langsung diperbarui di sheet 'Daftar_Acara'
+          callBackend("addEvent", {
+            pin: getEffectiveAdminPin(),
+            event: curEvToSync
+          });
         } else {
-          applyCategoryFilter(state.activeCategory);
-        }
-      }
-
-      saveBtn.disabled = true;
-      saveBtn.innerHTML = `<span>Menyimpan Pengaturan...</span>`;
-      if (alertBox) alertBox.style.display = "none";
-
-      if (state.gasApiUrl) {
-        // Kirim pembaruan ke Google Apps Script (menyimpan ke Pengaturan & Daftar_Acara secara terisolasi)
-        const curEvToSync = {
-          id: state.currentEventId,
-          name: finalEventName,
-          date: formattedDate,
-          venue: eventVenueInput || "",
-          homeUrl: (window.location.origin || "") + (window.location.pathname || "/") + "?event=" + encodeURIComponent(state.currentEventId),
-          driveFolderId: driveFolderInput,
-          photoboothUrl: pbUrlVal,
-          customCategories: customCategoriesList,
-          logoUrl: logoUrlInput,
-          EVENT_LOGO_URL: logoUrlInput,
-          frameImageUrl: frameUrlInput,
-          status: "Aktif"
-        };
-
-        callBackend("saveAdminSettings", { pin: getEffectiveAdminPin(), config: Object.assign({}, payload, { event: curEvToSync }) }, function(res) {
-          saveBtn.disabled = false;
-          saveBtn.innerHTML = `<polyline points="20 6 9 17 4 12"></polyline><span>Simpan Perubahan</span>`;
-          if (payload.NEW_PIN) {
-            state.adminPin = payload.NEW_PIN;
-            try {
-              sessionStorage.setItem("WEDDING_ADMIN_PIN", payload.NEW_PIN);
-              localStorage.setItem("WEDDING_ADMIN_PIN", payload.NEW_PIN);
-            } catch(e) {}
-            const newPinEl = document.getElementById("cfgNewPin");
-            if (newPinEl) newPinEl.value = "";
+          // Jika URL Apps Script belum diisi
+          if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = `
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Simpan Perubahan</span>
+            `;
           }
-          if (res && res.galleryData && res.galleryData.config) {
-            res.galleryData.config = Object.assign({}, res.galleryData.config, payload);
-            handleGalleryResponse(res.galleryData, false);
-          }
-          if (res && !res.success) {
-            showToast("⚠️ " + (res.message || "Gagal menyimpan ke Google Spreadsheet. Pengaturan disimpan di browser."));
-          } else {
-            showToast("✓ Pengaturan & Kustomisasi Acara berhasil disimpan!");
-          }
-          closeAdminSettingsModal();
-        }, function(err) {
-          saveBtn.disabled = false;
-          saveBtn.innerHTML = `<polyline points="20 6 9 17 4 12"></polyline><span>Simpan Perubahan</span>`;
           showToast("✓ Pengaturan berhasil disimpan di browser!");
           closeAdminSettingsModal();
-        });
-
-        // Pastikan baris event ini langsung diperbarui di sheet 'Daftar_Acara'
-        callBackend("addEvent", {
-          pin: getEffectiveAdminPin(),
-          event: curEvToSync
-        });
-      } else {
-        // Jika URL Apps Script belum diisi
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = `<polyline points="20 6 9 17 4 12"></polyline><span>Simpan Perubahan</span>`;
-        showToast("✓ Pengaturan berhasil disimpan di browser!");
-        closeAdminSettingsModal();
+        }
+      } catch (err) {
+        console.error("Gagal menyimpan pengaturan:", err);
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Simpan Perubahan</span>
+          `;
+        }
+        if (alertBox) {
+          alertBox.className = "admin-alert-box error";
+          alertBox.innerText = "⚠️ Terjadi kendala saat menyimpan: " + (err.message || err);
+          alertBox.style.display = "block";
+        }
+        showToast("⚠️ Terjadi kendala saat menyimpan: " + (err.message || err));
       }
     }
 
@@ -1796,3 +1847,29 @@
       });
     }
 
+
+    // Explicit Global Window Bindings untuk Modul Admin
+    window.handleSaveAllSettings = handleSaveAllSettings;
+    window.handleSaveSettings = handleSaveAllSettings;
+    window.openAdminModal = openAdminModal;
+    window.openAdminSettingsModal = openAdminSettingsModal;
+    window.closeAdminSettingsModal = closeAdminSettingsModal;
+    window.closeAdminLoginModal = closeAdminLoginModal;
+    window.handleAdminLogin = handleAdminLogin;
+    window.handleAdminLogout = handleAdminLogout;
+    window.switchAdminTab = switchAdminTab;
+    window.triggerSyncDaftarAcara = triggerSyncDaftarAcara;
+    window.openNewEventModal = openNewEventModal;
+    window.closeNewEventModal = closeNewEventModal;
+    window.confirmAddNewEvent = confirmAddNewEvent;
+    window.handleSelectEventChange = handleSelectEventChange;
+    window.openActiveEventHome = openActiveEventHome;
+    window.copyActiveEventUrl = copyActiveEventUrl;
+    window.handleDeleteCurrentEvent = handleDeleteCurrentEvent;
+    window.handleAddAdminUser = handleAddAdminUser;
+    window.handleChangeAdminPassword = handleChangeAdminPassword;
+    window.handleTriggerDatabaseSetup = handleTriggerDatabaseSetup;
+    window.addCategoryConfigRow = addCategoryConfigRow;
+    window.syncCategoriesAndDisplayLinks = syncCategoriesAndDisplayLinks;
+    window.handleSyncDrivePhotosDirectly = handleSyncDrivePhotosDirectly;
+    window.togglePasswordVisibility = togglePasswordVisibility;

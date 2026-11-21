@@ -1073,3 +1073,14 @@
       renderPhotoGrid(targetUrl, effectiveCat);
     }
 
+    // Explicit Global Window Bindings untuk Modul Categories
+    if (typeof window !== "undefined") {
+      window.applyCategoryFilter = applyCategoryFilter;
+      window.selectCategory = selectCategory;
+      window.syncSingleCategory = syncSingleCategory;
+      window.renderCategoryTabs = renderCategoryTabs;
+      window.updateCategoryPillCount = updateCategoryPillCount;
+      window.isGooglePhotosUrl = isGooglePhotosUrl;
+      window.extractDriveFolderId = extractDriveFolderId;
+    }
+

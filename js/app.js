@@ -3,83 +3,7 @@
    High-Speed Parallel Bootstrap, GViz Realtime Sync & Live Auto-Refresh
    ========================================================================== */
 
-function callBackend(action, payload, onSuccess, onError) {
-  if (typeof google !== 'undefined' && google.script && google.script.run) {
-    if (action === "getGalleryData") {
-      google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).getGalleryData();
-    } else if (action === "adminLogin") {
-      google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).adminLogin(payload.pin);
-    } else if (action === "saveAdminSettings") {
-      google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).saveAdminSettings(payload.pin, payload.config || payload);
-    } else if (action === "setupDatabase" || action === "setupSpreadsheetDatabase") {
-      google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).setupDatabaseSpreadsheet();
-    } else if (action === "getAdminUsers") {
-      google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).getAdminUsers(payload.pin);
-    } else if (action === "addAdminUser") {
-      google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).addAdminUser(payload.pin, payload.newUser);
-    } else if (action === "deleteAdminUser") {
-      google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).deleteAdminUser(payload.pin, payload.targetUserId);
-    } else if (action === "deleteEvent") {
-      google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).deleteEvent(payload.pin, payload.targetEventId);
-    } else if (action === "getImageBase64") {
-      google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).getImageBase64(payload.fileId);
-    } else if (action === "changeAdminPin") {
-      google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).changeAdminPin(payload.currentPin, payload.newPin);
-    } else if (action === "getCategoryPhotos" || action === "getFolderPhotos") {
-      const targetUrl = (payload && (payload.url || payload.folderId)) || "";
-      const catName = (payload && payload.category) || "Kategori";
-      google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onError).getCategoryPhotos(targetUrl, catName);
-    }
-    return;
-  }
-
-  const apiUrl = state.gasApiUrl ? state.gasApiUrl.trim() : "";
-  if (!apiUrl) {
-    const errMsg = "URL API Google Apps Script belum terhubung ke database. Harap hubungkan pada menu Pengaturan Cloud & API.";
-    if (onError) onError(new Error(errMsg));
-    return;
-  }
-
-  // HTTP POST Murni dengan Simple Request text/plain (CORS Preflight Free)
-  const bodyPayload = Object.assign({ action: action }, payload || {});
-
-  const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-  let timeoutId = null;
-  if (controller) {
-    timeoutId = setTimeout(function() {
-      try { controller.abort(); } catch(e) {}
-    }, 30000); // 30 detik timeout
-  }
-
-  const fetchOpts = {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    },
-    body: JSON.stringify(bodyPayload)
-  };
-  if (controller) fetchOpts.signal = controller.signal;
-
-  fetch(apiUrl, fetchOpts)
-    .then(function(res) {
-      if (timeoutId) clearTimeout(timeoutId);
-      if (!res.ok) throw new Error("HTTP Status " + res.status);
-      return res.json();
-    })
-    .then(function(data) {
-      if (data && data.success === false) {
-        console.warn("Backend API returned success=false:", data.message || data);
-        if (onError) onError(data);
-        return;
-      }
-      if (onSuccess) onSuccess(data);
-    })
-    .catch(function(err) {
-      if (timeoutId) clearTimeout(timeoutId);
-      console.error("Gagal menghubungi Google Apps Script API:", err);
-      if (onError) onError(err);
-    });
-}
+// callBackend didefinisikan secara terpusat di js/core.js dan siap diakses secara global
 
 function fetchGalleryData(forceRefresh, isSilent) {
   if (!getActiveEventIdFromUrl()) {
@@ -529,3 +453,11 @@ document.addEventListener("DOMContentLoaded", function() {
     startBadgeExpiryChecker();
   });
 });
+
+// Explicit Global Window Bindings untuk Modul App Bootloader
+if (typeof window !== "undefined") {
+  window.fetchGalleryData = fetchGalleryData;
+  window.syncFromSpreadsheetGViz = syncFromSpreadsheetGViz;
+  window.startLiveAutoRefresh = startLiveAutoRefresh;
+  window.showEventNotFoundScreen = showEventNotFoundScreen;
+}

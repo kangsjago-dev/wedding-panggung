@@ -297,3 +297,16 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
 - **Pembersihan Total Fallback Hardcode pada Galeri**:
   - Mengosongkan data acara statis dari [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/config.json).
   - Galeri 100% mengambil data realtime langsung dari sheet `Daftar_Acara` Google Sheets.
+
+### 2.31 Resolusi Preview Foto, Reaktivitas Simpan Admin, Z-Index Layering & Empty State Kategori Elegan (v4.31.0)
+- **Resolusi Preview Lightbox Foto (`js/gallery.js`)**:
+  - Memperbaiki penutupan komentar header pada baris 572 yang sebelumnya mengunci 1.040 baris kode penting. Seluruh fungsi preview lightbox (`openLightbox`, `closeLightbox`, `navigateLightbox`, zoom, download berbingkai) aktif kembali 100%.
+  - Menaikkan `z-index` `.lightbox-modal` di [css/style.css](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/css/style.css) menjadi `10000` agar selalu tampil di lapisan teratas.
+- **Resolusi Simpan Pengaturan Admin & Proteksi URL API (`js/admin.js` & `js/core.js`)**:
+  - Memproteksi `state.gasApiUrl` dari penimpaan nilai string kosong ketika admin berada di tab non-API. Sistem mempertahankan URL aktif dengan fallback otomatis ke `GLOBAL_CONFIG.GAS_API_URL`.
+  - Menaikkan `z-index` `.toast-container` di [css/style.css](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/css/style.css) menjadi `20000` sehingga toast notifikasi status penyimpanan selalu terlihat jelas di depan modal admin.
+  - Memindahkan `callBackend()` ke dalam [js/core.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/core.js) sebagai modul pondasi utama.
+- **Peringatan Elegan untuk Kategori Tanpa Link / Kosong**:
+  - Memperbarui `renderPhotoGrid()` untuk membedakan kategori tanpa link vs kategori yang sedang diproses. Menampilkan kartu empty state berkelas nuansa wedding gold dengan badge kategori, judul serif *"Foto Belum Tersedia"*, dan narasi sopan dan ramah.
+- **Global Window Bindings Lintas-Modul**:
+  - Mengikat seluruh fungsi dan objek state inti pada masing-masing modul ke objek global `window` guna menjamin interoperabilitas 100% pada seluruh platform browser dan mobile.
