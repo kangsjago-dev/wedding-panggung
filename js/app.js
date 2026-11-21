@@ -141,6 +141,7 @@ function handleGalleryResponse(response, isSilent) {
 
   if (response.config) {
     state.activeConfig = Object.assign({}, state.activeConfig, response.config);
+    populateConfigToUI(state.activeConfig);
   }
 
   if (Array.isArray(response.photos)) {

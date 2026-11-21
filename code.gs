@@ -660,7 +660,7 @@ function syncEventsToSheet(ss, eventsList) {
     }
 
     var headers = [
-      ['ID_Event', 'Nama_Acara', 'Tanggal_Acara', 'Venue_Lokasi', 'Tautan_Home_Event', 'Google_Drive_Folder_ID', 'Photobooth_Vendor_URL', 'Kategori_JSON', 'Bingkai_URL', 'Logo_Acara', 'Status']
+      ['ID_Event', 'Nama_Acara', 'Tanggal_Acara', 'Venue_Lokasi', 'Tautan_Home_Event', 'Google_Drive_Folder_ID', 'Photobooth_Vendor_URL', 'Kategori_JSON', 'Bingkai_URL', 'Logo_Acara', 'Status', 'Pesan_Sambutan', 'Subjudul', 'Pesan_Footer', 'Label_Semua_Foto']
     ];
 
     sheet.clear();
@@ -691,7 +691,11 @@ function syncEventsToSheet(ss, eventsList) {
         catStr,
         ev.frameImageUrl || '',
         ev.logoUrl || ev.EVENT_LOGO_URL || '',
-        ev.status || 'Aktif'
+        ev.status || 'Aktif',
+        ev.welcomeMessage || '',
+        ev.subtitle || '',
+        ev.footerMessage || '',
+        ev.allPhotosLabel || 'Semua Foto'
       ]);
     }
 
@@ -771,7 +775,11 @@ function addEventToSheet(ss, ev) {
       catStr,
       ev.frameImageUrl || '',
       ev.logoUrl || ev.EVENT_LOGO_URL || '',
-      ev.status || 'Aktif'
+      ev.status || 'Aktif',
+      ev.welcomeMessage || '',
+      ev.subtitle || '',
+      ev.footerMessage || '',
+      ev.allPhotosLabel || 'Semua Foto'
     ];
 
     if (existingRowIndex > 0) {
@@ -787,9 +795,13 @@ function addEventToSheet(ss, ev) {
       var finalFrame = (ev.frameImageUrl !== undefined && ev.frameImageUrl !== null) ? String(ev.frameImageUrl).trim() : (existingRow[8] || '');
       var finalLogo = (ev.logoUrl !== undefined && ev.logoUrl !== null) ? String(ev.logoUrl).trim() : (existingRow[9] || '');
       var finalStatus = ev.status || existingRow[10] || 'Aktif';
+      var finalWel = (ev.welcomeMessage !== undefined && ev.welcomeMessage !== null) ? String(ev.welcomeMessage).trim() : (existingRow[11] || '');
+      var finalSub = (ev.subtitle !== undefined && ev.subtitle !== null) ? String(ev.subtitle).trim() : (existingRow[12] || '');
+      var finalFoot = (ev.footerMessage !== undefined && ev.footerMessage !== null) ? String(ev.footerMessage).trim() : (existingRow[13] || '');
+      var finalAllLabel = (ev.allPhotosLabel !== undefined && ev.allPhotosLabel !== null) ? String(ev.allPhotosLabel).trim() : (existingRow[14] || 'Semua Foto');
 
       var mergedRowData = [
-        ev.id, finalName, finalDate, finalVenue, finalHome, finalDrive, finalPb, finalCat, finalFrame, finalLogo, finalStatus
+        ev.id, finalName, finalDate, finalVenue, finalHome, finalDrive, finalPb, finalCat, finalFrame, finalLogo, finalStatus, finalWel, finalSub, finalFoot, finalAllLabel
       ];
       sheet.getRange(existingRowIndex, 1, 1, mergedRowData.length).setValues([mergedRowData]);
     } else {
@@ -2522,7 +2534,11 @@ function saveAdminSettings(pin, updatedConfig) {
             customCategories: updatedConfig.CUSTOM_CATEGORIES || [],
             frameImageUrl: updatedConfig.FRAME_IMAGE_URL || "",
             logoUrl: updatedConfig.EVENT_LOGO_URL || "",
-            status: "Aktif"
+            status: "Aktif",
+            welcomeMessage: updatedConfig.WELCOME_MESSAGE || "",
+            subtitle: updatedConfig.SUBTITLE || "",
+            footerMessage: updatedConfig.FOOTER_MESSAGE || "",
+            allPhotosLabel: updatedConfig.ALL_PHOTOS_LABEL || "Semua Foto"
           });
         }
 

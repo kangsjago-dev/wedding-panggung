@@ -922,5 +922,6 @@ function isGooglePhotosUrl(url) {
       window.escapeHtml = escapeHtml;
       window.updateFrameStatusBadge = updateFrameStatusBadge;
       window.handleFrameUrlInput = handleFrameUrlInput;
+      window.handleAllPhotosLabelChange = handleAllPhotosLabelChange;
     }
 

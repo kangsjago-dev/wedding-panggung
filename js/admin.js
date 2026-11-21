@@ -772,6 +772,30 @@
     }
 
     function closeAdminSettingsModal() {
+      // Terapkan input terkini ke memori & antarmuka saat admin menutup modal atau menguji galeri
+      try {
+        const frameInput = (document.getElementById("cfgFrameImageUrl")?.value || "").trim();
+        if (frameInput) {
+          state.activeConfig.FRAME_IMAGE_URL = frameInput;
+          const curEv = (state.events || []).find(function(e) { return e && e.id === state.currentEventId; });
+          if (curEv) curEv.frameImageUrl = frameInput;
+        }
+        const welcomeInput = (document.getElementById("cfgWelcomeMessage")?.value || "").trim();
+        if (welcomeInput) state.activeConfig.WELCOME_MESSAGE = welcomeInput;
+        const subInput = (document.getElementById("cfgSubtitle")?.value || "").trim();
+        if (subInput) state.activeConfig.SUBTITLE = subInput;
+        const footInput = (document.getElementById("cfgFooterMessage")?.value || "").trim();
+        if (footInput) state.activeConfig.FOOTER_MESSAGE = footInput;
+        const mainLabelInput = (document.getElementById("cfgMainGalleryLabel")?.value || document.getElementById("cfgAllPhotosLabel")?.value || "").trim();
+        if (mainLabelInput) {
+          state.activeConfig.ALL_PHOTOS_LABEL = mainLabelInput;
+          state.allPhotosLabel = mainLabelInput;
+        }
+        populateConfigToUI(state.activeConfig);
+        renderCategoryTabs();
+        applyCategoryFilter(state.activeCategory || state.allPhotosLabel);
+      } catch(e) {}
+
       document.body.style.overflow = "";
       document.documentElement.style.overflow = "";
       document.getElementById("adminSettingsModal").classList.remove("active");
@@ -1706,7 +1730,11 @@
             logoUrl: logoUrlInput,
             EVENT_LOGO_URL: logoUrlInput,
             frameImageUrl: frameUrlInput,
-            status: "Aktif"
+            status: "Aktif",
+            welcomeMessage: welcomeInput || "",
+            subtitle: subtitleInput || "",
+            footerMessage: footerInput || "",
+            allPhotosLabel: allPhotosLabelInput || "Semua Foto"
           };
 
           callBackend("saveAdminSettings", { pin: getEffectiveAdminPin(), config: Object.assign({}, payload, { event: curEvToSync }) }, function(res) {

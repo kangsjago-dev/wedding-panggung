@@ -989,13 +989,20 @@
       img.crossOrigin = "anonymous";
       img.onload = function() { callback(img); };
       img.onerror = function() {
-        const proxyImg = new Image();
-        proxyImg.crossOrigin = "anonymous";
-        proxyImg.onload = function() { callback(proxyImg); };
-        proxyImg.onerror = function() {
-          if (errCallback) errCallback();
+        const fileId = dMatch ? dMatch[1] : urlOrId;
+        const altImg = new Image();
+        altImg.crossOrigin = "anonymous";
+        altImg.onload = function() { callback(altImg); };
+        altImg.onerror = function() {
+          const proxyImg = new Image();
+          proxyImg.crossOrigin = "anonymous";
+          proxyImg.onload = function() { callback(proxyImg); };
+          proxyImg.onerror = function() {
+            if (errCallback) errCallback();
+          };
+          proxyImg.src = "/api/download-proxy?url=" + encodeURIComponent(effectiveUrl);
         };
-        proxyImg.src = "/api/download-proxy?url=" + encodeURIComponent(effectiveUrl);
+        altImg.src = "https://drive.google.com/thumbnail?id=" + fileId + "&sz=w2500";
       };
       img.src = effectiveUrl;
     }
@@ -1107,10 +1114,12 @@
             preloadFrameAssets(frameUrl);
             renderFrameWithCutout(frameImg, { x: 0, y: 0, w: frameImg.naturalWidth || 2400, h: frameImg.naturalHeight || 1600 });
           }, function() {
+            showToast("⚠️ Berkas bingkai tidak dapat diakses dari Google Drive. Pastikan izin berbagi disetel 'Anyone with the link can view'.", "error");
             executeDirectPhotoDownload(photo, onDone);
           });
         }
       }, function() {
+        showToast("⚠️ Berkas foto tidak dapat dimuat untuk penggabungan bingkai.", "error");
         executeDirectPhotoDownload(photo, onDone);
       });
     }
