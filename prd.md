@@ -273,3 +273,27 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
   - Pada `openAdminSettingsModal()` dan `populateAdminInputsForActiveEvent()`, nilai logo aktif dipertahankan sehingga kotak input formulir terisi permanen dengan URL logo yang tersimpan.
 - **Sinkronisasi Database Penuh**:
   - Sheet `Pengaturan` baris `EVENTS` dan sheet `Daftar_Acara` disinkronkan langsung via API backend sehingga tautan logo resmi tersimpan permanen di cloud database.
+
+### 2.29 Isolasi Mutlak Pengaturan Per-Event (100% Independent Per Event - v4.29.0)
+- **Eliminasi Pencemaran Global dari Sheet 'Pengaturan'**:
+  - Menghapus penugasan global `sheetMap.PHOTOBOOTH_URL` dan `sheetMap.CUSTOM_CATEGORIES` yang sebelumnya menimpa event aktif.
+  - Setiap event membaca dan menyimpan pengaturannya sendiri secara independen dari baris terkait di sheet `Daftar_Acara`.
+- **Proteksi Penggabungan Baris di Backend (`code.gs`)**:
+  - `addEventToSheet` diperbarui dengan proteksi `mergedRowData` agar tidak menimpa nilai kolom yang tidak disertakan dalam payload update.
+  - Penyelarasan pemetaan kolom akun admin (5 kolom vs 6 kolom) pada `getAdminUsersList()`.
+
+### 2.30 Arsitektur Modular Frontend, Anti-Stuck Gallery & Realtime Database Murni (v4.30.0)
+- **Pemecahan Berkas Monolitik `js/app.js` (287 KB) Menjadi 5 Modul Ramping**:
+  - `js/core.js` (31.5 KB): State management, utilities, date formatting, escapeHtml, Toast notifications, URL parameters.
+  - `js/categories.js` (46.3 KB): Scraper & parser external (Google Photos, Fotoshare, Kingphotobooth, Drive) dengan cache terisolasi.
+  - `js/gallery.js` (77.1 KB): Photo grid, responsive image cards, badge "BARU", lightbox zoom, touch swipe, slideshow.
+  - `js/admin.js` (84.3 KB): Admin panel, multi-event switcher, settings form, account management, HTTP POST sync.
+  - `js/app.js` (23.1 KB): Main bootloader, parallel GViz database sync, live auto-refresh, watchdog timers.
+  - Seluruh modul diintegrasikan ke [index.html](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/index.html) dalam urutan eksekusi yang tepat.
+- **Resolusi "Gallery Stuck" & Anti-Bocor Cache Kategori**:
+  - Mengisolasi kunci cache badge dan memory map kategori dengan format `WEDDING_CAT_COUNT_${eventId}_${catName}` dan `state.categoryPhotosMap[eventId + '::' + cat]`. Menghilangkan bug video di mana badge photobooth Tommy & Natasha sempat menampilkan angka 514 milik Andre & Fayola.
+  - Membersihkan cache lama tak terisolasi pada `DOMContentLoaded`.
+  - Menerapkan Parallel Database Bootstrapping: `Daftar_Acara` dan `Pengaturan` ditarik secara paralel sejak detik pertama.
+- **Pembersihan Total Fallback Hardcode pada Galeri**:
+  - Mengosongkan data acara statis dari [config.json](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/config.json).
+  - Galeri 100% mengambil data realtime langsung dari sheet `Daftar_Acara` Google Sheets.

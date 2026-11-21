@@ -404,8 +404,7 @@ function setupTargetSpreadsheetDatabase() {
         "UPPERHILLS CONVENTION HALLS",
         "https://gallery.runway.my.id/?event=andre-fayola-281",
         "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh",
-        "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
-        JSON.stringify([{ name: "Photobooth", url: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8", enabled: true, isPhotobooth: true }]),
+        "", "",
         "",
         "",
         "Aktif"
@@ -417,8 +416,7 @@ function setupTargetSpreadsheetDatabase() {
         "UpperHills Convention Hall, Makassar",
         "https://gallery.runway.my.id/?event=wilson-felicia-133",
         "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
-        "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
-        JSON.stringify([{ name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", enabled: true, isPhotobooth: true }]),
+        "", "",
         "",
         "",
         "Aktif"
@@ -430,8 +428,7 @@ function setupTargetSpreadsheetDatabase() {
         "UpperHills Convention Hall, Makassar",
         "https://gallery.runway.my.id/?event=tommy-natasha-594",
         "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh",
-        "https://photos.google.com/share/AF1QipMagPm7xWB2YANajDr3hx-J4WKyhOgIQ41jUjqQnxv5LSy6392pyWC5hOfsQoz1mA?key=c1BLMDNyRGw4bEJyUWo5b1Y0eFlmTy14X1pESEdR",
-        JSON.stringify([{ id: "special_photobooth", name: "Photobooth", url: "https://photos.google.com/share/AF1QipMagPm7xWB2YANajDr3hx-J4WKyhOgIQ41jUjqQnxv5LSy6392pyWC5hOfsQoz1mA?key=c1BLMDNyRGw4bEJyUWo5b1Y0eFlmTy14X1pESEdR", enabled: true, isPhotobooth: true }]),
+        "", "",
         "",
         "",
         "Aktif"
@@ -770,7 +767,23 @@ function addEventToSheet(ss, ev) {
     ];
 
     if (existingRowIndex > 0) {
-      sheet.getRange(existingRowIndex, 1, 1, rowData.length).setValues([rowData]);
+      // Pertahankan nilai lama jika properti yang dikirim tidak mencakup kolom tersebut (Anti-Overwrite Kosong)
+      var existingRow = data[existingRowIndex - 1];
+      var finalName = (ev.name !== undefined && String(ev.name).trim()) ? ev.name : (existingRow[1] || '');
+      var finalDate = (ev.date !== undefined && String(ev.date).trim()) ? ev.date : (existingRow[2] || '');
+      var finalVenue = (ev.venue !== undefined && String(ev.venue).trim()) ? ev.venue : (existingRow[3] || '');
+      var finalHome = ev.homeUrl || existingRow[4] || homeLink;
+      var finalDrive = (ev.driveFolderId !== undefined && String(ev.driveFolderId).trim()) ? ev.driveFolderId : (existingRow[5] || '');
+      var finalPb = (ev.photoboothUrl !== undefined && ev.photoboothUrl !== null) ? String(ev.photoboothUrl).trim() : (existingRow[6] || '');
+      var finalCat = catStr || existingRow[7] || '';
+      var finalFrame = (ev.frameImageUrl !== undefined && ev.frameImageUrl !== null) ? String(ev.frameImageUrl).trim() : (existingRow[8] || '');
+      var finalLogo = (ev.logoUrl !== undefined && ev.logoUrl !== null) ? String(ev.logoUrl).trim() : (existingRow[9] || '');
+      var finalStatus = ev.status || existingRow[10] || 'Aktif';
+
+      var mergedRowData = [
+        ev.id, finalName, finalDate, finalVenue, finalHome, finalDrive, finalPb, finalCat, finalFrame, finalLogo, finalStatus
+      ];
+      sheet.getRange(existingRowIndex, 1, 1, mergedRowData.length).setValues([mergedRowData]);
     } else {
       sheet.appendRow(rowData);
     }
@@ -806,8 +819,7 @@ function syncAllEventsToSheet() {
       venue: "UPPERHILLS CONVENTION HALLS",
       homeUrl: "https://gallery.runway.my.id/?event=andre-fayola-281",
       driveFolderId: "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh",
-      photoboothUrl: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8",
-      customCategories: [{ name: "Photobooth", url: "https://photos.app.goo.gl/QkqewYw4dWfocxfK8", enabled: true, isPhotobooth: true }],
+      photoboothUrl: "", customCategories: [],
       frameImageUrl: "",
       logoUrl: "",
       status: "Aktif"
@@ -819,8 +831,7 @@ function syncAllEventsToSheet() {
       venue: "UpperHills Convention Hall, Makassar",
       homeUrl: "https://gallery.runway.my.id/?event=wilson-felicia-133",
       driveFolderId: "1B1HyALBKEetXRoakAZuZ3iZYUeEsnjU5",
-      photoboothUrl: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs",
-      customCategories: [{ name: "Photobooth", url: "https://fotoshare.co/e/ZJGYCfWbttuEG8Q67ocZs", enabled: true, isPhotobooth: true }],
+      photoboothUrl: "", customCategories: [],
       frameImageUrl: "",
       logoUrl: "https://drive.google.com/file/d/1tsZZc6y_0xiCVWunfPiEN_eQdAsjJP_B/view?usp=drivesdk",
       EVENT_LOGO_URL: "https://drive.google.com/file/d/1tsZZc6y_0xiCVWunfPiEN_eQdAsjJP_B/view?usp=drivesdk",
@@ -833,8 +844,7 @@ function syncAllEventsToSheet() {
       venue: "UpperHills Convention Hall, Makassar",
       homeUrl: "https://gallery.runway.my.id/?event=tommy-natasha-594",
       driveFolderId: "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh",
-      photoboothUrl: "https://photos.google.com/share/AF1QipMagPm7xWB2YANajDr3hx-J4WKyhOgIQ41jUjqQnxv5LSy6392pyWC5hOfsQoz1mA?key=c1BLMDNyRGw4bEJyUWo5b1Y0eFlmTy14X1pESEdR",
-      customCategories: [{ id: "special_photobooth", name: "Photobooth", url: "https://photos.google.com/share/AF1QipMagPm7xWB2YANajDr3hx-J4WKyhOgIQ41jUjqQnxv5LSy6392pyWC5hOfsQoz1mA?key=c1BLMDNyRGw4bEJyUWo5b1Y0eFlmTy14X1pESEdR", enabled: true, isPhotobooth: true }],
+      photoboothUrl: "", customCategories: [],
       frameImageUrl: "",
       logoUrl: "",
       status: "Aktif"
@@ -1700,10 +1710,23 @@ function getAdminUsersList() {
           var uRow = values[r];
           var uId = String(uRow[0] || "").trim();
           var uUsername = String(uRow[1] || "").trim();
-          var uName = String(uRow[2] || uUsername || "").trim();
-          var uPin = String(uRow[3] || "").trim();
-          var uRole = String(uRow[4] || "Admin").trim();
-          var uDate = String(uRow[5] || "").trim();
+          var uName = uUsername;
+          var uPin = "";
+          var uRole = "Admin";
+          var uDate = "";
+
+          // Deteksi pemetaan kolom dinamis (5 kolom vs 6 kolom)
+          if (String(uRow[2] || "").match(/^\d{4,8}$/) || String(uRow[3] || "").toLowerCase().indexOf("admin") !== -1) {
+            uPin = String(uRow[2] || "").trim();
+            uRole = String(uRow[3] || "Admin").trim();
+            uDate = String(uRow[4] || "").trim();
+          } else {
+            uName = String(uRow[2] || uUsername).trim();
+            uPin = String(uRow[3] || "").trim();
+            uRole = String(uRow[4] || "Admin").trim();
+            uDate = String(uRow[5] || "").trim();
+          }
+
           if ((uUsername || uName) && uPin) {
             sheetUsers.push({
               id: uId || ("usr_" + r),
@@ -2379,22 +2402,25 @@ function saveAdminSettings(pin, updatedConfig) {
     }
 
     if (updatedConfig.PHOTOBOOTH_URL !== undefined) {
-      props.setProperty("PHOTOBOOTH_URL", String(updatedConfig.PHOTOBOOTH_URL).trim());
-    } else if (updatedConfig.CUSTOM_CATEGORIES) {
+      // Save global PHOTOBOOTH_URL (legacy) and also sync to the active event in EVENTS array
+      var cleanPbUrl = String(updatedConfig.PHOTOBOOTH_URL).trim();
+      props.setProperty("PHOTOBOOTH_URL", cleanPbUrl);
       try {
-        var checkCats = (typeof updatedConfig.CUSTOM_CATEGORIES === "string")
-          ? JSON.parse(updatedConfig.CUSTOM_CATEGORIES)
-          : updatedConfig.CUSTOM_CATEGORIES;
-        if (Array.isArray(checkCats)) {
-          var pbMatch = checkCats.find(function(c) {
-            return c && (c.isPhotobooth || c.id === "special_photobooth" || String(c.name || "").toLowerCase().indexOf("photobooth") !== -1);
-          });
-          if (pbMatch && pbMatch.url) {
-            updatedConfig.PHOTOBOOTH_URL = String(pbMatch.url).trim();
-            props.setProperty("PHOTOBOOTH_URL", updatedConfig.PHOTOBOOTH_URL);
+        var existingEventsStr = props.getProperty("EVENTS") || WEDDING_CONFIG.EVENTS;
+        var existingEvents = JSON.parse(existingEventsStr);
+        if (Array.isArray(existingEvents)) {
+          var activeEvId = updatedConfig.ACTIVE_EVENT_ID || props.getProperty("ACTIVE_EVENT_ID") || "";
+          for (var evI = 0; evI < existingEvents.length; evI++) {
+            if (existingEvents[evI].id === activeEvId || existingEvents.length === 1) {
+              existingEvents[evI].photoboothUrl = cleanPbUrl;
+              existingEvents[evI].PHOTOBOOTH_URL = cleanPbUrl;
+            }
           }
+          var updatedEventsStr = JSON.stringify(existingEvents);
+          props.setProperty("EVENTS", updatedEventsStr);
+          updatedConfig.EVENTS = updatedEventsStr;
         }
-      } catch (ePb) {}
+      } catch (eEvPb) { Logger.log("Info sync PHOTOBOOTH_URL to EVENTS: " + eEvPb.toString()); }
     }
 
     if (updatedConfig.ALL_PHOTOS_LABEL !== undefined) {
@@ -2475,6 +2501,23 @@ function saveAdminSettings(pin, updatedConfig) {
         writeConfigToSheet(dbSpreadsheet, updatedConfig);
 
         // Sinkronisasi ERP Master Table ke Sheet 'Daftar_Acara'
+        var activeEvId = updatedConfig.ACTIVE_EVENT_ID || props.getProperty("ACTIVE_EVENT_ID") || "";
+        if (activeEvId) {
+          addEventToSheet(dbSpreadsheet, {
+            id: activeEvId,
+            name: updatedConfig.EVENT_NAME || updatedConfig.COUPLE_NAME || "",
+            date: updatedConfig.EVENT_DATE || "",
+            venue: updatedConfig.EVENT_VENUE || "",
+            homeUrl: "https://gallery.runway.my.id/?event=" + encodeURIComponent(activeEvId),
+            driveFolderId: updatedConfig.DRIVE_FOLDER_ID || "",
+            photoboothUrl: updatedConfig.PHOTOBOOTH_URL || "",
+            customCategories: updatedConfig.CUSTOM_CATEGORIES || [],
+            frameImageUrl: updatedConfig.FRAME_IMAGE_URL || "",
+            logoUrl: updatedConfig.EVENT_LOGO_URL || "",
+            status: "Aktif"
+          });
+        }
+
         var rawEvs = updatedConfig.EVENTS || props.getProperty("EVENTS");
         if (rawEvs) {
           try {
