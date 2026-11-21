@@ -597,6 +597,14 @@ function readEventsFromSheet(ss) {
     var logoCol = header.indexOf('Logo_Acara');
     if (logoCol === -1) logoCol = header.indexOf('EVENT_LOGO_URL');
     var statusCol = header.indexOf('Status');
+    var subCol = header.indexOf('Subjudul');
+    if (subCol === -1) subCol = header.indexOf('SUBTITLE');
+    var welCol = header.indexOf('Pesan_Sambutan');
+    if (welCol === -1) welCol = header.indexOf('WELCOME_MESSAGE');
+    var footCol = header.indexOf('Pesan_Footer');
+    if (footCol === -1) footCol = header.indexOf('FOOTER_MESSAGE');
+    var allLabelCol = header.indexOf('Label_Semua_Foto');
+    if (allLabelCol === -1) allLabelCol = header.indexOf('ALL_PHOTOS_LABEL');
 
     var events = [];
     for (var r = 1; r < data.length; r++) {
@@ -627,10 +635,10 @@ function readEventsFromSheet(ss) {
         logoUrl: logoCol >= 0 ? String(row[logoCol] || '').trim() : '',
         EVENT_LOGO_URL: logoCol >= 0 ? String(row[logoCol] || '').trim() : '',
         status: statusCol >= 0 ? String(row[statusCol] || 'Aktif').trim() : 'Aktif',
-        subtitle: 'The Wedding Gallery & Precious Memories',
-        welcomeMessage: 'Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.',
-        footerMessage: 'Diabadikan dengan cinta\nTerima kasih atas doa restunya.',
-        allPhotosLabel: 'Semua Foto'
+        subtitle: (subCol >= 0 && row[subCol]) ? String(row[subCol]).trim() : 'The Wedding Gallery & Precious Memories',
+        welcomeMessage: (welCol >= 0 && row[welCol]) ? String(row[welCol]).trim() : 'Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.',
+        footerMessage: (footCol >= 0 && row[footCol]) ? String(row[footCol]).trim() : 'Diabadikan dengan cinta\nTerima kasih atas doa restunya.',
+        allPhotosLabel: (allLabelCol >= 0 && row[allLabelCol]) ? String(row[allLabelCol]).trim() : 'Semua Foto'
       });
     }
     return events;

@@ -539,15 +539,14 @@ function isGooglePhotosUrl(url) {
         }
       }
 
-      if (cfg.SUBTITLE) {
-        setNodeTextIfChanged("subtitle", cfg.SUBTITLE);
-      }
-      if (cfg.WELCOME_MESSAGE) {
-        setNodeTextIfChanged("welcomeMessage", cfg.WELCOME_MESSAGE);
-      }
-      if (cfg.FOOTER_MESSAGE) {
-        setNodeTextIfChanged("footerBlessing", cfg.FOOTER_MESSAGE);
-      }
+      const subtitleVal = cfg.SUBTITLE || "The Wedding Gallery & Precious Memories";
+      setNodeTextIfChanged("subtitle", subtitleVal);
+
+      const welcomeVal = cfg.WELCOME_MESSAGE || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.";
+      setNodeTextIfChanged("welcomeMessage", welcomeVal);
+
+      const footerVal = cfg.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.";
+      setNodeTextIfChanged("footerBlessing", footerVal);
       // Input form admin & Kategori: HANYA perbarui jika modal admin SEDANG TIDAK DIBUKA (mencegah teks & kategori tertimpa saat admin mengetik/menambah)
       const adminModal = document.getElementById("adminSettingsModal");
       const isModalActive = adminModal && adminModal.classList.contains("active");
@@ -628,16 +627,9 @@ function isGooglePhotosUrl(url) {
         renderAdminEventsManager();
       }
 
-      const frameBadge = document.getElementById("frameStatusBadge");
-      if (frameBadge) {
-        if (cfg.FRAME_IMAGE_URL) {
-          frameBadge.innerText = "✓ Bingkai Aktif";
-          frameBadge.style.color = "#10B981";
-          preloadFrameAssets(normalizeDriveImageUrl(cfg.FRAME_IMAGE_URL));
-        } else {
-          frameBadge.innerText = "Tanpa Bingkai";
-          frameBadge.style.color = "#64748B";
-        }
+      updateFrameStatusBadge(cfg.FRAME_IMAGE_URL);
+      if (cfg.FRAME_IMAGE_URL && typeof preloadFrameAssets === "function") {
+        preloadFrameAssets(normalizeDriveImageUrl(cfg.FRAME_IMAGE_URL));
       }
 
       const apiBadge = document.getElementById("apiStatusBadge");
@@ -649,6 +641,31 @@ function isGooglePhotosUrl(url) {
           apiBadge.innerText = "Mode Pratinjau Lokal";
           apiBadge.style.color = "#F59E0B";
         }
+      }
+    }
+
+    function updateFrameStatusBadge(frameUrl) {
+      const frameBadge = document.getElementById("frameStatusBadge");
+      if (!frameBadge) return;
+      if (frameUrl && String(frameUrl).trim()) {
+        frameBadge.innerText = "✓ Bingkai Aktif";
+        frameBadge.style.color = "#10B981";
+      } else {
+        frameBadge.innerText = "Tanpa Bingkai";
+        frameBadge.style.color = "#64748B";
+      }
+    }
+
+    function handleFrameUrlInput(val) {
+      const cleanVal = (val || "").trim();
+      state.activeConfig.FRAME_IMAGE_URL = cleanVal;
+      const curEv = (state.events || []).find(function(e) { return e && e.id === state.currentEventId; });
+      if (curEv) {
+        curEv.frameImageUrl = cleanVal;
+      }
+      updateFrameStatusBadge(cleanVal);
+      if (cleanVal && typeof preloadFrameAssets === "function") {
+        preloadFrameAssets(normalizeDriveImageUrl(cleanVal));
       }
     }
 
@@ -903,5 +920,7 @@ function isGooglePhotosUrl(url) {
       window.sortPhotosNewestFirst = sortPhotosNewestFirst;
       window.getActiveEventIdFromUrl = getActiveEventIdFromUrl;
       window.escapeHtml = escapeHtml;
+      window.updateFrameStatusBadge = updateFrameStatusBadge;
+      window.handleFrameUrlInput = handleFrameUrlInput;
     }
 

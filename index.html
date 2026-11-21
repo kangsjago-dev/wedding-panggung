@@ -181,7 +181,7 @@
         } catch(e) {}
       })();
     </script>
-    <div id="subtitle" class="hero-subtitle"></div>
+    <div id="subtitle" class="hero-subtitle">The Wedding Gallery &amp; Precious Memories</div>
 
     <!-- Badge Tanggal dan Venue (Lokasi Acara - Live Database) -->
     <div class="hero-badges-wrapper">
@@ -204,7 +204,7 @@
       </div>
     </div>
 
-    <p id="welcomeMessage" class="hero-desc"></p>
+    <p id="welcomeMessage" class="hero-desc">Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.</p>
   </header>
 
   <!-- Sticky Filter Bar with Admin Trigger & Live Sync Indicator -->
@@ -622,7 +622,7 @@
               <label class="admin-label" for="cfgFrameImageUrl" style="margin-bottom: 0;">Bingkai PNG Transparan Saat Download</label>
               <span id="frameStatusBadge" style="font-size: 0.75rem; font-weight: 600;"></span>
             </div>
-            <input type="text" id="cfgFrameImageUrl" class="admin-input" placeholder="Tautan / ID File Bingkai PNG Google Drive">
+            <input type="text" id="cfgFrameImageUrl" class="admin-input" placeholder="Tautan / ID File Bingkai PNG Google Drive" oninput="handleFrameUrlInput(this.value)">
             <div class="admin-help-text">Unggah file bingkai berformat PNG transparan ke Google Drive dengan izin <em>"Anyone with the link can view"</em>.</div>
           </div>
 
@@ -789,7 +789,7 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="footer-names" id="footerCoupleName"></div>
-    <p id="footerBlessing" style="white-space: pre-line; line-height: 1.6;"></p>
+    <p id="footerBlessing" style="white-space: pre-line; line-height: 1.6;">Diabadikan dengan cinta&#10;Terima kasih atas doa restunya.</p>
   </footer>
 
   <!-- ==========================================================================

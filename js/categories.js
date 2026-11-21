@@ -885,8 +885,10 @@
       const isMain = (effectiveCat.toLowerCase() === mainLabel.toLowerCase() || effectiveCat.toLowerCase() === "semua foto");
 
       if (isMain) {
+        const mainDriveId = state.activeConfig.DRIVE_FOLDER_ID ? (extractDriveFolderId(state.activeConfig.DRIVE_FOLDER_ID) || state.activeConfig.DRIVE_FOLDER_ID) : "";
+        const mainResolvedUrl = targetUrl || (mainDriveId ? ("https://drive.google.com/drive/folders/" + mainDriveId) : "");
         state.filteredPhotos = state.allPhotos;
-        renderPhotoGrid(targetUrl, effectiveCat);
+        renderPhotoGrid(mainResolvedUrl, effectiveCat);
         return;
       }
 

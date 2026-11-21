@@ -36,12 +36,31 @@
 
       // Jika foto kosong untuk kategori ini
       if (!state.filteredPhotos || state.filteredPhotos.length === 0) {
-        const isUrlMissing = !targetUrl || !String(targetUrl).trim();
-        const emptyBadgeText = isUrlMissing ? `Momen Kenangan • ${escapeHtml(activeCat)}` : `Dokumentasi Acara • ${escapeHtml(activeCat)}`;
-        const emptyTitleText = isUrlMissing ? "Foto Belum Tersedia" : "Momen Sedang Dipersiapkan";
-        const emptyDescText = isUrlMissing 
-          ? `Tautan album untuk kategori <strong>${escapeHtml(activeCat)}</strong> belum ditautkan oleh penyelenggara acara. Foto momen kenangan indah akan otomatis tampil begitu tautan dokumentasi diperbarui.`
-          : `Foto kenangan untuk kategori <strong>${escapeHtml(activeCat)}</strong> sedang dalam proses dokumentasi. Silakan periksa kembali beberapa saat lagi.`;
+        const isMain = (activeCat.toLowerCase() === (state.allPhotosLabel || "Semua Foto").toLowerCase() || activeCat.toLowerCase() === "semua foto");
+        const effectiveUrl = isMain ? (targetUrl || state.activeConfig.DRIVE_FOLDER_ID || "") : targetUrl;
+        const isUrlMissing = !effectiveUrl || !String(effectiveUrl).trim();
+
+        let emptyBadgeText = "";
+        let emptyTitleText = "";
+        let emptyDescText = "";
+
+        if (isMain) {
+          if (isUrlMissing) {
+            emptyBadgeText = `Momen Utama • ${escapeHtml(activeCat)}`;
+            emptyTitleText = "Foto Belum Tersedia";
+            emptyDescText = `Tautan folder Google Drive untuk kategori "${escapeHtml(activeCat)}" belum ditautkan oleh penyelenggara acara. Foto dokumentasi momen bahagia akan otomatis tampil begitu folder ditautkan.`;
+          } else {
+            emptyBadgeText = `Momen Utama • ${escapeHtml(activeCat)}`;
+            emptyTitleText = "Momen Sedang Dipersiapkan";
+            emptyDescText = `Foto dokumentasi untuk kategori <strong>${escapeHtml(activeCat)}</strong> sedang dipersiapkan dan segera hadir. Silakan segarkan galeri atau periksa kembali beberapa saat lagi.`;
+          }
+        } else {
+          emptyBadgeText = isUrlMissing ? `Momen Kenangan • ${escapeHtml(activeCat)}` : `Dokumentasi Acara • ${escapeHtml(activeCat)}`;
+          emptyTitleText = isUrlMissing ? "Foto Belum Tersedia" : "Momen Sedang Dipersiapkan";
+          emptyDescText = isUrlMissing 
+            ? `Tautan album untuk kategori <strong>${escapeHtml(activeCat)}</strong> belum ditautkan oleh penyelenggara acara. Foto momen kenangan indah akan otomatis tampil begitu tautan dokumentasi diperbarui.`
+            : `Foto kenangan untuk kategori <strong>${escapeHtml(activeCat)}</strong> sedang dalam proses dokumentasi. Silakan periksa kembali beberapa saat lagi.`;
+        }
 
         grid.innerHTML = `
           <div class="empty-gallery-card">
@@ -637,6 +656,13 @@
 
     function isPhotoPhotobooth(photo) {
       if (!photo) return false;
+      const effectiveCat = String(state.activeCategory || state.allPhotosLabel || "Semua Foto").trim().toLowerCase();
+      const mainLabel = String(state.allPhotosLabel || "Semua Foto").trim().toLowerCase();
+      const isMainActive = (effectiveCat === "semua foto" || effectiveCat === mainLabel);
+      if (isMainActive) {
+        // Kategori utama ("Semua Foto" / label kustom) BUKAN photobooth!
+        return false;
+      }
       return Boolean(
         photo.isVideo ||
         photo.isKing ||
@@ -952,10 +978,10 @@
       }
 
       let effectiveUrl = urlOrId;
-      const dMatch = urlOrId.match(/(?:\/d\/|id=)([a-zA-Z0-9_-]{25,})/);
+      const dMatch = urlOrId.match(/(?:\/d\/|id=)([a-zA-Z0-9_-]+)/);
       if (dMatch && (urlOrId.includes("drive.google.com") || urlOrId.includes("docs.google.com") || !urlOrId.startsWith("http"))) {
         effectiveUrl = "https://lh3.googleusercontent.com/d/" + dMatch[1] + "=w2500";
-      } else if (/^[a-zA-Z0-9_\-]{20,}$/.test(urlOrId) && !urlOrId.startsWith("http")) {
+      } else if (/^[a-zA-Z0-9_\-]{15,}$/.test(urlOrId) && !urlOrId.startsWith("http")) {
         effectiveUrl = "https://lh3.googleusercontent.com/d/" + urlOrId + "=w2500";
       }
 

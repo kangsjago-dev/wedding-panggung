@@ -564,10 +564,15 @@
 
       const driveFolderVal = (document.getElementById("cfgDriveFolderId")?.value || state.activeConfig.DRIVE_FOLDER_ID || "").trim();
       const allPhotosLabelVal = (document.getElementById("cfgMainGalleryLabel")?.value || document.getElementById("cfgAllPhotosLabel")?.value || state.allPhotosLabel || "Semua Foto").trim();
+      const frameUrlVal = (document.getElementById("cfgFrameImageUrl")?.value || state.activeConfig.FRAME_IMAGE_URL || "").trim();
       if (driveFolderVal) state.activeConfig.DRIVE_FOLDER_ID = driveFolderVal;
+      if (frameUrlVal) state.activeConfig.FRAME_IMAGE_URL = frameUrlVal;
       if (allPhotosLabelVal) {
         state.activeConfig.ALL_PHOTOS_LABEL = allPhotosLabelVal;
         state.allPhotosLabel = allPhotosLabelVal;
+      }
+      if (typeof updateFrameStatusBadge === "function") {
+        updateFrameStatusBadge(frameUrlVal);
       }
 
       // Hapus cache foto kategori yang tautannya berubah
@@ -590,6 +595,7 @@
           curEv.customCategories = customCategoriesList;
           if (driveFolderVal) curEv.driveFolderId = driveFolderVal;
           if (allPhotosLabelVal) curEv.allPhotosLabel = allPhotosLabelVal;
+          if (frameUrlVal) curEv.frameImageUrl = frameUrlVal;
         }
       }
 
@@ -620,6 +626,7 @@
               CUSTOM_CATEGORIES: JSON.stringify(customCategoriesList),
               PHOTOBOOTH_URL: (pbCat && pbCat.url) ? String(pbCat.url).trim() : (state.activeConfig.PHOTOBOOTH_URL || ""),
               DRIVE_FOLDER_ID: driveFolderVal,
+              FRAME_IMAGE_URL: frameUrlVal,
               ALL_PHOTOS_LABEL: allPhotosLabelVal,
               EVENTS: JSON.stringify(state.events),
               ACTIVE_EVENT_ID: state.currentEventId
@@ -1004,6 +1011,9 @@
       if (cfgDriveEl) cfgDriveEl.value = cfg.DRIVE_FOLDER_ID || "";
       const cfgFrameEl = document.getElementById("cfgFrameImageUrl");
       if (cfgFrameEl) cfgFrameEl.value = cfg.FRAME_IMAGE_URL || "";
+      if (typeof updateFrameStatusBadge === "function") {
+        updateFrameStatusBadge(cfg.FRAME_IMAGE_URL);
+      }
     }
 
     function openNewEventModal() {

@@ -232,6 +232,25 @@ function syncFromSpreadsheetGViz(callback) {
               state.adminPin = sheetMap.ADMIN_PIN;
             }
           }
+          if (sheetMap.WELCOME_MESSAGE) {
+            state.activeConfig.WELCOME_MESSAGE = sheetMap.WELCOME_MESSAGE;
+          }
+          if (sheetMap.SUBTITLE) {
+            state.activeConfig.SUBTITLE = sheetMap.SUBTITLE;
+          }
+          if (sheetMap.FOOTER_MESSAGE) {
+            state.activeConfig.FOOTER_MESSAGE = sheetMap.FOOTER_MESSAGE;
+          }
+          if (sheetMap.FRAME_IMAGE_URL) {
+            state.activeConfig.FRAME_IMAGE_URL = sheetMap.FRAME_IMAGE_URL;
+          }
+          if (sheetMap.ALL_PHOTOS_LABEL) {
+            state.activeConfig.ALL_PHOTOS_LABEL = sheetMap.ALL_PHOTOS_LABEL;
+            state.allPhotosLabel = sheetMap.ALL_PHOTOS_LABEL;
+          }
+
+          // Simpan sheetMap untuk pengayaan multi-event di langkah berikutnya
+          state._sheetSettingsMap = sheetMap;
         }
       } catch (eP) {}
     }
@@ -260,6 +279,17 @@ function syncFromSpreadsheetGViz(callback) {
           const logoIdx = hRow.indexOf("Logo_Acara") >= 0 ? hRow.indexOf("Logo_Acara") : 9;
           const statusIdx = hRow.indexOf("Status") >= 0 ? hRow.indexOf("Status") : 10;
 
+          const sheetMap = state._sheetSettingsMap || {};
+          let sheetEventsMap = {};
+          if (sheetMap.EVENTS) {
+            try {
+              const parsedEvs = typeof sheetMap.EVENTS === "string" ? JSON.parse(sheetMap.EVENTS) : sheetMap.EVENTS;
+              if (Array.isArray(parsedEvs)) {
+                parsedEvs.forEach(ev => { if (ev && ev.id) sheetEventsMap[ev.id] = ev; });
+              }
+            } catch(eEv) {}
+          }
+
           const sheetEvs = [];
           const startRow = row0IsHeader ? 1 : 0;
           for (let r = startRow; r < parsedA.table.rows.length; r++) {
@@ -267,28 +297,39 @@ function syncFromSpreadsheetGViz(callback) {
             const evId = rowCells[idIdx] ? String(rowCells[idIdx].v || '').trim() : '';
             if (!evId || String(evId).startsWith("EVT-")) continue;
 
+            const extraEv = sheetEventsMap[evId] || {};
+
             let parsedCats = [];
             if (rowCells[catIdx] && rowCells[catIdx].v) {
               try {
                 parsedCats = typeof rowCells[catIdx].v === 'string' ? JSON.parse(rowCells[catIdx].v) : rowCells[catIdx].v;
               } catch(e) { parsedCats = []; }
             }
-            const cleanDate = rowCells[dateIdx] ? normalizeSheetDate(rowCells[dateIdx]) : '';
-            const cleanLogo = rowCells[logoIdx] ? String(rowCells[logoIdx].v || '').trim() : '';
+            if ((!parsedCats || parsedCats.length === 0) && Array.isArray(extraEv.customCategories) && extraEv.customCategories.length > 0) {
+              parsedCats = extraEv.customCategories;
+            }
+
+            const cleanDate = rowCells[dateIdx] ? normalizeSheetDate(rowCells[dateIdx]) : (extraEv.date || '');
+            const cleanLogo = rowCells[logoIdx] ? String(rowCells[logoIdx].v || '').trim() : (extraEv.logoUrl || extraEv.EVENT_LOGO_URL || '');
+            const cleanFrame = rowCells[frameIdx] ? String(rowCells[frameIdx].v || '').trim() : (extraEv.frameImageUrl || sheetMap.FRAME_IMAGE_URL || '');
 
             sheetEvs.push({
               id: evId,
-              name: rowCells[nameIdx] ? String(rowCells[nameIdx].v || '').trim() : evId,
+              name: rowCells[nameIdx] ? String(rowCells[nameIdx].v || '').trim() : (extraEv.name || evId),
               date: cleanDate,
-              venue: rowCells[venueIdx] ? String(rowCells[venueIdx].v || '').trim() : '',
-              homeUrl: rowCells[urlIdx] ? String(rowCells[urlIdx].v || '').trim() : '',
-              driveFolderId: rowCells[driveIdx] ? String(rowCells[driveIdx].v || '').trim() : '',
-              photoboothUrl: rowCells[pbIdx] ? String(rowCells[pbIdx].v || '').trim() : '',
+              venue: rowCells[venueIdx] ? String(rowCells[venueIdx].v || '').trim() : (extraEv.venue || ''),
+              homeUrl: rowCells[urlIdx] ? String(rowCells[urlIdx].v || '').trim() : (extraEv.homeUrl || ''),
+              driveFolderId: rowCells[driveIdx] ? String(rowCells[driveIdx].v || '').trim() : (extraEv.driveFolderId || ''),
+              photoboothUrl: rowCells[pbIdx] ? String(rowCells[pbIdx].v || '').trim() : (extraEv.photoboothUrl || ''),
               customCategories: Array.isArray(parsedCats) ? parsedCats : [],
-              frameImageUrl: rowCells[frameIdx] ? String(rowCells[frameIdx].v || '').trim() : '',
+              frameImageUrl: cleanFrame,
               logoUrl: cleanLogo,
               EVENT_LOGO_URL: cleanLogo,
-              status: rowCells[statusIdx] ? String(rowCells[statusIdx].v || 'Aktif').trim() : 'Aktif'
+              subtitle: extraEv.subtitle || sheetMap.SUBTITLE || "The Wedding Gallery & Precious Memories",
+              welcomeMessage: extraEv.welcomeMessage || sheetMap.WELCOME_MESSAGE || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
+              footerMessage: extraEv.footerMessage || sheetMap.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
+              allPhotosLabel: extraEv.allPhotosLabel || sheetMap.ALL_PHOTOS_LABEL || "Semua Foto",
+              status: rowCells[statusIdx] ? String(rowCells[statusIdx].v || 'Aktif').trim() : (extraEv.status || 'Aktif')
             });
           }
 
@@ -315,10 +356,11 @@ function syncFromSpreadsheetGViz(callback) {
       } catch(eA) {}
     }
 
-    // 3. Update data acara aktif murni dari Daftar_Acara
+    // 3. Update data acara aktif murni dari Daftar_Acara (Multi-Device Synchronized)
     const curEventId = getActiveEventIdFromUrl() || state.currentEventId;
     if (curEventId) {
       const matchedEv = (state.events || []).find(e => e && e.id === curEventId);
+      const sheetMap = state._sheetSettingsMap || {};
       if (matchedEv) {
         showEventNotFoundScreen(false);
         state.currentEventId = matchedEv.id;
@@ -331,18 +373,21 @@ function syncFromSpreadsheetGViz(callback) {
         state.activeConfig.logoUrl = matchedEv.logoUrl || "";
         state.activeConfig.DRIVE_FOLDER_ID = matchedEv.driveFolderId || "";
         state.activeConfig.PHOTOBOOTH_URL = matchedEv.photoboothUrl || "";
-        state.activeConfig.FRAME_IMAGE_URL = matchedEv.frameImageUrl || "";
+        state.activeConfig.FRAME_IMAGE_URL = matchedEv.frameImageUrl || sheetMap.FRAME_IMAGE_URL || "";
         state.activeConfig.HOME_URL = matchedEv.homeUrl || (window.location.origin + window.location.pathname + "?event=" + encodeURIComponent(matchedEv.id));
+
+        state.activeConfig.SUBTITLE = matchedEv.subtitle || sheetMap.SUBTITLE || state.activeConfig.SUBTITLE || "The Wedding Gallery & Precious Memories";
+        state.activeConfig.WELCOME_MESSAGE = matchedEv.welcomeMessage || sheetMap.WELCOME_MESSAGE || state.activeConfig.WELCOME_MESSAGE || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.";
+        state.activeConfig.FOOTER_MESSAGE = matchedEv.footerMessage || sheetMap.FOOTER_MESSAGE || state.activeConfig.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.";
 
         if (Array.isArray(matchedEv.customCategories) && matchedEv.customCategories.length > 0) {
           state.activeConfig.CUSTOM_CATEGORIES = matchedEv.customCategories;
           state.customCategories = matchedEv.customCategories;
         }
 
-        if (matchedEv.allPhotosLabel) {
-          state.activeConfig.ALL_PHOTOS_LABEL = matchedEv.allPhotosLabel;
-          state.allPhotosLabel = matchedEv.allPhotosLabel;
-        }
+        const effectiveAllLabel = matchedEv.allPhotosLabel || sheetMap.ALL_PHOTOS_LABEL || state.allPhotosLabel || "Semua Foto";
+        state.activeConfig.ALL_PHOTOS_LABEL = effectiveAllLabel;
+        state.allPhotosLabel = effectiveAllLabel;
 
         populateConfigToUI(state.activeConfig);
         if (typeof renderCategoryTabs === "function") renderCategoryTabs();
