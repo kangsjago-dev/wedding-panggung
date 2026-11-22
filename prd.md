@@ -139,7 +139,7 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
   - Badge kategori elegan dengan uppercase tracking: `Kategori • [Nama Kategori]`.
   - Judul bernuansa puitis: *"Momen Indah Sedang Disiapkan"* menggunakan font serif *Cormorant Garamond*.
   - Narasi ramah dan puitis yang menjelaskan foto sedang dipersiapkan oleh fotografer.
-  - Tombol aksi terpadu: *Segarkan Kategori Ini* dan *Buka Album Sumber* dengan SVG icon inline.
+  - Tombol aksi terpadu: *Segarkan Galeri* dengan SVG icon inline (tombol tautan sumber album dieliminasi demi privasi dan kebersihan antarmuka).
 
 ### 2.16 Perbaikan Fallback Photostage (Mode Panggung) & Audit 3x Eliminasi Total Hardcode Database (v4.14.0)
 - **Graceful Fallback & Ketahanan Photostage (Mode Panggung Layar Penuh)**:
