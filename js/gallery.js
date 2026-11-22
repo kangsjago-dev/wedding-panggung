@@ -380,21 +380,21 @@
               // Jika getImageData terhalang CORS, gunakan ukuran dimensi natural
             }
 
-            // 3. Batas dimensi proporsional aman untuk QR Code ECC=H (maksimal ~22% lebar QR)
-            const maxBadgeDim = Math.round(size * 0.22); // ~132px
-            const scale = Math.min(maxBadgeDim / sw, maxBadgeDim / sh);
+            // 3. Batas dimensi proporsional aman untuk QR Code ECC=H (logo 3x lebih besar dari sebelumnya)
+            const maxLogoW = Math.round(size * 0.48); // ~288px (maksimal lebar tengah aman)
+            const maxLogoH = Math.round(size * 0.32); // ~192px (maksimal tinggi tengah aman)
+            const scale = Math.min(maxLogoW / sw, maxLogoH / sh);
             const dw = Math.round(sw * scale);
             const dh = Math.round(sh * scale);
 
-            // 4. Bidang putih solid dibuat RAPI dan PAS mengikuti objek logo (tidak terlalu besar, terutama atas & bawah)
-            // Tanpa border (tanpa garis tepi) sesuai instruksi pengguna
-            const padX = 6; // padding horizontal yang rapi
-            const padY = 4; // padding vertikal yang ringkas (merapikan bagian atas dan bawah)
+            // 4. Bidang putih solid dibuat RAPI dan PAS mengikuti objek logo (tanpa border sesuai instruksi)
+            const padX = Math.round(Math.max(8, dw * 0.04)); // padding horizontal yang rapi dan pas
+            const padY = Math.round(Math.max(6, dh * 0.06)); // padding vertikal yang ringkas
             const bw = dw + (padX * 2);
             const bh = dh + (padY * 2);
             const bx = Math.round((size - bw) / 2);
             const by = Math.round((size - bh) / 2);
-            const radius = Math.min(8, Math.round(Math.min(bw, bh) * 0.2));
+            const radius = Math.min(12, Math.round(Math.min(bw, bh) * 0.2));
 
             // Gambar bidang putih solid (TANPA BORDER)
             ctx.save();

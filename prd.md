@@ -1,8 +1,8 @@
 # PRD - Wedding Photo Gallery & Live Slideshow Platform
 **Sistem**: Multi-Event Wedding Gallery with ERP Master Data Architecture  
-**Versi**: v4.37.0-PROD  
+**Versi**: v4.38.0-PROD  
 **Arsitektur Database**: Google Sheets ERP Master Table + Google Drive Live Photo Catalog  
-**Terakhir Diperbarui**: 22 November 2026
+**Terakhir Diperbarui**: 23 November 2026
 
 ---
 
