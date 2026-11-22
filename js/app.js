@@ -168,9 +168,52 @@ function handleGalleryResponse(response, isSilent) {
   }
 
   const mainLabel = state.allPhotosLabel || "Semua Foto";
+  const evId = state.currentEventId || "default";
+  let storedTab = "";
+  try {
+    storedTab = sessionStorage.getItem("WEDDING_ACTIVE_TAB_" + evId) || "";
+  } catch(e) {}
+  if (storedTab && (!state.activeCategory || state.activeCategory === "Semua Foto" || state.activeCategory === mainLabel)) {
+    if (storedTab !== "Semua Foto" && storedTab !== mainLabel) {
+      state.activeCategory = storedTab;
+    }
+  }
+
   if (!state.activeCategory || state.activeCategory === "Semua Foto" || state.activeCategory === mainLabel) {
     state.filteredPhotos = state.allPhotos;
     renderPhotoGrid();
+  } else {
+    // Tetap di kategori yang sedang dibuka (tidak terpental ke halaman utama)
+    if (typeof applyCategoryFilter === "function") {
+      applyCategoryFilter(state.activeCategory, null, true);
+    }
+  }
+}
+
+function triggerActiveCategoryRefresh(forceRefresh, isSilent) {
+  const mainLabel = state.allPhotosLabel || "Semua Foto";
+  const activeCat = state.activeCategory || mainLabel;
+  const icon = document.getElementById("refreshIconSvg");
+  if (!isSilent && icon) icon.classList.add("spin");
+
+  const stopSpin = function() {
+    if (!isSilent && icon) icon.classList.remove("spin");
+  };
+
+  if (!activeCat || activeCat === "Semua Foto" || activeCat === mainLabel) {
+    fetchGalleryData(forceRefresh, isSilent);
+    if (!isSilent) {
+      setTimeout(stopSpin, 1200);
+    }
+  } else {
+    // Sinkronkan kategori aktif saat ini (Photobooth atau kategori kustom)
+    if (typeof syncSingleCategory === "function") {
+      syncSingleCategory(activeCat, isSilent, function() {
+        stopSpin();
+      });
+    } else {
+      stopSpin();
+    }
   }
 }
 
@@ -206,7 +249,7 @@ function startLiveAutoRefresh() {
   state.autoRefreshTimer = setInterval(function() {
     syncFromSpreadsheetGViz(function() {
       if (!state.isAutoRefreshing) {
-        fetchGalleryData(false, true);
+        triggerActiveCategoryRefresh(false, true);
       }
     });
   }, state.autoRefreshIntervalMs);
@@ -444,8 +487,12 @@ function syncFromSpreadsheetGViz(callback) {
 
         populateConfigToUI(state.activeConfig);
         if (typeof renderCategoryTabs === "function") renderCategoryTabs();
-        if (state.activeCategory && state.activeCategory.toLowerCase().indexOf("photobooth") !== -1) {
-          if (typeof applyCategoryFilter === "function") {
+        
+        // Refresh latar belakang secara senyap (silent) untuk kategori aktif saat ini
+        if (state.activeCategory && state.activeCategory !== "Semua Foto" && state.activeCategory !== effectiveAllLabel) {
+          if (typeof syncSingleCategory === "function") {
+            syncSingleCategory(state.activeCategory, true);
+          } else if (typeof applyCategoryFilter === "function") {
             applyCategoryFilter(state.activeCategory, activePbUrl, true);
           }
         }
@@ -562,6 +609,7 @@ document.addEventListener("DOMContentLoaded", function() {
 // Explicit Global Window Bindings untuk Modul App Bootloader
 if (typeof window !== "undefined") {
   window.fetchGalleryData = fetchGalleryData;
+  window.triggerActiveCategoryRefresh = triggerActiveCategoryRefresh;
   window.syncFromSpreadsheetGViz = syncFromSpreadsheetGViz;
   window.startLiveAutoRefresh = startLiveAutoRefresh;
   window.showEventNotFoundScreen = showEventNotFoundScreen;

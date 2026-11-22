@@ -250,7 +250,11 @@ function isGooglePhotosUrl(url) {
 
     function isPhotoNew(photo) {
       if (!photo) return false;
-      if (photo.isNewlyAdded) return true;
+      if (photo.isNewlyAdded === true) return true;
+      if (photo.isNewlyAdded === false) return false;
+      // Untuk foto photobooth, lencana BARU murni dikontrol oleh deteksi delta (isNewlyAdded)
+      const isPb = Boolean(photo.isPhotobooth || (photo.category && photo.category.toLowerCase().includes("photobooth")));
+      if (isPb) return false;
       const ts = photo.timestamp || photo.detectedAt;
       if (!ts) return false;
       return (Date.now() - ts) < state.newBadgeDurationMs;
