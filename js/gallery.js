@@ -721,13 +721,20 @@
       }
     }
 
+    function getActiveFrameUrl() {
+      const curEv = (state.events || []).find(function(e) { return e && e.id === state.currentEventId; });
+      const raw = (state.activeConfig && state.activeConfig.FRAME_IMAGE_URL) ||
+                  (curEv && curEv.frameImageUrl) ||
+                  (typeof GLOBAL_CONFIG !== "undefined" && GLOBAL_CONFIG.FRAME_IMAGE_URL) || "";
+      return normalizeDriveImageUrl(raw);
+    }
+
     function downloadCurrentPhotoWithFrame() {
       const photo = state.filteredPhotos[state.currentLightboxIndex];
       if (!photo) return;
 
       const isPhotobooth = isPhotoPhotobooth(photo);
-      const rawFrameConfig = state.activeConfig.FRAME_IMAGE_URL ? state.activeConfig.FRAME_IMAGE_URL.trim() : "";
-      const frameUrl = normalizeDriveImageUrl(rawFrameConfig);
+      const frameUrl = getActiveFrameUrl();
 
       // 1. Jika berkas Photobooth atau tanpa bingkai: unduh langsung tanpa proses canvas
       if (isPhotobooth || !frameUrl) {
@@ -781,8 +788,7 @@
       }
 
       const isPhotobooth = isPhotoPhotobooth(photo);
-      const rawFrameConfig = state.activeConfig.FRAME_IMAGE_URL ? state.activeConfig.FRAME_IMAGE_URL.trim() : "";
-      const frameUrl = normalizeDriveImageUrl(rawFrameConfig);
+      const frameUrl = getActiveFrameUrl();
 
       if (isPhotobooth || !frameUrl) {
         updateDownloadWidget(35, "Mengunduh Berkas Asli...", (photo.name || "Foto") + " • Kualitas Asli" + queueSuffix, false);
@@ -859,109 +865,65 @@
 
     function prepareLightboxFramedBlob(photo) {
       if (!photo || isPhotoPhotobooth(photo)) return;
-      const rawFrameConfig = state.activeConfig.FRAME_IMAGE_URL ? state.activeConfig.FRAME_IMAGE_URL.trim() : "";
-      const frameUrl = normalizeDriveImageUrl(rawFrameConfig);
+      const frameUrl = getActiveFrameUrl();
       if (!frameUrl) return;
 
       if (state.currentPreparedFramedBlobPhotoId === photo.id && state.currentPreparedFramedBlob) return;
 
-      const photoSrc = photo.downloadUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || (photo.id ? ("https://lh3.googleusercontent.com/d/" + photo.id + "=w2500") : "");
+      const photoSrc = photo.downloadUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || (photo.id ? ("https://lh3.googleusercontent.com/d/" + photo.id + "=s0") : "");
       if (!photoSrc) return;
 
       loadSafeCanvasImage(photoSrc, function(photoImg) {
-        function doComposite(frameImg, cutoutInfo) {
+        function doComposite(frameImg) {
           try {
-            const fw = frameImg.naturalWidth || 2400;
-            const fh = frameImg.naturalHeight || 1600;
-            const cutoutX = cutoutInfo.x;
-            const cutoutY = cutoutInfo.y;
-            const cutoutW = cutoutInfo.w;
-            const cutoutH = cutoutInfo.h;
-
             const pw = photoImg.naturalWidth || photoImg.width || 1920;
             const ph = photoImg.naturalHeight || photoImg.height || 1080;
+            const rot = getPhotoRotation(photo.id, photo.category);
+            const isRotated90 = (rot % 180 !== 0);
 
-            const scale = Math.max(1, pw / cutoutW, ph / cutoutH);
-            const targetW = Math.round(fw * scale);
-            const targetH = Math.round(fh * scale);
+            // JANGAN UBAH UKURAN DARI FILE: Dimensi canvas harus 100% persis sama dengan ukuran asli foto
+            const canvasW = isRotated90 ? ph : pw;
+            const canvasH = isRotated90 ? pw : ph;
 
             const canvas = document.createElement("canvas");
-            canvas.width = targetW;
-            canvas.height = targetH;
+            canvas.width = canvasW;
+            canvas.height = canvasH;
             const ctx = canvas.getContext("2d");
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = "high";
 
-            const scaledCutoutX = Math.round(cutoutX * scale);
-            const scaledCutoutY = Math.round(cutoutY * scale);
-            const scaledCutoutW = Math.round(cutoutW * scale);
-            const scaledCutoutH = Math.round(cutoutH * scale);
-
-            const photoAspect = pw / ph;
-            const cutoutAspect = scaledCutoutW / scaledCutoutH;
-
-            let drawX = scaledCutoutX;
-            let drawY = scaledCutoutY;
-            let drawW = scaledCutoutW;
-            let drawH = scaledCutoutH;
-
-            if (Math.abs(photoAspect - cutoutAspect) < 0.05) {
-              drawX = scaledCutoutX;
-              drawY = scaledCutoutY;
-              drawW = scaledCutoutW;
-              drawH = scaledCutoutH;
-            } else if (photoAspect > cutoutAspect) {
-              drawW = scaledCutoutW;
-              drawH = scaledCutoutW / photoAspect;
-              drawX = scaledCutoutX;
-              drawY = scaledCutoutY + (scaledCutoutH - drawH) / 2;
-            } else {
-              drawH = scaledCutoutH;
-              drawW = scaledCutoutH * photoAspect;
-              drawY = scaledCutoutY;
-              drawX = scaledCutoutX + (scaledCutoutW - drawW) / 2;
-            }
-
             ctx.fillStyle = "#FFFFFF";
-            ctx.fillRect(0, 0, targetW, targetH);
+            ctx.fillRect(0, 0, canvasW, canvasH);
 
-            const rot = getPhotoRotation(photo.id, photo.category);
             if (rot % 360 !== 0) {
               ctx.save();
-              const cx = drawX + drawW / 2;
-              const cy = drawY + drawH / 2;
-              ctx.translate(cx, cy);
+              ctx.translate(canvasW / 2, canvasH / 2);
               ctx.rotate((rot * Math.PI) / 180);
-              if (rot % 180 !== 0) {
-                const scaleRatio = Math.max(drawW / drawH, drawH / drawW);
-                ctx.drawImage(photoImg, -drawH / 2 * scaleRatio, -drawW / 2 * scaleRatio, drawH * scaleRatio, drawW * scaleRatio);
-              } else {
-                ctx.drawImage(photoImg, -drawW / 2, -drawH / 2, drawW, drawH);
-              }
+              ctx.drawImage(photoImg, -pw / 2, -ph / 2, pw, ph);
               ctx.restore();
             } else {
-              ctx.drawImage(photoImg, drawX, drawY, drawW, drawH);
+              ctx.drawImage(photoImg, 0, 0, pw, ph);
             }
 
-            ctx.drawImage(frameImg, 0, 0, targetW, targetH);
+            ctx.drawImage(frameImg, 0, 0, canvasW, canvasH);
 
             canvas.toBlob(function(blob) {
               if (blob) {
                 state.currentPreparedFramedBlob = blob;
                 state.currentPreparedFramedBlobPhotoId = photo.id;
               }
-            }, "image/jpeg", 0.94);
+            }, "image/jpeg", 0.98);
           } catch (err) {
             console.warn("Pre-composite failed:", err);
           }
         }
 
         if (state.cachedFrame && state.cachedFrame.url === frameUrl) {
-          doComposite(state.cachedFrame.img, state.cachedFrame.cutout);
+          doComposite(state.cachedFrame.img);
         } else {
           loadSafeCanvasImage(frameUrl, function(fImg) {
             preloadFrameAssets(frameUrl);
-            doComposite(fImg, { x: 0, y: 0, w: fImg.naturalWidth || 2400, h: fImg.naturalHeight || 1600 });
+            doComposite(fImg);
           }, function() {});
         }
       }, function() {});
@@ -980,9 +942,9 @@
       let effectiveUrl = urlOrId;
       const dMatch = urlOrId.match(/(?:\/d\/|id=)([a-zA-Z0-9_-]+)/);
       if (dMatch && (urlOrId.includes("drive.google.com") || urlOrId.includes("docs.google.com") || !urlOrId.startsWith("http"))) {
-        effectiveUrl = "https://lh3.googleusercontent.com/d/" + dMatch[1] + "=w2500";
+        effectiveUrl = "https://lh3.googleusercontent.com/d/" + dMatch[1] + "=s0";
       } else if (/^[a-zA-Z0-9_\-]{15,}$/.test(urlOrId) && !urlOrId.startsWith("http")) {
-        effectiveUrl = "https://lh3.googleusercontent.com/d/" + urlOrId + "=w2500";
+        effectiveUrl = "https://lh3.googleusercontent.com/d/" + urlOrId + "=s0";
       }
 
       const img = new Image();
@@ -1002,92 +964,49 @@
           };
           proxyImg.src = "/api/download-proxy?url=" + encodeURIComponent(effectiveUrl);
         };
-        altImg.src = "https://drive.google.com/thumbnail?id=" + fileId + "&sz=w2500";
+        altImg.src = "https://drive.google.com/thumbnail?id=" + fileId + "&sz=w4000";
       };
       img.src = effectiveUrl;
     }
 
     function executeFramedPhotoDownload(photo, frameUrl, onDone) {
-      const photoSrc = photo.downloadUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || (photo.id ? ("https://lh3.googleusercontent.com/d/" + photo.id + "=w2500") : "");
+      const photoSrc = photo.downloadUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || (photo.id ? ("https://lh3.googleusercontent.com/d/" + photo.id + "=s0") : "");
       
       loadSafeCanvasImage(photoSrc, function(photoImg) {
         updateDownloadWidget(55, "Menggabungkan Foto Beresolusi Penuh...", (photo.name || "Foto") + " • Menjaga Ukuran Asli", false);
 
-        function renderFrameWithCutout(frameImg, cutoutInfo) {
+        function renderFrameWithCutout(frameImg) {
           try {
-            const fw = frameImg.naturalWidth || 2400;
-            const fh = frameImg.naturalHeight || 1600;
-            const cutoutX = cutoutInfo.x;
-            const cutoutY = cutoutInfo.y;
-            const cutoutW = cutoutInfo.w;
-            const cutoutH = cutoutInfo.h;
-
             const pw = photoImg.naturalWidth || photoImg.width || 1920;
             const ph = photoImg.naturalHeight || photoImg.height || 1080;
+            const rot = getPhotoRotation(photo.id, photo.category);
+            const isRotated90 = (rot % 180 !== 0);
 
-            const scale = Math.max(1, pw / cutoutW, ph / cutoutH);
-            const targetW = Math.round(fw * scale);
-            const targetH = Math.round(fh * scale);
+            // JANGAN UBAH UKURAN DARI FILE: Dimensi canvas harus 100% persis sama dengan resolusi asli foto
+            const canvasW = isRotated90 ? ph : pw;
+            const canvasH = isRotated90 ? pw : ph;
 
             const canvas = document.createElement("canvas");
-            canvas.width = targetW;
-            canvas.height = targetH;
+            canvas.width = canvasW;
+            canvas.height = canvasH;
             const ctx = canvas.getContext("2d");
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = "high";
 
-            const scaledCutoutX = Math.round(cutoutX * scale);
-            const scaledCutoutY = Math.round(cutoutY * scale);
-            const scaledCutoutW = Math.round(cutoutW * scale);
-            const scaledCutoutH = Math.round(cutoutH * scale);
-
-            const photoAspect = pw / ph;
-            const cutoutAspect = scaledCutoutW / scaledCutoutH;
-
-            let drawX = scaledCutoutX;
-            let drawY = scaledCutoutY;
-            let drawW = scaledCutoutW;
-            let drawH = scaledCutoutH;
-
-            if (Math.abs(photoAspect - cutoutAspect) < 0.05) {
-              drawX = scaledCutoutX;
-              drawY = scaledCutoutY;
-              drawW = scaledCutoutW;
-              drawH = scaledCutoutH;
-            } else if (photoAspect > cutoutAspect) {
-              drawW = scaledCutoutW;
-              drawH = scaledCutoutW / photoAspect;
-              drawX = scaledCutoutX;
-              drawY = scaledCutoutY + (scaledCutoutH - drawH) / 2;
-            } else {
-              drawH = scaledCutoutH;
-              drawW = scaledCutoutH * photoAspect;
-              drawY = scaledCutoutY;
-              drawX = scaledCutoutX + (scaledCutoutW - drawW) / 2;
-            }
-
             ctx.fillStyle = "#FFFFFF";
-            ctx.fillRect(0, 0, targetW, targetH);
+            ctx.fillRect(0, 0, canvasW, canvasH);
 
-            const rot = getPhotoRotation(photo.id, photo.category);
             if (rot % 360 !== 0) {
               ctx.save();
-              const cx = drawX + drawW / 2;
-              const cy = drawY + drawH / 2;
-              ctx.translate(cx, cy);
+              ctx.translate(canvasW / 2, canvasH / 2);
               ctx.rotate((rot * Math.PI) / 180);
-              if (rot % 180 !== 0) {
-                const scaleRatio = Math.max(drawW / drawH, drawH / drawW);
-                ctx.drawImage(photoImg, -drawH / 2 * scaleRatio, -drawW / 2 * scaleRatio, drawH * scaleRatio, drawW * scaleRatio);
-              } else {
-                ctx.drawImage(photoImg, -drawW / 2, -drawH / 2, drawW, drawH);
-              }
+              ctx.drawImage(photoImg, -pw / 2, -ph / 2, pw, ph);
               ctx.restore();
             } else {
-              ctx.drawImage(photoImg, drawX, drawY, drawW, drawH);
+              ctx.drawImage(photoImg, 0, 0, pw, ph);
             }
 
-            ctx.drawImage(frameImg, 0, 0, targetW, targetH);
+            ctx.drawImage(frameImg, 0, 0, canvasW, canvasH);
 
             updateDownloadWidget(85, "Menyimpan ke Memori Perangkat...", (photo.name || "Foto") + " • Kualitas Asli", false);
 
@@ -1099,7 +1018,7 @@
               } else {
                 executeDirectPhotoDownload(photo, onDone);
               }
-            }, "image/jpeg", 0.94);
+            }, "image/jpeg", 0.98);
 
           } catch (eCanvas) {
             console.warn("Canvas compositing error, fallback to direct download:", eCanvas);
@@ -1107,12 +1026,13 @@
           }
         }
 
-        if (state.cachedFrame && state.cachedFrame.url === frameUrl) {
-          renderFrameWithCutout(state.cachedFrame.img, state.cachedFrame.cutout);
+        const activeFrame = frameUrl || getActiveFrameUrl();
+        if (state.cachedFrame && state.cachedFrame.url === activeFrame) {
+          renderFrameWithCutout(state.cachedFrame.img);
         } else {
-          loadSafeCanvasImage(frameUrl, function(frameImg) {
-            preloadFrameAssets(frameUrl);
-            renderFrameWithCutout(frameImg, { x: 0, y: 0, w: frameImg.naturalWidth || 2400, h: frameImg.naturalHeight || 1600 });
+          loadSafeCanvasImage(activeFrame, function(frameImg) {
+            preloadFrameAssets(activeFrame);
+            renderFrameWithCutout(frameImg);
           }, function() {
             showToast("⚠️ Berkas bingkai tidak dapat diakses dari Google Drive. Pastikan izin berbagi disetel 'Anyone with the link can view'.", "error");
             executeDirectPhotoDownload(photo, onDone);
@@ -1587,15 +1507,7 @@
         }
         if (zoomToolbar) zoomToolbar.style.display = "none";
 
-        const isPhotobooth = photo && (
-          Boolean(photo.isVideo) ||
-          Boolean(photo.isKing) ||
-          Boolean(photo.isPhotobooth) ||
-          (photo.category && photo.category.toLowerCase().includes("photobooth")) ||
-          (state.activeCategory && state.activeCategory.toLowerCase().includes("photobooth")) ||
-          (photo.downloadUrl && (photo.downloadUrl.includes("kingphotobooth.co") || photo.downloadUrl.includes("fotoshare.co") || photo.downloadUrl.includes("photos.google.com") || photo.downloadUrl.includes("googleusercontent.com/pw/") || photo.downloadUrl.includes("photos.app.goo.gl"))) ||
-          (photo.previewUrl && (photo.previewUrl.includes("kingphotobooth.co") || photo.previewUrl.includes("fotoshare.co") || photo.previewUrl.includes("photos.google.com") || photo.previewUrl.includes("googleusercontent.com/pw/") || photo.previewUrl.includes("photos.app.goo.gl")))
-        );
+        const isPhotobooth = isPhotoPhotobooth(photo);
 
         if (isPhotobooth) {
           if (btnLabel) btnLabel.innerText = photo.isVideo ? "⬇️ Unduh Video Asli (Ukuran Penuh)" : "⬇️ Unduh Foto Asli (Ukuran Penuh)";
@@ -1606,8 +1518,7 @@
           }
         } else {
           // Semua kategori momen lainnya mengikuti settingan kategori utama (berbingkai jika frame dikonfigurasi)
-          const rawFrameConfig = state.activeConfig.FRAME_IMAGE_URL ? state.activeConfig.FRAME_IMAGE_URL.trim() : "";
-          const frameUrl = normalizeDriveImageUrl(rawFrameConfig);
+          const frameUrl = getActiveFrameUrl();
           const hasFrame = Boolean(frameUrl);
 
           if (hasFrame) {
@@ -1921,47 +1832,49 @@
 
 
     function precompositeLightboxPhoto(photo) {
-      if (!photo) return;
-      const rawFrameConfig = state.activeConfig.FRAME_IMAGE_URL ? state.activeConfig.FRAME_IMAGE_URL.trim() : "";
-      const frameUrl = normalizeDriveImageUrl(rawFrameConfig);
-      if (!frameUrl || isPhotoPhotobooth(photo)) return;
+      if (!photo || isPhotoPhotobooth(photo)) return;
+      const frameUrl = getActiveFrameUrl();
+      if (!frameUrl) return;
 
       state.precompositedPhotoId = null;
       state.precompositedBlob = null;
 
-      const photoSrc = photo.downloadUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || (photo.id ? ("https://lh3.googleusercontent.com/d/" + photo.id + "=w2500") : "");
+      const photoSrc = photo.downloadUrl || photo.highResUrl || photo.previewUrl || photo.thumbnailUrl || (photo.id ? ("https://lh3.googleusercontent.com/d/" + photo.id + "=s0") : "");
       if (!photoSrc) return;
 
       loadSafeCanvasImage(photoSrc, function(photoImg) {
         loadSafeCanvasImage(frameUrl, function(frameImg) {
           try {
-            const fw = frameImg.naturalWidth || 2400;
-            const fh = frameImg.naturalHeight || 1600;
             const pw = photoImg.naturalWidth || photoImg.width || 1920;
             const ph = photoImg.naturalHeight || photoImg.height || 1080;
+            const rot = getPhotoRotation(photo.id, photo.category);
+            const isRotated90 = (rot % 180 !== 0);
+
+            // JANGAN UBAH UKURAN DARI FILE: Dimensi canvas harus 100% persis sama dengan ukuran asli foto
+            const canvasW = isRotated90 ? ph : pw;
+            const canvasH = isRotated90 ? pw : ph;
 
             const canvas = document.createElement("canvas");
-            canvas.width = fw;
-            canvas.height = fh;
+            canvas.width = canvasW;
+            canvas.height = canvasH;
             const ctx = canvas.getContext("2d");
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = "high";
 
             ctx.fillStyle = "#FFFFFF";
-            ctx.fillRect(0, 0, fw, fh);
+            ctx.fillRect(0, 0, canvasW, canvasH);
 
-            const rot = getPhotoRotation(photo.id, photo.category);
             if (rot % 360 !== 0) {
               ctx.save();
-              ctx.translate(fw / 2, fh / 2);
+              ctx.translate(canvasW / 2, canvasH / 2);
               ctx.rotate((rot * Math.PI) / 180);
-              ctx.drawImage(photoImg, -fw / 2, -fh / 2, fw, fh);
+              ctx.drawImage(photoImg, -pw / 2, -ph / 2, pw, ph);
               ctx.restore();
             } else {
-              ctx.drawImage(photoImg, 0, 0, fw, fh);
+              ctx.drawImage(photoImg, 0, 0, pw, ph);
             }
 
-            ctx.drawImage(frameImg, 0, 0, fw, fh);
+            ctx.drawImage(frameImg, 0, 0, canvasW, canvasH);
 
             canvas.toBlob(function(blob) {
               if (blob && state.currentLightboxIndex !== -1) {
@@ -1971,7 +1884,7 @@
                   state.precompositedBlob = blob;
                 }
               }
-            }, "image/jpeg", 0.94);
+            }, "image/jpeg", 0.98);
           } catch (e) {}
         }, function() {});
       }, function() {});

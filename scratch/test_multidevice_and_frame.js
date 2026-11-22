@@ -187,7 +187,7 @@ assert(isPb === false, "Photo in main category 'Photostage' is NOT treated as ph
 // TEST 5: Normalization of Google Drive Frame URL with 27-28 character ID
 const testFrameUrl = "https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NE/view";
 const normFrame = context.normalizeDriveImageUrl(testFrameUrl);
-assert(normFrame === "https://lh3.googleusercontent.com/d/11u-XHGv13oljACPnwSfTIS65NE=w2500", "Google Drive frame URL properly converted to direct high-res image link: " + normFrame);
+assert(normFrame === "https://lh3.googleusercontent.com/d/11u-XHGv13oljACPnwSfTIS65NE=s0", "Google Drive frame URL properly converted to direct high-res image link: " + normFrame);
 
 // TEST 6: Multi-Device GViz Sync Simulation
 const samplePengaturan = '/*O_o*/\ngoogle.visualization.Query.setResponse({"version":"0.6","status":"ok","table":{"cols":[{"id":"A","label":"Parameter","type":"string"},{"id":"B","label":"Nilai","type":"string"}],"rows":[{"c":[{"v":"WELCOME_MESSAGE"},{"v":"Selamat datang di pernikahan Andre & Fayola!"}]},{"c":[{"v":"SUBTITLE"},{"v":"Momen Indah Bersama"}]},{"c":[{"v":"FOOTER_MESSAGE"},{"v":"Terima kasih dari Andre & Fayola."}]},{"c":[{"v":"FRAME_IMAGE_URL"},{"v":"https://drive.google.com/file/d/11u-XHGv13oljACPnwSfTIS65NE/view"}]},{"c":[{"v":"ALL_PHOTOS_LABEL"},{"v":"Photostage"}]}]}});';

@@ -26,13 +26,25 @@ export default async function handler(req, res) {
   }
 
   try {
-    const upstreamRes = await fetch(fileUrl, {
+    let upstreamRes = await fetch(fileUrl, {
       redirect: "follow",
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "*/*"
       }
     });
+
+    // Fallback jika direct download 404/gagal, ambil resolusi penuh via Google UserContent
+    if (!upstreamRes.ok && driveMatch) {
+      const fileId = driveMatch[1];
+      const altUrl = `https://lh3.googleusercontent.com/d/${fileId}=s0`;
+      const altRes = await fetch(altUrl, {
+        headers: { "User-Agent": "Mozilla/5.0" }
+      });
+      if (altRes.ok) {
+        upstreamRes = altRes;
+      }
+    }
 
     if (!upstreamRes.ok) {
       return res.status(upstreamRes.status).json({ success: false, message: "Upstream HTTP " + upstreamRes.status });

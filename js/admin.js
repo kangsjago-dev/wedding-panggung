@@ -103,10 +103,11 @@
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<span>Masuk</span>`;
         state.isAdminLoggedIn = true;
-        state.adminPin = (user && user.pin) ? String(user.pin).trim() : (user && user.password ? String(user.password).trim() : "");
+        const effectiveUserPin = (user && user.pin) ? String(user.pin).trim() : (user && user.password ? String(user.password).trim() : password);
+        state.adminPin = effectiveUserPin;
         try {
-          sessionStorage.setItem("WEDDING_ADMIN_PIN", password);
-          localStorage.setItem("WEDDING_ADMIN_PIN", password);
+          sessionStorage.setItem("WEDDING_ADMIN_PIN", effectiveUserPin);
+          localStorage.setItem("WEDDING_ADMIN_PIN", effectiveUserPin);
         } catch(e) {}
         state.currentAdminUser = user || { username: username, name: username, role: "Admin" };
         updateAdminButtonUI(true);
@@ -591,8 +592,17 @@
       // Update properti customCategories pada objek event aktif di state.events
       if (Array.isArray(state.events)) {
         const curEv = state.events.find(function(e) { return e.id === state.currentEventId; }) || state.events[0];
+        const pbCat = Array.isArray(customCategoriesList) ? customCategoriesList.find(function(c) {
+          return c && (c.isPhotobooth || c.id === "special_photobooth" || String(c.name || "").toLowerCase().includes("photobooth"));
+        }) : null;
+        const curPbUrl = pbCat ? String(pbCat.url || "").trim() : "";
+
         if (curEv) {
           curEv.customCategories = customCategoriesList;
+          if (curPbUrl) {
+            curEv.photoboothUrl = curPbUrl;
+            state.activeConfig.PHOTOBOOTH_URL = curPbUrl;
+          }
           if (driveFolderVal) curEv.driveFolderId = driveFolderVal;
           if (allPhotosLabelVal) curEv.allPhotosLabel = allPhotosLabelVal;
           if (frameUrlVal) curEv.frameImageUrl = frameUrlVal;
@@ -975,10 +985,20 @@
           const cachedPhotosStr = localStorage.getItem("WEDDING_EVENT_PHOTOS_" + selectedId);
           if (cachedPhotosStr) {
             const cachedPhotos = JSON.parse(cachedPhotosStr);
-            if (Array.isArray(cachedPhotos) && cachedPhotos.length > 0) {
-              const sortedCached = sortPhotosNewestFirst(cachedPhotos);
+            const cleanCached = Array.isArray(cachedPhotos) ? cachedPhotos.filter(p => {
+              if (!p) return false;
+              if (p.isDemo) return false;
+              if (String(p.id || '').startsWith('demo-')) return false;
+              if (p.thumbnailUrl && (p.thumbnailUrl.includes('unsplash.com') || p.thumbnailUrl.includes('picsum.photos'))) return false;
+              return true;
+            }) : [];
+            if (cleanCached.length > 0) {
+              const sortedCached = sortPhotosNewestFirst(cleanCached);
               state.allPhotos = sortedCached;
               state.filteredPhotos = sortedCached;
+            } else {
+              state.allPhotos = [];
+              state.filteredPhotos = [];
             }
           }
         } catch(ePh) {}

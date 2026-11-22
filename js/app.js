@@ -325,8 +325,17 @@ function syncFromSpreadsheetGViz(callback) {
             }
 
             const cleanDate = rowCells[dateIdx] ? normalizeSheetDate(rowCells[dateIdx]) : (extraEv.date || '');
-            const cleanLogo = rowCells[logoIdx] ? String(rowCells[logoIdx].v || '').trim() : (extraEv.logoUrl || extraEv.EVENT_LOGO_URL || '');
-            const cleanFrame = rowCells[frameIdx] ? String(rowCells[frameIdx].v || '').trim() : (extraEv.frameImageUrl || sheetMap.FRAME_IMAGE_URL || '');
+            const cleanLogo = (extraEv.logoUrl || extraEv.EVENT_LOGO_URL) || (rowCells[logoIdx] ? String(rowCells[logoIdx].v || '').trim() : '');
+            const cleanFrame = (extraEv.frameImageUrl && String(extraEv.frameImageUrl).trim())
+              ? String(extraEv.frameImageUrl).trim()
+              : ((rowCells[frameIdx] && String(rowCells[frameIdx].v || '').trim())
+                  ? String(rowCells[frameIdx].v).trim()
+                  : (sheetMap.FRAME_IMAGE_URL || state.activeConfig.FRAME_IMAGE_URL || ''));
+            const cleanPb = (extraEv.photoboothUrl && String(extraEv.photoboothUrl).trim())
+              ? String(extraEv.photoboothUrl).trim()
+              : ((rowCells[pbIdx] && String(rowCells[pbIdx].v || '').trim())
+                  ? String(rowCells[pbIdx].v).trim()
+                  : ((evId === (getActiveEventIdFromUrl() || state.currentEventId)) ? (sheetMap.PHOTOBOOTH_URL || '') : ''));
 
             sheetEvs.push({
               id: evId,
@@ -335,7 +344,7 @@ function syncFromSpreadsheetGViz(callback) {
               venue: rowCells[venueIdx] ? String(rowCells[venueIdx].v || '').trim() : (extraEv.venue || ''),
               homeUrl: rowCells[urlIdx] ? String(rowCells[urlIdx].v || '').trim() : (extraEv.homeUrl || ''),
               driveFolderId: rowCells[driveIdx] ? String(rowCells[driveIdx].v || '').trim() : (extraEv.driveFolderId || ''),
-              photoboothUrl: rowCells[pbIdx] ? String(rowCells[pbIdx].v || '').trim() : (extraEv.photoboothUrl || ''),
+              photoboothUrl: cleanPb,
               customCategories: Array.isArray(parsedCats) ? parsedCats : [],
               frameImageUrl: cleanFrame,
               logoUrl: cleanLogo,
@@ -387,8 +396,9 @@ function syncFromSpreadsheetGViz(callback) {
         state.activeConfig.EVENT_LOGO_URL = matchedEv.logoUrl || "";
         state.activeConfig.logoUrl = matchedEv.logoUrl || "";
         state.activeConfig.DRIVE_FOLDER_ID = matchedEv.driveFolderId || "";
-        state.activeConfig.PHOTOBOOTH_URL = matchedEv.photoboothUrl || "";
-        state.activeConfig.FRAME_IMAGE_URL = matchedEv.frameImageUrl || sheetMap.FRAME_IMAGE_URL || "";
+        const activePbUrl = matchedEv.photoboothUrl || sheetMap.PHOTOBOOTH_URL || state.activeConfig.PHOTOBOOTH_URL || "";
+        state.activeConfig.PHOTOBOOTH_URL = activePbUrl;
+        state.activeConfig.FRAME_IMAGE_URL = matchedEv.frameImageUrl || sheetMap.FRAME_IMAGE_URL || state.activeConfig.FRAME_IMAGE_URL || "";
         state.activeConfig.HOME_URL = matchedEv.homeUrl || (window.location.origin + window.location.pathname + "?event=" + encodeURIComponent(matchedEv.id));
 
         state.activeConfig.SUBTITLE = matchedEv.subtitle || sheetMap.SUBTITLE || state.activeConfig.SUBTITLE || "The Wedding Gallery & Precious Memories";
@@ -408,7 +418,7 @@ function syncFromSpreadsheetGViz(callback) {
         if (typeof renderCategoryTabs === "function") renderCategoryTabs();
         if (state.activeCategory && state.activeCategory.toLowerCase().indexOf("photobooth") !== -1) {
           if (typeof applyCategoryFilter === "function") {
-            applyCategoryFilter(state.activeCategory, matchedEv.photoboothUrl, true);
+            applyCategoryFilter(state.activeCategory, activePbUrl, true);
           }
         }
       }

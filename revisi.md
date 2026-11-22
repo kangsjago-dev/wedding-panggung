@@ -1,34 +1,41 @@
-# STATUS REVISI SISTEM (revisi.md) - v4.34.0
+# STATUS REVISI SISTEM (revisi.md) - v4.34.1
 ================================================================================
 STATUS: SELESAI DITERAPKAN & TERVERIFIKASI (IMPLEMENTED & VERIFIED)
 TANGGAL: 22 November 2026
-VERSI RILIS: v4.34.0-FRAMED-FILENAME-AND-EMPTY-STATE
+VERSI RILIS: v4.34.1-NATIVE-RESOLUTION-AND-REALTIME-SYNC
 ENGINE: ZettBOT Core v4.1 (by Zettbos)
 ================================================================================
 
-## 1. Ringkasan Eksekusi Revisi
-1. **Preservasi 100% Nama Asli File Saat Download Berbingkai (`js/core.js`, `js/gallery.js`):**
-   - **Instruksi Pengguna:** *"pada saat download kategori 'semua foto' gabungkan dengan bingkai yang telah diupload dan jangan ubah ukuran nama filenya"*.
-   - **Akar Masalah:** Sebelumnya, fungsi `generateUniqueFileName` menambahkan akhiran `-berbingkai`, memotong nama menjadi 35 karakter, dan menyisipkan timestamp hash acak (contoh: `DSC_0012-berbingkai_081734_512.jpg`). Hal ini mengubah panjang dan format nama asli file foto.
+## 1. Ringkasan Eksekusi Revisi Terkini
+1. **Preservasi 100% Ukuran & Resolusi Fisik Berkas Foto Saat Penggabungan Bingkai (`js/gallery.js`, `js/core.js`):**
+   - **Instruksi Pengguna:** *"pada saat download kategori 'semua foto' gabungkan dengan bingkai yang telah diupload dan jangan ubah ukuran dari filenya"*.
+   - **Akar Masalah:**
+     * Sebelumnya, kanvas penulisan bingkai dikompresi ke dimensi bingkai (2400x1600) atau diskalakan, sehingga foto kamera beresolusi tinggi (misal: 6000x4000) terpangkas ukurannya.
+     * Pengambilan gambar Google Drive menggunakan parameter resolusi terbatas (`=w2500`).
+     * `toBlob` menggunakan kualitas kompresi JPEG rendah (0.94).
    - **Solusi Diterapkan:**
-     * Menambahkan helper `getExactPhotoFileName(photo, defaultExt)` di `js/core.js` dan mendaftarkannya ke `window`. Helper ini mempertahankan 100% panjang dan karakter nama file asli (misal: `DSC_0012.JPG` tetap `DSC_0012.JPG`, `IMG_20261121_191928.jpg` tetap `IMG_20261121_191928.jpg`) dan hanya membersihkan karakter terlarang filesystem OS tanpa memotong atau menambahkan suffix `-berbingkai`.
-     * Mengganti seluruh pemanggilan `generateUniqueFileName` pada proses unduh berbingkai (`executeFramedPhotoDownload`, `handleCurrentLightboxDownload`, dan handler tombol unduh lightbox di `js/gallery.js`) dengan `getExactPhotoFileName`.
+     * Kanvas rendering (`executeFramedPhotoDownload`, `prepareLightboxFramedBlob`, `precompositeLightboxPhoto`) kini diatur 100% sama dengan dimensi piksel asli foto (`canvasW = isRotated90 ? ph : pw; canvasH = isRotated90 ? pw : ph`).
+     * Foto digambar secara 1:1 tanpa pengurangan resolusi, dan bingkai dihamparkan secara proporsional di atasnya.
+     * URL fetch foto menggunakan `=s0` (full uncompressed native image dari Google CDN).
+     * Kompresi ekspor ditingkatkan ke `0.98` (kualitas tertinggi) untuk menjaga ukuran dan ketajaman berkas.
 
-2. **Eliminasi Total Foto Dummy Saat Google Drive Kosong (`js/app.js`, `js/gallery.js`):**
-   - **Instruksi Pengguna:** *"apabila googledrive kosong. Jangan tampilkan dummy. Tapi tampilkan text bahwa galery masih kosong dengan kata2 yang menarik dan elegan"*.
-   - **Akar Masalah:** 
-     * Di `js/app.js`, ketika pemindaian Google Drive mengembalikan array kosong (`data.photos.length === 0`), script melempar `throw new Error("Empty drive-folder response")` sehingga `handleGalleryResponse` tidak dipanggil dengan `photos: []`, dan foto lama di `localStorage` tetap tertahan.
-     * Tidak adanya sanitasi penyaringan foto demo/dummy warisan sesi lawas di `localStorage`.
+2. **Perbaikan Sinkronisasi Realtime & Pencegahan Revert Pengaturan Photobooth / Bingkai / Tab (`js/app.js`, `js/admin.js`):**
+   - **Akar Masalah:**
+     * Background GViz auto-refresh (`syncFromSpreadsheetGViz`) berjalan tiap 20-25 detik membaca baris `Daftar_Acara`. Jika baris Google Sheets belum diperbarui atau kolom bernilai null, nilai lama menimpa konfigurasi yang baru disimpan oleh admin.
+     * Pada `js/admin.js`, sinkronisasi kategori tidak memperbarui properti `photoboothUrl` pada objek event aktif di `state.events`.
+     * Saat beralih event di panel admin, pembacaan `localStorage` tidak menyaring foto dummy lawas.
    - **Solusi Diterapkan:**
-     * Di `js/app.js`: Memperbarui `fetchGalleryData` agar menerima array `photos: []` dari `/api/drive-folder` sebagai respons valid (tanpa melempar error), serta menambahkan filter pembersih foto demo (`p.isDemo`, `demo-`, unsplash) pada `handleGalleryResponse` dan pembacaan `localStorage` saat startup.
-     * Di `js/gallery.js`: Merancang status galeri kosong dengan kata-kata romantis, hangat, dan berkelas tema pernikahan:
-       - **Badge:** `✦ Momen Bahagia Segera Hadir ✦`
-       - **Judul:** `Galeri Foto Masih Kosong`
-       - **Deskripsi:** *"Setiap senyuman, tatapan penuh cinta, dan kehangatan momen istimewa ini sedang dalam proses kurasi terbaik. Foto-foto kenangan indah akan segera hadir di sini. Silakan periksa kembali beberapa saat lagi."*
-       - Dilengkapi tombol elegan beraksen emas *"Segarkan Galeri"*.
+     * `js/app.js`: Prioritaskan data segar dari `extraEv.photoboothUrl`, `sheetMap.PHOTOBOOTH_URL`, `sheetMap.FRAME_IMAGE_URL`, dan `state.activeConfig` agar tidak tertimpa baris statis lama `Daftar_Acara`.
+     * `js/admin.js`: Pastikan `curEv.photoboothUrl` langsung disinkronkan saat tombol simpan ditekan.
+     * `js/admin.js`: Terapkan pembersihan foto demo/dummy saat event diubah di admin.
+
+3. **Preservasi 100% Nama Asli File & Status Galeri Kosong Elegan (`js/core.js`, `js/gallery.js`):**
+   - Nama asli file dipertahankan utuh via `getExactPhotoFileName` tanpa penambahan suffix `-berbingkai`.
+   - Galeri kosong menampilkan kartu pesan cinta yang hangat, romantis, dan elegan tanpa menampilkan foto contoh dummy.
 
 ## 2. Hasil Pengujian & Verifikasi Otomatis
+- `scratch/test_resolution_and_sync.js`: 10/10 PASS (100%).
 - `scratch/test_framed_download_and_empty_state.js`: 5/5 PASS (100%).
 - `scratch/test_multidevice_and_frame.js`: 18/18 PASS (100%).
 - `scratch/test_all_fixed.js`: 16/16 PASS (100%).
-- Total: 39 pengujian otomatis terverifikasi 100% SUKSES tanpa error.
+- **Total: 49/49 pengujian otomatis terverifikasi 100% BERHASIL.**

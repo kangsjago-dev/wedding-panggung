@@ -694,11 +694,11 @@ function isGooglePhotosUrl(url) {
 
       const match = raw.match(/\/d\/([a-zA-Z0-9_\-]+)/) || raw.match(/id=([a-zA-Z0-9_\-]+)/);
       if (match && match[1]) {
-        return "https://lh3.googleusercontent.com/d/" + match[1] + "=w2500";
+        return "https://lh3.googleusercontent.com/d/" + match[1] + "=s0";
       }
 
       if (/^[a-zA-Z0-9_\-]{20,}$/.test(raw) && !raw.startsWith("http")) {
-        return "https://lh3.googleusercontent.com/d/" + raw + "=w2500";
+        return "https://lh3.googleusercontent.com/d/" + raw + "=s0";
       }
 
       return raw;
