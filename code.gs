@@ -2434,6 +2434,14 @@ function saveAdminSettings(pin, updatedConfig) {
             if (existingEvents[evI].id === activeEvId || existingEvents.length === 1) {
               existingEvents[evI].photoboothUrl = cleanPbUrl;
               existingEvents[evI].PHOTOBOOTH_URL = cleanPbUrl;
+              if (Array.isArray(existingEvents[evI].customCategories)) {
+                for (var ci = 0; ci < existingEvents[evI].customCategories.length; ci++) {
+                  var catItem = existingEvents[evI].customCategories[ci];
+                  if (catItem && (catItem.isPhotobooth || catItem.id === "special_photobooth" || String(catItem.name || "").toLowerCase().includes("photobooth"))) {
+                    catItem.url = cleanPbUrl;
+                  }
+                }
+              }
             }
           }
           var updatedEventsStr = JSON.stringify(existingEvents);

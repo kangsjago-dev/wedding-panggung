@@ -337,6 +337,27 @@ function syncFromSpreadsheetGViz(callback) {
                   ? String(rowCells[pbIdx].v).trim()
                   : ((evId === (getActiveEventIdFromUrl() || state.currentEventId)) ? (sheetMap.PHOTOBOOTH_URL || '') : ''));
 
+            if (Array.isArray(parsedCats)) {
+              let foundPb = false;
+              parsedCats.forEach(function(c) {
+                if (c && (c.isPhotobooth || c.id === 'special_photobooth' || String(c.name || '').toLowerCase().includes('photobooth'))) {
+                  foundPb = true;
+                  c.isPhotobooth = true;
+                  c.id = 'special_photobooth';
+                  if (cleanPb) c.url = cleanPb;
+                }
+              });
+              if (!foundPb && cleanPb) {
+                parsedCats.unshift({
+                  id: 'special_photobooth',
+                  isPhotobooth: true,
+                  name: 'Photobooth',
+                  url: cleanPb,
+                  enabled: true
+                });
+              }
+            }
+
             sheetEvs.push({
               id: evId,
               name: rowCells[nameIdx] ? String(rowCells[nameIdx].v || '').trim() : (extraEv.name || evId),
@@ -406,6 +427,13 @@ function syncFromSpreadsheetGViz(callback) {
         state.activeConfig.FOOTER_MESSAGE = matchedEv.footerMessage || sheetMap.FOOTER_MESSAGE || state.activeConfig.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.";
 
         if (Array.isArray(matchedEv.customCategories) && matchedEv.customCategories.length > 0) {
+          if (activePbUrl) {
+            matchedEv.customCategories.forEach(function(c) {
+              if (c && (c.isPhotobooth || c.id === 'special_photobooth' || String(c.name || '').toLowerCase().includes('photobooth'))) {
+                c.url = activePbUrl;
+              }
+            });
+          }
           state.activeConfig.CUSTOM_CATEGORIES = matchedEv.customCategories;
           state.customCategories = matchedEv.customCategories;
         }

@@ -370,7 +370,8 @@
       } else {
         pbItem.isPhotobooth = true;
         pbItem.id = "special_photobooth";
-        if (currentConfigPbUrl && !pbItem.url) {
+        // Bebas custom link, tidak terkunci oleh URL lama
+        if (currentConfigPbUrl) {
           pbItem.url = currentConfigPbUrl;
         }
       }
@@ -517,6 +518,11 @@
       if (pb) {
         state.activeConfig.PHOTOBOOTH_URL = pb.url;
         try { localStorage.setItem("WEDDING_PHOTOBOOTH_URL", pb.url); } catch(e) {}
+        const curEv = (state.events || []).find(function(e) { return e && e.id === state.currentEventId; });
+        if (curEv) {
+          curEv.photoboothUrl = pb.url;
+          curEv.customCategories = list;
+        }
       }
       try {
         localStorage.setItem("WEDDING_SAVED_CUSTOM_CATEGORIES", JSON.stringify(list));

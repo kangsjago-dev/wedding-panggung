@@ -324,3 +324,9 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
     * Judul: `Galeri Foto Masih Kosong`
     * Narasi: *"Setiap senyuman, tatapan penuh cinta, dan kehangatan momen istimewa ini sedang dalam proses kurasi terbaik. Foto-foto kenangan indah akan segera hadir di sini. Silakan periksa kembali beberapa saat lagi."*
     * Tombol Interaktif: *"Segarkan Galeri"*.
+
+### 2.33 Kebebasan Custom Link Kategori Spesial Photobooth & Eliminasi Penguncian Tautan (v4.36.0)
+- **Eliminasi Penguncian Tautan Photobooth (`js/admin.js`, `js/app.js`, `js/categories.js`)**:
+  - Menghapus batasan yang mengunci tautan photobooth pada modal admin, memastikan input box `#pbUrlInput` bebas menerima tautan vendor apapun secara dinamis tanpa tertahan oleh nilai URL lama.
+  - Memperbarui engine sinkronisasi `syncFromSpreadsheetGViz` di `js/app.js` agar secara konsisten menyelaraskan elemen kategori photobooth di dalam memori dengan URL kustom aktif (`state.activeConfig.PHOTOBOOTH_URL`).
+  - Memprioritaskan URL aktif langsung pada fungsi `applyCategoryFilter` dan `renderCategoryTabs` di `js/categories.js` serta menambahkan penanganan universal terhadap segala macam vendor photobooth eksternal.

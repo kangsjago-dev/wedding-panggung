@@ -70,9 +70,10 @@
         }
       }
 
-      if (isPbCat && !targetUrl) {
+      if (isPbCat) {
         const pbInput = document.getElementById("pbUrlInput");
-        targetUrl = (pbInput && pbInput.value) ? pbInput.value.trim() : (state.activeConfig.PHOTOBOOTH_URL || "");
+        const customPbUrl = (pbInput && pbInput.value && pbInput.value.trim()) || (state.activeConfig.PHOTOBOOTH_URL && state.activeConfig.PHOTOBOOTH_URL.trim()) || targetUrl;
+        if (customPbUrl) targetUrl = customPbUrl;
       }
 
       // SIMPAN PERMANEN KE SCRIPT PROPERTIES & SHEET AGAR TIDAK TER-RESET
@@ -263,7 +264,10 @@
           const matchCat = state.customCategories.find(function(it) {
             return String((it && it.name) || "").trim().toLowerCase() === cat.toLowerCase();
           });
-          if (matchCat && matchCat.url) {
+          const isPb = (cat.toLowerCase().includes("photobooth")) || (matchCat && (matchCat.isPhotobooth || matchCat.id === "special_photobooth"));
+          if (isPb) {
+            targetUrl = state.activeConfig.PHOTOBOOTH_URL || (matchCat && matchCat.url) || "";
+          } else if (matchCat && matchCat.url) {
             targetUrl = String(matchCat.url).trim();
           }
         }
@@ -899,24 +903,24 @@
         }));
 
       // Pastikan targetUrl selalu di-resolve dari customCategories jika tidak dioper
-      if (!targetUrl && Array.isArray(state.customCategories)) {
+      if (isPbCat) {
+        const pbInput = document.getElementById("pbUrlInput");
+        const livePbUrl = (targetUrl && String(targetUrl).trim()) 
+          || (state.activeConfig.PHOTOBOOTH_URL && String(state.activeConfig.PHOTOBOOTH_URL).trim())
+          || (pbInput && pbInput.value && pbInput.value.trim())
+          || "";
+        if (livePbUrl) {
+          targetUrl = livePbUrl;
+        }
+      } else if (!targetUrl && Array.isArray(state.customCategories)) {
         const matchedCat = state.customCategories.find(function(c) {
           if (!c) return false;
           const cName = String(c.name || "").trim().toLowerCase();
-          if (cName === effectiveCat.toLowerCase()) return true;
-          if (isPbCat && (c.isPhotobooth || c.id === "special_photobooth")) return true;
-          return false;
+          return cName === effectiveCat.toLowerCase();
         });
         if (matchedCat && matchedCat.url) {
           targetUrl = String(matchedCat.url).trim();
         }
-      }
-
-      if (isPbCat && !targetUrl) {
-        const pbInput = document.getElementById("pbUrlInput");
-        targetUrl = (pbInput && pbInput.value) 
-          ? pbInput.value.trim() 
-          : (state.activeConfig.PHOTOBOOTH_URL || "");
       }
 
       if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
@@ -1061,6 +1065,26 @@
               state.filteredPhotos = photos;
               renderPhotoGrid(pbLink, effectiveCat);
             }
+          });
+          return;
+        }
+        // Fleksibilitas Penuh: Mendukung vendor kustom lainnya secara dinamis (tidak terkunci)
+        if (pbLink) {
+          callBackend("getCategoryPhotos", { url: pbLink, category: effectiveCat }, function(res) {
+            if (res && res.success && Array.isArray(res.photos) && res.photos.length > 0) {
+              const sorted = sortPhotosNewestFirst(res.photos);
+              state.categoryPhotosMap[effectiveCat] = sorted;
+              state.categoryPhotosUrlMap[effectiveCat] = pbLink;
+              updateCategoryPillCount(effectiveCat, sorted.length);
+              if (state.activeCategory === effectiveCat) {
+                state.filteredPhotos = sorted;
+                renderPhotoGrid(pbLink, effectiveCat);
+              }
+            } else {
+              renderPhotoGrid(pbLink, effectiveCat);
+            }
+          }, function() {
+            renderPhotoGrid(pbLink, effectiveCat);
           });
           return;
         }
