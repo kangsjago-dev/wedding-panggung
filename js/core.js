@@ -715,6 +715,26 @@ function isGooglePhotosUrl(url) {
     };
 
 
+    function getExactPhotoFileName(photo, defaultExt) {
+      let name = "";
+      if (typeof photo === "string") {
+        name = photo.trim();
+      } else if (photo && typeof photo === "object") {
+        name = String(photo.rawName || photo.name || "").trim();
+      }
+      if (!name) name = "Foto";
+      
+      // Bersihkan karakter terlarang filesystem OS tanpa mengubah struktur atau panjang nama
+      name = name.replace(/[/\\:*?"<>|]/g, "_");
+
+      // Pertahankan ekstensi asli jika ada, atau tambahkan ekstensi default jika tidak memiliki ekstensi
+      const hasExt = /\.[a-zA-Z0-9]{3,4}$/.test(name);
+      if (!hasExt) {
+        name += (defaultExt || ".jpg");
+      }
+      return name;
+    }
+
     function generateUniqueFileName(baseName, suffix, ext) {
       const clean = (baseName || "wedding-photo")
         .replace(/\.[^/.]+$/, "")
@@ -915,6 +935,7 @@ function isGooglePhotosUrl(url) {
       window.populateConfigToUI = populateConfigToUI;
       window.formatIndonesianDate = formatIndonesianDate;
       window.formatDateForInput = formatDateForInput;
+      window.getExactPhotoFileName = getExactPhotoFileName;
       window.normalizeDriveImageUrl = normalizeDriveImageUrl;
       window.normalizeSheetDate = normalizeSheetDate;
       window.sortPhotosNewestFirst = sortPhotosNewestFirst;

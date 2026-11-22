@@ -71,7 +71,7 @@ function fetchGalleryData(forceRefresh, isSilent) {
       })
       .then(function(data) {
         if (dfTimeoutId) clearTimeout(dfTimeoutId);
-        if (data && data.success && Array.isArray(data.photos) && data.photos.length > 0) {
+        if (data && data.success && Array.isArray(data.photos)) {
           clearWatchdog();
           state.isAutoRefreshing = false;
           if (refreshIcon) refreshIcon.classList.remove("spin");
@@ -83,9 +83,15 @@ function fetchGalleryData(forceRefresh, isSilent) {
             photos: data.photos,
             categories: [state.allPhotosLabel || "Semua Foto"]
           }, isSilent);
-          if (forceRefresh && data.photos.length > 0) showToast("✓ Galeri foto berhasil diperbarui (" + data.photos.length + " foto)!");
+          if (forceRefresh) {
+            if (data.photos.length > 0) {
+              showToast("✓ Galeri foto berhasil diperbarui (" + data.photos.length + " foto)!");
+            } else {
+              showToast("✓ Sinkronisasi selesai: Folder Google Drive masih kosong.");
+            }
+          }
         } else {
-          throw new Error("Empty drive-folder response");
+          throw new Error("Invalid drive-folder response");
         }
       })
       .catch(function() {
@@ -145,7 +151,15 @@ function handleGalleryResponse(response, isSilent) {
   }
 
   if (Array.isArray(response.photos)) {
-    const sortedPhotos = sortPhotosNewestFirst(response.photos);
+    // Pastikan tidak ada data foto dummy/demo dari sesi lama
+    const cleanPhotos = response.photos.filter(p => {
+      if (!p) return false;
+      if (p.isDemo) return false;
+      if (String(p.id || '').startsWith('demo-')) return false;
+      if (p.thumbnailUrl && (p.thumbnailUrl.includes('unsplash.com') || p.thumbnailUrl.includes('picsum.photos'))) return false;
+      return true;
+    });
+    const sortedPhotos = sortPhotosNewestFirst(cleanPhotos);
     state.allPhotos = sortedPhotos;
     try {
       localStorage.setItem("WEDDING_EVENT_PHOTOS_" + state.currentEventId, JSON.stringify(sortedPhotos));
@@ -462,8 +476,15 @@ document.addEventListener("DOMContentLoaded", function() {
     const savedPhotosStr = localStorage.getItem(photoCacheKey);
     if (savedPhotosStr) {
       const savedPhotos = JSON.parse(savedPhotosStr);
-      if (Array.isArray(savedPhotos) && savedPhotos.length > 0) {
-        state.allPhotos = sortPhotosNewestFirst(savedPhotos);
+      const cleanPhotos = Array.isArray(savedPhotos) ? savedPhotos.filter(p => {
+        if (!p) return false;
+        if (p.isDemo) return false;
+        if (String(p.id || '').startsWith('demo-')) return false;
+        if (p.thumbnailUrl && (p.thumbnailUrl.includes('unsplash.com') || p.thumbnailUrl.includes('picsum.photos'))) return false;
+        return true;
+      }) : [];
+      if (cleanPhotos.length > 0) {
+        state.allPhotos = sortPhotosNewestFirst(cleanPhotos);
         state.filteredPhotos = state.allPhotos;
         renderPhotoGrid();
       } else {

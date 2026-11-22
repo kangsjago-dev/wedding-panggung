@@ -310,3 +310,17 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
   - Memperbarui `renderPhotoGrid()` untuk membedakan kategori tanpa link vs kategori yang sedang diproses. Menampilkan kartu empty state berkelas nuansa wedding gold dengan badge kategori, judul serif *"Foto Belum Tersedia"*, dan narasi sopan dan ramah.
 - **Global Window Bindings Lintas-Modul**:
   - Mengikat seluruh fungsi dan objek state inti pada masing-masing modul ke objek global `window` guna menjamin interoperabilitas 100% pada seluruh platform browser dan mobile.
+
+### 2.32 Preservasi Nama Asli File Saat Download Berbingkai & Eliminasi Total Dummy Photos (v4.34.0)
+- **Preservasi 100% Nama Asli File Foto Saat Download Berbingkai (`js/core.js` & `js/gallery.js`)**:
+  - Menghapus modifikasi format filename yang sebelumnya menambahkan akhiran `-berbingkai` dan timestamp hash acak (contoh: `DSC_0012-berbingkai_081734_512.jpg`).
+  - Menerapkan helper `getExactPhotoFileName(photo, defaultExt)` yang menjamin panjang dan teks nama file asli tetap 100% utuh saat diunduh (misal: `DSC_0012.JPG` diunduh persis sebagai `DSC_0012.JPG`, `IMG_20261121_191928.jpg` diunduh persis sebagai `IMG_20261121_191928.jpg`).
+  - Memastikan seluruh proses unduhan pada kategori "Semua Foto" (atau nama kustom seperti "Photostage") tetap digabungkan secara presisi dengan bingkai PNG transparan resolusi penuh.
+- **Eliminasi Total Dummy Photos Saat Google Drive Kosong (`js/app.js` & `js/gallery.js`)**:
+  - Memperbarui parser `/api/drive-folder` di `js/app.js` agar menerima array kosong `photos: []` tanpa melempar error, sehingga tidak memicu injeksi fallback lama.
+  - Memasang filter pembersih di `handleGalleryResponse` dan pembacaan `localStorage` untuk memusnahkan seluruh cache foto demo/dummy warisan masa lalu.
+  - Menggubah status galeri kosong dengan teks romantis, puitis, dan berkelas nuansa pernikahan:
+    * Badge: `✦ Momen Bahagia Segera Hadir ✦`
+    * Judul: `Galeri Foto Masih Kosong`
+    * Narasi: *"Setiap senyuman, tatapan penuh cinta, dan kehangatan momen istimewa ini sedang dalam proses kurasi terbaik. Foto-foto kenangan indah akan segera hadir di sini. Silakan periksa kembali beberapa saat lagi."*
+    * Tombol Interaktif: *"Segarkan Galeri"*.

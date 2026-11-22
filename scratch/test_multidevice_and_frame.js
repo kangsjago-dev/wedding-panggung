@@ -171,13 +171,13 @@ context.state.activeConfig.DRIVE_FOLDER_ID = "";
 context.renderPhotoGrid("", "Photostage");
 const gridEl = mockDocument.getElementById("photosGrid");
 assert(gridEl.innerHTML.includes("Momen Utama • Photostage"), "Empty main gallery without link shows 'Momen Utama • Photostage' badge");
-assert(gridEl.innerHTML.includes("Foto Belum Tersedia"), "Empty main gallery without link shows 'Foto Belum Tersedia' title");
+assert(gridEl.innerHTML.includes("Galeri Foto Belum Terhubung"), "Empty main gallery without link shows 'Galeri Foto Belum Terhubung' title");
 assert(gridEl.innerHTML.includes("belum ditautkan"), "Empty main gallery without link explains folder is not yet linked");
 
 // When link is configured but 0 photos:
 context.state.activeConfig.DRIVE_FOLDER_ID = "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh";
 context.renderPhotoGrid("https://drive.google.com/drive/folders/1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh", "Photostage");
-assert(gridEl.innerHTML.includes("Momen Sedang Dipersiapkan"), "Empty main gallery with link shows 'Momen Sedang Dipersiapkan'");
+assert(gridEl.innerHTML.includes("Galeri Foto Masih Kosong"), "Empty main gallery with link shows 'Galeri Foto Masih Kosong'");
 
 // TEST 4: 'Semua Foto' / custom label is NOT treated as Photobooth
 const dummyPhoto = { id: "p1", name: "Photo1.jpg", url: "https://drive.google.com/1" };

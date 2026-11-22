@@ -46,20 +46,20 @@
 
         if (isMain) {
           if (isUrlMissing) {
-            emptyBadgeText = `Momen Utama • ${escapeHtml(activeCat)}`;
-            emptyTitleText = "Foto Belum Tersedia";
+            emptyBadgeText = `✦ Momen Utama • ${escapeHtml(activeCat)} ✦`;
+            emptyTitleText = "Galeri Foto Belum Terhubung";
             emptyDescText = `Tautan folder Google Drive untuk kategori "${escapeHtml(activeCat)}" belum ditautkan oleh penyelenggara acara. Foto dokumentasi momen bahagia akan otomatis tampil begitu folder ditautkan.`;
           } else {
-            emptyBadgeText = `Momen Utama • ${escapeHtml(activeCat)}`;
-            emptyTitleText = "Momen Sedang Dipersiapkan";
-            emptyDescText = `Foto dokumentasi untuk kategori <strong>${escapeHtml(activeCat)}</strong> sedang dipersiapkan dan segera hadir. Silakan segarkan galeri atau periksa kembali beberapa saat lagi.`;
+            emptyBadgeText = `✦ Momen Bahagia Segera Hadir ✦`;
+            emptyTitleText = "Galeri Foto Masih Kosong";
+            emptyDescText = `Setiap senyuman, tatapan penuh cinta, dan kehangatan momen istimewa ini sedang dalam proses kurasi terbaik. Foto-foto kenangan indah akan segera hadir di sini. Silakan periksa kembali beberapa saat lagi.`;
           }
         } else {
-          emptyBadgeText = isUrlMissing ? `Momen Kenangan • ${escapeHtml(activeCat)}` : `Dokumentasi Acara • ${escapeHtml(activeCat)}`;
-          emptyTitleText = isUrlMissing ? "Foto Belum Tersedia" : "Momen Sedang Dipersiapkan";
+          emptyBadgeText = isUrlMissing ? `✦ Momen Kenangan • ${escapeHtml(activeCat)} ✦` : `✦ Momen Kenangan Segera Hadir ✦`;
+          emptyTitleText = isUrlMissing ? "Galeri Foto Belum Terhubung" : "Galeri Foto Masih Kosong";
           emptyDescText = isUrlMissing 
             ? `Tautan album untuk kategori <strong>${escapeHtml(activeCat)}</strong> belum ditautkan oleh penyelenggara acara. Foto momen kenangan indah akan otomatis tampil begitu tautan dokumentasi diperbarui.`
-            : `Foto kenangan untuk kategori <strong>${escapeHtml(activeCat)}</strong> sedang dalam proses dokumentasi. Silakan periksa kembali beberapa saat lagi.`;
+            : `Setiap kebersamaan dan senyuman di kategori <strong>${escapeHtml(activeCat)}</strong> sedang dalam proses kurasi terbaik. Silakan nikmati suasana dan periksa kembali beberapa saat lagi.`;
         }
 
         grid.innerHTML = `
@@ -739,7 +739,7 @@
       // Eksekusi LANGSUNG 100% SINKRONIS (0ms) di dalam klik pengguna!
       // Ini menjaga userActivation.isActive = true sehingga browser Android (Samsung Internet) TIDAK PERNAH memunculkan dialog konfirmasi!
       if (state.precompositedBlob && state.precompositedPhotoId === photo.id) {
-        const fileName = generateUniqueFileName(photo.rawName || photo.name, "berbingkai", ".jpg");
+        const fileName = (typeof getExactPhotoFileName === "function") ? getExactPhotoFileName(photo, ".jpg") : (photo.rawName || photo.name || "Foto.jpg");
         saveBlobToDevice(state.precompositedBlob, fileName);
         showToast("✓ Foto berbingkai berhasil tersimpan ke perangkat!");
         return;
@@ -1093,7 +1093,7 @@
 
             canvas.toBlob(function(blob) {
               if (blob) {
-                const fileName = generateUniqueFileName(photo.rawName || photo.name, "berbingkai", ".jpg");
+                const fileName = (typeof getExactPhotoFileName === "function") ? getExactPhotoFileName(photo, ".jpg") : (photo.rawName || photo.name || "Foto.jpg");
                 saveBlobToDevice(blob, fileName);
                 if (onDone) onDone();
               } else {
@@ -1142,7 +1142,7 @@
       }
 
       const ext = isVideo ? ".mp4" : ".jpg";
-      const fileName = generateUniqueFileName(photo.rawName || photo.name, isVideo ? "video" : "original", ext);
+      const fileName = (typeof getExactPhotoFileName === "function") ? getExactPhotoFileName(photo, ext) : (photo.rawName || photo.name || ("Berkas" + ext));
 
       if (!rawUrl) {
         showToast("⚠️ Tautan berkas tidak ditemukan");
@@ -1616,12 +1616,12 @@
             if (btn) {
               btn.onclick = function() {
                 if (state.currentPreparedFramedBlobPhotoId === photo.id && state.currentPreparedFramedBlob) {
-                  const fileName = generateUniqueFileName(photo.rawName || photo.name, "berbingkai", ".jpg");
+                  const fileName = (typeof getExactPhotoFileName === "function") ? getExactPhotoFileName(photo, ".jpg") : (photo.rawName || photo.name || "Foto.jpg");
                   saveBlobToDevice(state.currentPreparedFramedBlob, fileName);
                   showToast("✓ Foto berbingkai berhasil tersimpan ke perangkat!");
                   updateDownloadWidget(100, "✓ Berhasil Disimpan!", photo.name || "Foto", true);
                 } else if (state.precompositedPhotoId === photo.id && state.precompositedBlob) {
-                  const fileName = generateUniqueFileName(photo.rawName || photo.name, "berbingkai", ".jpg");
+                  const fileName = (typeof getExactPhotoFileName === "function") ? getExactPhotoFileName(photo, ".jpg") : (photo.rawName || photo.name || "Foto.jpg");
                   saveBlobToDevice(state.precompositedBlob, fileName);
                   showToast("✓ Foto berbingkai berhasil tersimpan ke perangkat!");
                   updateDownloadWidget(100, "✓ Berhasil Disimpan!", photo.name || "Foto", true);

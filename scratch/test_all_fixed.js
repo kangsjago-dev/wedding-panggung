@@ -167,14 +167,14 @@ assert(elements['lightboxTitle'].innerText === 'Andre & Fayola Photo 1', 'Lightb
 ctx.state.filteredPhotos = [];
 ctx.renderPhotoGrid('', 'Photobooth');
 const emptyGridHtml = elements['photosGrid'].innerHTML;
-assert(emptyGridHtml.includes('Foto Belum Tersedia'), 'Empty category without link shows "Foto Belum Tersedia"');
+assert(emptyGridHtml.includes('Galeri Foto Belum Terhubung'), 'Empty category without link shows "Galeri Foto Belum Terhubung"');
 assert(emptyGridHtml.includes('belum ditautkan oleh penyelenggara'), 'Empty category has elegant wording explaining link not set');
 assert(emptyGridHtml.includes('empty-gallery-badge'), 'Empty category has elegant badge styling');
 
 // Test 6: Empty category WITH link
 ctx.renderPhotoGrid('https://photos.app.goo.gl/test', 'Photobooth');
 const emptyWithLinkHtml = elements['photosGrid'].innerHTML;
-assert(emptyWithLinkHtml.includes('Momen Sedang Dipersiapkan'), 'Category with link but 0 photos shows "Momen Sedang Dipersiapkan"');
+assert(emptyWithLinkHtml.includes('Galeri Foto Masih Kosong'), 'Category with link but 0 photos shows "Galeri Foto Masih Kosong"');
 
 // Test 7: Save All Settings in Admin
 ctx.state.currentEventId = 'ev_andre_fayola';
