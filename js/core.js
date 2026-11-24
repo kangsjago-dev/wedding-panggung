@@ -796,9 +796,14 @@ function isGooglePhotosUrl(url) {
       // 1. Jika video (kingphotobooth atau video lainnya)
       if (photo.isVideo && photo.videoUrl) return photo.videoUrl;
       
-      // 2. Jika Kingphotobooth: gunakan URL statis bersih (tanpa query string kedaluwarsa)
-      if ((photo.isKing || (photo.previewUrl && photo.previewUrl.includes("kingphotobooth.co"))) && photo.previewUrl) {
-        return photo.previewUrl.split("?")[0];
+      // 2. Jika Kingphotobooth: jika sudah memakai proxy internal, kembalikan URL utuh; jika direct URL luar, bersihkan query
+      if (photo.isKing || (photo.previewUrl && (photo.previewUrl.includes("kingphotobooth.co") || photo.previewUrl.includes("/api/kingphotobooth")))) {
+        if (photo.previewUrl && photo.previewUrl.startsWith("/api/")) {
+          return photo.previewUrl;
+        }
+        if (photo.previewUrl) {
+          return photo.previewUrl.split("?")[0];
+        }
       }
 
       // 3. Jika Fotoshare: gunakan URL master resolusi tinggi asli (tanpa parameter resize)

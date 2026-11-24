@@ -1118,10 +1118,12 @@
       updateDownloadWidget(20, isVideo ? "Mengunduh Video Asli..." : "Mengunduh Foto Asli...", (photo.name || "Foto") + " • Mengambil dari server...", false);
       showToast(isVideo ? "⏳ Mengunduh video asli kualitas penuh..." : "⏳ Mengunduh foto asli kualitas penuh...");
 
-      const proxyUrl = "/api/download-proxy?url=" + encodeURIComponent(rawUrl) + "&filename=" + encodeURIComponent(fileName);
+      // Jika URL adalah endpoint internal (misal: /api/kingphotobooth...), fetch langsung tanpa download-proxy
+      const isInternalApi = rawUrl.startsWith("/api/");
+      const fetchTargetUrl = isInternalApi ? rawUrl : ("/api/download-proxy?url=" + encodeURIComponent(rawUrl) + "&filename=" + encodeURIComponent(fileName));
 
       // Ambil berkas fisik (Blob) ke memori perangkat sebelum menyimpan
-      fetch(proxyUrl)
+      fetch(fetchTargetUrl)
         .then(function(res) {
           if (!res.ok) throw new Error("Proxy HTTP " + res.status);
           updateDownloadWidget(65, "Menerima Berkas Asli...", (photo.name || "Foto") + " • Menyiapkan penyimpanan...", false);

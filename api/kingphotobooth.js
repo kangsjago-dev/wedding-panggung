@@ -196,7 +196,8 @@ export default async function handler(req, res) {
         photoUrl = thumbProxyUrl;
         downloadUrl = `/api/kingphotobooth?action=download&token=${encodeURIComponent(it.share_token || it.id)}&origin=${encodeURIComponent(origin)}`;
       } else {
-        photoUrl = thumbProxyUrl;
+        // Stream foto HD master resolusi penuh via proxy internal terotentikasi
+        photoUrl = `/api/kingphotobooth?action=media&token=${encodeURIComponent(it.share_token || it.id)}&origin=${encodeURIComponent(origin)}`;
         downloadUrl = `/api/kingphotobooth?action=download&token=${encodeURIComponent(it.share_token || it.id)}&origin=${encodeURIComponent(origin)}`;
       }
 
