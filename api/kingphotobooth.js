@@ -1,12 +1,72 @@
 export default async function handler(req, res) {
-  const { action, token, origin: reqOrigin, url: targetUrl, category = "Photobooth" } = req.query;
+  const { action, token, path: thumbPath, event: eventUrl, origin: reqOrigin, url: targetUrl, category = "Photobooth", ck: reqCk } = req.query;
 
-  // 1. STREAMING PROXY UNTUK MEDIA (VIDEO / FOTO / THUMBNAIL) DENGAN SESSION COOKIE RESMI
+  // 1. STREAMING PROXY UNTUK MEDIA (VIDEO / FOTO / THUMBNAIL / DOWNLOAD) DENGAN SESSION RESMI
   if (action === "media" || action === "video" || action === "download" || action === "thumb") {
-    if (!token) {
-      return res.status(400).send("Parameter token diperlukan.");
-    }
     const hostOrigin = reqOrigin || "https://x1.kingphotobooth.co";
+
+    // A. JALUR CEPAT THUMBNAIL LANGSUNG DENGAN SESSION COOKIE DARI QUERY / REFERER
+    if (action === "thumb" && thumbPath) {
+      try {
+        let cookieHeader = "";
+        if (reqCk) {
+          cookieHeader = Buffer.from(reqCk, "base64url").toString("utf-8");
+        }
+
+        const decodedPath = decodeURIComponent(thumbPath);
+        const fullThumbUrl = decodedPath.startsWith("http") ? decodedPath : (hostOrigin + decodedPath);
+
+        // Jika cookie belum ada atau kadaluarsa, dapatkan dari event atau origin
+        if (!cookieHeader) {
+          const refPage = eventUrl ? decodeURIComponent(eventUrl) : `${hostOrigin}/`;
+          const initRes = await fetch(refPage, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+            }
+          });
+          const rawCookies = initRes.headers.get("set-cookie") || "";
+          cookieHeader = rawCookies.split(",").map(c => c.split(";")[0].trim()).join("; ");
+        }
+
+        const thumbHeaders = {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Referer": eventUrl ? decodeURIComponent(eventUrl) : `${hostOrigin}/`
+        };
+        if (cookieHeader) thumbHeaders["Cookie"] = cookieHeader;
+
+        const streamRes = await fetch(fullThumbUrl, { headers: thumbHeaders });
+        if (!streamRes.ok) {
+          return res.status(streamRes.status).send("Gagal mengambil thumbnail.");
+        }
+
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Content-Type", streamRes.headers.get("content-type") || "image/jpeg");
+        res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400");
+
+        const contentLen = streamRes.headers.get("content-length");
+        if (contentLen) res.setHeader("Content-Length", contentLen);
+
+        res.status(200);
+        const arrayBuffer = await streamRes.arrayBuffer();
+        const buf = Buffer.from(arrayBuffer);
+        if (typeof res.send === "function") {
+          return res.send(buf);
+        }
+        if (typeof res.end === "function") {
+          return res.end(buf);
+        }
+        return buf;
+      } catch (e) {
+        return res.status(500).send("Gagal mengalirkan thumbnail: " + e.message);
+      }
+    }
+
+    // B. JALUR TOKEN ITEM (/i/{token}) UNTUK VIDEO, DOWNLOAD, ATAU THUMBNAIL BY TOKEN
+    if (!token) {
+      return res.status(400).send("Parameter token atau path diperlukan.");
+    }
+
     try {
       // Dapatkan session resmi dan link media dari halaman item /i/{token}
       const pageRes = await fetch(`${hostOrigin}/i/${encodeURIComponent(token)}`, {
@@ -63,7 +123,8 @@ export default async function handler(req, res) {
       const streamRes = await fetch(mediaUrl, { headers: mediaHeaders });
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Content-Type", streamRes.headers.get("content-type") || (isVideo ? "video/mp4" : "image/jpeg"));
-      
+      res.setHeader("Cache-Control", isVideo ? "public, max-age=3600" : "public, max-age=86400, s-maxage=604800");
+
       const contentLen = streamRes.headers.get("content-length");
       if (contentLen) res.setHeader("Content-Length", contentLen);
 
@@ -101,6 +162,11 @@ export default async function handler(req, res) {
       return res.status(response.status).json({ success: false, message: "HTTP " + response.status });
     }
 
+    // Ambil session cookie event Kingphotobooth agar thumbnail bisa diproxy secara instan
+    const setCookieHeader = response.headers.get("set-cookie") || "";
+    const eventCookies = setCookieHeader.split(",").map(c => c.split(";")[0].trim()).join("; ");
+    const b64Cookie = eventCookies ? Buffer.from(eventCookies).toString("base64url") : "";
+
     const html = await response.text();
     const match = html.match(/const\s+ITEMS\s*=\s*(\[[\s\S]*?\]);/);
     if (!match) {
@@ -110,30 +176,35 @@ export default async function handler(req, res) {
     const rawItems = JSON.parse(match[1]);
     const photos = rawItems.map(function(it, idx) {
       const isVideo = Boolean(it.is_video);
-      const cleanThumb = String(it.thumb || "").split("?")[0];
-      const thumbUrl = cleanThumb ? (origin + cleanThumb) : "";
       
+      // Thumbnail dialirkan lewat internal proxy terotentikasi agar lolos dari anti-hotlink vendor
+      let thumbProxyUrl = "";
+      if (it.thumb) {
+        const ckParam = b64Cookie ? `&ck=${b64Cookie}` : "";
+        thumbProxyUrl = `/api/kingphotobooth?action=thumb&path=${encodeURIComponent(it.thumb)}&event=${encodeURIComponent(targetUrl)}&origin=${encodeURIComponent(origin)}${ckParam}`;
+      } else if (it.share_token || it.id) {
+        thumbProxyUrl = `/api/kingphotobooth?action=thumb&token=${encodeURIComponent(it.share_token || it.id)}&origin=${encodeURIComponent(origin)}`;
+      }
+
       let photoUrl = "";
       let videoUrl = "";
       let downloadUrl = "";
 
-      if (cleanThumb) {
-        if (isVideo) {
-          // Stream video terotentikasi via proxy internal
-          videoUrl = `/api/kingphotobooth?action=media&token=${encodeURIComponent(it.share_token || it.id)}&origin=${encodeURIComponent(origin)}`;
-          photoUrl = thumbUrl;
-          downloadUrl = `/api/kingphotobooth?action=download&token=${encodeURIComponent(it.share_token || it.id)}&origin=${encodeURIComponent(origin)}`;
-        } else {
-          photoUrl = thumbUrl;
-          downloadUrl = `/api/kingphotobooth?action=download&token=${encodeURIComponent(it.share_token || it.id)}&origin=${encodeURIComponent(origin)}`;
-        }
+      if (isVideo) {
+        // Stream video terotentikasi via proxy internal
+        videoUrl = `/api/kingphotobooth?action=media&token=${encodeURIComponent(it.share_token || it.id)}&origin=${encodeURIComponent(origin)}`;
+        photoUrl = thumbProxyUrl;
+        downloadUrl = `/api/kingphotobooth?action=download&token=${encodeURIComponent(it.share_token || it.id)}&origin=${encodeURIComponent(origin)}`;
+      } else {
+        photoUrl = thumbProxyUrl;
+        downloadUrl = `/api/kingphotobooth?action=download&token=${encodeURIComponent(it.share_token || it.id)}&origin=${encodeURIComponent(origin)}`;
       }
 
       return {
         id: "king_" + it.id,
         name: isVideo ? ("Video Photobooth #" + (rawItems.length - idx)) : ("Photobooth #" + (rawItems.length - idx)),
         category: category,
-        thumbnailUrl: thumbUrl,
+        thumbnailUrl: thumbProxyUrl,
         previewUrl: isVideo ? videoUrl : photoUrl,
         highResUrl: isVideo ? videoUrl : photoUrl,
         downloadUrl: downloadUrl || (origin + "/dl/" + it.id + (isVideo ? ".mp4" : ".jpg")),
