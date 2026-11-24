@@ -1,3 +1,13 @@
+function extractCleanCookies(rawSetCookie) {
+  if (!rawSetCookie) return "";
+  const parts = [];
+  const kp = rawSetCookie.match(/KPBSESSID=[^;]+/);
+  if (kp) parts.push(kp[0]);
+  const liker = rawSetCookie.match(/kpx1_liker_[^;]+/);
+  if (liker) parts.push(liker[0]);
+  return parts.join("; ");
+}
+
 export default async function handler(req, res) {
   const { action, token, path: thumbPath, event: eventUrl, origin: reqOrigin, url: targetUrl, category = "Photobooth", ck: reqCk } = req.query;
 
@@ -26,12 +36,18 @@ export default async function handler(req, res) {
             }
           });
           const rawCookies = initRes.headers.get("set-cookie") || "";
-          cookieHeader = rawCookies.split(",").map(c => c.split(";")[0].trim()).join("; ");
+          cookieHeader = extractCleanCookies(rawCookies);
         }
 
+        const refererUrl = eventUrl ? decodeURIComponent(eventUrl) : `${hostOrigin}/`;
         const thumbHeaders = {
+          "Host": new URL(fullThumbUrl).host,
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Referer": eventUrl ? decodeURIComponent(eventUrl) : `${hostOrigin}/`
+          "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+          "Referer": refererUrl,
+          "Sec-Fetch-Dest": "image",
+          "Sec-Fetch-Mode": "no-cors",
+          "Sec-Fetch-Site": "same-origin"
         };
         if (cookieHeader) thumbHeaders["Cookie"] = cookieHeader;
 
@@ -79,9 +95,9 @@ export default async function handler(req, res) {
         return res.status(pageRes.status).send("Item tidak ditemukan.");
       }
 
-      // Ambil cookie dari response
+      // Ambil cookie dari response dengan regex bersih
       const rawCookies = pageRes.headers.get("set-cookie") || "";
-      const cookies = rawCookies.split(",").map(c => c.split(";")[0].trim()).join("; ");
+      const cookies = extractCleanCookies(rawCookies);
 
       const html = await pageRes.text();
       let mediaPath = "";
@@ -114,8 +130,13 @@ export default async function handler(req, res) {
 
       const mediaUrl = mediaPath.startsWith("http") ? mediaPath : (hostOrigin + mediaPath);
       const mediaHeaders = {
+        "Host": new URL(mediaUrl).host,
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Referer": `${hostOrigin}/i/${encodeURIComponent(token)}`
+        "Referer": `${hostOrigin}/i/${encodeURIComponent(token)}`,
+        "Accept": isVideo ? "*/*" : "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        "Sec-Fetch-Dest": isVideo ? "video" : "image",
+        "Sec-Fetch-Mode": "no-cors",
+        "Sec-Fetch-Site": "same-origin"
       };
       if (cookies) mediaHeaders["Cookie"] = cookies;
       if (req.headers.range) mediaHeaders["Range"] = req.headers.range;
@@ -136,7 +157,14 @@ export default async function handler(req, res) {
 
       res.status(streamRes.status);
       const arrayBuffer = await streamRes.arrayBuffer();
-      return res.send(Buffer.from(arrayBuffer));
+      const buf = Buffer.from(arrayBuffer);
+      if (typeof res.send === "function") {
+        return res.send(buf);
+      }
+      if (typeof res.end === "function") {
+        return res.end(buf);
+      }
+      return buf;
     } catch (e) {
       return res.status(500).send("Gagal mengalirkan media: " + e.message);
     }
@@ -164,8 +192,8 @@ export default async function handler(req, res) {
 
     // Ambil session cookie event Kingphotobooth agar thumbnail bisa diproxy secara instan
     const setCookieHeader = response.headers.get("set-cookie") || "";
-    const eventCookies = setCookieHeader.split(",").map(c => c.split(";")[0].trim()).join("; ");
-    const b64Cookie = eventCookies ? Buffer.from(eventCookies).toString("base64url") : "";
+    const cleanEventCookies = extractCleanCookies(setCookieHeader);
+    const b64Cookie = cleanEventCookies ? Buffer.from(cleanEventCookies).toString("base64url") : "";
 
     const html = await response.text();
     const match = html.match(/const\s+ITEMS\s*=\s*(\[[\s\S]*?\]);/);
