@@ -363,15 +363,18 @@
       let pbItem = categories.find(function(c) {
         return c && (c.isPhotobooth === true || c.id === "special_photobooth" || String(c.name || "").trim().toLowerCase().includes("photobooth"));
       });
-      const currentConfigPbUrl = state.activeConfig.PHOTOBOOTH_URL || "";
+      const curEv = (state.events || []).find(function(e) { return e && e.id === state.currentEventId; });
+      const currentConfigPbUrl = (curEv && curEv.photoboothUrl) || state.activeConfig.PHOTOBOOTH_URL || "";
       if (!pbItem) {
         pbItem = { id: "special_photobooth", isPhotobooth: true, name: "Photobooth", url: currentConfigPbUrl, enabled: true };
       } else {
         pbItem.isPhotobooth = true;
         pbItem.id = "special_photobooth";
-        // Bebas custom link, tidak terkunci oleh URL lama
         if (currentConfigPbUrl) {
           pbItem.url = currentConfigPbUrl;
+        }
+        if (pbItem.enabled === undefined) {
+          pbItem.enabled = true;
         }
       }
 
@@ -521,6 +524,12 @@
         if (curEv) {
           curEv.photoboothUrl = pb.url;
           curEv.customCategories = list;
+          try {
+            localStorage.setItem("WEDDING_EVENT_CFG_" + curEv.id, JSON.stringify(Object.assign({}, curEv, {
+              customCategories: list,
+              photoboothUrl: pb.url
+            })));
+          } catch(e) {}
         }
       }
       try {

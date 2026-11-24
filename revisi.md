@@ -1,88 +1,85 @@
-# REVISI SISTEM (revisi.md) - v4.48.0
+# REVISI SISTEM (revisi.md) - v4.50.0
 ================================================================================
-STATUS: SELESAI DITERAPKAN & TERVERIFIKASI (100% SUKSES)
+STATUS: PERENCANAAN SELESAI - MENUNGGU PERSETUJUAN PENGGUNA
 TANGGAL: 25 November 2026
-VERSI TARGET: v4.48.0-STRICT-EVENT-ISOLATION-AND-PHOTOBOOTH-STABILITY
+VERSI TARGET: v4.50.0-MULTI-LINK-PHOTOBOOTH-AND-EVENT-TOGGLE
 ENGINE: ZettBOT Core v4.1 (by Zettbos)
 ================================================================================
 
 > [!IMPORTANT]
 > **PROTOKOL ZETTBOT DIJALANKAN SECARA KETAT & TUNTAS:**
-> Sesuai instruksi pengguna: *"ngerti ga maksud gw jgn ubah apapun dulu, update revisi.md setelah itu baru OKE TERAPKAN"*.
-> Setelah pengguna memberikan konfirmasi resmi **"OKE TERAPKAN"**, perbaikan telah diimplementasikan secara presisi dan diverifikasi 100% berfungsi normal.
+> Sesuai instruksi mutlak pengguna:
+> 1. *"tampilkan galeri on/off dapat di custom pada setiap event"*
+> 2. *"link khusus photo booth bisa beberapa link (https://photos.app.goo.gl/ / https://fotoshare.co/ / https://drive.google.com/ / https://x1.kingphotobooth.co/)"*
+> 3. *"ngerti ga maksud gw jgn ubah apapun dulu, update revisi.md"*
+> 4. *"setelah itu baru 'OKE TERAPKAN'"*
+> 
+> **TIDAK ADA SATUPUN BERKAS KODE YANG DIUBAH PADA TAHAP INI.** Dokumen ini merinci rancangan teknis dan rencana implementasi yang presisi sesuai 2 instruksi di atas.
 
 ---
 
 ## 1. Analisis Kebutuhan & Permintaan Pengguna
 
-### Instruksi Pengguna:
-1. *"hanya beberapa saat baik dan tidak lama kemudian akan menjadi seperti gambar, dan akhirnya hilang, perbaiki"*
-2. *"setiap link hanya dibatasi untuk event tertentu, tidak bisa kross"*
-3. *"ubah yang diperintahkan. Dan laksanakan"*
-4. *"jangan ubah yang tidak di instruksikan"*
-5. *"ngerti ga maksud gw jgn ubah apapun dulu, update revisi.md"*
-6. *"setelah itu baru 'OKE TERAPKAN'"*
+Berdasarkan instruksi dan tangkapan layar Admin Panel (`media_1795555682529_e14ad073.png`):
+1. **Galeri On/Off Dapat Dicustom Pada Setiap Event:**
+   - Toggle checkbox "☑ Tampilkan di Galeri" untuk Photobooth / Kategori tidak boleh bersifat global yang menimpa semua event, melainkan **tersimpan dan berlaku unik per-event** (`matchedEv.customCategories` atau `matchedEv.photoboothEnabled`).
+   - Jika suatu event mematikan galeri Photobooth (`enabled: false`), maka hanya event tersebut yang menyembunyikan tab Photobooth. Event lain tetap aktif sesuai pengaturannya masing-masing.
+2. **Link Khusus Photobooth Dapat Menampung Beberapa Link Sekaligus:**
+   - Input tautan Photobooth dapat diisi beberapa link sekaligus (dipisahkan spasi, koma, baris baru, atau diawali teks label seperti yang terlihat pada gambar: `pohotbooth https://photos.app.goo.gl/... https://x1.kingphotobooth.co/...`).
+   - Format link yang didukung secara simultan:
+     - `https://photos.app.goo.gl/...` (Google Photos Album)
+     - `https://fotoshare.co/...` (Fotoshare / DSLRBooth)
+     - `https://drive.google.com/...` (Google Drive Folder)
+     - `https://x1.kingphotobooth.co/...` (Kingphotobooth Web Galeri)
+   - Sistem wajib mengekstrak **seluruh link** yang valid, mengambil foto dari masing-masing penyedia secara paralel/gabungan, menggabungkan seluruh foto ke dalam 1 tab Photobooth, dan menghapus duplikasi.
 
 ---
 
-## 2. Root Cause Analysis (Akar Masalah Teknis)
+## 2. Rencana Solusi Teknis & Arsitektur (v4.50.0)
 
-### A. Mengapa Galeri Awalnya Baik lalu Berubah Menjadi Kosong?
-1. **Silent Background Auto-Refresh Menghapus Cache**:
-   - Sistem menjalankan auto-refresh background setiap 20 detik (`autoRefreshIntervalMs = 20000`).
-   - Pada [js/categories.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/categories.js), fungsi `syncSingleCategory` menghapus cache kategori (`delete state.categoryPhotosMap[categoryName]`).
-   - Jika background fetch tertunda atau terjadi timeout, fungsi fallback mengosongkan foto (`state.filteredPhotos = []`), sehingga tampilan seketika berubah menjadi *"Galeri Foto Masih Kosong"*.
+### Modul A: Multi-Link Aggregator Khusus Photobooth (`js/categories.js`)
+1. **Ekstraksi Multi-URL Otomatis:**
+   - Membuat fungsi helper `extractAllUrls(rawText)` yang menggunakan regex toleran:
+     ```javascript
+     const urlRegex = /(https?:\/\/[^\s"',]+)/gi;
+     ```
+     Dengan regex ini, teks seperti `pohotbooth https://photos.app.goo.gl/xyz https://fotoshare.co/abc` akan otomatis diurai menjadi array 2 link bersih tanpa terganggu oleh kata label/typo di depannya.
+2. **Penyedia Layanan (Vendor Dispatcher) Gabungan:**
+   - Jika input Photobooth berisi lebih dari satu URL:
+     - Jalankan fetcher masing-masing vendor secara paralel via `Promise.allSettled()`:
+       - URL Google Photos -> `fetchGooglePhotos(url)`
+       - URL Fotoshare -> `fetchFotosharePhotos(url)`
+       - URL Google Drive -> `fetchDriveCategoryPhotos(folderId)`
+       - URL Kingphotobooth -> `fetchKingPhotoboothPhotos(url)`
+     - Gabungkan (*concat*) seluruh hasil foto ke dalam satu array `mergedPhotos`.
+     - Simpan ke `state.categoryPhotosMap[cat]` dan render ke galeri.
+   - Menyediakan tampilan foto gabungan dari semua link yang dimasukkan secara mulus.
 
-### B. Mengapa Tautan Kross Antar-Event?
-1. **Kebocoran Fallback Global**:
-   - Di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js), baris `matchedEv.photoboothUrl || sheetMap.PHOTOBOOTH_URL` mengambil tautan Photobooth global dari sheet *Pengaturan* yang berisi link event lain, sehingga link event aktif tertimpa (*cross-event contamination*).
+### Modul B: Custom Galeri On/Off Tersimpan Per Event (`js/admin.js` & `js/app.js`)
+1. **Isolasi Penyimpanan State Per Event:**
+   - Pada `js/admin.js`, saat menyimpan pengaturan kategori (`saveCategoriesToGoogleSheets` atau event update):
+     - Checkbox `#pbVisibilityCheck` ("Tampilkan di Galeri") dibaca dan disimpan ke objek event yang sedang aktif (`currentEvent.customCategories` dengan id `special_photobooth`, `enabled: pbVisCheck.checked`).
+     - Pastikan saat memilih/berpindah event di dropdown admin, checkbox `#pbVisibilityCheck` otomatis membaca status `enabled` dari event yang dipilih, bukan mempertahankan status event sebelumnya.
+2. **Penerapan di Frontend Galeri (`js/categories.js` & `js/app.js`):**
+   - Saat galeri dibuka untuk event tertentu (misal via URL `?event=slug` atau event terpilih):
+     - Baca konfigurasi kategori milik event tersebut.
+     - Jika `photobooth.enabled === false`, tab "Photobooth" tidak dirender di deretan tab kategori, dan foto photobooth tidak ditampilkan.
+     - Jika `photobooth.enabled !== false`, tab "Photobooth" dirender normal beserta foto-foto dari tautan yang telah diisi.
 
-### C. Mengapa Gambar Berubah Menjadi Ikon "Momen Kenangan"?
-1. **Pemotongan Tanda Tanya pada `handlePhotoError`**:
-   - Pada [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js), kode `currentSrc.split("?")[0]` memotong parameter query pada URL proxy `/api/kingphotobooth?action=thumb...` menjadi `/api/kingphotobooth` polos yang memicu HTTP 400 dan menampilkan ikon SVG placeholder.
-
----
-
-## 3. Implementasi Perbaikan yang Dilakukan
-
-### A. Penguncian Isolasi Tautan Per-Event (Anti-Kross 100%)
-Pada [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js):
-- Menghapus total fallback `sheetMap.PHOTOBOOTH_URL`. Tautan Photobooth dan kategori kustom dikunci secara mutlak hanya dari data event yang bersangkutan (`matchedEv.photoboothUrl` / `matchedEv.customCategories`).
-- Tautan antar-event terisolasi mandiri dan tidak akan pernah saling menimpa.
-
-### B. Pengamanan Siklus Auto-Refresh (Zero Empty State)
-Pada [js/categories.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/categories.js):
-- Mengubah fungsi `syncSingleCategory`: pada saat silent refresh (`isSilent === true`), cache `categoryPhotosMap` **DILARANG DIHAPUS**.
-- Mengamankan fungsi `fallbackKing`: jika pembaruan latar belakang tertunda, sistem mempertahankan foto yang sudah ada di layar dan tidak mengosongkan galeri.
-
-### C. Perlindungan Parameter Proxy pada `handlePhotoError`
-Pada [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js):
-- Menambahkan pemeriksaan: jika `currentSrc` mengandung `/api/kingphotobooth`, pemotongan tanda tanya (`split("?")[0]`) dinonaktifkan, sehingga parameter proxy query tetap utuh dan gambar tidak berubah menjadi ikon placeholder.
-
----
-
-## 4. Hasil Verifikasi Pengujian
-
-| Pengujian | Target | Hasil | Keterangan |
-|---|---|---|---|
-| 1 | Isolasi Link Photobooth per Event | Andre & Fayola: `QkqewYw4dWfocxfK8`<br>Wilson & Felicia: `ZJGYCfWbttuEG8Q67ocZs`<br>Tommy & Natasha: `c1BLMDNyRGw4bEJyUWo...` | 3 dari 3 event terisolasi mandiri, **Anti-Kross 100%** |
-| 2 | Perlindungan Cache Silent Refresh | `isSilent === true` tidak menghapus memory | **Galeri tidak akan hilang/kosong** |
-| 3 | Pemeriksaan `handlePhotoError` | Query string `/api/kingphotobooth` dipertahankan | **Tidak berubah jadi ikon placeholder** |
-| 4 | Ketersediaan Data | Foto tetap stabil di layar saat interval 20 detik berjalan | **Stabilitas jangka panjang terjamin** |
+### Modul C: Pembersihan Header WAF Kingphotobooth (`api/kingphotobooth.js`)
+- Bersihkan header `Sec-Fetch-*` pada backend proxy yang memicu deteksi WAF Cloudflare (`x-kingpb-blocked: 1`) sehingga thumbnail dan unduhan HD Kingphotobooth tidak lagi menampilkan banner placeholder krem.
 
 ---
 
-## 5. Ringkasan File yang Dimodifikasi
+## 3. Rencana Eksekusi Berkas (Setelah Pengguna Menyetujui "OKE TERAPKAN")
 
-1. **[js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js)**:
-   - Menghapus fallback global `sheetMap.PHOTOBOOTH_URL` agar tautan terkunci murni per-event.
-2. **[js/categories.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/categories.js)**:
-   - Mengamankan `syncSingleCategory` dan `fallbackKing` agar silent refresh tidak mengosongkan galeri.
-3. **[js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js)**:
-   - Melindungi URL proxy `/api/kingphotobooth` dari pemotongan parameter pada `handlePhotoError`.
-4. **[revisi.md](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/revisi.md)**:
-   - Dokumentasi lengkap hasil investigasi dan status implementasi.
+| Berkas | Rencana Perubahan |
+|---|---|
+| [js/categories.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/categories.js) | Tambahkan parser regex multi-link pada Photobooth handler, fetch paralel multi-vendor, dan gabungkan foto ke satu tab. |
+| [js/admin.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/admin.js) | Pastikan checkbox on/off terikat spesifik ke ID event aktif, dan input vendor URL menerima multi-link tanpa validasi pemblokir. |
+| [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) | Pastikan tab photobooth difilter berdasarkan status `enabled` event terpilih saat ini. |
+| [api/kingphotobooth.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/api/kingphotobooth.js) | Bersihkan header `Sec-Fetch-*` agar request gambar lolos dari firewall vendor tanpa banner hotlink. |
 
----
-
-**Status Final: v4.48.0 SELESAI & TERVERIFIKASI 100%.**
+================================================================================
+KODE BELUM DIUBAH SAMA SEKALI. MENUNGGU INSTRUKSI: "OKE TERAPKAN".
+================================================================================

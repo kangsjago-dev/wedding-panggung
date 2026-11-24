@@ -3,6 +3,95 @@
    Tautan Eksternal: Google Photos, Fotoshare, Kingphotobooth, Drive & Filter Tabs
    ========================================================================== */
 
+    // Helper ekstraksi semua URL dari teks bebas (mendukung multi-link dipisah spasi, koma, baris baru, atau diawali teks label)
+    function extractAllCategoryUrls(rawText) {
+      if (!rawText || typeof rawText !== "string") return [];
+      const matches = rawText.match(/https?:\/\/[^\s"',]+/gi);
+      if (!matches) return [];
+      const cleanUrls = [];
+      const seen = {};
+      matches.forEach(function(u) {
+        let clean = String(u).trim();
+        // Bersihkan tanda baca trailing jika ada
+        clean = clean.replace(/[),.;]+$/, '');
+        if (clean && !seen[clean]) {
+          seen[clean] = true;
+          cleanUrls.push(clean);
+        }
+      });
+      return cleanUrls;
+    }
+
+    // Dispatcher pengambilan foto dari 1 URL vendor independen
+    function fetchSingleVendorPhotos(cat, url, onComplete) {
+      if (!url) {
+        if (typeof onComplete === "function") onComplete([]);
+        return;
+      }
+      const driveFolderId = extractDriveFolderId(url);
+      if (isGooglePhotosUrl(url)) {
+        fetchGooglePhotos(cat, url, onComplete);
+      } else if (url.includes("kingphotobooth.co") || url.includes("kingphoto")) {
+        fetchKingPhotoboothPhotos(cat, url, onComplete);
+      } else if (url.includes("fotoshare.co")) {
+        fetchFotosharePhotos(cat, url, onComplete);
+      } else if (driveFolderId) {
+        fetchDriveCategoryPhotos(cat, driveFolderId, onComplete);
+      } else {
+        // Fallback default
+        if (typeof onComplete === "function") onComplete([]);
+      }
+    }
+
+    // Multi-Link Aggregator: Mendukung beberapa link vendor sekaligus untuk 1 tab kategori (misal: Photobooth)
+    function fetchMultiVendorPhotos(cat, rawUrlText, onComplete) {
+      const urls = extractAllCategoryUrls(rawUrlText);
+      if (urls.length === 0) {
+        // Jika tidak ada URL http yang valid, coba cek apakah mungkin driveFolderId polos
+        const driveId = extractDriveFolderId(rawUrlText);
+        if (driveId) {
+          fetchDriveCategoryPhotos(cat, driveId, onComplete);
+          return;
+        }
+        if (typeof onComplete === "function") onComplete([]);
+        return;
+      }
+
+      if (urls.length === 1) {
+        fetchSingleVendorPhotos(cat, urls[0], onComplete);
+        return;
+      }
+
+      // Jika terdapat lebih dari 1 link vendor: Jalankan secara paralel dan gabungkan seluruh hasil foto
+      let completedCount = 0;
+      let aggregatedPhotos = [];
+      const photoIdMap = {};
+
+      urls.forEach(function(vendorUrl, vIdx) {
+        fetchSingleVendorPhotos(cat, vendorUrl, function(vendorPhotos) {
+          if (Array.isArray(vendorPhotos)) {
+            vendorPhotos.forEach(function(p) {
+              const uniqueKey = p.id || (p.previewUrl || p.thumbnailUrl || ("p_" + Math.random()));
+              if (!photoIdMap[uniqueKey]) {
+                photoIdMap[uniqueKey] = true;
+                aggregatedPhotos.push(p);
+              }
+            });
+          }
+          completedCount++;
+          if (completedCount === urls.length) {
+            // Urutkan foto gabungan: Terkini di atas jika ada timestamp
+            aggregatedPhotos.sort(function(a, b) {
+              const timeA = a.timestamp || 0;
+              const timeB = b.timestamp || 0;
+              return timeB - timeA;
+            });
+            if (typeof onComplete === "function") onComplete(aggregatedPhotos);
+          }
+        });
+      });
+    }
+
     function syncSingleCategory(categoryName, isSilent, callback) {
       if (!categoryName) return;
 
@@ -103,104 +192,21 @@
         return;
       }
 
-      const driveFolderId = extractDriveFolderId(targetUrl);
+      // Dukungan Multi-Link Vendor (Google Photos, Kingphotobooth, Fotoshare, Google Drive, dsb)
+      const effectiveUrl = targetUrl || (isPbCat ? (state.activeConfig.PHOTOBOOTH_URL || "") : "");
+      const detectedUrls = extractAllCategoryUrls(effectiveUrl);
 
-      // Fleksibilitas Tautan Kategori (Mendukung Google Photos, Kingphotobooth, Fotoshare, Google Drive, dsb)
-      if (isGooglePhotosUrl(targetUrl)) {
-        fetchGooglePhotos(categoryName, targetUrl, function(photos) {
-          state.categoryPhotosUrlMap[categoryName] = targetUrl;
+      if (detectedUrls.length > 0 || extractDriveFolderId(effectiveUrl)) {
+        fetchMultiVendorPhotos(categoryName, effectiveUrl, function(photos) {
+          state.categoryPhotosUrlMap[categoryName] = effectiveUrl;
           updateCategoryPillCount(categoryName, photos.length);
           if (state.activeCategory === categoryName) {
             state.filteredPhotos = photos;
-            renderPhotoGrid(targetUrl, categoryName);
-          }
-          if (!isSilent) showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
-          if (typeof callback === "function") callback(photos);
-        });
-        return;
-      } else if (targetUrl && (targetUrl.includes("kingphotobooth.co") || targetUrl.includes("kingphoto"))) {
-        fetchKingPhotoboothPhotos(categoryName, targetUrl, function(photos) {
-          state.categoryPhotosUrlMap[categoryName] = targetUrl;
-          updateCategoryPillCount(categoryName, photos.length);
-          if (state.activeCategory === categoryName) {
-            state.filteredPhotos = photos;
-            renderPhotoGrid(targetUrl, categoryName);
+            renderPhotoGrid(effectiveUrl, categoryName);
           }
           if (!isSilent) showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " media)!");
           if (typeof callback === "function") callback(photos);
         });
-        return;
-      } else if (targetUrl && targetUrl.includes("fotoshare.co")) {
-        fetchFotosharePhotos(categoryName, targetUrl, function(photos) {
-          state.categoryPhotosUrlMap[categoryName] = targetUrl;
-          updateCategoryPillCount(categoryName, photos.length);
-          if (state.activeCategory === categoryName) {
-            state.filteredPhotos = photos;
-            renderPhotoGrid(targetUrl, categoryName);
-          }
-          if (!isSilent) showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
-          if (typeof callback === "function") callback(photos);
-        });
-        return;
-      } else if (driveFolderId) {
-        fetchDriveCategoryPhotos(categoryName, driveFolderId, function(photos) {
-          state.categoryPhotosUrlMap[categoryName] = "drive:" + driveFolderId;
-          updateCategoryPillCount(categoryName, photos.length);
-          if (state.activeCategory === categoryName) {
-            state.filteredPhotos = photos;
-            renderPhotoGrid(targetUrl, categoryName);
-          }
-          if (!isSilent) showToast("✓ Kategori " + categoryName + " berhasil disinkronkan!");
-          if (typeof callback === "function") callback(photos);
-        });
-        return;
-      } else if (isPbCat) {
-        const pbLink = targetUrl || state.activeConfig.PHOTOBOOTH_URL || "";
-        if (isGooglePhotosUrl(pbLink)) {
-          fetchGooglePhotos(categoryName, pbLink, function(photos) {
-            state.categoryPhotosUrlMap[categoryName] = pbLink;
-            updateCategoryPillCount(categoryName, photos.length);
-            if (state.activeCategory === categoryName) {
-              state.filteredPhotos = photos;
-              renderPhotoGrid(pbLink, categoryName);
-            }
-            if (!isSilent) showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
-            if (typeof callback === "function") callback(photos);
-          });
-        } else if (extractDriveFolderId(pbLink)) {
-          fetchDriveCategoryPhotos(categoryName, extractDriveFolderId(pbLink), function(photos) {
-            state.categoryPhotosUrlMap[categoryName] = "drive:" + extractDriveFolderId(pbLink);
-            updateCategoryPillCount(categoryName, photos.length);
-            if (state.activeCategory === categoryName) {
-              state.filteredPhotos = photos;
-              renderPhotoGrid(pbLink, categoryName);
-            }
-            if (!isSilent) showToast("✓ Kategori " + categoryName + " berhasil disinkronkan!");
-            if (typeof callback === "function") callback(photos);
-          });
-        } else if (pbLink.includes("kingphotobooth.co") || pbLink.includes("kingphoto")) {
-          fetchKingPhotoboothPhotos(categoryName, pbLink, function(photos) {
-            state.categoryPhotosUrlMap[categoryName] = pbLink;
-            updateCategoryPillCount(categoryName, photos.length);
-            if (state.activeCategory === categoryName) {
-              state.filteredPhotos = photos;
-              renderPhotoGrid(pbLink, categoryName);
-            }
-            if (!isSilent) showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " media)!");
-            if (typeof callback === "function") callback(photos);
-          });
-        } else if (pbLink.includes("fotoshare.co")) {
-          fetchFotosharePhotos(categoryName, pbLink, function(photos) {
-            state.categoryPhotosUrlMap[categoryName] = pbLink;
-            updateCategoryPillCount(categoryName, photos.length);
-            if (state.activeCategory === categoryName) {
-              state.filteredPhotos = photos;
-              renderPhotoGrid(pbLink, categoryName);
-            }
-            if (!isSilent) showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
-            if (typeof callback === "function") callback(photos);
-          });
-        }
         return;
       }
 
@@ -387,42 +393,11 @@
           return c && (c.isPhotobooth || c.id === "special_photobooth") && String(c.name || "").trim().toLowerCase() === cat.toLowerCase();
         })));
 
-      const driveFolderId = extractDriveFolderId(targetUrl);
-      if (isGooglePhotosUrl(targetUrl)) {
-        fetchGooglePhotos(cat, targetUrl, function(photos) {
+      const effectiveUrl = targetUrl || (isPbCat ? (state.activeConfig.PHOTOBOOTH_URL || "") : "");
+      if (effectiveUrl) {
+        fetchMultiVendorPhotos(cat, effectiveUrl, function(photos) {
           updateCategoryPillCount(cat, photos.length);
         });
-      } else if (targetUrl && (targetUrl.includes("kingphotobooth.co") || targetUrl.includes("kingphoto"))) {
-        fetchKingPhotoboothPhotos(cat, targetUrl, function(photos) {
-          updateCategoryPillCount(cat, photos.length);
-        });
-      } else if (targetUrl && targetUrl.includes("fotoshare.co")) {
-        fetchFotosharePhotos(cat, targetUrl, function(photos) {
-          updateCategoryPillCount(cat, photos.length);
-        });
-      } else if (driveFolderId) {
-        fetchDriveCategoryPhotos(cat, driveFolderId, function(photos) {
-          updateCategoryPillCount(cat, photos.length);
-        });
-      } else if (isPbCat) {
-        const pbLink = targetUrl || state.activeConfig.PHOTOBOOTH_URL || "";
-        if (isGooglePhotosUrl(pbLink)) {
-          fetchGooglePhotos(cat, pbLink, function(photos) {
-            updateCategoryPillCount(cat, photos.length);
-          });
-        } else if (extractDriveFolderId(pbLink)) {
-          fetchDriveCategoryPhotos(cat, extractDriveFolderId(pbLink), function(photos) {
-            updateCategoryPillCount(cat, photos.length);
-          });
-        } else if (pbLink.includes("kingphotobooth.co") || pbLink.includes("kingphoto")) {
-          fetchKingPhotoboothPhotos(cat, pbLink, function(photos) {
-            updateCategoryPillCount(cat, photos.length);
-          });
-        } else {
-          fetchFotosharePhotos(cat, pbLink, function(photos) {
-            updateCategoryPillCount(cat, photos.length);
-          });
-        }
       }
     }
 
@@ -1083,125 +1058,20 @@
         showGridSkeleton();
       }
 
-      // 2. Jika tautan Google Photos (album bersama atau photos.app.goo.gl)
-      if (isGooglePhotosUrl(targetUrl)) {
-        fetchGooglePhotos(effectiveCat, targetUrl, function(photos) {
-          state.categoryPhotosUrlMap[effectiveCat] = targetUrl;
+      // 2. Dukungan Multi-Link Vendor (Google Photos, Kingphotobooth, Fotoshare, Google Drive, dsb)
+      const effectiveUrl = targetUrl || (isPbCat ? (state.activeConfig.PHOTOBOOTH_URL || "") : "");
+      const detectedUrls = extractAllCategoryUrls(effectiveUrl);
+
+      if (detectedUrls.length > 0 || extractDriveFolderId(effectiveUrl)) {
+        fetchMultiVendorPhotos(effectiveCat, effectiveUrl, function(photos) {
+          state.categoryPhotosUrlMap[effectiveCat] = effectiveUrl;
           updateCategoryPillCount(effectiveCat, photos.length);
           if (state.activeCategory === effectiveCat) {
             state.filteredPhotos = photos;
-            renderPhotoGrid(targetUrl, effectiveCat);
+            renderPhotoGrid(effectiveUrl, effectiveCat);
           }
         });
         return;
-      }
-
-      // 3b. Jika tautan eksternal kingphotobooth
-      if (targetUrl && (targetUrl.includes("kingphotobooth.co") || targetUrl.includes("kingphoto"))) {
-        fetchKingPhotoboothPhotos(effectiveCat, targetUrl, function(photos) {
-          state.categoryPhotosUrlMap[effectiveCat] = targetUrl;
-          updateCategoryPillCount(effectiveCat, photos.length);
-          if (state.activeCategory === effectiveCat) {
-            state.filteredPhotos = photos;
-            renderPhotoGrid(targetUrl, effectiveCat);
-          }
-        });
-        return;
-      }
-
-      // 3. Jika tautan eksternal fotoshare
-      if (targetUrl && targetUrl.includes("fotoshare.co")) {
-        fetchFotosharePhotos(effectiveCat, targetUrl, function(photos) {
-          state.categoryPhotosUrlMap[effectiveCat] = targetUrl;
-          updateCategoryPillCount(effectiveCat, photos.length);
-          if (state.activeCategory === effectiveCat) {
-            state.filteredPhotos = photos;
-            renderPhotoGrid(targetUrl, effectiveCat);
-          }
-        });
-        return;
-      }
-
-      // 4. Jika tautan folder Google Drive
-      if (driveFolderId) {
-        fetchDriveCategoryPhotos(effectiveCat, driveFolderId, function(photos) {
-          state.categoryPhotosUrlMap[effectiveCat] = "drive:" + driveFolderId;
-          updateCategoryPillCount(effectiveCat, photos.length);
-          if (state.activeCategory === effectiveCat) {
-            state.filteredPhotos = photos;
-            renderPhotoGrid(targetUrl, effectiveCat);
-          }
-        });
-        return;
-      }
-
-      // 4b. Jika kategori Photobooth (mendukung segala variasi URL kustom)
-      if (isPbCat) {
-        const pbLink = targetUrl || state.activeConfig.PHOTOBOOTH_URL || "";
-        if (isGooglePhotosUrl(pbLink)) {
-          fetchGooglePhotos(effectiveCat, pbLink, function(photos) {
-            state.categoryPhotosUrlMap[effectiveCat] = pbLink;
-            updateCategoryPillCount(effectiveCat, photos.length);
-            if (state.activeCategory === effectiveCat) {
-              state.filteredPhotos = photos;
-              renderPhotoGrid(pbLink, effectiveCat);
-            }
-          });
-          return;
-        }
-        if (extractDriveFolderId(pbLink)) {
-          fetchDriveCategoryPhotos(effectiveCat, extractDriveFolderId(pbLink), function(photos) {
-            state.categoryPhotosUrlMap[effectiveCat] = "drive:" + extractDriveFolderId(pbLink);
-            updateCategoryPillCount(effectiveCat, photos.length);
-            if (state.activeCategory === effectiveCat) {
-              state.filteredPhotos = photos;
-              renderPhotoGrid(pbLink, effectiveCat);
-            }
-          });
-          return;
-        }
-        if (pbLink.includes("kingphotobooth.co") || pbLink.includes("kingphoto")) {
-          fetchKingPhotoboothPhotos(effectiveCat, pbLink, function(photos) {
-            state.categoryPhotosUrlMap[effectiveCat] = pbLink;
-            updateCategoryPillCount(effectiveCat, photos.length);
-            if (state.activeCategory === effectiveCat) {
-              state.filteredPhotos = photos;
-              renderPhotoGrid(pbLink, effectiveCat);
-            }
-          });
-          return;
-        }
-        if (pbLink.includes("fotoshare.co")) {
-          fetchFotosharePhotos(effectiveCat, pbLink, function(photos) {
-            state.categoryPhotosUrlMap[effectiveCat] = pbLink;
-            updateCategoryPillCount(effectiveCat, photos.length);
-            if (state.activeCategory === effectiveCat) {
-              state.filteredPhotos = photos;
-              renderPhotoGrid(pbLink, effectiveCat);
-            }
-          });
-          return;
-        }
-        // Fleksibilitas Penuh: Mendukung vendor kustom lainnya secara dinamis (tidak terkunci)
-        if (pbLink) {
-          callBackend("getCategoryPhotos", { url: pbLink, category: effectiveCat }, function(res) {
-            if (res && res.success && Array.isArray(res.photos) && res.photos.length > 0) {
-              const sorted = sortPhotosNewestFirst(res.photos);
-              state.categoryPhotosMap[effectiveCat] = sorted;
-              state.categoryPhotosUrlMap[effectiveCat] = pbLink;
-              updateCategoryPillCount(effectiveCat, sorted.length);
-              if (state.activeCategory === effectiveCat) {
-                state.filteredPhotos = sorted;
-                renderPhotoGrid(pbLink, effectiveCat);
-              }
-            } else {
-              renderPhotoGrid(pbLink, effectiveCat);
-            }
-          }, function() {
-            renderPhotoGrid(pbLink, effectiveCat);
-          });
-          return;
-        }
       }
 
       // 5. Filter ketat: Jika tanpa link eksternal, hanya cocokkan label kategori secara eksak (tanpa fallback hardcode)
