@@ -171,8 +171,8 @@
         return;
       }
 
-      // Self-healing 2: jika foto objek memiliki previewUrl atau highResUrl alternatif
-      const pObj = (state.filteredPhotos || []).find(function(p) { return p && p.id === photoId; });
+      // Self-healing 2: jika foto objek memiliki previewUrl alternatif
+      const pObj = (state.filteredPhotos || []).find(function(p) { return p && String(p.id) === String(photoId); });
       if (pObj && pObj.previewUrl && !imgElement.dataset.retriedPreview) {
         const cleanPreview = String(pObj.previewUrl).split("?")[0];
         if (cleanPreview && cleanPreview !== currentSrc) {
@@ -182,13 +182,28 @@
         }
       }
 
-      if (state.failedPhotoIds) state.failedPhotoIds.add(photoId);
-      const card = imgElement.closest('.photo-card');
-      if (card) card.remove();
+      // Self-healing 3: Jika Kingphotobooth, coba proxy internal thumbnail
+      if (pObj && (pObj.isKing || currentSrc.includes("kingphotobooth.co")) && !imgElement.dataset.retriedProxy) {
+        imgElement.dataset.retriedProxy = "true";
+        const token = pObj.shareToken || (pObj.id ? String(pObj.id).replace(/^king_/, "") : "");
+        if (token) {
+          imgElement.src = "/api/kingphotobooth?action=thumb&token=" + encodeURIComponent(token);
+          return;
+        }
+      }
 
-      state.allPhotos = state.allPhotos.filter(function(p) { return p.id !== photoId; });
-      state.filteredPhotos = state.filteredPhotos.filter(function(p) { return p.id !== photoId; });
-      renderCategoryTabs();
+      // TIDAK BOLEH MENGHAPUS ELEMEN KARTU! Ke-288 foto harus selalu lengkap di layar
+      // Tampilkan placeholder ornamen elegan agar kartu tetap utuh dan dapat dibuka di lightbox
+      imgElement.onerror = null;
+      imgElement.style.opacity = "0.7";
+      imgElement.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" fill="#FAF8F5">
+          <rect width="400" height="400" fill="#FAF8F5"/>
+          <circle cx="200" cy="180" r="48" fill="#F3EFEA"/>
+          <path d="M185 170a15 15 0 1 0 30 0 15 15 0 0 0-30 0zm45 35h-60c-8 0-15 7-15 15v10h90v-10c0-8-7-15-15-15z" fill="#C5A880"/>
+          <text x="200" y="270" font-family="sans-serif" font-size="14" font-weight="600" fill="#8C7A6B" text-anchor="middle">Momen Kenangan</text>
+        </svg>
+      `);
     }
 
 

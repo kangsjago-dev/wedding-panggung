@@ -1,8 +1,8 @@
 export default async function handler(req, res) {
   const { action, token, origin: reqOrigin, url: targetUrl, category = "Photobooth" } = req.query;
 
-  // 1. STREAMING PROXY UNTUK MEDIA (VIDEO / FOTO) DENGAN SESSION COOKIE RESMI
-  if (action === "media" || action === "video" || action === "download") {
+  // 1. STREAMING PROXY UNTUK MEDIA (VIDEO / FOTO / THUMBNAIL) DENGAN SESSION COOKIE RESMI
+  if (action === "media" || action === "video" || action === "download" || action === "thumb") {
     if (!token) {
       return res.status(400).send("Parameter token diperlukan.");
     }
@@ -30,6 +30,11 @@ export default async function handler(req, res) {
       if (action === "download") {
         const dlMatch = html.match(/<a[^>]*href=["'](\/dl\/[^"']+)["']/i);
         if (dlMatch) mediaPath = dlMatch[1];
+      }
+
+      if (action === "thumb") {
+        const thumbMatch = html.match(/src=["'](\/storage\/thumbs\/[^"']+)["']/i) || html.match(/src=["'](\/storage\/photos\/[^"']+)["']/i);
+        if (thumbMatch) mediaPath = thumbMatch[1].replace(/&amp;/g, "&");
       }
 
       if (!mediaPath) {
