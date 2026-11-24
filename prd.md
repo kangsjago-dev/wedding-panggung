@@ -1,8 +1,8 @@
 # PRD - Wedding Photo Gallery & Live Slideshow Platform
 **Sistem**: Multi-Event Wedding Gallery with ERP Master Data Architecture  
-**Versi**: v4.38.0-PROD  
+**Versi**: v4.39.0-PROD  
 **Arsitektur Database**: Google Sheets ERP Master Table + Google Drive Live Photo Catalog  
-**Terakhir Diperbarui**: 23 November 2026
+**Terakhir Diperbarui**: 24 November 2026
 
 ---
 
@@ -330,3 +330,11 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
   - Menghapus batasan yang mengunci tautan photobooth pada modal admin, memastikan input box `#pbUrlInput` bebas menerima tautan vendor apapun secara dinamis tanpa tertahan oleh nilai URL lama.
   - Memperbarui engine sinkronisasi `syncFromSpreadsheetGViz` di `js/app.js` agar secara konsisten menyelaraskan elemen kategori photobooth di dalam memori dengan URL kustom aktif (`state.activeConfig.PHOTOBOOTH_URL`).
   - Memprioritaskan URL aktif langsung pada fungsi `applyCategoryFilter` dan `renderCategoryTabs` di `js/categories.js` serta menambahkan penanganan universal terhadap segala macam vendor photobooth eksternal.
+
+### 2.34 Isolasi Penuh & Kustomisasi Mandiri Tautan Lintas-Event (v4.39.0)
+- **Isolasi Penuh State Tautan Per-Event (`js/admin.js`)**:
+  - Memastikan saat berganti event di modal admin (`openAdminSettingsModal`, `handleSelectEventChange`), konfigurasi tautan Google Drive (`DRIVE_FOLDER_ID`), Photobooth (`PHOTOBOOTH_URL`), label tab galeri (`ALL_PHOTOS_LABEL`), dan kategori kustom diinisialisasi murni dari event yang dipilih tanpa mengambil atau mewarisi nilai dari event lain (*anti-state-leak*).
+  - Mengizinkan pengosongan atau perubahan tautan secara bebas pada setiap event tanpa adanya fallback paksa ke state global lama.
+- **Pembersihan Data Bawaan & Sinkronisasi Database Spreadsheet (`code.gs`)**:
+  - Mengeliminasi duplikasi folder ID Andre & Fayola pada event Tommy & Natasha di `setupTargetSpreadsheetDatabase` dan `syncAllEventsToSheet`.
+  - Menambahkan dukungan parameter `eventId` pada `testAndSyncDriveFolder` dan `saveAdminSettings` sehingga perubahan tautan Google Drive dan kategori langsung tercatat secara spesifik pada baris event bersangkutan di sheet master `Daftar_Acara` Google Sheets.

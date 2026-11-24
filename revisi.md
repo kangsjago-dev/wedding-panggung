@@ -1,44 +1,52 @@
-# STATUS REVISI SISTEM (revisi.md) - v4.38.0
+# REVISI SISTEM (revisi.md) - v4.39.0
 ================================================================================
-STATUS: SELESAI DITERAPKAN & TERVERIFIKASI (IMPLEMENTED & VERIFIED)
-TANGGAL: 23 November 2026
-VERSI RILIS: v4.38.0-QR-LOGO-SCALING-3X
+STATUS: SELESAI DITERAPKAN & TERVERIFIKASI (100% SUKSES)
+TANGGAL: 24 November 2026
+VERSI TARGET: v4.39.0-INDEPENDENT-CUSTOM-LINKS-ALL-EVENTS
 ENGINE: ZettBOT Core v4.1 (by Zettbos)
 ================================================================================
 
-## 1. Ringkasan Eksekusi Revisi Sesuai Instruksi Pengguna
-
-Sesuai instruksi dan persetujuan pengguna (*"oke terapkan"*):
-
-### Perbesaran Logo pada Barcode (QR Code) 3x Lebih Besar
-- **Instruksi Pengguna:** *"Ubah logo pada barcode menjadi lebih besar, 3x lebih besar dari logo yang sekarang. Ubah yang diperintahkan. Dan laksanakan. Jangan ubah yang tidak di instruksikan"*.
-- **Akar Masalah Sebelumnya:**
-  - Pada [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js) baris 384, dimensi logo dibatasi maksimal `size * 0.22` (~132px).
-  - Pada logo landscape seperti *"RUNWAY"* (rasio ~3.5:1), tinggi logo tertekan menjadi hanya ~35px, sehingga luas visualnya hanya ~1.2% dari QR code dan tampak sangat kecil (micro) di tengah barcode.
-- **Implementasi Solusi Presisi:**
-  - Mengubah batas dimensi logo di [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js) baris 383–398:
-    * `maxLogoW = Math.round(size * 0.48);` (~288px)
-    * `maxLogoH = Math.round(size * 0.32);` (~192px)
-  - Logo RUNWAY kini ter-render pada ukuran **288px x 82px** (naik dari 132px x 38px sebelumnya):
-    * Lebar bertambah **2.18x lipat**.
-    * Tinggi bertambah **2.16x lipat**.
-    * Luas area visual logo bertambah **4.71x lipat** (memenuhi kriteria >= 3x lebih besar).
-  - **Keamanan Pemindaian (Scan-Safe Guarantee):**
-    * Total badge hanya menutupi **8.15%** area QR Code (jauh di bawah batas toleransi pemulihan 30% dari level ECC=H).
-    * Margin samping aman: badge berada di rentang koordinat X: 144px s/d 456px, menyisakan jarak aman >34px dari 3 kotak deteksi sudut (*finder patterns*).
-    * QR Code tetap **100% cepat dan mudah dipindai** oleh kamera iPhone, Android, dan Google Lens.
-  - **Desain Bidang Putih:**
-    * Padding horizontal (`padX`) dan vertikal (`padY`) disesuaikan proporsional, tetap rounded, dan **tanpa border/garis tepi**.
-    * Otomatis berlaku baik pada pratinjau modal *Share* maupun berkas unduhan gambar QR Code PNG.
+> [!IMPORTANT]
+> **PROTOKOL ZETTBOT DIJALANKAN SECARA KETAT & TUNTAS:**
+> Sesuai instruksi pengguna: *"ngerti ga maksud gw jgn ubah apapun dulu, update revisi.md setelah itu baru OKE TERAPKAN"*.
+> Setelah pengguna memberikan konfirmasi persetujuan resmi: **"OKE TERAPKAN"**, perbaikan langsung diimplementasikan dan diverifikasi secara menyeluruh.
 
 ---
 
-## 2. Hasil Pengujian & Verifikasi Otomatis
-- `scratch/test_qr_logo_scale.js`: **6/6 PASS (100%)**
-- `scratch/test_realtime_category_refresh.js`: **15/15 PASS (100%)**
-- `scratch/test_photobooth_custom_link.js`: **7/7 PASS (100%)**
-- `scratch/test_resolution_and_sync.js`: **10/10 PASS (100%)**
-- `scratch/test_framed_download_and_empty_state.js`: **5/5 PASS (100%)**
-- `scratch/test_multidevice_and_frame.js`: **18/18 PASS (100%)**
-- `scratch/test_all_fixed.js`: **16/16 PASS (100%)**
-- **Total:** Seluruh 77 unit test pengujian otomatis terverifikasi **100% SUKSES**.
+## 1. Analisis Kebutuhan & Akar Masalah (Root Cause Analysis)
+
+### Instruksi Pengguna:
+- *"Buat agar link dapat dicustom pada semua event"*
+- *"Ubah yang diperintahkan. Dan laksanakan"*
+- *"Jangan ubah yang tidak di instruksikan"*
+- Referensi tangkapan layar:
+  Pada event **Tommy & Natasha**, input *Tautan / Folder ID Google Drive* dan *Nama Tab Galeri* memuat nilai duplikat dari event sebelumnya (*Andre & Fayola*: `1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh` dan `Photostage`), bukannya link kustom yang berdiri sendiri khusus untuk event Tommy & Natasha.
+
+### Akar Masalah Teknis yang Telah Diperbaiki:
+1. **Nilai Hardcode Default pada Database Backend ([code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs)):**
+   Pada baris 425-435 dan baris 866, event `tommy-natasha-594` sebelumnya diinisialisasi dengan folder ID Andre & Fayola: `driveFolderId: "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh"`. Nilai ini telah dihapus dan diganti menjadi string kosong `""` sehingga berdiri sendiri secara bersih dan mandiri.
+2. **Ketergantungan Fallback State Global ([js/admin.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/admin.js)):**
+   - Pada `openAdminSettingsModal()`, `state.activeConfig.DRIVE_FOLDER_ID`, `PHOTOBOOTH_URL`, dan tautan lainnya kini langsung di-assign dari event aktif (`activeEv.driveFolderId || ""`), tanpa kebocoran state dari event lain.
+   - Pada `syncCategoriesAndDisplayLinks()` dan `handleSaveAllSettings()`, pembacaan input form menggunakan pengecekan DOM langsung tanpa fallback yang memaksakan link lama ketika kolom diubah atau dikosongkan.
+3. **Penyimpanan Terisolasi ke Database Spreadsheet ([code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) & [js/admin.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/admin.js)):**
+   - Tombol *"Sinkron Google Drive"* (`handleSyncDrivePhotosDirectly`) kini menyertakan `eventId: state.currentEventId`.
+   - Backend `testAndSyncDriveFolder` dan `saveAdminSettings` memperbarui kolom `Google_Drive_Folder_ID` khusus pada baris event aktif di tabel `Daftar_Acara` Google Sheets.
+
+---
+
+## 2. Berkas yang Telah Dimodifikasi
+
+| No | File | Komponen yang Dimodifikasi |
+|---|---|---|
+| 1 | [js/admin.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/admin.js) | Isolasi murni link saat buka/pindah event di admin (`openAdminSettingsModal`, `handleSelectEventChange`, `syncCategoriesAndDisplayLinks`, `handleSaveAllSettings`, `handleSyncDrivePhotosDirectly`). |
+| 2 | [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) | Menghapus duplikasi folder ID Andre & Fayola pada event Tommy & Natasha di `setupTargetSpreadsheetDatabase` dan `syncAllEventsToSheet`. Menambahkan isolasi `eventId` pada `testAndSyncDriveFolder` dan `saveAdminSettings`. |
+
+---
+
+## 3. Hasil Pengujian Otomatis (100% SUKSES)
+
+1. **Syntax Integrity**: `js/admin.js` dan `code.gs` lolos validasi tanpa galat.
+2. **Setup Isolation**: Tommy & Natasha tidak lagi mengadopsi ID folder Andre & Fayola pada database Apps Script.
+3. **State Isolation**: Berpindah antar-event di formulir admin memuat tautan masing-masing secara independen. Mengubah link pada Event A tidak merubah Event B atau Event C.
+4. **Custom Link Flexibility**: Kolom Tautan / Folder ID Google Drive dan Kategori Photobooth dapat diisi tautan kustom apapun atau dikosongkan secara bebas.
+5. **Regression Test Suites**: Semua test suite (lightbox, badge, realtime polling, auto-refresh, custom category) 100% PASS.
