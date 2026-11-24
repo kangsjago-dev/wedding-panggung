@@ -1548,19 +1548,20 @@ function scanKingPhotoboothEvent(eventUrl, catName) {
 
     var photos = rawItems.map(function(it, idx) {
       var isVideo = Boolean(it.is_video);
-      var thumbUrl = it.thumb ? (origin + it.thumb) : "";
+      var cleanThumb = String(it.thumb || "").split("?")[0];
+      var thumbUrl = cleanThumb ? (origin + cleanThumb) : "";
       var photoUrl = "";
       var videoUrl = "";
       var downloadUrl = "";
 
-      if (it.thumb) {
+      if (cleanThumb) {
         if (isVideo) {
-          videoUrl = origin + it.thumb.replace("/storage/thumbs/", "/storage/photos/").replace(/\.jpg$/i, ".mp4");
-          photoUrl = videoUrl;
-          downloadUrl = origin + "/dl/" + it.id;
+          videoUrl = origin + cleanThumb.replace("/storage/thumbs/", "/storage/photos/").replace(/\.jpg$/i, ".mp4");
+          photoUrl = thumbUrl;
+          downloadUrl = origin + "/dl/" + it.id + ".mp4";
         } else {
-          photoUrl = origin + it.thumb.replace("/storage/thumbs/", "/storage/photos/");
-          downloadUrl = origin + "/dl/" + it.id;
+          photoUrl = thumbUrl;
+          downloadUrl = origin + "/dl/" + it.id + ".jpg";
         }
       }
 

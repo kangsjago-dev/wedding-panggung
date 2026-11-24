@@ -30,21 +30,22 @@ export default async function handler(req, res) {
     const rawItems = JSON.parse(match[1]);
     const photos = rawItems.map(function(it, idx) {
       const isVideo = Boolean(it.is_video);
-      const thumbUrl = it.thumb ? (origin + it.thumb) : "";
+      const cleanThumb = String(it.thumb || "").split("?")[0];
+      const thumbUrl = cleanThumb ? (origin + cleanThumb) : "";
       
-      // Path full resolusi
+      // Path resolusi publik stabil (tanpa parameter query kedaluwarsa)
       let photoUrl = "";
       let videoUrl = "";
       let downloadUrl = "";
 
-      if (it.thumb) {
+      if (cleanThumb) {
         if (isVideo) {
-          videoUrl = origin + it.thumb.replace("/storage/thumbs/", "/storage/photos/").replace(/\.jpg$/i, ".mp4");
-          photoUrl = videoUrl;
-          downloadUrl = origin + "/dl/" + it.id;
+          videoUrl = origin + cleanThumb.replace("/storage/thumbs/", "/storage/photos/").replace(/\.jpg$/i, ".mp4");
+          photoUrl = thumbUrl;
+          downloadUrl = origin + "/dl/" + it.id + ".mp4";
         } else {
-          photoUrl = origin + it.thumb.replace("/storage/thumbs/", "/storage/photos/");
-          downloadUrl = origin + "/dl/" + it.id;
+          photoUrl = thumbUrl;
+          downloadUrl = origin + "/dl/" + it.id + ".jpg";
         }
       }
 
