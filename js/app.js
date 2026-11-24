@@ -168,52 +168,9 @@ function handleGalleryResponse(response, isSilent) {
   }
 
   const mainLabel = state.allPhotosLabel || "Semua Foto";
-  const evId = state.currentEventId || "default";
-  let storedTab = "";
-  try {
-    storedTab = sessionStorage.getItem("WEDDING_ACTIVE_TAB_" + evId) || "";
-  } catch(e) {}
-  if (storedTab && (!state.activeCategory || state.activeCategory === "Semua Foto" || state.activeCategory === mainLabel)) {
-    if (storedTab !== "Semua Foto" && storedTab !== mainLabel) {
-      state.activeCategory = storedTab;
-    }
-  }
-
   if (!state.activeCategory || state.activeCategory === "Semua Foto" || state.activeCategory === mainLabel) {
     state.filteredPhotos = state.allPhotos;
     renderPhotoGrid();
-  } else {
-    // Tetap di kategori yang sedang dibuka (tidak terpental ke halaman utama)
-    if (typeof applyCategoryFilter === "function") {
-      applyCategoryFilter(state.activeCategory, null, true);
-    }
-  }
-}
-
-function triggerActiveCategoryRefresh(forceRefresh, isSilent) {
-  const mainLabel = state.allPhotosLabel || "Semua Foto";
-  const activeCat = state.activeCategory || mainLabel;
-  const icon = document.getElementById("refreshIconSvg");
-  if (!isSilent && icon) icon.classList.add("spin");
-
-  const stopSpin = function() {
-    if (!isSilent && icon) icon.classList.remove("spin");
-  };
-
-  if (!activeCat || activeCat === "Semua Foto" || activeCat === mainLabel) {
-    fetchGalleryData(forceRefresh, isSilent);
-    if (!isSilent) {
-      setTimeout(stopSpin, 1200);
-    }
-  } else {
-    // Sinkronkan kategori aktif saat ini (Photobooth atau kategori kustom)
-    if (typeof syncSingleCategory === "function") {
-      syncSingleCategory(activeCat, isSilent, function() {
-        stopSpin();
-      });
-    } else {
-      stopSpin();
-    }
   }
 }
 
@@ -249,7 +206,7 @@ function startLiveAutoRefresh() {
   state.autoRefreshTimer = setInterval(function() {
     syncFromSpreadsheetGViz(function() {
       if (!state.isAutoRefreshing) {
-        triggerActiveCategoryRefresh(false, true);
+        fetchGalleryData(false, true);
       }
     });
   }, state.autoRefreshIntervalMs);
@@ -336,7 +293,6 @@ function syncFromSpreadsheetGViz(callback) {
           const frameIdx = hRow.indexOf("Bingkai_URL") >= 0 ? hRow.indexOf("Bingkai_URL") : 8;
           const logoIdx = hRow.indexOf("Logo_Acara") >= 0 ? hRow.indexOf("Logo_Acara") : 9;
           const statusIdx = hRow.indexOf("Status") >= 0 ? hRow.indexOf("Status") : 10;
-          const allLabelIdx = hRow.indexOf("Label_Semua_Foto") >= 0 ? hRow.indexOf("Label_Semua_Foto") : 14;
 
           const sheetMap = state._sheetSettingsMap || {};
           let sheetEventsMap = {};
@@ -375,12 +331,11 @@ function syncFromSpreadsheetGViz(callback) {
               : ((rowCells[frameIdx] && String(rowCells[frameIdx].v || '').trim())
                   ? String(rowCells[frameIdx].v).trim()
                   : (sheetMap.FRAME_IMAGE_URL || state.activeConfig.FRAME_IMAGE_URL || ''));
-            // KUNCI ISOLASI MUTLAK: Tautan Photobooth hanya milik event yang bersangkutan (Anti-Kross 100%)
             const cleanPb = (extraEv.photoboothUrl && String(extraEv.photoboothUrl).trim())
               ? String(extraEv.photoboothUrl).trim()
               : ((rowCells[pbIdx] && String(rowCells[pbIdx].v || '').trim())
                   ? String(rowCells[pbIdx].v).trim()
-                  : '');
+                  : ((evId === (getActiveEventIdFromUrl() || state.currentEventId)) ? (sheetMap.PHOTOBOOTH_URL || '') : ''));
 
             if (Array.isArray(parsedCats)) {
               let foundPb = false;
@@ -403,22 +358,13 @@ function syncFromSpreadsheetGViz(callback) {
               }
             }
 
-            let cleanDrive = (extraEv.driveFolderId !== undefined)
-              ? String(extraEv.driveFolderId || '').trim()
-              : (rowCells[driveIdx] ? String(rowCells[driveIdx].v || '').trim() : '');
-
-            // Proteksi anti-duplikasi: Jika event bukan Andre & Fayola, jangan biarkan folder ID Andre & Fayola bocor masuk
-            if (evId !== "andre-fayola-281" && cleanDrive === "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh") {
-              cleanDrive = (extraEv.driveFolderId && extraEv.driveFolderId !== "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh") ? extraEv.driveFolderId : "";
-            }
-
             sheetEvs.push({
               id: evId,
               name: rowCells[nameIdx] ? String(rowCells[nameIdx].v || '').trim() : (extraEv.name || evId),
               date: cleanDate,
               venue: rowCells[venueIdx] ? String(rowCells[venueIdx].v || '').trim() : (extraEv.venue || ''),
               homeUrl: rowCells[urlIdx] ? String(rowCells[urlIdx].v || '').trim() : (extraEv.homeUrl || ''),
-              driveFolderId: cleanDrive,
+              driveFolderId: rowCells[driveIdx] ? String(rowCells[driveIdx].v || '').trim() : (extraEv.driveFolderId || ''),
               photoboothUrl: cleanPb,
               customCategories: Array.isArray(parsedCats) ? parsedCats : [],
               frameImageUrl: cleanFrame,
@@ -427,13 +373,7 @@ function syncFromSpreadsheetGViz(callback) {
               subtitle: extraEv.subtitle || sheetMap.SUBTITLE || "The Wedding Gallery & Precious Memories",
               welcomeMessage: extraEv.welcomeMessage || sheetMap.WELCOME_MESSAGE || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
               footerMessage: extraEv.footerMessage || sheetMap.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
-              allPhotosLabel: (extraEv.allPhotosLabel && extraEv.allPhotosLabel !== 'undefined' && String(extraEv.allPhotosLabel).trim())
-                ? String(extraEv.allPhotosLabel).trim()
-                : ((rowCells[allLabelIdx] && String(rowCells[allLabelIdx].v || '').trim())
-                    ? String(rowCells[allLabelIdx].v).trim()
-                    : ((evId === (getActiveEventIdFromUrl() || state.currentEventId || sheetMap.ACTIVE_EVENT_ID) && sheetMap.ALL_PHOTOS_LABEL)
-                        ? sheetMap.ALL_PHOTOS_LABEL
-                        : "Semua Foto")),
+              allPhotosLabel: extraEv.allPhotosLabel || sheetMap.ALL_PHOTOS_LABEL || "Semua Foto",
               status: rowCells[statusIdx] ? String(rowCells[statusIdx].v || 'Aktif').trim() : (extraEv.status || 'Aktif')
             });
           }
@@ -477,8 +417,7 @@ function syncFromSpreadsheetGViz(callback) {
         state.activeConfig.EVENT_LOGO_URL = matchedEv.logoUrl || "";
         state.activeConfig.logoUrl = matchedEv.logoUrl || "";
         state.activeConfig.DRIVE_FOLDER_ID = matchedEv.driveFolderId || "";
-        // Kunci isolasi Photobooth: Hanya ambil tautan milik event aktif (DILARANG mengambil sheetMap global event lain)
-        const activePbUrl = (matchedEv.photoboothUrl && String(matchedEv.photoboothUrl).trim()) || "";
+        const activePbUrl = matchedEv.photoboothUrl || sheetMap.PHOTOBOOTH_URL || state.activeConfig.PHOTOBOOTH_URL || "";
         state.activeConfig.PHOTOBOOTH_URL = activePbUrl;
         state.activeConfig.FRAME_IMAGE_URL = matchedEv.frameImageUrl || sheetMap.FRAME_IMAGE_URL || state.activeConfig.FRAME_IMAGE_URL || "";
         state.activeConfig.HOME_URL = matchedEv.homeUrl || (window.location.origin + window.location.pathname + "?event=" + encodeURIComponent(matchedEv.id));
@@ -505,12 +444,8 @@ function syncFromSpreadsheetGViz(callback) {
 
         populateConfigToUI(state.activeConfig);
         if (typeof renderCategoryTabs === "function") renderCategoryTabs();
-        
-        // Refresh latar belakang secara senyap (silent) untuk kategori aktif saat ini
-        if (state.activeCategory && state.activeCategory !== "Semua Foto" && state.activeCategory !== effectiveAllLabel) {
-          if (typeof syncSingleCategory === "function") {
-            syncSingleCategory(state.activeCategory, true);
-          } else if (typeof applyCategoryFilter === "function") {
+        if (state.activeCategory && state.activeCategory.toLowerCase().indexOf("photobooth") !== -1) {
+          if (typeof applyCategoryFilter === "function") {
             applyCategoryFilter(state.activeCategory, activePbUrl, true);
           }
         }
@@ -627,7 +562,6 @@ document.addEventListener("DOMContentLoaded", function() {
 // Explicit Global Window Bindings untuk Modul App Bootloader
 if (typeof window !== "undefined") {
   window.fetchGalleryData = fetchGalleryData;
-  window.triggerActiveCategoryRefresh = triggerActiveCategoryRefresh;
   window.syncFromSpreadsheetGViz = syncFromSpreadsheetGViz;
   window.startLiveAutoRefresh = startLiveAutoRefresh;
   window.showEventNotFoundScreen = showEventNotFoundScreen;

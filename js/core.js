@@ -107,17 +107,10 @@ function isGooglePhotosUrl(url) {
       state.lastLocalCategoryEditTime = Date.now();
       const inp = document.getElementById("cfgMainGalleryLabel");
       if (inp && inp.value !== newVal) inp.value = newVal;
-      const curEv = (state.events || []).find(function(e) { return e && e.id === state.currentEventId; });
-      if (curEv) {
-        curEv.allPhotosLabel = val;
-      }
       try {
         localStorage.setItem("WEDDING_ALL_PHOTOS_LABEL", val);
         const cacheKey = state.currentEventId ? ("WEDDING_EVENT_CFG_" + state.currentEventId) : "WEDDING_ACTIVE_EVENT_CFG";
         localStorage.setItem(cacheKey, JSON.stringify(state.activeConfig));
-        if (Array.isArray(state.events)) {
-          localStorage.setItem("WEDDING_EVENTS_REGISTRY", JSON.stringify(state.events));
-        }
       } catch (e) {}
       // Prefetch & update badge foto untuk setiap kategori yang disinkronkan
       (state.customCategories || []).forEach(function(cat) {
@@ -257,11 +250,7 @@ function isGooglePhotosUrl(url) {
 
     function isPhotoNew(photo) {
       if (!photo) return false;
-      if (photo.isNewlyAdded === true) return true;
-      if (photo.isNewlyAdded === false) return false;
-      // Untuk foto photobooth, lencana BARU murni dikontrol oleh deteksi delta (isNewlyAdded)
-      const isPb = Boolean(photo.isPhotobooth || (photo.category && photo.category.toLowerCase().includes("photobooth")));
-      if (isPb) return false;
+      if (photo.isNewlyAdded) return true;
       const ts = photo.timestamp || photo.detectedAt;
       if (!ts) return false;
       return (Date.now() - ts) < state.newBadgeDurationMs;
@@ -796,14 +785,9 @@ function isGooglePhotosUrl(url) {
       // 1. Jika video (kingphotobooth atau video lainnya)
       if (photo.isVideo && photo.videoUrl) return photo.videoUrl;
       
-      // 2. Jika Kingphotobooth: jika sudah memakai proxy internal, kembalikan URL utuh; jika direct URL luar, bersihkan query
-      if (photo.isKing || (photo.previewUrl && (photo.previewUrl.includes("kingphotobooth.co") || photo.previewUrl.includes("/api/kingphotobooth")))) {
-        if (photo.previewUrl && photo.previewUrl.startsWith("/api/")) {
-          return photo.previewUrl;
-        }
-        if (photo.previewUrl) {
-          return photo.previewUrl.split("?")[0];
-        }
+      // 2. Jika Kingphotobooth
+      if ((photo.isKing || (photo.previewUrl && photo.previewUrl.includes("kingphotobooth.co"))) && photo.previewUrl) {
+        return photo.previewUrl;
       }
 
       // 3. Jika Fotoshare: gunakan URL master resolusi tinggi asli (tanpa parameter resize)

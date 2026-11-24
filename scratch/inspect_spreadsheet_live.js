@@ -25,7 +25,7 @@ fetchGViz("Daftar_Acara", (err, json) => {
   if (json.table && json.table.rows) {
     json.table.rows.forEach((r, idx) => {
       const vals = (r.c || []).map(c => c ? c.v : '');
-      console.log(`Row ${idx + 1} (${vals[0]}): DriveFolder=`, vals[5], `PB=`, vals[6], `Label=`, vals[14]);
+      console.log(`Row ${idx + 1}:`, vals.slice(0, 5));
     });
   }
   
@@ -36,7 +36,9 @@ fetchGViz("Daftar_Acara", (err, json) => {
       json2.table.rows.forEach(r => {
         const k = r.c && r.c[0] ? r.c[0].v : '';
         const v = r.c && r.c[1] ? String(r.c[1].v).substring(0, 100) : '';
-        console.log(`Key: ${k} => ${v}`);
+        if (k === 'EVENTS' || k === 'ACTIVE_EVENT_ID' || k === 'EVENT_NAME') {
+          console.log(`Key: ${k} => ${v}`);
+        }
       });
     }
   });

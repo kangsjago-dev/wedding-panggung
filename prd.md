@@ -1,8 +1,8 @@
 # PRD - Wedding Photo Gallery & Live Slideshow Platform
 **Sistem**: Multi-Event Wedding Gallery with ERP Master Data Architecture  
-**Versi**: v4.41.0-PROD  
+**Versi**: v4.33.0-PROD  
 **Arsitektur Database**: Google Sheets ERP Master Table + Google Drive Live Photo Catalog  
-**Terakhir Diperbarui**: 24 November 2026
+**Terakhir Diperbarui**: 22 November 2026
 
 ---
 
@@ -330,27 +330,3 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
   - Menghapus batasan yang mengunci tautan photobooth pada modal admin, memastikan input box `#pbUrlInput` bebas menerima tautan vendor apapun secara dinamis tanpa tertahan oleh nilai URL lama.
   - Memperbarui engine sinkronisasi `syncFromSpreadsheetGViz` di `js/app.js` agar secara konsisten menyelaraskan elemen kategori photobooth di dalam memori dengan URL kustom aktif (`state.activeConfig.PHOTOBOOTH_URL`).
   - Memprioritaskan URL aktif langsung pada fungsi `applyCategoryFilter` dan `renderCategoryTabs` di `js/categories.js` serta menambahkan penanganan universal terhadap segala macam vendor photobooth eksternal.
-
-### 2.34 Isolasi Penuh & Kustomisasi Mandiri Tautan Lintas-Event (v4.39.0)
-- **Isolasi Penuh State Tautan Per-Event (`js/admin.js`)**:
-  - Memastikan saat berganti event di modal admin (`openAdminSettingsModal`, `handleSelectEventChange`), konfigurasi tautan Google Drive (`DRIVE_FOLDER_ID`), Photobooth (`PHOTOBOOTH_URL`), label tab galeri (`ALL_PHOTOS_LABEL`), dan kategori kustom diinisialisasi murni dari event yang dipilih tanpa mengambil atau mewarisi nilai dari event lain (*anti-state-leak*).
-  - Mengizinkan pengosongan atau perubahan tautan secara bebas pada setiap event tanpa adanya fallback paksa ke state global lama.
-- **Pembersihan Data Bawaan & Sinkronisasi Database Spreadsheet (`code.gs`)**:
-  - Mengeliminasi duplikasi folder ID Andre & Fayola pada event Tommy & Natasha di `setupTargetSpreadsheetDatabase` dan `syncAllEventsToSheet`.
-  - Menambahkan dukungan parameter `eventId` pada `testAndSyncDriveFolder` dan `saveAdminSettings` sehingga perubahan tautan Google Drive dan kategori langsung tercatat secara spesifik pada baris event bersangkutan di sheet master `Daftar_Acara` Google Sheets.
-
-### 2.35 Kustomisasi Mandiri Menu Kategori "Semua Foto" & Proteksi Anti-Leakage (v4.40.0)
-- **Kemandirian Penuh Tautan & Nama Tab Kategori "Semua Foto" (`setup.gs`, `js/app.js`, `js/core.js`)**:
-  - Menghapus folder ID hardcode `1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh` pada [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/setup.gs) (baris 63, 120, 360) sehingga event Tommy & Natasha dan event baru lainnya diinisialisasi bersih tanpa tautan folder peninggalan event lain.
-  - Menerapkan guard anti-leakage di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) untuk membersihkan folder ID Andre & Fayola jika terbaca dari baris legacy event non-Andre & Fayola.
-  - Memisahkan secara presisi penentuan `allPhotosLabel` per-event sehingga nilai global `Photostage` pada sheet `Pengaturan` tidak lagi bocor ke event lain.
-  - Mengikat pembaruan input "Nama Tab Galeri" (`handleAllPhotosLabelChange`) langsung ke objek event aktif di `state.events` pada [js/core.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/core.js).
-  - Memperbarui data live database Google Sheets via Apps Script API sehingga array `EVENTS` pada sheet `Pengaturan` bersih dan terisolasi 100%.
-
-### 2.36 Normalisasi Tautan Bersih & Pemulihan Preview Image Kategori Photobooth (v4.41.0)
-- **Normalisasi URL Thumbnail & Pratinjau Kingphotobooth (`api/kingphotobooth.js`, `js/categories.js`, `code.gs`)**:
-  - Mengeliminasi parameter query string tanda tangan sementara (`?e=...&s=...`) dari path gambar thumbnail Kingphotobooth yang sebelumnya memicu penolakan `HTTP 403 Forbidden: Akses media ditolak: tautan tidak valid atau sudah kedaluwarsa`.
-  - Menggunakan path statis publik bersih (`/storage/thumbs/...jpg`) yang terverifikasi menghasilkan respon `HTTP 200 OK (image/jpeg, 45 KB)` secara stabil tanpa memerlukan cookie maupun otentikasi.
-- **Proteksi Self-Healing pada Galat Gambar (`js/gallery.js`)**:
-  - Memperbarui fungsi `handlePhotoError`: sebelum menghapus kartu dari DOM, sistem secara otomatis melakukan sanitasi URL (stripping parameter query kedaluwarsa) dan mencoba memuat ulang preview alternatif.
-  - Menjamin seluruh foto Photobooth tampil utuh pada grid galeri dan lightbox modal.

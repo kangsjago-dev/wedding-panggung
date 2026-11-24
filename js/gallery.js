@@ -91,18 +91,12 @@
 
       state.filteredPhotos.forEach(function(photo, index) {
         const card = document.createElement("div");
-        card.className = "photo-card" + (photo.isVideo ? " is-video-card" : "");
+        card.className = "photo-card";
         card.setAttribute("data-photo-id", photo.id);
 
-        // Khusus photobooth & seluruh kategori: gunakan pencarian mutlak data-photo-id agar bebas swap / desinkronisasi
+        // Khusus photobooth & seluruh kategori: langsung buka lightbox seperti biasa!
         card.onclick = function() {
-          const photoId = card.getAttribute("data-photo-id");
-          const targetIdx = (state.filteredPhotos || []).findIndex(function(p) { return p && String(p.id) === String(photoId); });
-          if (targetIdx !== -1) {
-            openLightbox(targetIdx);
-          } else {
-            openLightbox(index);
-          }
+          openLightbox(index);
         };
 
         const photoIsNew = isPhotoNew(photo);
@@ -130,26 +124,14 @@
         else if (rot === 180) rotClass = " rotate-180";
         else if (rot === 270) rotClass = " rotate-270";
 
-        // Render preview media: Foto di galeri tidak bergerak (statis), dibuka di lightbox baru berputar
-        let mediaHtml = `
-          <img class="photo-img${rotClass}" 
-               src="${escapeHtml(photo.thumbnailUrl)}" 
-               alt="${escapeHtml(photo.name)}" 
-               loading="lazy" 
-               onerror="handlePhotoError(this, '${escapeHtml(photo.id)}');">
-        `;
-        if (photo.isVideo) {
-          mediaHtml += `
-            <div class="video-play-hint" aria-hidden="true" title="Klik untuk memutar video">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            </div>
-          `;
-        }
-
         card.innerHTML = `
           ${newBadgeHtml}
           ${videoBadgeHtml}
-          ${mediaHtml}
+          <img class="photo-img${rotClass}" 
+               src="${photo.thumbnailUrl}" 
+               alt="${escapeHtml(photo.name)}" 
+               loading="lazy" 
+               onerror="handlePhotoError(this, '${escapeHtml(photo.id)}');">
           <div class="photo-overlay">
             ${overlayBadge}
             <div class="photo-name">${escapeHtml(photo.name)}</div>
@@ -161,63 +143,13 @@
     }
 
     function handlePhotoError(imgElement, photoId) {
-      if (!imgElement) return;
+      if (state.failedPhotoIds) state.failedPhotoIds.add(photoId);
+      const card = imgElement.closest('.photo-card');
+      if (card) card.remove();
 
-      const currentSrc = imgElement.getAttribute("src") || imgElement.src || "";
-      const pObj = (state.filteredPhotos || []).find(function(p) { return p && String(p.id) === String(photoId); });
-
-      // Jika URL adalah endpoint proxy internal kita, JANGAN POTONG query parameter (?action=thumb...)
-      if (currentSrc.includes("/api/kingphotobooth")) {
-        // Coba retry sekali dengan parameter bersih token jika ada
-        if (!imgElement.dataset.retriedProxy && pObj) {
-          imgElement.dataset.retriedProxy = "true";
-          const token = pObj.shareToken || (pObj.id ? String(pObj.id).replace(/^king_/, "") : "");
-          if (token) {
-            imgElement.src = "/api/kingphotobooth?action=thumb&token=" + encodeURIComponent(token);
-            return;
-          }
-        }
-      } else {
-        // Self-healing 1: jika URL langsung luar memiliki query string kedaluwarsa (?e=... atau ?s=...), bersihkan dan muat ulang
-        if (currentSrc.includes("?") && !imgElement.dataset.retriedClean) {
-          imgElement.dataset.retriedClean = "true";
-          imgElement.src = currentSrc.split("?")[0];
-          return;
-        }
-
-        // Self-healing 2: jika foto objek memiliki previewUrl alternatif
-        if (pObj && pObj.previewUrl && !imgElement.dataset.retriedPreview) {
-          const cleanPreview = String(pObj.previewUrl).split("?")[0];
-          if (cleanPreview && cleanPreview !== currentSrc) {
-            imgElement.dataset.retriedPreview = "true";
-            imgElement.src = cleanPreview;
-            return;
-          }
-        }
-
-        // Self-healing 3: Jika Kingphotobooth, coba proxy internal thumbnail
-        if (pObj && (pObj.isKing || currentSrc.includes("kingphotobooth.co")) && !imgElement.dataset.retriedProxy) {
-          imgElement.dataset.retriedProxy = "true";
-          const token = pObj.shareToken || (pObj.id ? String(pObj.id).replace(/^king_/, "") : "");
-          if (token) {
-            imgElement.src = "/api/kingphotobooth?action=thumb&token=" + encodeURIComponent(token);
-            return;
-          }
-        }
-      }
-
-      // TIDAK BOLEH MENGHAPUS ELEMEN KARTU! Ke-288 foto harus selalu lengkap di layar
-      // Tampilkan placeholder ornamen elegan agar kartu tetap utuh dan dapat dibuka di lightbox
-      imgElement.onerror = null;
-      imgElement.style.opacity = "0.7";
-      imgElement.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
-        <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" fill="#FAF8F5">
-          <rect width="400" height="400" fill="#FAF8F5"/>
-          <circle cx="200" cy="180" r="48" fill="#F3EFEA"/>
-          <path d="M185 170a15 15 0 1 0 30 0 15 15 0 0 0-30 0zm45 35h-60c-8 0-15 7-15 15v10h90v-10c0-8-7-15-15-15z" fill="#C5A880"/>
-          <text x="200" y="270" font-family="sans-serif" font-size="14" font-weight="600" fill="#8C7A6B" text-anchor="middle">Momen Kenangan</text>
-        </svg>
-      `);
+      state.allPhotos = state.allPhotos.filter(function(p) { return p.id !== photoId; });
+      state.filteredPhotos = state.filteredPhotos.filter(function(p) { return p.id !== photoId; });
+      renderCategoryTabs();
     }
 
 
@@ -448,21 +380,21 @@
               // Jika getImageData terhalang CORS, gunakan ukuran dimensi natural
             }
 
-            // 3. Batas dimensi proporsional aman untuk QR Code ECC=H (logo 3x lebih besar dari sebelumnya)
-            const maxLogoW = Math.round(size * 0.48); // ~288px (maksimal lebar tengah aman)
-            const maxLogoH = Math.round(size * 0.32); // ~192px (maksimal tinggi tengah aman)
-            const scale = Math.min(maxLogoW / sw, maxLogoH / sh);
+            // 3. Batas dimensi proporsional aman untuk QR Code ECC=H (maksimal ~22% lebar QR)
+            const maxBadgeDim = Math.round(size * 0.22); // ~132px
+            const scale = Math.min(maxBadgeDim / sw, maxBadgeDim / sh);
             const dw = Math.round(sw * scale);
             const dh = Math.round(sh * scale);
 
-            // 4. Bidang putih solid dibuat RAPI dan PAS mengikuti objek logo (tanpa border sesuai instruksi)
-            const padX = Math.round(Math.max(8, dw * 0.04)); // padding horizontal yang rapi dan pas
-            const padY = Math.round(Math.max(6, dh * 0.06)); // padding vertikal yang ringkas
+            // 4. Bidang putih solid dibuat RAPI dan PAS mengikuti objek logo (tidak terlalu besar, terutama atas & bawah)
+            // Tanpa border (tanpa garis tepi) sesuai instruksi pengguna
+            const padX = 6; // padding horizontal yang rapi
+            const padY = 4; // padding vertikal yang ringkas (merapikan bagian atas dan bawah)
             const bw = dw + (padX * 2);
             const bh = dh + (padY * 2);
             const bx = Math.round((size - bw) / 2);
             const by = Math.round((size - bh) / 2);
-            const radius = Math.min(12, Math.round(Math.min(bw, bh) * 0.2));
+            const radius = Math.min(8, Math.round(Math.min(bw, bh) * 0.2));
 
             // Gambar bidang putih solid (TANPA BORDER)
             ctx.save();
@@ -1132,12 +1064,10 @@
       updateDownloadWidget(20, isVideo ? "Mengunduh Video Asli..." : "Mengunduh Foto Asli...", (photo.name || "Foto") + " • Mengambil dari server...", false);
       showToast(isVideo ? "⏳ Mengunduh video asli kualitas penuh..." : "⏳ Mengunduh foto asli kualitas penuh...");
 
-      // Jika URL adalah endpoint internal (misal: /api/kingphotobooth...), fetch langsung tanpa download-proxy
-      const isInternalApi = rawUrl.startsWith("/api/");
-      const fetchTargetUrl = isInternalApi ? rawUrl : ("/api/download-proxy?url=" + encodeURIComponent(rawUrl) + "&filename=" + encodeURIComponent(fileName));
+      const proxyUrl = "/api/download-proxy?url=" + encodeURIComponent(rawUrl) + "&filename=" + encodeURIComponent(fileName);
 
       // Ambil berkas fisik (Blob) ke memori perangkat sebelum menyimpan
-      fetch(fetchTargetUrl)
+      fetch(proxyUrl)
         .then(function(res) {
           if (!res.ok) throw new Error("Proxy HTTP " + res.status);
           updateDownloadWidget(65, "Menerima Berkas Asli...", (photo.name || "Foto") + " • Menyiapkan penyimpanan...", false);

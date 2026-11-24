@@ -260,22 +260,23 @@
       const activeEv = (state.events || []).find(function(e) { return e && e.id === state.currentEventId; });
       if (activeEv) {
         state.activeConfig.ACTIVE_EVENT_ID = activeEv.id;
-        state.activeConfig.EVENT_NAME = activeEv.name || "";
-        state.activeConfig.COUPLE_NAME = activeEv.name || "";
-        state.activeConfig.EVENT_DATE = activeEv.date || "";
-        state.activeConfig.EVENT_VENUE = activeEv.venue || "";
-        state.activeConfig.EVENT_LOGO_URL = activeEv.logoUrl || activeEv.EVENT_LOGO_URL || "";
+        state.activeConfig.EVENT_NAME = activeEv.name || state.activeConfig.EVENT_NAME;
+        state.activeConfig.COUPLE_NAME = activeEv.name || state.activeConfig.COUPLE_NAME;
+        state.activeConfig.EVENT_DATE = activeEv.date || state.activeConfig.EVENT_DATE;
+        state.activeConfig.EVENT_VENUE = activeEv.venue || state.activeConfig.EVENT_VENUE;
+        state.activeConfig.EVENT_LOGO_URL = activeEv.logoUrl || activeEv.EVENT_LOGO_URL || state.activeConfig.EVENT_LOGO_URL || GLOBAL_CONFIG.EVENT_LOGO_URL || "";
         state.activeConfig.logoUrl = state.activeConfig.EVENT_LOGO_URL;
-        state.activeConfig.SUBTITLE = activeEv.subtitle || "The Wedding Gallery & Precious Memories";
-        state.activeConfig.WELCOME_MESSAGE = activeEv.welcomeMessage || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.";
-        state.activeConfig.FOOTER_MESSAGE = activeEv.footerMessage || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.";
-        state.activeConfig.ALL_PHOTOS_LABEL = activeEv.allPhotosLabel || "Semua Foto";
-        state.allPhotosLabel = state.activeConfig.ALL_PHOTOS_LABEL;
-        state.activeConfig.DRIVE_FOLDER_ID = activeEv.driveFolderId || "";
-        state.activeConfig.PHOTOBOOTH_URL = activeEv.photoboothUrl || "";
-        state.activeConfig.FRAME_IMAGE_URL = activeEv.frameImageUrl || "";
-        state.activeConfig.CUSTOM_CATEGORIES = Array.isArray(activeEv.customCategories) ? activeEv.customCategories : [];
-        state.customCategories = state.activeConfig.CUSTOM_CATEGORIES;
+        if (activeEv.subtitle) state.activeConfig.SUBTITLE = activeEv.subtitle;
+        if (activeEv.welcomeMessage) state.activeConfig.WELCOME_MESSAGE = activeEv.welcomeMessage;
+        if (activeEv.footerMessage) state.activeConfig.FOOTER_MESSAGE = activeEv.footerMessage;
+        if (activeEv.allPhotosLabel) state.activeConfig.ALL_PHOTOS_LABEL = activeEv.allPhotosLabel;
+        if (activeEv.driveFolderId) state.activeConfig.DRIVE_FOLDER_ID = activeEv.driveFolderId;
+        if (activeEv.photoboothUrl) state.activeConfig.PHOTOBOOTH_URL = activeEv.photoboothUrl;
+        if (activeEv.frameImageUrl) state.activeConfig.FRAME_IMAGE_URL = activeEv.frameImageUrl;
+        if (Array.isArray(activeEv.customCategories) && activeEv.customCategories.length > 0) {
+          state.activeConfig.CUSTOM_CATEGORIES = activeEv.customCategories;
+          state.customCategories = activeEv.customCategories;
+        }
       }
 
       renderAdminEventsManager();
@@ -568,15 +569,15 @@
       state.customCategories = customCategoriesList;
       state.activeConfig.CUSTOM_CATEGORIES = customCategoriesList;
 
-      const driveInputEl = document.getElementById("cfgDriveFolderId");
-      const driveFolderVal = (driveInputEl && driveInputEl.value !== undefined) ? driveInputEl.value.trim() : (state.activeConfig.DRIVE_FOLDER_ID || "");
+      const driveFolderVal = (document.getElementById("cfgDriveFolderId")?.value || state.activeConfig.DRIVE_FOLDER_ID || "").trim();
       const allPhotosLabelVal = (document.getElementById("cfgMainGalleryLabel")?.value || document.getElementById("cfgAllPhotosLabel")?.value || state.allPhotosLabel || "Semua Foto").trim();
-      const frameInputEl = document.getElementById("cfgFrameImageUrl");
-      const frameUrlVal = (frameInputEl && frameInputEl.value !== undefined) ? frameInputEl.value.trim() : (state.activeConfig.FRAME_IMAGE_URL || "");
-      state.activeConfig.DRIVE_FOLDER_ID = driveFolderVal;
-      state.activeConfig.FRAME_IMAGE_URL = frameUrlVal;
-      state.activeConfig.ALL_PHOTOS_LABEL = allPhotosLabelVal;
-      state.allPhotosLabel = allPhotosLabelVal;
+      const frameUrlVal = (document.getElementById("cfgFrameImageUrl")?.value || state.activeConfig.FRAME_IMAGE_URL || "").trim();
+      if (driveFolderVal) state.activeConfig.DRIVE_FOLDER_ID = driveFolderVal;
+      if (frameUrlVal) state.activeConfig.FRAME_IMAGE_URL = frameUrlVal;
+      if (allPhotosLabelVal) {
+        state.activeConfig.ALL_PHOTOS_LABEL = allPhotosLabelVal;
+        state.allPhotosLabel = allPhotosLabelVal;
+      }
       if (typeof updateFrameStatusBadge === "function") {
         updateFrameStatusBadge(frameUrlVal);
       }
@@ -604,11 +605,13 @@
 
         if (curEv) {
           curEv.customCategories = customCategoriesList;
-          curEv.photoboothUrl = curPbUrl;
-          state.activeConfig.PHOTOBOOTH_URL = curPbUrl;
-          curEv.driveFolderId = driveFolderVal;
-          curEv.allPhotosLabel = allPhotosLabelVal;
-          curEv.frameImageUrl = frameUrlVal;
+          if (curPbUrl) {
+            curEv.photoboothUrl = curPbUrl;
+            state.activeConfig.PHOTOBOOTH_URL = curPbUrl;
+          }
+          if (driveFolderVal) curEv.driveFolderId = driveFolderVal;
+          if (allPhotosLabelVal) curEv.allPhotosLabel = allPhotosLabelVal;
+          if (frameUrlVal) curEv.frameImageUrl = frameUrlVal;
         }
       }
 
@@ -1586,9 +1589,7 @@
 
       try {
         const newApiUrl = (document.getElementById("cfgGasApiUrl")?.value || "").trim();
-        const driveFolderInput = (document.getElementById("cfgDriveFolderId") && document.getElementById("cfgDriveFolderId").value !== undefined)
-          ? document.getElementById("cfgDriveFolderId").value.trim()
-          : (state.activeConfig.DRIVE_FOLDER_ID || "");
+        const driveFolderInput = (document.getElementById("cfgDriveFolderId")?.value || state.activeConfig.DRIVE_FOLDER_ID || "").trim();
         const eventNameInput = (document.getElementById("cfgCoupleName")?.value || "").trim();
         const eventDateInput = (document.getElementById("cfgEventDate")?.value || "").trim();
         const eventVenueInput = (document.getElementById("cfgEventVenue")?.value || "").trim();
@@ -1666,7 +1667,7 @@
         const pbItem = customCategoriesList.find(function(c) {
           return c && (c.isPhotobooth === true || c.id === "special_photobooth" || String(c.name || "").trim().toLowerCase().includes("photobooth"));
         });
-        const pbUrlVal = pbItem ? String(pbItem.url || "").trim() : "";
+        const pbUrlVal = pbItem ? String(pbItem.url || "").trim() : (state.activeConfig.PHOTOBOOTH_URL || "");
 
         const curEvObject = (Array.isArray(state.events) ? state.events.find(function(e) { return e && e.id === state.currentEventId; }) : null) || {};
 
@@ -1878,8 +1879,7 @@
       callBackend("testAndSyncDriveFolder", {
         pin: getEffectiveAdminPin(),
         folderId: driveInput,
-        allPhotosLabel: allPhotosLabel,
-        eventId: state.currentEventId
+        allPhotosLabel: allPhotosLabel
       }, function(res) {
         if (btn) btn.disabled = false;
         if (btnText) btnText.innerText = "🔄 Sinkron Google Drive";
@@ -1889,19 +1889,9 @@
           state.activeConfig.DRIVE_FOLDER_ID = driveInput;
           state.activeConfig.ALL_PHOTOS_LABEL = allPhotosLabel;
           state.allPhotosLabel = allPhotosLabel;
-          if (state.currentEventId && Array.isArray(state.events)) {
-            const curEv = state.events.find(function(e) { return e && e.id === state.currentEventId; });
-            if (curEv) {
-              curEv.driveFolderId = driveInput;
-              curEv.allPhotosLabel = allPhotosLabel;
-            }
-          }
           try {
             localStorage.setItem("WEDDING_ALL_PHOTOS_LABEL", allPhotosLabel);
             localStorage.setItem("WEDDING_SAVED_CONFIG", JSON.stringify(state.activeConfig));
-            if (Array.isArray(state.events)) {
-              localStorage.setItem("WEDDING_EVENTS_REGISTRY", JSON.stringify(state.events));
-            }
           } catch(e) {}
           renderCategoryTabs();
           showToast("✓ " + (res.message || "Foto Google Drive berhasil disinkronkan ke galeri!"));
