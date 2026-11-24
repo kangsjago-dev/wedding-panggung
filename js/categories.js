@@ -3,7 +3,7 @@
    Tautan Eksternal: Google Photos, Fotoshare, Kingphotobooth, Drive & Filter Tabs
    ========================================================================== */
 
-    function syncSingleCategory(categoryName) {
+    function syncSingleCategory(categoryName, isSilent, callback) {
       if (!categoryName) return;
 
       // Ambil nilai terbaru langsung dari DOM form admin jika sedang dibuka
@@ -19,21 +19,22 @@
       }
       state.lastLocalCategoryEditTime = Date.now();
 
-      showToast("🔄 Menyinkronkan kategori " + categoryName + "...");
-      
-      // Hapus cache foto & URL kategori agar dimuat ulang dari tautan terbaru
-      if (state.categoryPhotosMap) {
-        delete state.categoryPhotosMap[categoryName];
+      if (!isSilent) {
+        showToast("🔄 Menyinkronkan kategori " + categoryName + "...");
+        // Hapus cache foto & URL kategori HANYA jika sinkronisasi manual dipicu oleh pengguna
+        if (state.categoryPhotosMap) {
+          delete state.categoryPhotosMap[categoryName];
+        }
+        if (state.categoryPhotosUrlMap) {
+          delete state.categoryPhotosUrlMap[categoryName];
+        }
+        try {
+          localStorage.removeItem("WEDDING_CAT_COUNT_" + categoryName);
+        } catch (e) {}
       }
-      if (state.categoryPhotosUrlMap) {
-        delete state.categoryPhotosUrlMap[categoryName];
-      }
-      try {
-        localStorage.removeItem("WEDDING_CAT_COUNT_" + categoryName);
-      } catch (e) {}
 
-      // Jika kategori yang sedang aktif disinkronkan, segera bersihkan grid dari foto lama
-      if (state.activeCategory === categoryName) {
+      // Jika kategori yang sedang aktif disinkronkan secara manual (bukan silent), bersihkan grid
+      if (!isSilent && state.activeCategory === categoryName) {
         state.filteredPhotos = [];
         const grid = document.getElementById("photosGrid");
         if (grid) {
@@ -97,7 +98,8 @@
 
       const mainLabel = state.allPhotosLabel || "Semua Foto";
       if (categoryName === mainLabel || categoryName === "Semua Foto") {
-        fetchGalleryData(true, false);
+        fetchGalleryData(!isSilent, isSilent);
+        if (typeof callback === "function") callback(state.allPhotos);
         return;
       }
 
@@ -112,7 +114,8 @@
             state.filteredPhotos = photos;
             renderPhotoGrid(targetUrl, categoryName);
           }
-          showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
+          if (!isSilent) showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
+          if (typeof callback === "function") callback(photos);
         });
         return;
       } else if (targetUrl && (targetUrl.includes("kingphotobooth.co") || targetUrl.includes("kingphoto"))) {
@@ -123,7 +126,8 @@
             state.filteredPhotos = photos;
             renderPhotoGrid(targetUrl, categoryName);
           }
-          showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " media)!");
+          if (!isSilent) showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " media)!");
+          if (typeof callback === "function") callback(photos);
         });
         return;
       } else if (targetUrl && targetUrl.includes("fotoshare.co")) {
@@ -134,7 +138,8 @@
             state.filteredPhotos = photos;
             renderPhotoGrid(targetUrl, categoryName);
           }
-          showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
+          if (!isSilent) showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
+          if (typeof callback === "function") callback(photos);
         });
         return;
       } else if (driveFolderId) {
@@ -145,7 +150,8 @@
             state.filteredPhotos = photos;
             renderPhotoGrid(targetUrl, categoryName);
           }
-          showToast("✓ Kategori " + categoryName + " berhasil disinkronkan!");
+          if (!isSilent) showToast("✓ Kategori " + categoryName + " berhasil disinkronkan!");
+          if (typeof callback === "function") callback(photos);
         });
         return;
       } else if (isPbCat) {
@@ -158,7 +164,8 @@
               state.filteredPhotos = photos;
               renderPhotoGrid(pbLink, categoryName);
             }
-            showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
+            if (!isSilent) showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
+            if (typeof callback === "function") callback(photos);
           });
         } else if (extractDriveFolderId(pbLink)) {
           fetchDriveCategoryPhotos(categoryName, extractDriveFolderId(pbLink), function(photos) {
@@ -168,7 +175,8 @@
               state.filteredPhotos = photos;
               renderPhotoGrid(pbLink, categoryName);
             }
-            showToast("✓ Kategori " + categoryName + " berhasil disinkronkan!");
+            if (!isSilent) showToast("✓ Kategori " + categoryName + " berhasil disinkronkan!");
+            if (typeof callback === "function") callback(photos);
           });
         } else if (pbLink.includes("kingphotobooth.co") || pbLink.includes("kingphoto")) {
           fetchKingPhotoboothPhotos(categoryName, pbLink, function(photos) {
@@ -178,7 +186,8 @@
               state.filteredPhotos = photos;
               renderPhotoGrid(pbLink, categoryName);
             }
-            showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " media)!");
+            if (!isSilent) showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " media)!");
+            if (typeof callback === "function") callback(photos);
           });
         } else if (pbLink.includes("fotoshare.co")) {
           fetchFotosharePhotos(categoryName, pbLink, function(photos) {
@@ -188,7 +197,8 @@
               state.filteredPhotos = photos;
               renderPhotoGrid(pbLink, categoryName);
             }
-            showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
+            if (!isSilent) showToast("✓ Kategori " + categoryName + " berhasil disinkronkan (" + photos.length + " foto)!");
+            if (typeof callback === "function") callback(photos);
           });
         }
         return;
@@ -206,7 +216,8 @@
         state.filteredPhotos = matched;
         renderPhotoGrid(targetUrl, categoryName);
       }
-      showToast("✓ Kategori " + categoryName + " disinkronkan!");
+      if (!isSilent) showToast("✓ Kategori " + categoryName + " disinkronkan!");
+      if (typeof callback === "function") callback(matched);
     }
 
     function syncActiveCategory() {
@@ -257,6 +268,18 @@
       }
 
       state.categories = uniqueCategories;
+
+      // Pertahankan tab aktif dari sesi sebelumnya (Anti-Reset saat refresh)
+      const evId = state.currentEventId || "default";
+      let storedTab = "";
+      try {
+        storedTab = sessionStorage.getItem("WEDDING_ACTIVE_TAB_" + evId) || "";
+      } catch (e) {}
+      if (storedTab && (!state.activeCategory || state.activeCategory === "Semua Foto" || state.activeCategory === mainLabel)) {
+        if (storedTab !== "Semua Foto" && storedTab !== mainLabel && uniqueCategories.includes(storedTab)) {
+          state.activeCategory = storedTab;
+        }
+      }
 
       state.categories.forEach(function(cat) {
         let targetUrl = "";
@@ -403,6 +426,75 @@
       }
     }
 
+    function applyNewBadgeDeltaDetection(cat, photos) {
+      if (!Array.isArray(photos) || photos.length === 0) return photos;
+      const isPb = Boolean(
+        (cat && cat.toLowerCase().includes("photobooth")) ||
+        (state.activeCategory && state.activeCategory.toLowerCase().includes("photobooth")) ||
+        (Array.isArray(state.customCategories) && state.customCategories.some(function(c) {
+          return c && (c.isPhotobooth || c.id === "special_photobooth") && String(c.name || "").trim().toLowerCase() === String(cat || "").trim().toLowerCase();
+        }))
+      );
+
+      if (!isPb) return photos;
+
+      const evId = state.currentEventId || "default";
+      const catKey = (cat || "pb").toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const storageKey = "SEEN_PB_IDS_" + evId + "_" + catKey;
+      let seenIds = [];
+      let isInitial = false;
+
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (raw) {
+          seenIds = JSON.parse(raw);
+          if (!Array.isArray(seenIds)) seenIds = [];
+        } else {
+          isInitial = true;
+        }
+      } catch (e) {
+        isInitial = true;
+      }
+
+      // Kunjungan pertama (Baseline): Simpan semua ID, jangan tandai foto lama sebagai baru
+      if (isInitial || seenIds.length === 0) {
+        const allIds = photos.map(function(p) { return String(p.id); });
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(allIds));
+        } catch (e) {}
+        photos.forEach(function(p) {
+          p.isNewlyAdded = false;
+        });
+        return photos;
+      }
+
+      // Deteksi delta penambahan: Hanya foto yang ID-nya belum pernah ada di seenIds yang ditandai BARU
+      const seenSet = {};
+      seenIds.forEach(function(id) { seenSet[String(id)] = true; });
+      let newlyFound = 0;
+      const updatedIds = [].concat(seenIds);
+
+      photos.forEach(function(p) {
+        const idStr = String(p.id);
+        if (!seenSet[idStr]) {
+          p.isNewlyAdded = true;
+          p.detectedAt = Date.now();
+          newlyFound++;
+          updatedIds.push(idStr);
+        } else {
+          p.isNewlyAdded = false;
+        }
+      });
+
+      if (newlyFound > 0) {
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(updatedIds));
+        } catch (e) {}
+      }
+
+      return photos;
+    }
+
     function fetchGooglePhotos(cat, url, callback) {
       if (!state.categoryPhotosMap) state.categoryPhotosMap = {};
       if (state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0 && state.categoryPhotosUrlMap && state.categoryPhotosUrlMap[cat] === url) {
@@ -424,8 +516,9 @@
               );
             }))
           );
+          const stableToken = cleanBase ? (cleanBase.split('/').pop().replace(/[^a-zA-Z0-9_-]/g, '').slice(-20)) : String(idx + 1);
           return {
-            id: (item.id || ("gp_" + (idx + 1))),
+            id: (item.id || ("gp_" + stableToken)),
             name: (cat || "Photobooth") + " " + (idx + 1),
             thumbnailUrl: cleanBase ? (cleanBase + "=w500-h500-c") : base,
             previewUrl: cleanBase ? (cleanBase + "=w1600-h1200") : base,
@@ -456,11 +549,12 @@
         .then(function(data) {
           if (data && data.success && Array.isArray(data.photos) && data.photos.length > 0) {
             const sorted = sortPhotosNewestFirst(data.photos);
-            state.categoryPhotosMap[cat] = sorted;
+            const processed = applyNewBadgeDeltaDetection(cat, sorted);
+            state.categoryPhotosMap[cat] = processed;
             if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
             state.categoryPhotosUrlMap[cat] = url;
-            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(sorted.length)); } catch(e) {}
-            if (callback) callback(sorted);
+            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(processed.length)); } catch(e) {}
+            if (callback) callback(processed);
             return;
           }
           throw new Error("No photos from API");
@@ -471,11 +565,12 @@
           callBackend("getCategoryPhotos", { url: url, category: cat }, function(res) {
             if (res && res.success && Array.isArray(res.photos) && res.photos.length > 0) {
               const sorted = sortPhotosNewestFirst(res.photos);
-              state.categoryPhotosMap[cat] = sorted;
+              const processed = applyNewBadgeDeltaDetection(cat, sorted);
+              state.categoryPhotosMap[cat] = processed;
               if (!state.categoryPhotosUrlMap) state.categoryPhotosUrlMap = {};
               state.categoryPhotosUrlMap[cat] = url;
-              try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(sorted.length)); } catch(e) {}
-              if (callback) callback(sorted);
+              try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(processed.length)); } catch(e) {}
+              if (callback) callback(processed);
               return;
             }
             if (callback) callback(state.categoryPhotosMap[cat] || []);
@@ -493,19 +588,20 @@
 
       return (rawList || []).map(function(it, idx) {
         const isVideo = Boolean(it.is_video);
-        const thumbUrl = it.thumb ? (origin + it.thumb) : "";
+        const cleanThumb = String(it.thumb || "").split("?")[0];
+        const thumbUrl = cleanThumb ? (origin + cleanThumb) : "";
         let photoUrl = "";
         let videoUrl = "";
         let downloadUrl = "";
 
-        if (it.thumb) {
+        if (cleanThumb) {
           if (isVideo) {
-            videoUrl = origin + it.thumb.replace("/storage/thumbs/", "/storage/photos/").replace(/\.jpg$/i, ".mp4");
-            photoUrl = videoUrl;
-            downloadUrl = origin + "/dl/" + it.id;
+            videoUrl = origin + cleanThumb.replace("/storage/thumbs/", "/storage/photos/").replace(/\.jpg$/i, ".mp4");
+            photoUrl = thumbUrl;
+            downloadUrl = origin + "/dl/" + it.id + ".mp4";
           } else {
-            photoUrl = origin + it.thumb.replace("/storage/thumbs/", "/storage/photos/");
-            downloadUrl = origin + "/dl/" + it.id;
+            photoUrl = thumbUrl;
+            downloadUrl = origin + "/dl/" + it.id + ".jpg";
           }
         }
 
@@ -536,6 +632,11 @@
       }
 
       function fallbackKing() {
+        // PERTAHANKAN DATA: Jangan pernah mengosongkan cache jika sudah ada data sebelumnya
+        if (state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0) {
+          if (callback) callback(state.categoryPhotosMap[cat]);
+          return;
+        }
         state.categoryPhotosMap[cat] = [];
         state.categoryPhotosUrlMap[cat] = url;
         if (callback) callback([]);
@@ -560,10 +661,11 @@
         .then(function(data) {
           if (data && data.success && Array.isArray(data.photos) && data.photos.length > 0) {
             const sorted = sortPhotosNewestFirst(data.photos);
-            state.categoryPhotosMap[cat] = sorted;
+            const processed = applyNewBadgeDeltaDetection(cat, sorted);
+            state.categoryPhotosMap[cat] = processed;
             state.categoryPhotosUrlMap[cat] = url;
-            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(sorted.length)); } catch (e) {}
-            if (callback) callback(sorted);
+            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(processed.length)); } catch (e) {}
+            if (callback) callback(processed);
             return;
           }
           throw new Error("No photos from Kingphotobooth API");
@@ -574,10 +676,11 @@
           callBackend("getCategoryPhotos", { url: url, category: cat }, function(res) {
             if (res && res.success && Array.isArray(res.photos) && res.photos.length > 0) {
               const sorted = sortPhotosNewestFirst(res.photos);
-              state.categoryPhotosMap[cat] = sorted;
+              const processed = applyNewBadgeDeltaDetection(cat, sorted);
+              state.categoryPhotosMap[cat] = processed;
               state.categoryPhotosUrlMap[cat] = url;
-              try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(sorted.length)); } catch (e) {}
-              if (callback) callback(sorted);
+              try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(processed.length)); } catch (e) {}
+              if (callback) callback(processed);
               return;
             }
             fallbackKing();
@@ -659,10 +762,11 @@
         callBackend("getCategoryPhotos", { url: url, category: cat }, function(res) {
           if (res && res.success && Array.isArray(res.photos) && res.photos.length > 0) {
             const sorted = sortPhotosNewestFirst(res.photos);
-            state.categoryPhotosMap[cat] = sorted;
+            const processed = applyNewBadgeDeltaDetection(cat, sorted);
+            state.categoryPhotosMap[cat] = processed;
             state.categoryPhotosUrlMap[cat] = url;
-            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(sorted.length)); } catch (e) {}
-            if (callback) callback(sorted);
+            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(processed.length)); } catch (e) {}
+            if (callback) callback(processed);
             return;
           }
           state.categoryPhotosMap[cat] = [];
@@ -694,10 +798,11 @@
         .then(function(data) {
           if (data && data.success && Array.isArray(data.photos) && data.photos.length > 0) {
             const sorted = sortPhotosNewestFirst(data.photos);
-            state.categoryPhotosMap[cat] = sorted;
+            const processed = applyNewBadgeDeltaDetection(cat, sorted);
+            state.categoryPhotosMap[cat] = processed;
             state.categoryPhotosUrlMap[cat] = url;
-            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(sorted.length)); } catch (e) {}
-            if (callback) callback(sorted);
+            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(processed.length)); } catch (e) {}
+            if (callback) callback(processed);
             return;
           }
           throw new Error("No photos from Fotoshare API");
@@ -712,11 +817,12 @@
             })
             .then(function(htmlText) {
               const list = sortPhotosNewestFirst(parseFotoshareHtml(htmlText));
-              if (list.length > 0) {
-                state.categoryPhotosMap[cat] = list;
+              const processed = applyNewBadgeDeltaDetection(cat, list);
+              if (processed.length > 0) {
+                state.categoryPhotosMap[cat] = processed;
                 state.categoryPhotosUrlMap[cat] = url;
-                try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(list.length)); } catch (e) {}
-                if (callback) callback(list);
+                try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(processed.length)); } catch (e) {}
+                if (callback) callback(processed);
                 return;
               }
               fallbackFotoshare();
@@ -833,10 +939,11 @@
         .then(function(data) {
           if (data && data.success && Array.isArray(data.photos)) {
             const sorted = sortPhotosNewestFirst(data.photos);
-            state.categoryPhotosMap[cat] = sorted;
+            const processed = applyNewBadgeDeltaDetection(cat, sorted);
+            state.categoryPhotosMap[cat] = processed;
             state.categoryPhotosUrlMap[cat] = driveKey;
-            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(sorted.length)); } catch (e) {}
-            if (callback) callback(sorted);
+            try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(processed.length)); } catch (e) {}
+            if (callback) callback(processed);
             return;
           }
           throw new Error("No photos from drive-folder API");
@@ -847,10 +954,11 @@
           callBackend("getCategoryPhotos", { folderId: driveFolderId, category: cat }, function(res) {
             if (res && res.success && Array.isArray(res.photos)) {
               const sorted = sortPhotosNewestFirst(res.photos);
-              state.categoryPhotosMap[cat] = sorted;
+              const processed = applyNewBadgeDeltaDetection(cat, sorted);
+              state.categoryPhotosMap[cat] = processed;
               state.categoryPhotosUrlMap[cat] = driveKey;
-              try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(sorted.length)); } catch (e) {}
-              if (callback) callback(sorted);
+              try { localStorage.setItem("WEDDING_CAT_COUNT_" + cat, String(processed.length)); } catch (e) {}
+              if (callback) callback(processed);
             } else {
               fallbackDrive();
             }
@@ -862,6 +970,10 @@
 
     function selectCategory(category, targetUrl) {
       state.activeCategory = category;
+      try {
+        const evId = state.currentEventId || "default";
+        sessionStorage.setItem("WEDDING_ACTIVE_TAB_" + evId, category);
+      } catch (e) {}
 
       document.querySelectorAll(".filter-pill").forEach(function(el) {
         if (el.getAttribute("data-category") === category) {
@@ -965,9 +1077,11 @@
         }
       }
 
-      // Bersihkan foto kategori lama seketika dari memori & DOM agar gambar sebelumnya tidak bocor
-      state.filteredPhotos = [];
-      showGridSkeleton();
+      // Bersihkan foto kategori lama seketika dari memori & DOM hanya jika bukan silent refresh
+      if (!isSilent) {
+        state.filteredPhotos = [];
+        showGridSkeleton();
+      }
 
       // 2. Jika tautan Google Photos (album bersama atau photos.app.goo.gl)
       if (isGooglePhotosUrl(targetUrl)) {

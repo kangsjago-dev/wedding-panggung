@@ -427,7 +427,7 @@ function setupTargetSpreadsheetDatabase() {
         "Rabu, 25 November 2026",
         "UpperHills Convention Hall, Makassar",
         "https://gallery.runway.my.id/?event=tommy-natasha-594",
-        "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh",
+        "",
         "", "",
         "",
         "",
@@ -863,7 +863,7 @@ function syncAllEventsToSheet() {
       date: "Rabu, 25 November 2026",
       venue: "UpperHills Convention Hall, Makassar",
       homeUrl: "https://gallery.runway.my.id/?event=tommy-natasha-594",
-      driveFolderId: "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh",
+      driveFolderId: "",
       photoboothUrl: "", customCategories: [],
       frameImageUrl: "",
       logoUrl: "",
@@ -1075,7 +1075,8 @@ function handleApiRequest(e) {
     } else if (action === "testAndSyncDriveFolder" || action === "syncDriveFolder") {
       var targetFolder = params.folderId || (params.config && params.config.DRIVE_FOLDER_ID) || params.DRIVE_FOLDER_ID;
       var allLabel = params.allPhotosLabel || (params.config && params.config.ALL_PHOTOS_LABEL) || params.ALL_PHOTOS_LABEL;
-      return testAndSyncDriveFolder(params.pin, targetFolder, allLabel);
+      var targetEventId = params.eventId || params.event || (params.config && params.config.ACTIVE_EVENT_ID);
+      return testAndSyncDriveFolder(params.pin, targetFolder, allLabel, targetEventId);
     } else if (action === "saveAdminSettings") {
       return saveAdminSettings(params.pin, params.config || params);
     } else if (action === "setupDatabase" || action === "setupSpreadsheetDatabase" || action === "setupDemo" || action === "setupDemoSystem" || action === "setupTargetSpreadsheetDatabase" || action === "syncAllDatabaseToSheet" || action === "populateAllDatabase" || action === "syncDaftarFoto") {
@@ -1547,19 +1548,20 @@ function scanKingPhotoboothEvent(eventUrl, catName) {
 
     var photos = rawItems.map(function(it, idx) {
       var isVideo = Boolean(it.is_video);
-      var thumbUrl = it.thumb ? (origin + it.thumb) : "";
+      var cleanThumb = String(it.thumb || "").split("?")[0];
+      var thumbUrl = cleanThumb ? (origin + cleanThumb) : "";
       var photoUrl = "";
       var videoUrl = "";
       var downloadUrl = "";
 
-      if (it.thumb) {
+      if (cleanThumb) {
         if (isVideo) {
-          videoUrl = origin + it.thumb.replace("/storage/thumbs/", "/storage/photos/").replace(/\.jpg$/i, ".mp4");
-          photoUrl = videoUrl;
-          downloadUrl = origin + "/dl/" + it.id;
+          videoUrl = origin + cleanThumb.replace("/storage/thumbs/", "/storage/photos/").replace(/\.jpg$/i, ".mp4");
+          photoUrl = thumbUrl;
+          downloadUrl = origin + "/dl/" + it.id + ".mp4";
         } else {
-          photoUrl = origin + it.thumb.replace("/storage/thumbs/", "/storage/photos/");
-          downloadUrl = origin + "/dl/" + it.id;
+          photoUrl = thumbUrl;
+          downloadUrl = origin + "/dl/" + it.id + ".jpg";
         }
       }
 
@@ -2253,7 +2255,7 @@ function getImageBase64(fileIdOrUrl) {
 /**
  * Sinkronisasi & Uji Coba ID Folder Google Drive (Tanpa menulis ke sheet Daftar_Foto)
  */
-function testAndSyncDriveFolder(pin, folderId, allPhotosLabel) {
+function testAndSyncDriveFolder(pin, folderId, allPhotosLabel, eventId) {
   var loginResult = adminLogin(pin);
   if (!loginResult.success) {
     return { success: false, message: "Akses ditolak. PIN salah atau sesi kedaluwarsa." };
@@ -2274,8 +2276,9 @@ function testAndSyncDriveFolder(pin, folderId, allPhotosLabel) {
     props.setProperty("DRIVE_FOLDER_ID", cleanId);
 
     var sheetPayload = { DRIVE_FOLDER_ID: cleanId };
+    var cleanLabel = "";
     if (allPhotosLabel && String(allPhotosLabel).trim()) {
-      var cleanLabel = String(allPhotosLabel).trim();
+      cleanLabel = String(allPhotosLabel).trim();
       props.setProperty("ALL_PHOTOS_LABEL", cleanLabel);
       sheetPayload.ALL_PHOTOS_LABEL = cleanLabel;
     }
@@ -2288,6 +2291,30 @@ function testAndSyncDriveFolder(pin, folderId, allPhotosLabel) {
     if (ss) {
       writeConfigToSheet(ss, sheetPayload);
       logActivityToSheet(ss, "Tautkan Folder Google Drive", "Folder ID: " + cleanId + (allPhotosLabel ? (" (" + allPhotosLabel + ")") : "") + " ditautkan oleh " + loginResult.user.name, loginResult.user.name);
+    }
+
+    // Perbarui event terkait di EVENTS & Sheet Daftar_Acara jika eventId diberikan
+    if (eventId) {
+      try {
+        var existingEventsStr = props.getProperty("EVENTS") || WEDDING_CONFIG.EVENTS;
+        var existingEvents = JSON.parse(existingEventsStr);
+        if (Array.isArray(existingEvents)) {
+          for (var evI = 0; evI < existingEvents.length; evI++) {
+            if (existingEvents[evI].id === eventId) {
+              existingEvents[evI].driveFolderId = cleanId;
+              if (cleanLabel) existingEvents[evI].allPhotosLabel = cleanLabel;
+              break;
+            }
+          }
+          var updatedEventsStr = JSON.stringify(existingEvents);
+          props.setProperty("EVENTS", updatedEventsStr);
+          if (ss) {
+            syncEventsToSheet(ss, existingEvents);
+          }
+        }
+      } catch (eEvSyncDrive) {
+        Logger.log("Info testAndSyncDriveFolder event sync: " + eEvSyncDrive.toString());
+      }
     }
 
     var scanResult = scanDriveFolderDirectly(cleanId);
@@ -2452,7 +2479,24 @@ function saveAdminSettings(pin, updatedConfig) {
     }
 
     if (updatedConfig.ALL_PHOTOS_LABEL !== undefined) {
-      props.setProperty("ALL_PHOTOS_LABEL", String(updatedConfig.ALL_PHOTOS_LABEL).trim());
+      var cleanAllLabel = String(updatedConfig.ALL_PHOTOS_LABEL).trim();
+      props.setProperty("ALL_PHOTOS_LABEL", cleanAllLabel);
+      try {
+        var existingEventsStr = props.getProperty("EVENTS") || WEDDING_CONFIG.EVENTS;
+        var existingEvents = JSON.parse(existingEventsStr);
+        if (Array.isArray(existingEvents)) {
+          var activeEvId = updatedConfig.ACTIVE_EVENT_ID || props.getProperty("ACTIVE_EVENT_ID") || "";
+          for (var evI = 0; evI < existingEvents.length; evI++) {
+            if (existingEvents[evI].id === activeEvId || existingEvents.length === 1) {
+              existingEvents[evI].allPhotosLabel = cleanAllLabel;
+              existingEvents[evI].ALL_PHOTOS_LABEL = cleanAllLabel;
+            }
+          }
+          var updatedEventsStr = JSON.stringify(existingEvents);
+          props.setProperty("EVENTS", updatedEventsStr);
+          updatedConfig.EVENTS = updatedEventsStr;
+        }
+      } catch (eEvAll) { Logger.log("Info sync ALL_PHOTOS_LABEL to EVENTS: " + eEvAll.toString()); }
     }
 
     if (updatedConfig.ACTIVE_EVENT_ID !== undefined) {
@@ -2481,6 +2525,23 @@ function saveAdminSettings(pin, updatedConfig) {
       if (cleanFolderId) {
         CacheService.getScriptCache().remove("drive_gallery_" + cleanFolderId);
       }
+
+      try {
+        var existingEventsStr = props.getProperty("EVENTS") || WEDDING_CONFIG.EVENTS;
+        var existingEvents = JSON.parse(existingEventsStr);
+        if (Array.isArray(existingEvents)) {
+          var activeEvId = updatedConfig.ACTIVE_EVENT_ID || props.getProperty("ACTIVE_EVENT_ID") || "";
+          for (var evI = 0; evI < existingEvents.length; evI++) {
+            if (existingEvents[evI].id === activeEvId || existingEvents.length === 1) {
+              existingEvents[evI].driveFolderId = cleanFolderId;
+              existingEvents[evI].DRIVE_FOLDER_ID = cleanFolderId;
+            }
+          }
+          var updatedEventsStr = JSON.stringify(existingEvents);
+          props.setProperty("EVENTS", updatedEventsStr);
+          updatedConfig.EVENTS = updatedEventsStr;
+        }
+      } catch (eEvDrive) { Logger.log("Info sync DRIVE_FOLDER_ID to EVENTS: " + eEvDrive.toString()); }
     }
 
     if (updatedConfig.SLIDESHOW_INTERVAL_SEC) {

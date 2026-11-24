@@ -33,8 +33,10 @@ export default async function handler(req, res) {
       if (!seen.has(base)) {
         seen.add(base);
         count++;
+        // Gunakan token stabil dari base URL agar ID foto deterministik dan konsisten antar-refresh
+        const stableToken = base.split('/').pop().replace(/[^a-zA-Z0-9_-]/g, '').slice(-20) || String(count);
         photos.push({
-          id: "gp_" + count,
+          id: "gp_" + stableToken,
           name: category + " " + count,
           thumbnailUrl: base + "=w500-h500-c",
           previewUrl: base + "=w1600-h1200",

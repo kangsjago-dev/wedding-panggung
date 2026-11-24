@@ -1010,21 +1010,56 @@
       position: absolute;
       top: 10px;
       right: 10px;
-      background: rgba(15, 23, 42, 0.82);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       color: #FFFFFF;
       font-size: 0.72rem;
       font-weight: 700;
-      padding: 4px 8px;
+      padding: 4px 10px;
       border-radius: 9999px;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-      border: 1px solid rgba(255,255,255,0.2);
-      z-index: 4;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.25);
+      z-index: 5;
       pointer-events: none;
+    }
+
+    .photo-card.is-video-card {
+      position: relative;
+    }
+
+    .video-play-hint {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border: 1.5px solid rgba(255, 255, 255, 0.85);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 4;
+      opacity: 0.9;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+      transition: opacity 0.2s, transform 0.2s, background 0.2s;
+    }
+
+    .photo-card:hover .video-play-hint {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1.12);
+      background: rgba(180, 83, 9, 0.88);
+      border-color: #FBBF24;
+      color: #FFFFFF;
     }
 
     .lightbox-nav-btn {
