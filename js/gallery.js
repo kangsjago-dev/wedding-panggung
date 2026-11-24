@@ -120,7 +120,7 @@
         const videoBadgeHtml = photo.isVideo ? `
           <div class="video-card-badge">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            <span>Video Preview</span>
+            <span>Video</span>
           </div>
         ` : '';
 
@@ -130,35 +130,19 @@
         else if (rot === 180) rotClass = " rotate-180";
         else if (rot === 270) rotClass = " rotate-270";
 
-        // Render preview media: Video element aktif untuk item video, dan img tajam untuk foto
-        let mediaHtml = "";
+        // Render preview media: Foto di galeri tidak bergerak (statis), dibuka di lightbox baru berputar
+        let mediaHtml = `
+          <img class="photo-img${rotClass}" 
+               src="${escapeHtml(photo.thumbnailUrl)}" 
+               alt="${escapeHtml(photo.name)}" 
+               loading="lazy" 
+               onerror="handlePhotoError(this, '${escapeHtml(photo.id)}');">
+        `;
         if (photo.isVideo) {
-          const videoSrc = photo.videoUrl || photo.previewUrl || "";
-          mediaHtml = `
-            <video class="photo-img photo-video-preview${rotClass}" 
-                   src="${escapeHtml(videoSrc)}" 
-                   poster="${escapeHtml(photo.thumbnailUrl)}" 
-                   muted loop playsinline autoplay preload="metadata" 
-                   onmouseenter="try{this.play();}catch(e){}" 
-                   onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='block';">
-            </video>
-            <img class="photo-img${rotClass}" 
-                 src="${escapeHtml(photo.thumbnailUrl)}" 
-                 alt="${escapeHtml(photo.name)}" 
-                 loading="lazy" 
-                 style="display:none;" 
-                 onerror="handlePhotoError(this, '${escapeHtml(photo.id)}');">
-            <div class="video-play-hint" aria-hidden="true">
+          mediaHtml += `
+            <div class="video-play-hint" aria-hidden="true" title="Klik untuk memutar video">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
             </div>
-          `;
-        } else {
-          mediaHtml = `
-            <img class="photo-img${rotClass}" 
-                 src="${escapeHtml(photo.thumbnailUrl)}" 
-                 alt="${escapeHtml(photo.name)}" 
-                 loading="lazy" 
-                 onerror="handlePhotoError(this, '${escapeHtml(photo.id)}');">
           `;
         }
 

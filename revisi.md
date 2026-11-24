@@ -1,8 +1,8 @@
-# REVISI SISTEM (revisi.md) - v4.42.0
+# REVISI SISTEM (revisi.md) - v4.43.0
 ================================================================================
 STATUS: SELESAI DITERAPKAN & TERVERIFIKASI (100% SUKSES)
 TANGGAL: 24 November 2026
-VERSI TARGET: v4.42.0-FIX-PHOTOBOOTH-VIDEO-PREVIEW-AND-SWAP-RESOLUTION
+VERSI TARGET: v4.43.0-STATIC-GALLERY-PREVIEWS-AND-FULL-LIST-RENDER
 ENGINE: ZettBOT Core v4.1 (by Zettbos)
 ================================================================================
 
@@ -16,122 +16,75 @@ ENGINE: ZettBOT Core v4.1 (by Zettbos)
 ## 1. Analisis Kebutuhan & Permintaan Pengguna
 
 ### Instruksi Pengguna:
-1. *"cek kembali imgae preview, saya klik foto yang keluar video, begitupun sebaliknya"*
-2. *"tampilkan juga preview video"*
+1. *"foto gallery tidak perlu gerak, nanti di buka baru bergerak"*
+2. *"tampilkan semua list fallery secara lengkap"* (tampilkan semua list gallery secara lengkap)
 3. *"ubah yang diperintahkan. Dan laksanakan"*
 4. *"jangan ubah yang tidak di instruksikan"*
 5. *"ngerti ga maksud gw jgn ubah apapun dulu, update revisi.md"*
 6. *"setelah itu baru 'OKE TERAPKAN'"*
 
-### Referensi Tangkapan Layar Pengguna:
-- Mengunggah berkas `media_1795521431075_45dfaf68.jpg` yang memperlihatkan galeri **Photobooth (288)** pada event aktif Michael & Frysilya (`https://x1.kingphotobooth.co/e/2e0df2c7a2cd95b331b00d40`).
-- Pada grid tampak 12 kartu foto:
-  - **Baris 1 Kolom 1**: Foto potret keluarga berpose bersama pria berbaju oranye -> Memiliki badge `▶ Video`.
-  - **Baris 1 Kolom 2**: Hasil cetak print strip (Header *Headline Today Michael & Frysilya*) -> Tanpa badge (Foto).
-  - **Baris 1 Kolom 3**: Hasil cetak print strip ibu berkebaya beludru -> Tanpa badge (Foto).
-  - **Baris 1 Kolom 4**: Foto potret ibu berkebaya beludru -> Memiliki badge `▶ Video`.
-  - Pola berulang untuk pasangan dan grup lainnya.
-
 ---
 
 ## 2. Root Cause Analysis (Akar Masalah Teknis)
 
-### Masalah 1: Mengapa saat klik foto keluar video, dan begitupun sebaliknya?
-
-Berdasarkan investigasi teknis mendalam dan pengujian live endpoint Kingphotobooth, ditemukan **3 penyebab utama**:
-
-1. **Perbedaan Struktur Data Vendor vs Persepsi Visual Pengguna**:
-   - Di sistem vendor Kingphotobooth, setiap kali tamu berfoto di booth, mesin menghasilkan 2 file:
-     1. **File Video Sesi (Klip bergerak 3–5 detik)**: Disimpan dengan atribut `is_video: true`. Namun, thumbnail yang disediakan vendor adalah satu frame diam format JPEG (`/storage/thumbs/...jpg`).
-     2. **File Foto Kolase Cetak (Print Strip)**: Disimpan dengan atribut `is_video: false` format JPEG.
-   - Karena sebelumnya galeri kita hanya merender tag `<img>` biasa untuk semua kartu (termasuk kartu video), mata pengguna melihat kartu klip sesi tersebut **100% sebagai FOTO potret**.
-   - Saat kartu potret tersebut diklik, sistem membuka Lightbox yang mendeteksi `photo.isVideo === true`, menyembunyikan tag `<img>` dan menampilkan tag `<video>`. Pengguna pun melihat: *"Saya klik foto orang berpose, kenapa yang terbuka video?"*.
-   - Sebaliknya, saat kartu cetak diklik, yang terbuka adalah gambar diam.
-
-2. **Celah Desinkronisasi Indeks Klik pada DOM Grid (`card.onclick = openLightbox(index)`):**
-   - Pada [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js) baris 98:
-     ```javascript
-     card.onclick = function() {
-       openLightbox(index);
-     };
-     ```
-   - Nilai `index` terikat pada closure urutan render array saat itu. Jika array `state.filteredPhotos` mengalami pengurutan ulang (`sortPhotosNewestFirst` pada baris 12) atau pembaruan latar belakang dengan mekanisme anti-flicker (baris 18–33 di mana kartu DOM lama dipertahankan), maka `index` lama pada elemen DOM tidak lagi cocok dengan urutan foto baru di `state.filteredPhotos`.
-   - Akibatnya: Klik kartu foto dapat membuka indeks yang ditempati oleh video, dan sebaliknya!
-
-3. **Blokir HTTP 403 Forbidden pada Video Mentah (Video Gagal Memutar):**
-   - Di [api/kingphotobooth.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/api/kingphotobooth.js) baris 43:
-     ```javascript
-     videoUrl = origin + cleanThumb.replace("/storage/thumbs/", "/storage/photos/").replace(/\.jpg$/i, ".mp4");
-     ```
-   - Hasil pengujian script Node.js membuktikan bahwa mengakses URL `/storage/photos/...mp4` secara langsung tanpa query tanda tangan dan cookie sesi vendor mengembalikan:
-     **`HTTP 403 Forbidden`**.
-   - Ketika `<video src="...">` memuat URL yang terkena 403, video gagal memutar dan menampilkan layar hitam/rusak di lightbox, memperparah ketidakjelasan tampilan preview media.
-
----
-
-### Masalah 2: Mengapa preview video tidak tampil?
-
-1. **Grid Kartu Galeri Belum Memiliki Elemen Preview Video**:
-   - Pada baris 127–139 [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js), seluruh kartu hanya merender tag gambar statis:
-     ```html
-     <img class="photo-img${rotClass}" src="${photo.thumbnailUrl}" ...>
-     ```
-   - Belum ada pemutar video mini (`<video autoplay muted loop playsinline>`) pada kartu berkategori video, sehingga pengguna tidak dapat melihat preview gerakan video sama sekali sebelum mengklik.
-2. **Lightbox Video Belum Memiliki URL Streaming yang Lolos 200 OK**:
-   - Di Lightbox, elemen `<video id="lightboxVideo">` tidak dapat memutar video preview karena URL video belum diproxy dengan otentikasi sesi vendor.
-
----
-
-## 3. Rencana Solusi Arsitektur (v4.42.0)
-
-### A. Pengikatan Klik Berbasis ID Unik Mutlak (Zero Click Swap Guarantee)
-Pada [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js):
-- Ganti binding closure `index` dengan pencarian dinamis berbasis atribut `data-photo-id`:
-  ```javascript
-  card.onclick = function() {
-    const photoId = card.getAttribute("data-photo-id");
-    const targetIdx = state.filteredPhotos.findIndex(function(p) { return p && p.id === photoId; });
-    if (targetIdx !== -1) {
-      openLightbox(targetIdx);
-    }
-  };
+### Masalah 1: Preview kartu di galeri bergerak otomatis (Video autoplay pada grid)
+- **Kondisi Saat Ini**:
+  Pada [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js) baris 138–144:
+  ```html
+  <video class="photo-img photo-video-preview${rotClass}" 
+         src="${escapeHtml(videoSrc)}" 
+         poster="${escapeHtml(photo.thumbnailUrl)}" 
+         muted loop playsinline autoplay preload="metadata">
+  </video>
   ```
-- Ini menjamin 100% kepastian bahwa kartu yang diklik selalu membuka objek media yang sesuai, tanpa risiko tertukar akibat perubahan urutan array atau filter.
+  Elemen `<video>` disetel dengan atribut `autoplay`, `loop`, dan event hover yang langsung memutar klip video bergerak pada halaman grid galeri.
+- **Ekspektasi Pengguna**:
+  *"foto gallery tidak perlu gerak, nanti di buka baru bergerak"*.
+  - Di grid galeri luar: Seluruh kartu (baik foto maupun video) **TIDAK BOLEH BERGERAK** (tampil sebagai gambar diam/statis yang rapi, ringan, dan jernih menggunakan thumbnail gambar asli).
+  - Tanda bahwa kartu tersebut adalah video cukup dengan badge elegan `▶ Video` dan ikon play statis.
+  - Begitu kartu diklik dan dibuka di **Lightbox modal**, barulah pemutar video resolusi tinggi berputar bergerak (*autoplay, playsinline, controls* penuh).
 
 ---
 
-### B. Tampilkan Preview Video Nyata pada Kartu Grid & Lightbox (Live Video Preview)
-
-1. **Pada Grid Kartu Galeri ([js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js))**:
-   - Untuk item bertipe Video (`photo.isVideo === true`):
-     - Tampilkan elemen video preview otomatis:
-       ```html
-       <video class="photo-img photo-video-thumb${rotClass}" 
-              src="${photo.videoUrl || photo.previewUrl}" 
-              poster="${photo.thumbnailUrl}" 
-              muted loop playsinline autoplay preload="metadata">
-       </video>
-       ```
-     - Sertakan tombol overlay putar (*play badge*) dan badge `▶ Video Preview` yang mencolok, sehingga pengguna dapat membedakan seketika mana foto cetak diam dan mana video klip bergerak.
-   - Untuk item bertipe Foto (`photo.isVideo === false`):
-     - Tampilkan gambar jernih format `<img>` seperti biasa dengan badge `Foto Photobooth` atau label kategori yang sesuai.
-
-2. **Pada Lightbox Modal ([js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js))**:
-   - Saat membuka item **Video**:
-     - Sembunyikan elemen `<img>`, tampilkan `<video id="lightboxVideo">` dengan kontrol penuh (*controls*), autoplay, playsinline, dan loop.
-     - Ubah tombol unduh menjadi: `⬇️ Unduh Video Asli (MP4)`.
-   - Saat membuka item **Foto**:
-     - Matikan dan sembunyikan `<video>`, tampilkan `<img>` dengan ketajaman penuh (*getSharpPreviewUrl*), fitur zoom, dan opsi bingkai momen.
-     - Ubah tombol unduh menjadi: `⬇️ Unduh Foto Asli (Ukuran Penuh)`.
+### Masalah 2: Tampilkan semua list gallery secara lengkap (Full Gallery Listing)
+- **Kondisi & Analisis**:
+  1. Pada [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js) baris 19–33, terdapat pengecekan anti-flicker:
+     ```javascript
+     if (existingCards.length === state.filteredPhotos.length) { ... return; }
+     ```
+     Jika jumlah kartu DOM yang sudah ada sama dengan data cache lama, grid dapat berhenti merender penambahan data baru.
+  2. Pada integrasi Google Drive ([api/drive-folder.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/api/drive-folder.js)), scraping Google Drive `embeddedfolderview` terkadang hanya memuat sebagian file jika ada pembatasan DOM atau paging.
+  3. Pada sistem filter kategori ([js/categories.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/categories.js) dan [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js)):
+     - Pastikan `state.filteredPhotos` selalu memuat **100% item tanpa pembatasan kuota (*untruncated*)** baik untuk kategori "Semua Foto" (seluruh folder Drive utama + subfolder) maupun kategori Photobooth (seluruh 288+ foto dan video dari vendor).
+     - Seluruh foto yang diterima dari API langsung dirender lengkap ke DOM grid dengan lazy loading native browser (`loading="lazy"`), sehingga ratusan foto langsung hadir di halaman tanpa terpotong.
 
 ---
 
-### C. Streaming Proxy Video Kingphotobooth Bebas 403 ([api/kingphotobooth.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/api/kingphotobooth.js))
-- Uji coba live membuktikan bahwa saat kita mengunjungi halaman single item `/i/{share_token}`, server Kingphotobooth menerbitkan cookie sesi `KPBSESSID` yang mengizinkan pemutaran video `video/mp4` dengan status **HTTP 200 OK**.
-- Tambahkan handler streaming proxy pada `/api/kingphotobooth?action=video&token={share_token}`:
-  - Proxy akan mengambil video dari server vendor dengan cookie dan header referer resmi.
-  - Mengalirkan stream video MP4 langsung ke browser pengguna dengan header `Content-Type: video/mp4` dan dukungan `Accept-Ranges: bytes`.
-  - Hasil: Video preview dapat berputar seketika di kartu maupun di modal lightbox tanpa hambatan 403 Forbidden.
+## 3. Rencana Solusi Arsitektur (v4.43.0)
+
+### A. Nonaktifkan Gerakan Video pada Grid Galeri (Static Card Grid)
+Pada [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js):
+1. **Hapus tag `<video autoplay>` dari grid kartu**:
+   - Seluruh kartu (baik foto maupun video) kembali menggunakan tag gambar statis `<img>` dengan sumber `photo.thumbnailUrl`.
+   - Tidak ada elemen video yang memuat bandwidth atau bergerak di grid galeri.
+2. **Pertahankan Indikator Video Statis**:
+   - Untuk kartu video (`photo.isVideo === true`), tampilkan:
+     - Badge elegan `▶ Video`.
+     - Ikon play overlay statis di tengah kartu.
+3. **Gerakan Video Penuh Hanya di Lightbox Modal**:
+   - Saat pengunjung mengklik kartu video, Lightbox modal dibuka.
+   - Di dalam Lightbox, elemen `<video id="lightboxVideo">` aktif memutar klip video dengan audio/kontrol penuh dan resolusi tajam via streaming proxy bebas 403.
+   - Kartu foto tetap dibuka sebagai gambar resolusi penuh dengan fitur zoom.
+
+---
+
+### B. Pastikan Seluruh List Galeri Tampil Lengkap 100% (Full List Rendering)
+1. **Di [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js)**:
+   - Pastikan fungsi `renderPhotoGrid` merender **seluruh elemen `state.filteredPhotos` tanpa batasan (*no slice, no hard limit*)**.
+   - Hapus potensi penghentian awal (early return) yang dapat menahan pembaruan DOM saat foto baru disinkronkan.
+   - Tambahkan pembaruan counter jumlah foto yang akurat di bawah header galeri atau tab.
+2. **Di [js/categories.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/categories.js) & [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js)**:
+   - Pastikan seluruh foto hasil sinkronisasi dari Google Drive (`drive-folder`) maupun vendor Photobooth (`kingphotobooth`) disimpan penuh ke `state.allPhotos` dan `state.categoryPhotosMap`, tidak ada pemotongan kuota.
 
 ---
 
@@ -139,16 +92,15 @@ Pada [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/proj
 
 | No | Berkas | Lokasi / Komponen | Tindakan Perubahan Spesifik |
 |---|---|---|---|
-| 1 | [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js) | Baris 92–142 | Ubah `card.onclick` ke pencarian `data-photo-id` (anti-swap). Render elemen `<video>` preview bergerak pada kartu video. |
-| 2 | [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js) | Baris 1488–1520 | Sempurnakan logika `updateLightboxContent` untuk pemisahan tegas antara foto preview vs video preview. |
-| 3 | [api/kingphotobooth.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/api/kingphotobooth.js) | Handler utama | Sediakan URL video yang valid dan streaming proxy bebas 403 menggunakan token resmi item. |
-| 4 | [css/style.css](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/css/style.css) | Gaya kartu galeri | Tambahkan styling untuk `.photo-video-thumb` dan tombol badge play video agar serasi dan elegan. |
+| 1 | [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js) | Baris 130–165 | Hapus `<video autoplay>` dari kartu grid; ganti dengan tag `<img>` statis + badge play. Video baru bergerak saat dibuka di lightbox. |
+| 2 | [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js) | Baris 18–35 | Pastikan seluruh item foto (100% tanpa batas) dirender tuntas ke DOM grid galeri. |
+| 3 | [css/style.css](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/css/style.css) | Gaya kartu galeri | Sempurnakan tampilan kartu statis dengan play badge overlay yang elegan tanpa animasi memutar otomatis di grid. |
 
 ---
 
 ## 5. Pernyataan Kepatuhan Protokol ZettBOT
 - Tidak ada file kode yang dimodifikasi sebelum persetujuan pengguna.
 - Perubahan yang direncanakan **hanya** pada bagian yang diperintahkan:
-  1. Perbaikan preview media (foto vs video tidak tertukar).
-  2. Menampilkan preview video pada item video.
+  1. Foto/media galeri di grid tidak bergerak (statis), baru bergerak setelah dibuka di modal.
+  2. Menampilkan semua list galeri secara lengkap tanpa terpotong.
 - Menunggu konfirmasi: **"OKE TERAPKAN"**.
