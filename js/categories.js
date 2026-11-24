@@ -21,18 +21,17 @@
 
       if (!isSilent) {
         showToast("🔄 Menyinkronkan kategori " + categoryName + "...");
+        // Hapus cache foto & URL kategori HANYA jika sinkronisasi manual dipicu oleh pengguna
+        if (state.categoryPhotosMap) {
+          delete state.categoryPhotosMap[categoryName];
+        }
+        if (state.categoryPhotosUrlMap) {
+          delete state.categoryPhotosUrlMap[categoryName];
+        }
+        try {
+          localStorage.removeItem("WEDDING_CAT_COUNT_" + categoryName);
+        } catch (e) {}
       }
-      
-      // Hapus cache foto & URL kategori agar dimuat ulang dari tautan terbaru
-      if (state.categoryPhotosMap) {
-        delete state.categoryPhotosMap[categoryName];
-      }
-      if (state.categoryPhotosUrlMap) {
-        delete state.categoryPhotosUrlMap[categoryName];
-      }
-      try {
-        localStorage.removeItem("WEDDING_CAT_COUNT_" + categoryName);
-      } catch (e) {}
 
       // Jika kategori yang sedang aktif disinkronkan secara manual (bukan silent), bersihkan grid
       if (!isSilent && state.activeCategory === categoryName) {
@@ -633,6 +632,11 @@
       }
 
       function fallbackKing() {
+        // PERTAHANKAN DATA: Jangan pernah mengosongkan cache jika sudah ada data sebelumnya
+        if (state.categoryPhotosMap[cat] && state.categoryPhotosMap[cat].length > 0) {
+          if (callback) callback(state.categoryPhotosMap[cat]);
+          return;
+        }
         state.categoryPhotosMap[cat] = [];
         state.categoryPhotosUrlMap[cat] = url;
         if (callback) callback([]);

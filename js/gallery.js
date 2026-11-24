@@ -163,32 +163,46 @@
     function handlePhotoError(imgElement, photoId) {
       if (!imgElement) return;
 
-      // Self-healing 1: jika URL memiliki query string kedaluwarsa (?e=... atau ?s=...), bersihkan dan muat ulang
       const currentSrc = imgElement.getAttribute("src") || imgElement.src || "";
-      if (currentSrc.includes("?") && !imgElement.dataset.retriedClean) {
-        imgElement.dataset.retriedClean = "true";
-        imgElement.src = currentSrc.split("?")[0];
-        return;
-      }
-
-      // Self-healing 2: jika foto objek memiliki previewUrl alternatif
       const pObj = (state.filteredPhotos || []).find(function(p) { return p && String(p.id) === String(photoId); });
-      if (pObj && pObj.previewUrl && !imgElement.dataset.retriedPreview) {
-        const cleanPreview = String(pObj.previewUrl).split("?")[0];
-        if (cleanPreview && cleanPreview !== currentSrc) {
-          imgElement.dataset.retriedPreview = "true";
-          imgElement.src = cleanPreview;
+
+      // Jika URL adalah endpoint proxy internal kita, JANGAN POTONG query parameter (?action=thumb...)
+      if (currentSrc.includes("/api/kingphotobooth")) {
+        // Coba retry sekali dengan parameter bersih token jika ada
+        if (!imgElement.dataset.retriedProxy && pObj) {
+          imgElement.dataset.retriedProxy = "true";
+          const token = pObj.shareToken || (pObj.id ? String(pObj.id).replace(/^king_/, "") : "");
+          if (token) {
+            imgElement.src = "/api/kingphotobooth?action=thumb&token=" + encodeURIComponent(token);
+            return;
+          }
+        }
+      } else {
+        // Self-healing 1: jika URL langsung luar memiliki query string kedaluwarsa (?e=... atau ?s=...), bersihkan dan muat ulang
+        if (currentSrc.includes("?") && !imgElement.dataset.retriedClean) {
+          imgElement.dataset.retriedClean = "true";
+          imgElement.src = currentSrc.split("?")[0];
           return;
         }
-      }
 
-      // Self-healing 3: Jika Kingphotobooth, coba proxy internal thumbnail
-      if (pObj && (pObj.isKing || currentSrc.includes("kingphotobooth.co")) && !imgElement.dataset.retriedProxy) {
-        imgElement.dataset.retriedProxy = "true";
-        const token = pObj.shareToken || (pObj.id ? String(pObj.id).replace(/^king_/, "") : "");
-        if (token) {
-          imgElement.src = "/api/kingphotobooth?action=thumb&token=" + encodeURIComponent(token);
-          return;
+        // Self-healing 2: jika foto objek memiliki previewUrl alternatif
+        if (pObj && pObj.previewUrl && !imgElement.dataset.retriedPreview) {
+          const cleanPreview = String(pObj.previewUrl).split("?")[0];
+          if (cleanPreview && cleanPreview !== currentSrc) {
+            imgElement.dataset.retriedPreview = "true";
+            imgElement.src = cleanPreview;
+            return;
+          }
+        }
+
+        // Self-healing 3: Jika Kingphotobooth, coba proxy internal thumbnail
+        if (pObj && (pObj.isKing || currentSrc.includes("kingphotobooth.co")) && !imgElement.dataset.retriedProxy) {
+          imgElement.dataset.retriedProxy = "true";
+          const token = pObj.shareToken || (pObj.id ? String(pObj.id).replace(/^king_/, "") : "");
+          if (token) {
+            imgElement.src = "/api/kingphotobooth?action=thumb&token=" + encodeURIComponent(token);
+            return;
+          }
         }
       }
 

@@ -375,11 +375,12 @@ function syncFromSpreadsheetGViz(callback) {
               : ((rowCells[frameIdx] && String(rowCells[frameIdx].v || '').trim())
                   ? String(rowCells[frameIdx].v).trim()
                   : (sheetMap.FRAME_IMAGE_URL || state.activeConfig.FRAME_IMAGE_URL || ''));
+            // KUNCI ISOLASI MUTLAK: Tautan Photobooth hanya milik event yang bersangkutan (Anti-Kross 100%)
             const cleanPb = (extraEv.photoboothUrl && String(extraEv.photoboothUrl).trim())
               ? String(extraEv.photoboothUrl).trim()
               : ((rowCells[pbIdx] && String(rowCells[pbIdx].v || '').trim())
                   ? String(rowCells[pbIdx].v).trim()
-                  : ((evId === (getActiveEventIdFromUrl() || state.currentEventId)) ? (sheetMap.PHOTOBOOTH_URL || '') : ''));
+                  : '');
 
             if (Array.isArray(parsedCats)) {
               let foundPb = false;
@@ -476,7 +477,8 @@ function syncFromSpreadsheetGViz(callback) {
         state.activeConfig.EVENT_LOGO_URL = matchedEv.logoUrl || "";
         state.activeConfig.logoUrl = matchedEv.logoUrl || "";
         state.activeConfig.DRIVE_FOLDER_ID = matchedEv.driveFolderId || "";
-        const activePbUrl = matchedEv.photoboothUrl || sheetMap.PHOTOBOOTH_URL || state.activeConfig.PHOTOBOOTH_URL || "";
+        // Kunci isolasi Photobooth: Hanya ambil tautan milik event aktif (DILARANG mengambil sheetMap global event lain)
+        const activePbUrl = (matchedEv.photoboothUrl && String(matchedEv.photoboothUrl).trim()) || "";
         state.activeConfig.PHOTOBOOTH_URL = activePbUrl;
         state.activeConfig.FRAME_IMAGE_URL = matchedEv.frameImageUrl || sheetMap.FRAME_IMAGE_URL || state.activeConfig.FRAME_IMAGE_URL || "";
         state.activeConfig.HOME_URL = matchedEv.homeUrl || (window.location.origin + window.location.pathname + "?event=" + encodeURIComponent(matchedEv.id));
