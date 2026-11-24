@@ -336,6 +336,7 @@ function syncFromSpreadsheetGViz(callback) {
           const frameIdx = hRow.indexOf("Bingkai_URL") >= 0 ? hRow.indexOf("Bingkai_URL") : 8;
           const logoIdx = hRow.indexOf("Logo_Acara") >= 0 ? hRow.indexOf("Logo_Acara") : 9;
           const statusIdx = hRow.indexOf("Status") >= 0 ? hRow.indexOf("Status") : 10;
+          const allLabelIdx = hRow.indexOf("Label_Semua_Foto") >= 0 ? hRow.indexOf("Label_Semua_Foto") : 14;
 
           const sheetMap = state._sheetSettingsMap || {};
           let sheetEventsMap = {};
@@ -401,13 +402,22 @@ function syncFromSpreadsheetGViz(callback) {
               }
             }
 
+            let cleanDrive = (extraEv.driveFolderId !== undefined)
+              ? String(extraEv.driveFolderId || '').trim()
+              : (rowCells[driveIdx] ? String(rowCells[driveIdx].v || '').trim() : '');
+
+            // Proteksi anti-duplikasi: Jika event bukan Andre & Fayola, jangan biarkan folder ID Andre & Fayola bocor masuk
+            if (evId !== "andre-fayola-281" && cleanDrive === "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh") {
+              cleanDrive = (extraEv.driveFolderId && extraEv.driveFolderId !== "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh") ? extraEv.driveFolderId : "";
+            }
+
             sheetEvs.push({
               id: evId,
               name: rowCells[nameIdx] ? String(rowCells[nameIdx].v || '').trim() : (extraEv.name || evId),
               date: cleanDate,
               venue: rowCells[venueIdx] ? String(rowCells[venueIdx].v || '').trim() : (extraEv.venue || ''),
               homeUrl: rowCells[urlIdx] ? String(rowCells[urlIdx].v || '').trim() : (extraEv.homeUrl || ''),
-              driveFolderId: rowCells[driveIdx] ? String(rowCells[driveIdx].v || '').trim() : (extraEv.driveFolderId || ''),
+              driveFolderId: cleanDrive,
               photoboothUrl: cleanPb,
               customCategories: Array.isArray(parsedCats) ? parsedCats : [],
               frameImageUrl: cleanFrame,
@@ -416,7 +426,13 @@ function syncFromSpreadsheetGViz(callback) {
               subtitle: extraEv.subtitle || sheetMap.SUBTITLE || "The Wedding Gallery & Precious Memories",
               welcomeMessage: extraEv.welcomeMessage || sheetMap.WELCOME_MESSAGE || "Terima kasih atas kehadiran, doa restu, dan kehangatan keluarga serta sahabat terkasih. Silakan nikmati dan unduh momen bahagia kebersamaan kita.",
               footerMessage: extraEv.footerMessage || sheetMap.FOOTER_MESSAGE || "Diabadikan dengan cinta\nTerima kasih atas doa restunya.",
-              allPhotosLabel: extraEv.allPhotosLabel || sheetMap.ALL_PHOTOS_LABEL || "Semua Foto",
+              allPhotosLabel: (extraEv.allPhotosLabel && extraEv.allPhotosLabel !== 'undefined' && String(extraEv.allPhotosLabel).trim())
+                ? String(extraEv.allPhotosLabel).trim()
+                : ((rowCells[allLabelIdx] && String(rowCells[allLabelIdx].v || '').trim())
+                    ? String(rowCells[allLabelIdx].v).trim()
+                    : ((evId === (getActiveEventIdFromUrl() || state.currentEventId || sheetMap.ACTIVE_EVENT_ID) && sheetMap.ALL_PHOTOS_LABEL)
+                        ? sheetMap.ALL_PHOTOS_LABEL
+                        : "Semua Foto")),
               status: rowCells[statusIdx] ? String(rowCells[statusIdx].v || 'Aktif').trim() : (extraEv.status || 'Aktif')
             });
           }

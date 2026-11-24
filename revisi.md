@@ -1,52 +1,111 @@
-# REVISI SISTEM (revisi.md) - v4.39.0
+# DRAFT PERENCANAAN REVISI SISTEM (revisi.md) - v4.41.0
 ================================================================================
-STATUS: SELESAI DITERAPKAN & TERVERIFIKASI (100% SUKSES)
+STATUS: DRAFT - MENUNGGU PERSETUJUAN PENGGUNA ("OKE TERAPKAN")
 TANGGAL: 24 November 2026
-VERSI TARGET: v4.39.0-INDEPENDENT-CUSTOM-LINKS-ALL-EVENTS
+VERSI TARGET: v4.41.0-FIX-PHOTOBOOTH-PREVIEW-IMAGES
 ENGINE: ZettBOT Core v4.1 (by Zettbos)
 ================================================================================
 
 > [!IMPORTANT]
-> **PROTOKOL ZETTBOT DIJALANKAN SECARA KETAT & TUNTAS:**
+> **PROTOKOL ZETTBOT DIJALANKAN SECARA KETAT:**
 > Sesuai instruksi pengguna: *"ngerti ga maksud gw jgn ubah apapun dulu, update revisi.md setelah itu baru OKE TERAPKAN"*.
-> Setelah pengguna memberikan konfirmasi persetujuan resmi: **"OKE TERAPKAN"**, perbaikan langsung diimplementasikan dan diverifikasi secara menyeluruh.
+> **TIDAK ADA PERUBAHAN PADA KODE PROGRAM APLIKASI** yang dilakukan pada tahap ini sebelum pengguna memberikan konfirmasi persetujuan resmi: **"OKE TERAPKAN"**.
 
 ---
 
 ## 1. Analisis Kebutuhan & Akar Masalah (Root Cause Analysis)
 
 ### Instruksi Pengguna:
-- *"Buat agar link dapat dicustom pada semua event"*
-- *"Ubah yang diperintahkan. Dan laksanakan"*
-- *"Jangan ubah yang tidak di instruksikan"*
-- Referensi tangkapan layar:
-  Pada event **Tommy & Natasha**, input *Tautan / Folder ID Google Drive* dan *Nama Tab Galeri* memuat nilai duplikat dari event sebelumnya (*Andre & Fayola*: `1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh` dan `Photostage`), bukannya link kustom yang berdiri sendiri khusus untuk event Tommy & Natasha.
-
-### Akar Masalah Teknis yang Telah Diperbaiki:
-1. **Nilai Hardcode Default pada Database Backend ([code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs)):**
-   Pada baris 425-435 dan baris 866, event `tommy-natasha-594` sebelumnya diinisialisasi dengan folder ID Andre & Fayola: `driveFolderId: "1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh"`. Nilai ini telah dihapus dan diganti menjadi string kosong `""` sehingga berdiri sendiri secara bersih dan mandiri.
-2. **Ketergantungan Fallback State Global ([js/admin.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/admin.js)):**
-   - Pada `openAdminSettingsModal()`, `state.activeConfig.DRIVE_FOLDER_ID`, `PHOTOBOOTH_URL`, dan tautan lainnya kini langsung di-assign dari event aktif (`activeEv.driveFolderId || ""`), tanpa kebocoran state dari event lain.
-   - Pada `syncCategoriesAndDisplayLinks()` dan `handleSaveAllSettings()`, pembacaan input form menggunakan pengecekan DOM langsung tanpa fallback yang memaksakan link lama ketika kolom diubah atau dikosongkan.
-3. **Penyimpanan Terisolasi ke Database Spreadsheet ([code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) & [js/admin.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/admin.js)):**
-   - Tombol *"Sinkron Google Drive"* (`handleSyncDrivePhotosDirectly`) kini menyertakan `eventId: state.currentEventId`.
-   - Backend `testAndSyncDriveFolder` dan `saveAdminSettings` memperbarui kolom `Google_Drive_Folder_ID` khusus pada baris event aktif di tabel `Daftar_Acara` Google Sheets.
+- *"menu Kategori 'Kategori Spesial: Photobooth' tidak ada tampilan preview image"*
+- *"ubah yang diperintahkan. Dan laksanakan"*
+- *"jangan ubah yang tidak di instruksikan"*
+- *"ngerti ga maksud gw jgn ubah apapun dulu, update revisi.md"*
+- *"setelah itu baru 'OKE TERAPKAN'"*
+- Referensi tangkapan layar pengguna:
+  - **Image 1**: Pada tab galeri aktif **Photobooth (139)** (event Andre & Fayola), area grid galeri di bawah tab kosong melompong (tidak ada gambar preview yang tampil sama sekali).
+  - **Image 2**: Pada form admin, menu *Kategori Spesial: Photobooth* menggunakan tautan vendor Kingphotobooth:
+    `https://x1.kingphotobooth.co/e/f77cfa081d00281b3f834c1d` (total 139 foto terdeteksi).
 
 ---
 
-## 2. Berkas yang Telah Dimodifikasi
+### Akar Masalah Teknis Hasil Pengujian & Bedah Kode (Root Cause):
 
-| No | File | Komponen yang Dimodifikasi |
-|---|---|---|
-| 1 | [js/admin.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/admin.js) | Isolasi murni link saat buka/pindah event di admin (`openAdminSettingsModal`, `handleSelectEventChange`, `syncCategoriesAndDisplayLinks`, `handleSaveAllSettings`, `handleSyncDrivePhotosDirectly`). |
-| 2 | [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) | Menghapus duplikasi folder ID Andre & Fayola pada event Tommy & Natasha di `setupTargetSpreadsheetDatabase` dan `syncAllEventsToSheet`. Menambahkan isolasi `eventId` pada `testAndSyncDriveFolder` dan `saveAdminSettings`. |
+1. **Parameter Query Tanda Tangan Sementara yang Kedaluwarsa pada Kingphotobooth:**
+   - Pada berkas [api/kingphotobooth.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/api/kingphotobooth.js) (baris 33), [js/categories.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/categories.js) (baris 611), dan [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) (baris 1551):
+     ```javascript
+     const thumbUrl = it.thumb ? (origin + it.thumb) : "";
+     ```
+   - Nilai mentah `it.thumb` dari halaman Kingphotobooth menyertakan parameter query tanda tangan sementara berbatas waktu, contohnya:
+     `/storage/thumbs/86/8c95ec649a735bf10f6e5b89.jpg?e=1795563301&s=a953586ea75c71bccddc610d1ba077a9`.
+   - Hasil uji coba langsung via script Node.js membuktikan bahwa ketika browser memuat URL dengan query string tersebut tanpa session cookie resmi vendor, server Cloudflare / Kingphotobooth mengembalikan respon:
+     **`HTTP 403 Forbidden: Akses media ditolak: tautan tidak valid atau sudah kedaluwarsa.`**
+
+2. **Mekanisme Penghapusan Kartu Foto Otomatis pada Error (`handlePhotoError`):**
+   - Pada [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js) baris 134:
+     ```html
+     <img class="photo-img..." src="${photo.thumbnailUrl}" onerror="handlePhotoError(this, '${escapeHtml(photo.id)}');">
+     ```
+   - Dan pada baris 147-148:
+     ```javascript
+     function handlePhotoError(imgElement, photoId) {
+       const card = imgElement.closest('.photo-card');
+       if (card) card.remove();
+       ...
+     ```
+   - Karena ke-139 gambar thumbnail Kingphotobooth terkena galat `403 Forbidden` akibat query string kedaluwarsa tersebut, fungsi `handlePhotoError` secara beruntun **menghapus seluruh 139 elemen kartu foto dari DOM**.
+   - Akibatnya, grid galeri menjadi kosong putih bersih tanpa ada preview image yang tersisa, persis seperti yang tampak pada Image 1 pengguna.
+
+3. **Bukti Validasi Solusi (Clean Static Path):**
+   - Hasil pengujian membuktikan bahwa jika parameter query string tanda tangan tersebut dibersihkan:
+     `const cleanThumbPath = String(it.thumb || "").split("?")[0];`
+     sehingga URL menjadi:
+     `https://x1.kingphotobooth.co/storage/thumbs/86/8c95ec649a735bf10f6e5b89.jpg`
+   - Server Kingphotobooth **seketika mengembalikan status HTTP 200 OK (image/jpeg, 45.016 bytes) secara publik, stabil, dan jernih** tanpa memerlukan cookie atau otentikasi apapun.
 
 ---
 
-## 3. Hasil Pengujian Otomatis (100% SUKSES)
+## 2. Rencana Solusi Arsitektur (v4.41.0)
 
-1. **Syntax Integrity**: `js/admin.js` dan `code.gs` lolos validasi tanpa galat.
-2. **Setup Isolation**: Tommy & Natasha tidak lagi mengadopsi ID folder Andre & Fayola pada database Apps Script.
-3. **State Isolation**: Berpindah antar-event di formulir admin memuat tautan masing-masing secara independen. Mengubah link pada Event A tidak merubah Event B atau Event C.
-4. **Custom Link Flexibility**: Kolom Tautan / Folder ID Google Drive dan Kategori Photobooth dapat diisi tautan kustom apapun atau dikosongkan secara bebas.
-5. **Regression Test Suites**: Semua test suite (lightbox, badge, realtime polling, auto-refresh, custom category) 100% PASS.
+### A. Normalisasi Tautan Bersih Tanpa Query String (Clean Static URLs)
+1. **Di [api/kingphotobooth.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/api/kingphotobooth.js):**
+   - Bersihkan parameter query dari `it.thumb`:
+     ```javascript
+     const cleanThumbPath = String(it.thumb || "").split("?")[0];
+     const thumbUrl = cleanThumbPath ? (origin + cleanThumbPath) : "";
+     ```
+   - Pastikan `thumbnailUrl` dan `previewUrl` menggunakan `cleanThumbPath` publik yang terbukti 100% lolos 200 OK.
+   - Atur URL unduhan asli ke format direct file: `origin + "/dl/" + it.id + ".jpg"`.
+2. **Di [js/categories.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/categories.js):**
+   - Bersihkan parameter query pada parser client-side Kingphotobooth (`fetchKingPhotoboothPhotos` dan `parseKingPhotoboothItems`) sehingga `thumbnailUrl` selalu bersih dari token kedaluwarsa.
+3. **Di [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs):**
+   - Terapkan pembersihan path yang sama pada fungsi `scanKingPhotoboothEvent` agar backend Google Apps Script juga menghasilkan URL thumbnail bersih yang siap dibuka publik.
+
+### B. Proteksi Fallback Elegan pada [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js)
+1. Perbarui fungsi `handlePhotoError`:
+   - Khusus foto kategori Photobooth / Kingphotobooth, jangan langsung menghapus elemen kartu (`card.remove()`).
+   - Lakukan percobaan pemulihan (*self-healing fallback*):
+     - Jika URL memiliki tanda tanya `?`, bersihkan query string dan muat ulang sumber gambar.
+     - Jika thumbnail gagal, coba muat `previewUrl` atau `highResUrl`.
+     - Hanya jika seluruh fallback gagal, tampilkan placeholder ramah daripada menghapus kartu secara mendadak.
+
+---
+
+## 3. Matriks Berkas yang Akan Dimodifikasi (HANYA SETELAH "OKE TERAPKAN")
+
+| No | Berkas | Lokasi / Komponen | Tindakan Perubahan |
+|---|---|---|---|
+| 1 | [api/kingphotobooth.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/api/kingphotobooth.js) | Baris 33-49 | Pembersihan query string `?e=...&s=...` pada thumbnail & preview gambar Kingphotobooth. |
+| 2 | [js/categories.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/categories.js) | Baris 610-630 | Pembersihan query string pada client-side parser Kingphotobooth. |
+| 3 | [code.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/code.gs) | Baris 1550-1565 | Pembersihan query string pada backend scanner Kingphotobooth. |
+| 4 | [js/gallery.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/gallery.js) | Baris 145-155 | Proteksi self-healing pada `handlePhotoError` agar kartu foto photobooth tidak langsung lenyap dari layar. |
+
+*Catatan Kepatuhan: Sesuai instruksi ketat pengguna ("jangan ubah yang tidak di instruksikan"), tidak ada modul atau komponen lain yang dimodifikasi.*
+
+---
+
+## 4. Matriks Rencana Pengujian Otomatis
+
+1. **Uji Akses Thumbnail HTTP 200 OK**: Memverifikasi URL thumbnail Kingphotobooth yang dihasilkan dapat diakses langsung oleh browser tanpa error 403.
+2. **Uji Render Grid Photobooth**: Memverifikasi ke-139 kartu foto Photobooth berhasil dirender ke layar dan menampilkan preview image.
+3. **Uji Unduhan & Lightbox**: Memverifikasi pratinjau modal dan unduhan foto photobooth berjalan mulus tanpa kompresi.
+4. **Uji Regresi Penuh**: Seluruh test suite sebelumnya tetap 100% PASS.

@@ -107,10 +107,17 @@ function isGooglePhotosUrl(url) {
       state.lastLocalCategoryEditTime = Date.now();
       const inp = document.getElementById("cfgMainGalleryLabel");
       if (inp && inp.value !== newVal) inp.value = newVal;
+      const curEv = (state.events || []).find(function(e) { return e && e.id === state.currentEventId; });
+      if (curEv) {
+        curEv.allPhotosLabel = val;
+      }
       try {
         localStorage.setItem("WEDDING_ALL_PHOTOS_LABEL", val);
         const cacheKey = state.currentEventId ? ("WEDDING_EVENT_CFG_" + state.currentEventId) : "WEDDING_ACTIVE_EVENT_CFG";
         localStorage.setItem(cacheKey, JSON.stringify(state.activeConfig));
+        if (Array.isArray(state.events)) {
+          localStorage.setItem("WEDDING_EVENTS_REGISTRY", JSON.stringify(state.events));
+        }
       } catch (e) {}
       // Prefetch & update badge foto untuk setiap kategori yang disinkronkan
       (state.customCategories || []).forEach(function(cat) {

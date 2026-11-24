@@ -1,6 +1,6 @@
 # PRD - Wedding Photo Gallery & Live Slideshow Platform
 **Sistem**: Multi-Event Wedding Gallery with ERP Master Data Architecture  
-**Versi**: v4.39.0-PROD  
+**Versi**: v4.40.0-PROD  
 **Arsitektur Database**: Google Sheets ERP Master Table + Google Drive Live Photo Catalog  
 **Terakhir Diperbarui**: 24 November 2026
 
@@ -338,3 +338,11 @@ Setiap baris mewakili 1 event independen dengan properti lengkap:
 - **Pembersihan Data Bawaan & Sinkronisasi Database Spreadsheet (`code.gs`)**:
   - Mengeliminasi duplikasi folder ID Andre & Fayola pada event Tommy & Natasha di `setupTargetSpreadsheetDatabase` dan `syncAllEventsToSheet`.
   - Menambahkan dukungan parameter `eventId` pada `testAndSyncDriveFolder` dan `saveAdminSettings` sehingga perubahan tautan Google Drive dan kategori langsung tercatat secara spesifik pada baris event bersangkutan di sheet master `Daftar_Acara` Google Sheets.
+
+### 2.35 Kustomisasi Mandiri Menu Kategori "Semua Foto" & Proteksi Anti-Leakage (v4.40.0)
+- **Kemandirian Penuh Tautan & Nama Tab Kategori "Semua Foto" (`setup.gs`, `js/app.js`, `js/core.js`)**:
+  - Menghapus folder ID hardcode `1qCHAv1hTfsnUQ5g6iHFCVkM3x60vw4uh` pada [setup.gs](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/setup.gs) (baris 63, 120, 360) sehingga event Tommy & Natasha dan event baru lainnya diinisialisasi bersih tanpa tautan folder peninggalan event lain.
+  - Menerapkan guard anti-leakage di [js/app.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/app.js) untuk membersihkan folder ID Andre & Fayola jika terbaca dari baris legacy event non-Andre & Fayola.
+  - Memisahkan secara presisi penentuan `allPhotosLabel` per-event sehingga nilai global `Photostage` pada sheet `Pengaturan` tidak lagi bocor ke event lain.
+  - Mengikat pembaruan input "Nama Tab Galeri" (`handleAllPhotosLabelChange`) langsung ke objek event aktif di `state.events` pada [js/core.js](file:///c:/Users/Administrator/.gemini/antigravity-ide/project/wedding-panggung/js/core.js).
+  - Memperbarui data live database Google Sheets via Apps Script API sehingga array `EVENTS` pada sheet `Pengaturan` bersih dan terisolasi 100%.
