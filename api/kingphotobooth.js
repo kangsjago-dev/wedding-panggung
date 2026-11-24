@@ -1,7 +1,82 @@
 export default async function handler(req, res) {
-  const targetUrl = req.query.url;
-  const category = req.query.category || "Photobooth";
+  const { action, token, origin: reqOrigin, url: targetUrl, category = "Photobooth" } = req.query;
 
+  // 1. STREAMING PROXY UNTUK MEDIA (VIDEO / FOTO) DENGAN SESSION COOKIE RESMI
+  if (action === "media" || action === "video" || action === "download") {
+    if (!token) {
+      return res.status(400).send("Parameter token diperlukan.");
+    }
+    const hostOrigin = reqOrigin || "https://x1.kingphotobooth.co";
+    try {
+      // Dapatkan session resmi dan link media dari halaman item /i/{token}
+      const pageRes = await fetch(`${hostOrigin}/i/${encodeURIComponent(token)}`, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        }
+      });
+      if (!pageRes.ok) {
+        return res.status(pageRes.status).send("Item tidak ditemukan.");
+      }
+
+      // Ambil cookie dari response
+      const rawCookies = pageRes.headers.get("set-cookie") || "";
+      const cookies = rawCookies.split(",").map(c => c.split(";")[0].trim()).join("; ");
+
+      const html = await pageRes.text();
+      let mediaPath = "";
+      let isVideo = false;
+
+      if (action === "download") {
+        const dlMatch = html.match(/<a[^>]*href=["'](\/dl\/[^"']+)["']/i);
+        if (dlMatch) mediaPath = dlMatch[1];
+      }
+
+      if (!mediaPath) {
+        const vidMatch = html.match(/<video[^>]*src=["']([^"']+)["']/i);
+        const imgMatch = html.match(/<img[^>]*class=["']ph-media["'][^>]*src=["']([^"']+)["']/i);
+        if (vidMatch) {
+          mediaPath = vidMatch[1].replace(/&amp;/g, "&");
+          isVideo = true;
+        } else if (imgMatch) {
+          mediaPath = imgMatch[1].replace(/&amp;/g, "&");
+        }
+      }
+
+      if (!mediaPath) {
+        return res.status(404).send("Media tidak ditemukan pada halaman vendor.");
+      }
+
+      const mediaUrl = mediaPath.startsWith("http") ? mediaPath : (hostOrigin + mediaPath);
+      const mediaHeaders = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Referer": `${hostOrigin}/i/${encodeURIComponent(token)}`
+      };
+      if (cookies) mediaHeaders["Cookie"] = cookies;
+      if (req.headers.range) mediaHeaders["Range"] = req.headers.range;
+
+      const streamRes = await fetch(mediaUrl, { headers: mediaHeaders });
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Content-Type", streamRes.headers.get("content-type") || (isVideo ? "video/mp4" : "image/jpeg"));
+      
+      const contentLen = streamRes.headers.get("content-length");
+      if (contentLen) res.setHeader("Content-Length", contentLen);
+
+      const contentRange = streamRes.headers.get("content-range");
+      if (contentRange) res.setHeader("Content-Range", contentRange);
+
+      const acceptRanges = streamRes.headers.get("accept-ranges");
+      if (acceptRanges) res.setHeader("Accept-Ranges", acceptRanges);
+
+      res.status(streamRes.status);
+      const arrayBuffer = await streamRes.arrayBuffer();
+      return res.send(Buffer.from(arrayBuffer));
+    } catch (e) {
+      return res.status(500).send("Gagal mengalirkan media: " + e.message);
+    }
+  }
+
+  // 2. PARSING DAFTAR ITEM EVENT PHOTOBOOTH
   if (!targetUrl) {
     return res.status(400).json({ success: false, message: "Parameter url Kingphotobooth wajib disertakan." });
   }
@@ -33,19 +108,19 @@ export default async function handler(req, res) {
       const cleanThumb = String(it.thumb || "").split("?")[0];
       const thumbUrl = cleanThumb ? (origin + cleanThumb) : "";
       
-      // Path resolusi publik stabil (tanpa parameter query kedaluwarsa)
       let photoUrl = "";
       let videoUrl = "";
       let downloadUrl = "";
 
       if (cleanThumb) {
         if (isVideo) {
-          videoUrl = origin + cleanThumb.replace("/storage/thumbs/", "/storage/photos/").replace(/\.jpg$/i, ".mp4");
+          // Stream video terotentikasi via proxy internal
+          videoUrl = `/api/kingphotobooth?action=media&token=${encodeURIComponent(it.share_token || it.id)}&origin=${encodeURIComponent(origin)}`;
           photoUrl = thumbUrl;
-          downloadUrl = origin + "/dl/" + it.id + ".mp4";
+          downloadUrl = `/api/kingphotobooth?action=download&token=${encodeURIComponent(it.share_token || it.id)}&origin=${encodeURIComponent(origin)}`;
         } else {
           photoUrl = thumbUrl;
-          downloadUrl = origin + "/dl/" + it.id + ".jpg";
+          downloadUrl = `/api/kingphotobooth?action=download&token=${encodeURIComponent(it.share_token || it.id)}&origin=${encodeURIComponent(origin)}`;
         }
       }
 
@@ -54,9 +129,9 @@ export default async function handler(req, res) {
         name: isVideo ? ("Video Photobooth #" + (rawItems.length - idx)) : ("Photobooth #" + (rawItems.length - idx)),
         category: category,
         thumbnailUrl: thumbUrl,
-        previewUrl: photoUrl,
-        highResUrl: photoUrl,
-        downloadUrl: downloadUrl,
+        previewUrl: isVideo ? videoUrl : photoUrl,
+        highResUrl: isVideo ? videoUrl : photoUrl,
+        downloadUrl: downloadUrl || (origin + "/dl/" + it.id + (isVideo ? ".mp4" : ".jpg")),
         videoUrl: videoUrl,
         isVideo: isVideo,
         isKing: true,
@@ -82,4 +157,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ success: false, error: err.message });
   }
 }
-
